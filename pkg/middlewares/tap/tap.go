@@ -102,10 +102,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 		return nil, errors.New("at least one of request or response must be defined")
 	}
 
-	if config.Request != nil && len(config.Request.RequestHeaders) > 0 {
-		return nil, errors.New("requestHeaders is only allowed on the response records")
-	}
-
 	t := &tap{
 		name:    name,
 		next:    next,
@@ -113,22 +109,24 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 	}
 
 	var err error
-	if t.request, err = newDestination(ctx, config.Request, serviceBuilder); err != nil {
-		return nil, fmt.Errorf("building request destination: %w", err)
+	if config.Request != nil {
+		if t.request, err = newDestination(ctx, *config.Request, serviceBuilder); err != nil {
+			return nil, fmt.Errorf("building request destination: %w", err)
+		}
 	}
 
-	if t.response, err = newDestination(ctx, config.Response, serviceBuilder); err != nil {
-		return nil, fmt.Errorf("building response destination: %w", err)
+	if config.Response != nil {
+		if t.response, err = newDestination(ctx, config.Response.TapRequestRecord, serviceBuilder); err != nil {
+			return nil, fmt.Errorf("building response destination: %w", err)
+		}
+
+		t.response.requestHeaders = config.Response.RequestHeaders
 	}
 
 	return t, nil
 }
 
-func newDestination(ctx context.Context, config *dynamic.TapRecord, serviceBuilder serviceBuilder) (*destination, error) {
-	if config == nil {
-		return nil, nil
-	}
-
+func newDestination(ctx context.Context, config dynamic.TapRequestRecord, serviceBuilder serviceBuilder) (*destination, error) {
 	if config.Service == "" {
 		return nil, errors.New("service must be defined")
 	}
@@ -148,18 +146,12 @@ func newDestination(ctx context.Context, config *dynamic.TapRecord, serviceBuild
 		path = "/" + path
 	}
 
-	maxBodySize := dynamic.TapDefaultMaxBodySize
-	if config.MaxBodySize != nil {
-		maxBodySize = *config.MaxBodySize
-	}
-
 	return &destination{
-		handler:        handler,
-		path:           path,
-		body:           ptr.Deref(config.Body, true),
-		maxBodySize:    maxBodySize,
-		requestHeaders: config.RequestHeaders,
-		failClosed:     config.FailClosed,
+		handler:     handler,
+		path:        path,
+		body:        ptr.Deref(config.Body, true),
+		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
+		failClosed:  config.FailClosed,
 	}, nil
 }
 

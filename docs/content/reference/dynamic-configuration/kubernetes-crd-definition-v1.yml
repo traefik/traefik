@@ -2317,14 +2317,6 @@ spec:
                           Path defines the path of the requests sending the records to the service.
                           Default is `/`.
                         type: string
-                      requestHeaders:
-                        description: |-
-                          RequestHeaders defines the request headers described in the records, along with the request line.
-                          It allows a response record to be understood, and correlated, without the matching request record.
-                          It is only allowed on the response records, as the request ones already describe the request.
-                        items:
-                          type: string
-                        type: array
                       service:
                         description: Service defines the reference to a Kubernetes
                           Service the records are sent to.
@@ -2613,7 +2605,6 @@ spec:
                         description: |-
                           RequestHeaders defines the request headers described in the records, along with the request line.
                           It allows a response record to be understood, and correlated, without the matching request record.
-                          It is only allowed on the response records, as the request ones already describe the request.
                         items:
                           type: string
                         type: array

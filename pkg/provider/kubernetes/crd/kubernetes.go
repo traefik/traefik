@@ -759,29 +759,34 @@ func (p *Provider) createTapMiddleware(ctx context.Context, client Client, names
 
 	services := make(map[string]*dynamic.Service)
 
-	var err error
-	if conf.Request, err = cb.tapRecord(ctx, namespace, id+"-tap-request-service", tap.Request, services); err != nil {
-		return nil, nil, err
+	if tap.Request != nil {
+		record, err := cb.tapRecord(ctx, namespace, id+"-tap-request-service", *tap.Request, services)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		conf.Request = record
 	}
 
-	if conf.Response, err = cb.tapRecord(ctx, namespace, id+"-tap-response-service", tap.Response, services); err != nil {
-		return nil, nil, err
+	if tap.Response != nil {
+		record, err := cb.tapRecord(ctx, namespace, id+"-tap-response-service", tap.Response.TapRequestRecord, services)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		conf.Response = &dynamic.TapResponseRecord{TapRequestRecord: *record, RequestHeaders: tap.Response.RequestHeaders}
 	}
 
 	return conf, services, nil
 }
 
-func (c configBuilder) tapRecord(ctx context.Context, namespace, serviceKey string, record *traefikv1alpha1.TapRecord, services map[string]*dynamic.Service) (*dynamic.TapRecord, error) {
-	if record == nil {
-		return nil, nil
-	}
-
+func (c configBuilder) tapRecord(ctx context.Context, namespace, serviceKey string, record traefikv1alpha1.TapRequestRecord, services map[string]*dynamic.Service) (*dynamic.TapRequestRecord, error) {
 	balancerName, balancerServerHTTP, err := c.nameAndService(ctx, namespace, record.Service.LoadBalancerSpec, serviceKey)
 	if err != nil {
 		return nil, err
 	}
 
-	conf := &dynamic.TapRecord{}
+	conf := &dynamic.TapRequestRecord{}
 	conf.SetDefaults()
 
 	conf.Service = balancerName
@@ -802,7 +807,6 @@ func (c configBuilder) tapRecord(ctx context.Context, namespace, serviceKey stri
 		conf.MaxBodySize = record.MaxBodySize
 	}
 
-	conf.RequestHeaders = record.RequestHeaders
 	conf.FailClosed = record.FailClosed
 
 	return conf, nil

@@ -15,9 +15,9 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
-	// TapDefaultMaxBodySize is the TapRecord.MaxBodySize option default value.
+	// TapDefaultMaxBodySize is the tap records MaxBodySize option default value.
 	TapDefaultMaxBodySize int64 = -1
-	// TapDefaultPath is the TapRecord.Path option default value.
+	// TapDefaultPath is the tap records Path option default value.
 	TapDefaultPath = "/"
 	// TapDefaultTimeout is the Tap.Timeout option default value.
 	TapDefaultTimeout = 10 * time.Second
@@ -821,10 +821,10 @@ type StripPrefixRegex struct {
 type Tap struct {
 	// Request defines where and how the requests are sent.
 	// When omitted, requests are not sent.
-	Request *TapRecord `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
+	Request *TapRequestRecord `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
-	Response *TapRecord `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
+	Response *TapResponseRecord `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
 	// Timeout defines the maximum duration allowed to send a record.
 	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 }
@@ -836,8 +836,8 @@ func (t *Tap) SetDefaults() {
 
 // +k8s:deepcopy-gen=true
 
-// TapRecord holds the configuration of the records sent by the tap middleware.
-type TapRecord struct {
+// TapRequestRecord holds the configuration of the request records sent by the tap middleware.
+type TapRequestRecord struct {
 	// Service defines the name of the service the records are sent to.
 	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	// Path defines the path of the requests sending the records to the service.
@@ -848,10 +848,6 @@ type TapRecord struct {
 	// A larger body is truncated, and the record is flagged as truncated.
 	// A negative value means no limit.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
-	// RequestHeaders defines the request headers described in the records, along with the request line.
-	// It allows a response record to be understood, and correlated, without the matching request record.
-	// It is only allowed on the response records, as the request ones already describe the request.
-	RequestHeaders []string `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
 	// FailClosed defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
@@ -862,10 +858,22 @@ type TapRecord struct {
 }
 
 // SetDefaults sets the default values.
-func (t *TapRecord) SetDefaults() {
+func (t *TapRequestRecord) SetDefaults() {
 	t.Path = TapDefaultPath
 	t.Body = new(true)
 	t.MaxBodySize = new(TapDefaultMaxBodySize)
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapResponseRecord holds the configuration of the response records sent by the tap middleware.
+// A response record is configured like a request record, with the request headers on top.
+type TapResponseRecord struct {
+	TapRequestRecord `json:",inline" yaml:",inline" export:"true"`
+
+	// RequestHeaders defines the request headers described in the records, along with the request line.
+	// It allows a response record to be understood, and correlated, without the matching request record.
+	RequestHeaders []string `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

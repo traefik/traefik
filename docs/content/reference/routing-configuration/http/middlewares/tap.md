@@ -87,13 +87,13 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="opt-request" href="#opt-request" title="#opt-request">`request`</a> | Where and how the requests are sent. When omitted, requests are not sent. More information [here](#request-and-response). | | No |
-| <a id="opt-response" href="#opt-response" title="#opt-response">`response`</a> | Where and how the responses are sent. When omitted, responses are not sent. More information [here](#request-and-response). | | No |
+| <a id="opt-request" href="#opt-request" title="#opt-request">`request`</a> | Where and how the requests are sent. When omitted, requests are not sent. More information [here](#request). | | No |
+| <a id="opt-response" href="#opt-response" title="#opt-response">`response`</a> | Where and how the responses are sent. When omitted, responses are not sent. More information [here](#response). | | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. | 10s | No |
 
 At least one of `request` and `response` must be set.
 
-### request and response
+### request
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
@@ -101,8 +101,18 @@ At least one of `request` and `response` must be set.
 | <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Path of the requests sending the records to the service. | / | No |
 | <a id="opt-body" href="#opt-body" title="#opt-body">`body`</a> | Whether the body is part of the records. | true | No |
 | <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
-| <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. Only allowed on the `response` records. More information [here](#requestheaders). | | No |
 | <a id="opt-failClosed" href="#opt-failClosed" title="#opt-failClosed">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
+
+### response
+
+| Field | Description | Default | Required |
+|:------|:------------|:--------|:---------|
+| <a id="opt-service-2" href="#opt-service-2" title="#opt-service-2">`service`</a> | Name of the service the records are sent to. | | Yes |
+| <a id="opt-path-2" href="#opt-path-2" title="#opt-path-2">`path`</a> | Path of the requests sending the records to the service. | / | No |
+| <a id="opt-body-2" href="#opt-body-2" title="#opt-body-2">`body`</a> | Whether the body is part of the records. | true | No |
+| <a id="opt-maxBodySize-2" href="#opt-maxBodySize-2" title="#opt-maxBodySize-2">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
+| <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. More information [here](#requestheaders). | | No |
+| <a id="opt-failClosed-2" href="#opt-failClosed-2" title="#opt-failClosed-2">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
 
 ### failClosed
 
@@ -120,7 +130,7 @@ The guarantee comes with two consequences:
 
 - The client latency and availability are coupled to the tap service. Deploying it close to Traefik, as a sidecar,
   keeps that coupling small.
-- A response failing closed is withheld until its record is accepted, which means it is buffered whole in memory and
+- A response failing closed is held until its record is accepted, which means it is buffered whole in memory and
   cannot be flushed as it goes. Do not set `failClosed` on the `response` records of routes serving large payloads or
   streamed responses (Server-Sent Events, long polling). Hijacked connections, such as WebSocket upgrades, are served
   as usual, and the record is then sent on a best-effort basis.
@@ -134,8 +144,8 @@ response record.
 
 It is typically used to carry a correlation identifier set by a middleware standing before the tap in the chain.
 
-Headers absent from the request are absent from the record. The option is rejected on the `request` records, which
-already describe the whole request.
+Headers absent from the request are absent from the record.
+The option does not exist on the `request` records, which already describe the whole request.
 
 ### maxBodySize
 
@@ -190,7 +200,8 @@ them without parsing the payload:
 | <a id="opt-X-Tap-Id" href="#opt-X-Tap-Id" title="#opt-X-Tap-Id">`X-Tap-Id`</a> | The record `id`. |
 | <a id="opt-X-Tap-Record" href="#opt-X-Tap-Record" title="#opt-X-Tap-Record">`X-Tap-Record`</a> | The record `kind`. |
 
-A tap service is expected to answer with a status below `400`. Anything else is treated as a failure to record.
+A tap service is expected to answer with a status below `400`. 
+Anything else is treated as a failure to record.
 
 !!! warning "Sensitive data"
 

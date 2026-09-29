@@ -39,10 +39,10 @@ import (
 type TapApplyConfiguration struct {
 	// Request defines where and how the requests are sent.
 	// When omitted, requests are not sent.
-	Request *TapRecordApplyConfiguration `json:"request,omitempty"`
+	Request *TapRequestRecordApplyConfiguration `json:"request,omitempty"`
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
-	Response *TapRecordApplyConfiguration `json:"response,omitempty"`
+	Response *TapResponseRecordApplyConfiguration `json:"response,omitempty"`
 	// Timeout defines the maximum duration allowed to send a record.
 	// The value of timeout should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
@@ -59,7 +59,7 @@ func Tap() *TapApplyConfiguration {
 // WithRequest sets the Request field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Request field is set to the value of the last call.
-func (b *TapApplyConfiguration) WithRequest(value *TapRecordApplyConfiguration) *TapApplyConfiguration {
+func (b *TapApplyConfiguration) WithRequest(value *TapRequestRecordApplyConfiguration) *TapApplyConfiguration {
 	b.Request = value
 	return b
 }
@@ -67,7 +67,7 @@ func (b *TapApplyConfiguration) WithRequest(value *TapRecordApplyConfiguration) 
 // WithResponse sets the Response field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Response field is set to the value of the last call.
-func (b *TapApplyConfiguration) WithResponse(value *TapRecordApplyConfiguration) *TapApplyConfiguration {
+func (b *TapApplyConfiguration) WithResponse(value *TapResponseRecordApplyConfiguration) *TapApplyConfiguration {
 	b.Response = value
 	return b
 }

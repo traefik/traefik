@@ -26,11 +26,11 @@ THE SOFTWARE.
 
 package v1alpha1
 
-// TapRecordApplyConfiguration represents a declarative configuration of the TapRecord type for use
+// TapRequestRecordApplyConfiguration represents a declarative configuration of the TapRequestRecord type for use
 // with apply.
 //
-// TapRecord holds the configuration of the records sent by the tap middleware.
-type TapRecordApplyConfiguration struct {
+// TapRequestRecord holds the configuration of the request records sent by the tap middleware.
+type TapRequestRecordApplyConfiguration struct {
 	// Service defines the reference to a Kubernetes Service the records are sent to.
 	Service *ServiceApplyConfiguration `json:"service,omitempty"`
 	// Path defines the path of the requests sending the records to the service.
@@ -43,10 +43,6 @@ type TapRecordApplyConfiguration struct {
 	// A larger body is truncated, and the record is flagged as truncated.
 	// Default is `-1`, which means no limit.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
-	// RequestHeaders defines the request headers described in the records, along with the request line.
-	// It allows a response record to be understood, and correlated, without the matching request record.
-	// It is only allowed on the response records, as the request ones already describe the request.
-	RequestHeaders []string `json:"requestHeaders,omitempty"`
 	// FailClosed defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
@@ -55,16 +51,16 @@ type TapRecordApplyConfiguration struct {
 	FailClosed *bool `json:"failClosed,omitempty"`
 }
 
-// TapRecordApplyConfiguration constructs a declarative configuration of the TapRecord type for use with
+// TapRequestRecordApplyConfiguration constructs a declarative configuration of the TapRequestRecord type for use with
 // apply.
-func TapRecord() *TapRecordApplyConfiguration {
-	return &TapRecordApplyConfiguration{}
+func TapRequestRecord() *TapRequestRecordApplyConfiguration {
+	return &TapRequestRecordApplyConfiguration{}
 }
 
 // WithService sets the Service field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Service field is set to the value of the last call.
-func (b *TapRecordApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapRecordApplyConfiguration {
+func (b *TapRequestRecordApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapRequestRecordApplyConfiguration {
 	b.Service = value
 	return b
 }
@@ -72,7 +68,7 @@ func (b *TapRecordApplyConfiguration) WithService(value *ServiceApplyConfigurati
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *TapRecordApplyConfiguration) WithPath(value string) *TapRecordApplyConfiguration {
+func (b *TapRequestRecordApplyConfiguration) WithPath(value string) *TapRequestRecordApplyConfiguration {
 	b.Path = &value
 	return b
 }
@@ -80,7 +76,7 @@ func (b *TapRecordApplyConfiguration) WithPath(value string) *TapRecordApplyConf
 // WithBody sets the Body field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Body field is set to the value of the last call.
-func (b *TapRecordApplyConfiguration) WithBody(value bool) *TapRecordApplyConfiguration {
+func (b *TapRequestRecordApplyConfiguration) WithBody(value bool) *TapRequestRecordApplyConfiguration {
 	b.Body = &value
 	return b
 }
@@ -88,25 +84,15 @@ func (b *TapRecordApplyConfiguration) WithBody(value bool) *TapRecordApplyConfig
 // WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the MaxBodySize field is set to the value of the last call.
-func (b *TapRecordApplyConfiguration) WithMaxBodySize(value int64) *TapRecordApplyConfiguration {
+func (b *TapRequestRecordApplyConfiguration) WithMaxBodySize(value int64) *TapRequestRecordApplyConfiguration {
 	b.MaxBodySize = &value
-	return b
-}
-
-// WithRequestHeaders adds the given value to the RequestHeaders field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the RequestHeaders field.
-func (b *TapRecordApplyConfiguration) WithRequestHeaders(values ...string) *TapRecordApplyConfiguration {
-	for i := range values {
-		b.RequestHeaders = append(b.RequestHeaders, values[i])
-	}
 	return b
 }
 
 // WithFailClosed sets the FailClosed field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the FailClosed field is set to the value of the last call.
-func (b *TapRecordApplyConfiguration) WithFailClosed(value bool) *TapRecordApplyConfiguration {
+func (b *TapRequestRecordApplyConfiguration) WithFailClosed(value bool) *TapRequestRecordApplyConfiguration {
 	b.FailClosed = &value
 	return b
 }
