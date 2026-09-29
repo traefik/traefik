@@ -30,7 +30,9 @@ on:
   issues:
     # Only the opening: traefik/ai labels a new issue that arrives with no
     # label. Nothing else on an issue is routed anywhere.
-    types: [opened]
+    types: [opened, edited, deleted, transferred, pinned, unpinned, closed,
+            reopened, assigned, unassigned, labeled, unlabeled, locked, unlocked,
+            milestoned, demilestoned]
 
 permissions:
   pull-requests: read # a comment payload has no pull request data
