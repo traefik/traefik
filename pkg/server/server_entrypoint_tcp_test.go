@@ -21,6 +21,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"golang.org/x/net/http2"
@@ -387,6 +388,117 @@ func TestKeepAliveH2c(t *testing.T) {
 	// package restrictions. Since this error message ("use of closed network connection")
 	// is distinct and specific, we rely on its consistency, assuming it is stable and unlikely
 	// to change.
+	require.Contains(t, err.Error(), "use of closed network connection")
+}
+
+// fakeTLSHandler simulates the "TLS options name" ConnContext wiring that a real TLS
+// entry point performs (see server_entrypoint_tcp.go), so that snicheck can be driven
+// through a plain-TCP test entry point while still observing a stale TLS options name.
+func fakeTLSHandler(connTLSOptionsName string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		req.TLS = &tls.ConnectionState{ServerName: "example.com"}
+		req = req.WithContext(tcp.AddTLSOptionsNameInContext(req.Context(), connTLSOptionsName))
+		next.ServeHTTP(rw, req)
+	})
+}
+
+// TestSNICheckClosesStaleConnectionHTTP1 asserts that, over a real HTTP/1.1 connection,
+// snicheck rejecting a request over stale TLS options actually results in the underlying
+// TCP connection being closed by the server, and not merely in the response carrying a
+// "Connection: close" header that a client could choose to ignore.
+func TestSNICheckClosesStaleConnectionHTTP1(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "", &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	router.SetHTTPHandler(fakeTLSHandler("default", snicheck.New("router-name", "tls-strict@file", next)))
+
+	conn, err := startEntrypoint(t, entryPoint, router)
+	require.NoError(t, err)
+
+	http.DefaultClient.Transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return conn, nil
+		},
+	}
+
+	resp, err := http.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusMisdirectedRequest, resp.StatusCode)
+	assert.True(t, resp.Close, "server must mark the response as closing the connection")
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	// The connection was closed by the server, so writing to it (and reading a response
+	// back) must fail: there is no live peer left, rather than a client merely choosing
+	// to honor "Connection: close" on its next request.
+	_, err = conn.Write([]byte("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n"))
+	if err == nil {
+		buf := make([]byte, 1)
+		_, err = conn.Read(buf)
+	}
+	require.Error(t, err)
+}
+
+// TestSNICheckClosesStaleConnectionHTTP2 mirrors TestSNICheckClosesStaleConnectionHTTP1
+// for HTTP/2: it asserts that a stale TLS options name causes the server to tear down
+// the connection via a GOAWAY frame, matching the mechanism TestKeepAliveH2c already
+// relies on for the keep-alive middleware.
+func TestSNICheckClosesStaleConnectionHTTP2(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "", &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	router.SetHTTPHandler(fakeTLSHandler("default", snicheck.New("router-name", "tls-strict@file", next)))
+
+	conn, err := startEntrypoint(t, entryPoint, router)
+	require.NoError(t, err)
+
+	http2Transport := &http2.Transport{
+		AllowHTTP: true,
+		DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+			return conn, nil
+		},
+	}
+
+	client := &http.Client{Transport: http2Transport}
+
+	resp, err := client.Get("http://" + entryPoint.listener.Addr().String())
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusMisdirectedRequest, resp.StatusCode)
+	err = resp.Body.Close()
+	require.NoError(t, err)
+
+	// As in TestKeepAliveH2c, a GOAWAY-closed HTTP/2 connection surfaces as this specific
+	// "connection closed" error on the next request over the same (now dead) transport.
+	_, err = client.Get("http://" + entryPoint.listener.Addr().String())
+	require.Error(t, err)
 	require.Contains(t, err.Error(), "use of closed network connection")
 }
 
