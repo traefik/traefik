@@ -527,3 +527,47 @@ func TestDifferentIntervals(t *testing.T) {
 
 	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "removed servers greater than upserted servers")
 }
+
+func TestServiceHealthChecker_ImmediateFirstCheck(t *testing.T) {
+	// Verifies that a health check fires immediately on startup without waiting
+	// for the first interval tick. A DOWN server must be identified quickly after
+	// launch, not after one full interval elapses.
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(server.Close)
+
+	targetURL := testhelpers.MustParseURL(server.URL)
+
+	lb := &testLoadBalancer{
+		RWMutex: &sync.RWMutex{},
+		eventCh: make(chan struct{}, 5),
+	}
+
+	// Use a very long interval so any observed check must be from the
+	// immediate first firing, not a periodic tick.
+	config := &dynamic.ServerHealthCheck{
+		Path:     "/",
+		Interval: ptypes.Duration(time.Minute),
+		Timeout:  ptypes.Duration(time.Second),
+	}
+
+	gauge := &testhelpers.CollectingGauge{}
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, &runtime.ServiceInfo{}, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
+
+	go hc.Launch(ctx)
+
+	select {
+	case <-lb.eventCh:
+	case <-time.After(5 * time.Second):
+		t.Fatal("health check did not fire immediately; DOWN server not identified within 5 seconds")
+	}
+
+	lb.RLock()
+	defer lb.RUnlock()
+	assert.Equal(t, 1, lb.numRemovedServers)
+	assert.Equal(t, 0, lb.numUpsertedServers)
+}
