@@ -565,7 +565,10 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 
 	<-requestStarted
 
+	// Cancel request and wait for cancellation to propagate
 	cancel()
+	<-ctx.Done()
+
 	close(requestCancelled)
 
 	<-responseComplete

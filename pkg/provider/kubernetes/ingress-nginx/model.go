@@ -168,6 +168,10 @@ type location struct {
 	ServiceName string
 	ServicePort string
 
+	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
+	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
+	SSLPassthrough bool
+
 	// SSLRedirectOnly is true when the non-TLS router should only perform an
 	// HTTPS redirect. All other middlewares are suppressed for that router.
 	SSLRedirectOnly bool
@@ -211,6 +215,11 @@ type location struct {
 	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
 	LimitConnections *dynamic.InFlightReq
 
+	// LimitAllowlist holds the client IP ranges exempted from the rate and connection
+	// limits above. In nginx those limits share a single counting key, and the allowlist
+	// empties it, so an allowlisted client is exempted from all of them at once.
+	LimitAllowlist []string
+
 	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
@@ -227,6 +236,11 @@ type location struct {
 	// ingress-level spec.defaultBackend fallback (host-only rule, no path,
 	// no serversTransport).
 	IsIngressDefaultBackend bool
+}
+
+// hasLimits returns true when the location carries at least one rate or connection limit.
+func (l *location) hasLimits() bool {
+	return l.RateLimitRPM != nil || l.RateLimitRPS != nil || l.LimitConnections != nil
 }
 
 // middlewareCustomHTTPErrors configures error-page routing for specific HTTP status codes.
@@ -284,6 +298,7 @@ func (c *canaryConfig) RequiresNonCanaryRouter() bool {
 }
 
 // sslPassthroughBackend holds a TLS passthrough entry.
+// It only describes the TCP router: the HTTP side of an ssl-passthrough ingress goes through the regular location path, like any other ingress.
 type sslPassthroughBackend struct {
 	// BackendName is the key into Configuration.Backends.
 	BackendName string
@@ -293,26 +308,4 @@ type sslPassthroughBackend struct {
 
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
-
-	// SSLRedirect indicates that HTTP requests to this host should be redirected
-	// to HTTPS with a 308 Permanent Redirect, following the same semantics as
-	// regular locations (see sslRedirectEnabled).
-	SSLRedirect bool
-
-	// HTTPServiceName is the key for the HTTP service proxying to the backend.
-	// Unlike BackendName it is scoped to the ingress, because per-ingress
-	// annotations (e.g. backend-protocol) shape the service.
-	// It is empty when the serversTransport could not be built: only the TCP
-	// passthrough router is created in that case.
-	HTTPServiceName string
-
-	// ServersTransportName is the unique name of the per-ingress transport.
-	ServersTransportName string
-
-	// ServersTransport holds the resolved per-ingress transport config for the
-	// HTTP router. The translator registers it once per unique ServersTransportName.
-	ServersTransport *dynamic.ServersTransport
-
-	// Config holds all parsed annotation values for the ingress.
-	Config IngressConfig
 }

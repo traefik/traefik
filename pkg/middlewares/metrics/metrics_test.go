@@ -74,6 +74,10 @@ func Test_getMethod(t *testing.T) {
 			expected: "EXTENSION_METHOD",
 		},
 		{
+			method:   "QUERY",
+			expected: "QUERY",
+		},
+		{
 			method:   "THIS_IS_NOT_A_VALID_METHOD",
 			expected: "EXTENSION_METHOD",
 		},
