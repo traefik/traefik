@@ -9,7 +9,7 @@
           "redirect-web-to-websecure"
         ],
         "service": "noop@internal",
-        "rule": "HostRegexp(`^.+$`)",
+        "rule": "Host(`*`)",
         "ruleSyntax": "default"
       }
     },
