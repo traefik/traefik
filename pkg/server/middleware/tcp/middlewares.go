@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipwhitelist"
+	cfgprovider "github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
@@ -41,7 +42,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *tcp.Cha
 		chain = chain.Append(func(next tcp.Handler) (tcp.Handler, error) {
 			constructorContext := provider.AddInContext(ctx, middlewareName)
 			if midInf, ok := b.configs[middlewareName]; !ok || midInf.TCPMiddleware == nil {
-				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+				return nil, fmt.Errorf("middleware %q does not exist%s", middlewareName, cfgprovider.MiddlewareNameHint(middlewareName))
 			}
 
 			var err error
