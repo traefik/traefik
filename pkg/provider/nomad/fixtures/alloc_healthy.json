@@ -1,0 +1,12 @@
+{
+  "ID": "03c7270c-f475-5981-1932-87c0a8a5aa24",
+  "ClientStatus": "running",
+  "DeploymentStatus": {
+    "Healthy": true
+  },
+  "TaskStates": {
+    "job1-http": {
+      "State": "running"
+    }
+  }
+}
