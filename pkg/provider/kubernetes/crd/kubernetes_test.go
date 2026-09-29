@@ -7592,18 +7592,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-tap": {
 							Tap: &dynamic.Tap{
-								Request: &dynamic.TapRecord{
+								Request: &dynamic.TapRequestRecord{
 									Service:     "default-tap-tap-request-service",
 									Path:        "/records/requests",
 									Body:        new(true),
 									MaxBodySize: new(int64(1024)),
 									FailClosed:  true,
 								},
-								Response: &dynamic.TapRecord{
-									Service:        "default-tap-tap-response-service",
-									Path:           "/",
-									Body:           new(false),
-									MaxBodySize:    new(int64(-1)),
+								Response: &dynamic.TapResponseRecord{
+									TapRequestRecord: dynamic.TapRequestRecord{
+										Service:     "default-tap-tap-response-service",
+										Path:        "/",
+										Body:        new(false),
+										MaxBodySize: new(int64(-1)),
+									},
 									RequestHeaders: []string{"X-Request-Id"},
 								},
 								Timeout: ptypes.Duration(5 * time.Second),

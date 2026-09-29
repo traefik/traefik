@@ -75,16 +75,16 @@ func newTap(t *testing.T, config dynamic.Tap, next http.Handler, builder service
 	return handler
 }
 
-func requestRecordConfig() *dynamic.TapRecord {
-	config := &dynamic.TapRecord{}
+func requestRecordConfig() *dynamic.TapRequestRecord {
+	config := &dynamic.TapRequestRecord{}
 	config.SetDefaults()
 	config.Service = "requests"
 
 	return config
 }
 
-func responseRecordConfig() *dynamic.TapRecord {
-	config := &dynamic.TapRecord{}
+func responseRecordConfig() *dynamic.TapResponseRecord {
+	config := &dynamic.TapResponseRecord{}
 	config.SetDefaults()
 	config.Service = "responses"
 
@@ -104,20 +104,13 @@ func TestNew(t *testing.T) {
 		},
 		{
 			desc:        "destination without service",
-			config:      dynamic.Tap{Request: &dynamic.TapRecord{}},
+			config:      dynamic.Tap{Request: &dynamic.TapRequestRecord{}},
 			expectedErr: "building request destination: service must be defined",
 		},
 		{
 			desc:        "unknown service",
-			config:      dynamic.Tap{Response: &dynamic.TapRecord{Service: "unknown"}},
+			config:      dynamic.Tap{Response: &dynamic.TapResponseRecord{TapRequestRecord: dynamic.TapRequestRecord{Service: "unknown"}}},
 			expectedErr: "building response destination: service not found",
-		},
-		{
-			desc: "request headers on the request records",
-			config: dynamic.Tap{
-				Request: &dynamic.TapRecord{Service: "requests", RequestHeaders: []string{"X-Client"}},
-			},
-			expectedErr: "requestHeaders is only allowed on the response records",
 		},
 		{
 			desc: "request only",
