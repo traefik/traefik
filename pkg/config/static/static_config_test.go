@@ -849,13 +849,14 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 			assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
 			assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
 
-			// Applying the effective configuration again must leave it unchanged.
-			cfg.SetEffectiveConfiguration()
+			t.Run("reapplying preserves configuration", func(t *testing.T) {
+				cfg.SetEffectiveConfiguration()
 
-			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, test.expected, ep)
-			assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
-			assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
+				require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+				assert.Equal(t, test.expected, ep)
+				assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
+				assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
+			})
 		})
 	}
 }
