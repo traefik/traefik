@@ -15,6 +15,19 @@ const (
 	serviceTypeName = "TracingService"
 )
 
+type serviceNameKey struct{}
+
+// WithServiceName stores the logical service name in the context.
+func WithServiceName(ctx context.Context, service string) context.Context {
+	return context.WithValue(ctx, serviceNameKey{}, service)
+}
+
+// ServiceNameFromContext retrieves the logical service name from the context.
+func ServiceNameFromContext(ctx context.Context) (string, bool) {
+	name, ok := ctx.Value(serviceNameKey{}).(string)
+	return name, ok && name != ""
+}
+
 type serviceTracing struct {
 	service string
 	next    http.Handler
@@ -32,6 +45,9 @@ func NewService(ctx context.Context, service string, next http.Handler) http.Han
 }
 
 func (t *serviceTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	// Store service name in context for use by the RoundTripper client span.
+	req = req.WithContext(WithServiceName(req.Context(), t.service))
+
 	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
 		tracingCtx, span := tracer.Start(req.Context(), "Service", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
