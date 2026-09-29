@@ -313,6 +313,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			ep.SetDefaults()
 			c.EntryPoints[DefaultInternalEntryPointName] = ep
 		} else if ep.Address == "" {
+			// Configuring entry point options can create it without an address.
 			ep.Address = ":8080"
 		}
 	}

@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/paerser/env"
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
@@ -712,53 +711,115 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 	}
 }
 
-func TestConfiguration_InternalEntryPointAddressFromEnv(t *testing.T) {
-	for _, strategy := range []string{AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject} {
-		t.Run(strategy, func(t *testing.T) {
-			t.Parallel()
+func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
+	defaultEntryPoint := &EntryPoint{Address: ":8080"}
+	defaultEntryPoint.SetDefaults()
 
-			cfg := &Configuration{Providers: &Providers{}}
-			err := env.Decode([]string{
-				"TRAEFIK_PING=true",
-				"TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80",
-				"TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443",
-				"TRAEFIK_ENTRYPOINTS_TRAEFIK_HTTP_ALIASHEADERSSTRATEGY=" + strategy,
-			}, env.DefaultNamePrefix, cfg)
-			require.NoError(t, err)
-
-			cfg.SetEffectiveConfiguration()
-
-			require.NotNil(t, cfg.Ping)
-			assert.Equal(t, DefaultInternalEntryPointName, cfg.Ping.EntryPoint)
-			require.NotNil(t, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, ":8080", cfg.EntryPoints[DefaultInternalEntryPointName].Address)
-			assert.Equal(t, strategy, cfg.EntryPoints[DefaultInternalEntryPointName].HTTP.AliasHeadersStrategy)
-			assert.Equal(t, ":80", cfg.EntryPoints["web"].Address)
-			assert.Equal(t, ":443", cfg.EntryPoints["websecure"].Address)
-		})
-	}
-}
-
-func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
 	tests := []struct {
-		desc string
-		conf Configuration
+		desc       string
+		conf       Configuration
+		entryPoint *EntryPoint
+		expected   *EntryPoint
 	}{
 		{
-			desc: "ping",
+			desc:     "missing entry point",
+			conf:     Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			expected: defaultEntryPoint,
+		},
+		{
+			desc:       "empty address with keep headers",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyKeep}},
+			expected:   &EntryPoint{Address: ":8080", HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyKeep}},
+		},
+		{
+			desc:       "empty address with delete headers",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyDelete}},
+			expected:   &EntryPoint{Address: ":8080", HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyDelete}},
+		},
+		{
+			desc:       "empty address with reject headers",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject}},
+			expected:   &EntryPoint{Address: ":8080", HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject}},
+		},
+		{
+			desc:       "explicit address :8082",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{Address: ":8082"},
+			expected:   &EntryPoint{Address: ":8082"},
+		},
+		{
+			desc:       "explicit address :0",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{Address: ":0"},
+			expected:   &EntryPoint{Address: ":0"},
+		},
+		{
+			desc: "preserve entry point options",
 			conf: Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
+			entryPoint: &EntryPoint{
+				HTTP: HTTPConfig{
+					AliasHeadersStrategy: AliasHeadersStrategyReject,
+					Middlewares:          []string{"auth@file"},
+					MaxHeaderBytes:       4096,
+				},
+				Transport:        &EntryPointsTransport{RespondingTimeouts: &RespondingTimeouts{ReadTimeout: ptypes.Duration(7 * time.Second)}},
+				ForwardedHeaders: &ForwardedHeaders{TrustedIPs: []string{"192.0.2.0/24"}},
+			},
+			expected: &EntryPoint{
+				Address: ":8080",
+				HTTP: HTTPConfig{
+					AliasHeadersStrategy: AliasHeadersStrategyReject,
+					Middlewares:          []string{"auth@file"},
+					MaxHeaderBytes:       4096,
+				},
+				Transport:        &EntryPointsTransport{RespondingTimeouts: &RespondingTimeouts{ReadTimeout: ptypes.Duration(7 * time.Second)}},
+				ForwardedHeaders: &ForwardedHeaders{TrustedIPs: []string{"192.0.2.0/24"}},
+			},
 		},
 		{
-			desc: "insecure API",
-			conf: Configuration{API: &API{Insecure: true}},
+			desc:       "insecure API",
+			conf:       Configuration{API: &API{Insecure: true}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{Address: ":8080"},
 		},
 		{
-			desc: "Prometheus",
-			conf: Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName}}},
+			desc:       "Prometheus",
+			conf:       Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName}}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{Address: ":8080"},
 		},
 		{
-			desc: "insecure REST",
-			conf: Configuration{Providers: &Providers{Rest: &rest.Provider{Insecure: true}}},
+			desc:       "insecure REST",
+			conf:       Configuration{Providers: &Providers{Rest: &rest.Provider{Insecure: true}}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{Address: ":8080"},
+		},
+		{
+			desc:       "no internal service",
+			conf:       Configuration{},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{},
+		},
+		{
+			desc:       "manual ping routing",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName, ManualRouting: true}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{},
+		},
+		{
+			desc:       "custom ping entry point",
+			conf:       Configuration{Ping: &ping.Handler{EntryPoint: "web"}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{},
+		},
+		{
+			desc:       "manual Prometheus routing",
+			conf:       Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName, ManualRouting: true}}},
+			entryPoint: &EntryPoint{},
+			expected:   &EntryPoint{},
 		},
 	}
 
@@ -766,31 +827,35 @@ func TestConfiguration_InternalEntryPointAddressPreservesOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ep := &EntryPoint{}
-			expected := &EntryPoint{Address: ":8080"}
-			for _, entryPoint := range []*EntryPoint{ep, expected} {
-				entryPoint.SetDefaults()
-				entryPoint.HTTP.AliasHeadersStrategy = AliasHeadersStrategyReject
-				entryPoint.HTTP.Middlewares = []string{"auth@file"}
-				entryPoint.HTTP.MaxHeaderBytes = 4096
-				entryPoint.Transport.RespondingTimeouts.ReadTimeout = ptypes.Duration(7 * time.Second)
-				entryPoint.ForwardedHeaders.TrustedIPs = []string{"192.0.2.0/24"}
-			}
-
 			cfg := test.conf
 			if cfg.Providers == nil {
 				cfg.Providers = &Providers{}
 			}
-			cfg.EntryPoints = EntryPoints{DefaultInternalEntryPointName: ep}
+			cfg.EntryPoints = EntryPoints{
+				"web":       {Address: ":80"},
+				"websecure": {Address: ":443"},
+			}
+			if test.entryPoint != nil {
+				cfg.EntryPoints[DefaultInternalEntryPointName] = test.entryPoint
+			}
+
+			cfg.SetEffectiveConfiguration()
+
+			ep := cfg.EntryPoints[DefaultInternalEntryPointName]
+			if test.entryPoint != nil {
+				require.Same(t, test.entryPoint, ep)
+			}
+			assert.Equal(t, test.expected, ep)
+			assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
+			assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
+
+			// Applying the effective configuration again must leave it unchanged.
 			cfg.SetEffectiveConfiguration()
 
 			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, expected, ep)
-
-			cfg.SetEffectiveConfiguration()
-
-			require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-			assert.Equal(t, expected, ep)
+			assert.Equal(t, test.expected, ep)
+			assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
+			assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
 		})
 	}
 }
