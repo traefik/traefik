@@ -18,12 +18,29 @@ import (
 )
 
 func TestNewBasicEmpty(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
 	auth := dynamic.BasicAuth{
 		Users: []string{},
 	}
 
-	_, err := NewBasic(t.Context(), nil, auth, "authName")
-	require.Error(t, err)
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+	require.NoError(t, err)
+
+	ba := authMiddleware.(*basicAuth)
+	assert.Equal(t, emptyUsersNotFoundSecret, ba.notFoundSecret)
+
+	ts := httptest.NewServer(authMiddleware)
+	defer ts.Close()
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.SetBasicAuth("anyone", "anything")
+
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
 
 func TestNewBasicNotFoundSecretIsSet(t *testing.T) {
