@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -3738,6 +3741,68 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 				assert.Equal(t, http.StatusOK, w.Code)
 			} else {
 				assert.Equal(t, http.StatusNotFound, w.Code)
+			}
+		})
+	}
+}
+
+func TestProvider_Init_warnsOnMalformedIngressEndpointIP(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		ip          string
+		expectsWarn bool
+	}{
+		{
+			desc: "no ingress endpoint at all",
+		},
+		{
+			desc: "IPv4",
+			ip:   "10.0.0.1",
+		},
+		{
+			desc: "IPv6",
+			ip:   "2001:db8::1",
+		},
+		{
+			desc:        "another CLI flag swallowed as the value",
+			ip:          "--entryPoints.metrics.address=:9100/tcp",
+			expectsWarn: true,
+		},
+		{
+			desc:        "hostname given instead of an IP",
+			ip:          "traefik.example.com",
+			expectsWarn: true,
+		},
+		{
+			desc:        "IPv4 with a port",
+			ip:          "10.0.0.1:80",
+			expectsWarn: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var buf bytes.Buffer
+
+			originalLogger := log.Logger
+			log.Logger = zerolog.New(&buf).Level(zerolog.WarnLevel)
+
+			t.Cleanup(func() {
+				log.Logger = originalLogger
+			})
+
+			p := Provider{}
+			if test.ip != "" {
+				p.IngressEndpoint = &EndpointIngress{IP: test.ip}
+			}
+
+			require.NoError(t, p.Init())
+
+			if test.expectsWarn {
+				assert.Contains(t, buf.String(), "ingressEndpoint.ip")
+				assert.Contains(t, buf.String(), test.ip)
+			} else {
+				assert.Empty(t, buf.String())
 			}
 		})
 	}
