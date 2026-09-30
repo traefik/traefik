@@ -7600,6 +7600,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Query:                "query",
 								ErrorRequestHeaders:  []string{"X-Foo-Bar", "X-Bar-Foo"},
 								ErrorResponseHeaders: []string{"WWW-Authenticate"},
+								ForwardHeaders:       []string{"Content-Language"},
 							},
 						},
 					},

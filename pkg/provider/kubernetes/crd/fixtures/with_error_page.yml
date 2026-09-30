@@ -17,6 +17,8 @@ spec:
     - "X-Bar-Foo"
     errorResponseHeaders:
     - "WWW-Authenticate"
+    forwardHeaders:
+    - "Content-Language"
     service:
       name: whoami
       port: 80
