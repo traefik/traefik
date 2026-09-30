@@ -107,6 +107,11 @@ type location struct {
 	// across all ingresses sharing the host).
 	UseRegex bool
 
+	// PathKeep and PathExclude are combined as keep && !exclude for translated lookaheads.
+	// Both are empty when no translation is applied. Path is never rewritten.
+	PathKeep    string
+	PathExclude string
+
 	// BackendName is the key into Configuration.Backends for the primary backend.
 	BackendName string
 
