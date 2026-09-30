@@ -84,6 +84,35 @@ type destination struct {
 	failClosed     bool
 }
 
+func newDestination(ctx context.Context, config dynamic.TapRequestRecord, serviceBuilder serviceBuilder) (*destination, error) {
+	if config.Service == "" {
+		return nil, errors.New("service must be defined")
+	}
+
+	handler, err := serviceBuilder.BuildHTTP(ctx, config.Service)
+	if err != nil {
+		return nil, fmt.Errorf("building tap service handler: %w", err)
+	}
+
+	path := config.Path
+	if path == "" {
+		path = dynamic.TapDefaultPath
+	}
+
+	// The path ends up in the request line sent to the service, where it must be absolute.
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	return &destination{
+		handler:     handler,
+		path:        path,
+		body:        config.Body,
+		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
+		failClosed:  config.FailClosed,
+	}, nil
+}
+
 type tap struct {
 	name string
 	next http.Handler
@@ -126,35 +155,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 	return t, nil
 }
 
-func newDestination(ctx context.Context, config dynamic.TapRequestRecord, serviceBuilder serviceBuilder) (*destination, error) {
-	if config.Service == "" {
-		return nil, errors.New("service must be defined")
-	}
-
-	handler, err := serviceBuilder.BuildHTTP(ctx, config.Service)
-	if err != nil {
-		return nil, err
-	}
-
-	path := config.Path
-	if path == "" {
-		path = dynamic.TapDefaultPath
-	}
-
-	// The path ends up in the request line sent to the service, where it must be absolute.
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-
-	return &destination{
-		handler:     handler,
-		path:        path,
-		body:        config.Body,
-		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
-		failClosed:  config.FailClosed,
-	}, nil
-}
-
 func (t *tap) GetTracingInformation() (string, string) {
 	return t.name, typeName
 }
@@ -175,12 +175,6 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var traceID string
 	if spanContext := trace.SpanContextFromContext(ctx); spanContext.HasTraceID() {
 		traceID = spanContext.TraceID().String()
-	}
-
-	// The request is described on arrival, before the next handlers alter it.
-	var described *requestRecord
-	if t.response != nil && len(t.response.requestHeaders) > 0 {
-		described = describeRequest(req, t.response.requestHeaders)
 	}
 
 	if t.request != nil {
@@ -206,10 +200,16 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// The request is described on arrival, before the next handlers alter it.
+	var responseRecordRequest *requestRecord
+	if t.response != nil && len(t.response.requestHeaders) > 0 {
+		responseRecordRequest = describeRequest(req, t.response.requestHeaders)
+	}
+
 	capturer := newResponseCapturer(rw, t.response, t.response.failClosed)
 	t.next.ServeHTTP(capturer, req)
 
-	rec := &record{ID: id, Kind: kindResponse, Time: start, TraceID: traceID, Request: described, Response: capturer.record(time.Since(start))}
+	rec := &record{ID: id, Kind: kindResponse, Time: start, TraceID: traceID, Request: responseRecordRequest, Response: capturer.record(time.Since(start))}
 
 	if err := t.send(ctx, t.response, req.Host, rec); err != nil {
 		logger.Error().Err(err).Msg("Unable to send the response record")
@@ -233,11 +233,13 @@ func (t *tap) send(ctx context.Context, dest *destination, host string, rec *rec
 	}
 
 	// A record must be sent even when the client is gone, and must not outlive the configured timeout.
-	sendCtx, cancel := context.WithoutCancel(ctx), context.CancelFunc(func() {})
+	sendCtx := context.WithoutCancel(ctx)
 	if t.timeout > 0 {
+		var cancel context.CancelFunc
 		sendCtx, cancel = context.WithTimeout(sendCtx, t.timeout)
+
+		defer cancel()
 	}
-	defer cancel()
 
 	// The access log data table of the incoming request must not be mutated by the tap service call.
 	sendCtx = context.WithValue(sendCtx, accesslog.DataTableKey, nil)
@@ -248,7 +250,6 @@ func (t *tap) send(ctx context.Context, dest *destination, host string, rec *rec
 	}
 
 	sendReq.RequestURI = dest.path
-	sendReq.ContentLength = int64(len(payload))
 	sendReq.Header.Set("Content-Type", "application/json")
 	sendReq.Header.Set(headerRecordID, rec.ID)
 	sendReq.Header.Set(headerRecordKind, rec.Kind)
@@ -320,7 +321,7 @@ func readBody(req *http.Request, maxBodySize int64) ([]byte, bool, error) {
 		return nil, false, nil
 	}
 
-	// Reading the body is what makes the server answer an Expect: 100-continue, so the
+	// Reading the body is what makes Traefik answer an Expect: 100-continue, so the
 	// expectation is satisfied here and must not be forwarded: the backend would answer a
 	// second informational response, which the client has no reason to see.
 	if strings.EqualFold(req.Header.Get("Expect"), "100-continue") {
@@ -330,7 +331,7 @@ func readBody(req *http.Request, maxBodySize int64) ([]byte, bool, error) {
 	if maxBodySize < 0 {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("reading request body: %w", err)
 		}
 
 		req.Body = replayBody(bytes.NewReader(body), req.Body)

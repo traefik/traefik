@@ -40,19 +40,19 @@ type responseCapturer struct {
 	hijacked      bool
 }
 
-func newResponseCapturer(rw http.ResponseWriter, dest *destination, withhold bool) *responseCapturer {
+func newResponseCapturer(rw http.ResponseWriter, dest *destination, failClosed bool) *responseCapturer {
 	// A detached header map is needed, because the response can end up being replaced by an error.
 	// It starts as a copy of the client one, so that the headers set by the middlewares standing
 	// before this one in the chain are part of the record.
 	headers := rw.Header()
-	if withhold {
+	if failClosed {
 		headers = headers.Clone()
 		if headers == nil {
 			headers = make(http.Header)
 		}
 	}
 
-	return &responseCapturer{rw: rw, dest: dest, withheld: withhold, headers: headers}
+	return &responseCapturer{rw: rw, dest: dest, withheld: failClosed, headers: headers}
 }
 
 func (r *responseCapturer) Header() http.Header {
@@ -63,7 +63,7 @@ func (r *responseCapturer) WriteHeader(status int) {
 	// An informational response is interim: it is forwarded as it comes, even when the
 	// response is withheld, because it commits nothing. The final status is the one that
 	// follows, so it must not be recorded as the status of the response.
-	if status >= http.StatusContinue && status < http.StatusOK {
+	if status >= 100 && status <= 199 {
 		r.writeInformationalHeader(status)
 		return
 	}
