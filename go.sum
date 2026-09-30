@@ -276,6 +276,8 @@ github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
 github.com/containerd/log v0.1.0/go.mod h1:VRRf09a7mHDIRezVKTRCrOq78v577GXq3bSa3EhrzVo=
 github.com/containerd/platforms v1.0.0-rc.1 h1:83KIq4yy1erSRgOVHNk1HYdPvzdJ5CnsWaRoJX4C41E=
 github.com/containerd/platforms v1.0.0-rc.1/go.mod h1:J71L7B+aiM5SdIEqmd9wp6THLVRzJGXfNuWCZCllLA4=
+github.com/containerd/stargz-snapshotter/estargz v0.18.2 h1:yXkZFYIzz3eoLwlTUZKz2iQ4MrckBxJjkmD16ynUTrw=
+github.com/containerd/stargz-snapshotter/estargz v0.18.2/go.mod h1:XyVU5tcJ3PRpkA9XS2T5us6Eg35yM0214Y+wvrZTBrY=
 github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd h1:0n+lFLh5zU0l6KSk3KpnDwfbPGAR44aRLgTbCnhRBHU=
 github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd/go.mod h1:BbQgeDS5i0tNvypwEoF1oNjOJw8knRAE1DnVvjDstcQ=
 github.com/containous/go-http-auth v0.4.1-0.20260804094822-b975dcaa8c48 h1:zvriB/VtwWvyNjuyIZgYDzvdNrnXYT0rXSN3WNgDzqg=
@@ -320,6 +322,8 @@ github.com/dnsimple/dnsimple-go/v9 v9.1.1 h1:DtfbFvZxqtu6jfz2S3Mptr72KJ7YOr6NZEC
 github.com/dnsimple/dnsimple-go/v9 v9.1.1/go.mod h1:RRE/lyj5lz5XdkTE04LJ17lP0WSAiDPMjyJANZnNBU4=
 github.com/docker/cli v29.8.1+incompatible h1:qYL1bCp6cRw2SB1xmLlIOPyV171dilw9W2Jew38vy9c=
 github.com/docker/cli v29.8.1+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
+github.com/docker/docker-credential-helpers v0.9.3 h1:gAm/VtF9wgqJMoxzT3Gj5p4AqIjCBS4wrsOh9yRqcz8=
+github.com/docker/docker-credential-helpers v0.9.3/go.mod h1:x+4Gbw9aGmChi3qTLZj8Dfn0TD20M/fuWy0E5+WDeCo=
 github.com/docker/go-connections v0.8.1 h1:JibmG5hULs5qXSr/cp/w3Pw5fZuStt4MOHMUExb29/M=
 github.com/docker/go-connections v0.8.1/go.mod h1:no1qkHdjq7kLMGUXYAduOhYPSJxxvgWBh7ogVvptn3Q=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
@@ -572,6 +576,8 @@ github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/google/go-containerregistry v0.21.5 h1:KTJG9Pn/jC0VdZR6ctV3/jcN+q6/Iqlx0sTVz3ywZlM=
+github.com/google/go-containerregistry v0.21.5/go.mod h1:ySvMuiWg+dOsRW0Hw8GYwfMwBlNRTmpYBFJPlkco5zU=
 github.com/google/go-github/v32 v32.1.0/go.mod h1:rIEpZD9CTDQwDK9GDrtMTycQNA4JU3qBsCizh3q2WCI=
 github.com/google/go-github/v90 v90.0.0 h1:EnX9HvTfqvuJbUSWu1/jLrYH6JJLMz0w0qfQVbTxPzE=
 github.com/google/go-github/v90 v90.0.0/go.mod h1:pLzt1FZURZyoTHT5/Z1UQY3b9fYyrbXH6aj7X+qgID4=
@@ -1289,6 +1295,8 @@ github.com/valyala/fasthttp v1.73.0 h1:ocTOORnBWtJ+P8t/6wAjdkchMzdfHmWx2VD/DPbgZ
 github.com/valyala/fasthttp v1.73.0/go.mod h1:EtXQDHaR+5P18p8wqDRFpUhxr108Ga9mXvVJXHRrN2k=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
+github.com/vbatts/tar-split v0.12.2 h1:w/Y6tjxpeiFMR47yzZPlPj/FcPLpXbTUi/9H7d3CPa4=
+github.com/vbatts/tar-split v0.12.2/go.mod h1:eF6B6i6ftWQcDqEn3/iGFRFRo8cBIMSJVOpnNdfTMFA=
 github.com/vinyldns/go-vinyldns v0.9.18 h1:U3Nl1NEeqhbaQ4W1+V6Qm6iSmAEfEHaOgN/zSV4DtNY=
 github.com/vinyldns/go-vinyldns v0.9.18/go.mod h1:pwWhE9K/leGDOIduVhRGvQ3ecVMHWRfEnKYUTEU3gB4=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
