@@ -79,10 +79,10 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	return getBestCertificate(c, clientHello, matchDomain)
 }
 
-// The matcher must remain the same for the lifetime of the store's cache because
+// The matchDomainFunc must remain the same for the lifetime of the store's cache because
 // cache hits bypass matching. The manager uses separate stores for regular TLS
 // and ACME challenges to keep their matching policies and cached results isolated.
-func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matcher func(string, string) bool) *tls.Certificate {
+func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matchDomainFunc func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
 	}
@@ -119,7 +119,7 @@ func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, m
 		})
 
 		for _, certDomains := range sorted {
-			if matcher(serverName, certDomains) {
+			if matchDomainFunc(serverName, certDomains) {
 				// cache best match
 				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
