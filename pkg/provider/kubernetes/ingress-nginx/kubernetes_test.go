@@ -22668,3 +22668,35 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 
 	return k8sObjects
 }
+
+func TestLoadIngresses_SSLPassthroughWithDefaultBackend(t *testing.T) {
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"secrets.yml",
+		"ingressclasses.yml",
+		"ingresses/ingress-with-ssl-passthrough-and-default-backend.yml",
+	})
+	client := newClient(kubefake.NewClientset(k8sObjects...))
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		k8sClient:         client,
+		NonTLSEntryPoints: []string{"http"},
+		TLSEntryPoints:    []string{"https"},
+	}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+
+	require.Contains(t, conf.TCP.Routers, "default-ingress-with-ssl-passthrough-and-default-backend-passthrough-whoami-localhost")
+
+	// The per-host default backend must not get a TLS router, which would take precedence
+	// over the TCP passthrough router and terminate TLS for the ssl-passthrough host.
+	for name, router := range conf.HTTP.Routers {
+		assert.Nil(t, router.TLS, "HTTP router %q must not be a TLS router for an ssl-passthrough host", name)
+	}
+	assert.Contains(t, conf.HTTP.Routers, "default-ingress-with-ssl-passthrough-and-default-backend-default-backend")
+}
