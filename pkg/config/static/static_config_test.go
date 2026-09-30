@@ -839,24 +839,23 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 				cfg.EntryPoints[DefaultInternalEntryPointName] = test.entryPoint
 			}
 
-			cfg.SetEffectiveConfiguration()
+			ep := test.entryPoint
+			for _, phase := range []string{"first application", "reapplication"} {
+				t.Run(phase, func(t *testing.T) {
+					cfg.SetEffectiveConfiguration()
 
-			ep := cfg.EntryPoints[DefaultInternalEntryPointName]
-			if test.entryPoint != nil {
-				require.Same(t, test.entryPoint, ep)
+					actual := cfg.EntryPoints[DefaultInternalEntryPointName]
+					require.NotNil(t, actual)
+					if ep != nil {
+						require.Same(t, ep, actual)
+					}
+					ep = actual
+
+					assert.Equal(t, test.expected, actual)
+					assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
+					assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
+				})
 			}
-			assert.Equal(t, test.expected, ep)
-			assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
-			assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
-
-			t.Run("reapplying preserves configuration", func(t *testing.T) {
-				cfg.SetEffectiveConfiguration()
-
-				require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
-				assert.Equal(t, test.expected, ep)
-				assert.Equal(t, &EntryPoint{Address: ":80"}, cfg.EntryPoints["web"])
-				assert.Equal(t, &EntryPoint{Address: ":443"}, cfg.EntryPoints["websecure"])
-			})
 		})
 	}
 }
