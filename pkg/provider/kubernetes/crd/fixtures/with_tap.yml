@@ -12,6 +12,7 @@ spec:
         name: whoami
         port: 80
       path: /records/requests
+      body: true
       maxBodySize: 1024
       failClosed: true
     response:

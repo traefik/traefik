@@ -2295,7 +2295,7 @@ spec:
                       body:
                         description: |-
                           Body defines whether the body is part of the records.
-                          Default is `true`.
+                          Default is `false`.
                         type: boolean
                       failClosed:
                         description: |-
@@ -2579,7 +2579,7 @@ spec:
                       body:
                         description: |-
                           Body defines whether the body is part of the records.
-                          Default is `true`.
+                          Default is `false`.
                         type: boolean
                       failClosed:
                         description: |-
