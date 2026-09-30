@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -447,9 +448,7 @@ func TestHandler(t *testing.T) {
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				for name, values := range test.backendHeaders {
-					for _, value := range values {
-						w.Header().Add(name, value)
-					}
+					w.Header()[http.CanonicalHeaderKey(name)] = slices.Clone(values)
 				}
 
 				w.WriteHeader(test.backendCode)
