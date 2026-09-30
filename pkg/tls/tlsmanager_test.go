@@ -18,6 +18,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
@@ -258,6 +259,117 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 			certificate, err = config.GetCertificate(clientHello)
 			require.NoError(t, err)
 			assert.Same(t, acmeCert, certificate)
+		})
+	}
+}
+
+func TestManager_ACMEChallengeCertificateLifecycle(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		ip          string
+		reverseAddr string
+	}{
+		{
+			desc:        "IPv4",
+			ip:          "192.0.2.1",
+			reverseAddr: "1.2.0.192.in-addr.arpa",
+		},
+		{
+			desc:        "IPv6",
+			ip:          "2001:db8::1",
+			reverseAddr: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dnsCertPEM, dnsKeyPEM, err := generate.KeyPair(test.reverseAddr, time.Time{})
+			require.NoError(t, err)
+			dnsCert, err := tls.X509KeyPair(dnsCertPEM, dnsKeyPEM)
+			require.NoError(t, err)
+
+			acmeCertPEM, acmeKeyPEM, err := tlsalpn01.ChallengeBlocks(test.ip, "keyAuth")
+			require.NoError(t, err)
+			acmeCert, err := tls.X509KeyPair(acmeCertPEM, acmeKeyPEM)
+			require.NoError(t, err)
+
+			orders := []struct {
+				desc      string
+				protocols []string
+			}{
+				{
+					desc:      "regular TLS first",
+					protocols: []string{"h2", tlsalpn01.ACMETLS1Protocol, "h2"},
+				},
+				{
+					desc:      "ACME first",
+					protocols: []string{tlsalpn01.ACMETLS1Protocol, "h2", tlsalpn01.ACMETLS1Protocol},
+				},
+			}
+
+			for _, order := range orders {
+				t.Run(order.desc, func(t *testing.T) {
+					stores := map[string]Store{
+						DefaultTLSStoreName: {
+							DefaultCertificate: &Certificate{CertFile: localhostCert, KeyFile: localhostKey},
+						},
+					}
+					tlsOption := DefaultTLSOptions
+					tlsOption.SniStrict = true
+					configs := map[string]Options{DefaultTLSConfigName: tlsOption}
+					certs := []*CertAndStores{
+						{
+							Certificate: Certificate{CertFile: types.FileOrContent(dnsCertPEM), KeyFile: types.FileOrContent(dnsKeyPEM)},
+							Stores:      []string{DefaultTLSStoreName},
+						},
+						{
+							Certificate: Certificate{CertFile: types.FileOrContent(acmeCertPEM), KeyFile: types.FileOrContent(acmeKeyPEM)},
+							Stores:      []string{tlsalpn01.ACMETLS1Protocol},
+						},
+					}
+					tlsManager := NewManager(nil)
+					tlsManager.UpdateConfigs(t.Context(), stores, configs, certs)
+					config, err := tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+					require.NoError(t, err)
+
+					for _, protocol := range order.protocols {
+						certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
+							ServerName:      test.reverseAddr,
+							SupportedProtos: []string{protocol},
+						})
+						require.NoError(t, err)
+						require.NotNil(t, certificate)
+
+						expected := dnsCert.Certificate
+						if protocol == tlsalpn01.ACMETLS1Protocol {
+							expected = acmeCert.Certificate
+						}
+						assert.Equal(t, expected, certificate.Certificate)
+					}
+
+					// New connections use the TLS configuration rebuilt after the challenge is removed.
+					tlsManager.UpdateConfigs(t.Context(), stores, configs, certs[:1])
+					config, err = tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+					require.NoError(t, err)
+
+					certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
+						ServerName:      test.reverseAddr,
+						SupportedProtos: []string{tlsalpn01.ACMETLS1Protocol},
+					})
+					require.NoError(t, err)
+					assert.Nil(t, certificate)
+
+					certificate, err = config.GetCertificate(&tls.ClientHelloInfo{
+						ServerName:      test.reverseAddr,
+						SupportedProtos: []string{"h2"},
+					})
+					require.NoError(t, err)
+					require.NotNil(t, certificate)
+					assert.Equal(t, dnsCert.Certificate, certificate.Certificate)
+				})
+			}
 		})
 	}
 }

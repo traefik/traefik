@@ -79,6 +79,9 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	return getBestCertificate(c, clientHello, matchDomain)
 }
 
+// The matcher must remain the same for the lifetime of the store's cache because
+// cache hits bypass matching. The manager uses separate stores for regular TLS
+// and ACME challenges to keep their matching policies and cached results isolated.
 func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matcher func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
