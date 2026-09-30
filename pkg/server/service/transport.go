@@ -281,9 +281,32 @@ func (c connWithTimeouts) Write(b []byte) (n int, err error) {
 	return n, nil
 }
 
-func customDialContext(d *net.Dialer, cfg *dynamic.ForwardingTimeouts) func(ctx context.Context, network string, address string) (net.Conn, error) {
+type dialContextFunc func(ctx context.Context, network, address string) (net.Conn, error)
+
+// preferIPv6DialContext wraps a DialContext to resolve backend server hostnames
+// to IPv6 first, only falling back to IPv4 when no IPv6 address is reachable.
+// The preference applies to the address-family-agnostic "tcp" network only:
+// literal IP addresses and networks that already pin a family (tcp4/tcp6) are
+// dialed as-is.
+func preferIPv6DialContext(dialContext dialContextFunc) dialContextFunc {
 	return func(ctx context.Context, network, address string) (net.Conn, error) {
-		conn, err := d.DialContext(ctx, network, address)
+		host, _, err := net.SplitHostPort(address)
+		if network != "tcp" || err != nil || net.ParseIP(host) != nil {
+			return dialContext(ctx, network, address)
+		}
+
+		conn, err := dialContext(ctx, "tcp6", address)
+		if err == nil || ctx.Err() != nil {
+			return conn, err
+		}
+
+		return dialContext(ctx, "tcp4", address)
+	}
+}
+
+func customDialContext(dialContext dialContextFunc, cfg *dynamic.ForwardingTimeouts) dialContextFunc {
+	return func(ctx context.Context, network, address string) (net.Conn, error) {
+		conn, err := dialContext(ctx, network, address)
 
 		if cfg.ReadTimeout <= 0 && cfg.WriteTimeout <= 0 {
 			return conn, err
@@ -316,9 +339,14 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 		dialer.Timeout = time.Duration(cfg.ForwardingTimeouts.DialTimeout)
 	}
 
+	dialContext := dialContextFunc(dialer.DialContext)
+	if cfg.PreferIPv6 {
+		dialContext = preferIPv6DialContext(dialContext)
+	}
+
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           dialer.DialContext,
+		DialContext:           dialContext,
 		MaxIdleConnsPerHost:   cfg.MaxIdleConnsPerHost,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
@@ -331,7 +359,7 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 	if cfg.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
-		transport.DialContext = customDialContext(dialer, cfg.ForwardingTimeouts)
+		transport.DialContext = customDialContext(dialContext, cfg.ForwardingTimeouts)
 		// The forwarding timeout names come from the x/net/http2.Transport fields (ReadIdleTimeout/PingTimeout),
 		// which were used to configure the HTTP/2 health checks before the net/http native support (Go 1.24).
 		// HTTP2Config.SendPingTimeout carries the same semantics as ReadIdleTimeout:
