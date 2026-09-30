@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"time"
 
@@ -12,24 +13,44 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/otel/attribute"
 	otellog "go.opentelemetry.io/otel/log"
+	otelsdk "go.opentelemetry.io/otel/sdk/log"
 )
 
 // SetupOTelLogger sets up the OpenTelemetry logger.
-func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.OTelLog) (zerolog.Logger, error) {
+// The returned io.Closer flushes the queued records, and must be closed last.
+func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.OTelLog) (zerolog.Logger, io.Closer, error) {
 	if config == nil {
-		return logger, nil
+		return logger, noopCloser{}, nil
 	}
 
 	if err := observability.EnsureUserEnvVar(); err != nil {
-		return zerolog.Logger{}, err
+		return zerolog.Logger{}, nil, err
 	}
 	provider, err := config.NewLoggerProvider(ctx)
 	if err != nil {
-		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
+		return zerolog.Logger{}, nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 	}
 
-	return logger.Hook(&otelLoggerHook{logger: provider.Logger("traefik")}), nil
+	return logger.Hook(&otelLoggerHook{logger: provider.Logger("traefik")}), &lpCloser{provider: provider}, nil
 }
+
+// lpCloser converts a LoggerProvider into an io.Closer.
+type lpCloser struct {
+	provider *otelsdk.LoggerProvider
+}
+
+func (l *lpCloser) Close() error {
+	// Batch processor keeps unexported records in memory.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return l.provider.Shutdown(ctx)
+}
+
+// noopCloser stands in when OTLP logging is disabled.
+type noopCloser struct{}
+
+func (noopCloser) Close() error { return nil }
 
 // otelLoggerHook is a zerolog hook that forwards logs to OpenTelemetry.
 type otelLoggerHook struct {

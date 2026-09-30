@@ -171,8 +171,11 @@ func TestLog(t *testing.T) {
 			out := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 			logger := zerolog.New(out).With().Caller().Logger()
 
-			logger, err := SetupOTelLogger(t.Context(), logger, config)
+			logger, closer, err := SetupOTelLogger(t.Context(), logger, config)
 			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, closer.Close())
+			})
 
 			ctx := trace.ContextWithSpanContext(t.Context(), trace.NewSpanContext(trace.SpanContextConfig{
 				TraceID: trace.TraceID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
@@ -192,5 +195,53 @@ func TestLog(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestOTelLoggerFlushedOnClose(t *testing.T) {
+	// Buffered: the export runs inside Close, an unbuffered send would deadlock.
+	logCh := make(chan string, 1)
+	collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
+		require.NoError(t, err)
+
+		req := plogotlp.NewExportRequest()
+		err = req.UnmarshalProto(body)
+		require.NoError(t, err)
+
+		marshalledReq, err := json.Marshal(req)
+		require.NoError(t, err)
+
+		logCh <- string(marshalledReq)
+	}))
+	t.Cleanup(collector.Close)
+
+	config := &otypes.OTelLog{
+		ServiceName: "test",
+		HTTP: &otypes.OTelHTTP{
+			Endpoint: collector.URL,
+		},
+	}
+
+	logger, closer, err := SetupOTelLogger(t.Context(), zerolog.New(io.Discard), config)
+	require.NoError(t, err)
+
+	logger.Info().Msg("test")
+
+	// The batch processor only exports every second.
+	// Closing now, only a Shutdown can still flush the record.
+	require.NoError(t, closer.Close())
+
+	// No wait: Shutdown exports synchronously.
+	// Waiting would let the periodic export pass the test instead.
+	select {
+	case log := <-logCh:
+		assert.Regexp(t, `"body":{"stringValue":"test"}`, log)
+
+	default:
+		t.Error("Log not exported on Close")
 	}
 }

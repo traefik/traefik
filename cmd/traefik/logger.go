@@ -23,13 +23,15 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) error {
+// setupLogger configures the global logger.
+// The returned io.Closer is nil unless OTLP logging is enabled.
+func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) (io.Closer, error) {
 	// Validate that the experimental flag is set up at this point,
 	// rather than validating the static configuration before the setupLogger call.
 	// This ensures that validation messages are not logged using an un-configured logger.
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil &&
 		(staticConfiguration.Experimental == nil || !staticConfiguration.Experimental.OTLPLogs) {
-		return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+		return nil, errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
 	}
 
 	// configure log format
@@ -47,11 +49,12 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 
 	log.Logger = logger.Logger().Level(logLevel)
 
+	var logCloser io.Closer
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
 		var err error
-		log.Logger, err = logs.SetupOTelLogger(ctx, log.Logger, staticConfiguration.Log.OTLP)
+		log.Logger, logCloser, err = logs.SetupOTelLogger(ctx, log.Logger, staticConfiguration.Log.OTLP)
 		if err != nil {
-			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
+			return nil, fmt.Errorf("setting up OpenTelemetry logger: %w", err)
 		}
 	}
 
@@ -64,7 +67,7 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
-	return nil
+	return logCloser, nil
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
