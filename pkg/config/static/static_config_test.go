@@ -558,7 +558,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Internal entrypoint, no internal service enabled, address left empty",
+			desc: "Internal entrypoint, no internal service enabled, default address set",
 			conf: &Configuration{
 				Providers: &Providers{},
 				EntryPoints: EntryPoints{
@@ -568,7 +568,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			expected: &Configuration{
 				Providers: &Providers{},
 				EntryPoints: EntryPoints{
-					DefaultInternalEntryPointName: {},
+					DefaultInternalEntryPointName: {Address: ":8080"},
 				},
 			},
 		},
