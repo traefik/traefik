@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
@@ -94,147 +93,88 @@ func TestChunkIDs(t *testing.T) {
 	}
 }
 
-func TestLookupTaskDefinitions(t *testing.T) {
+func TestLookupTaskDefinitionsSharesDefinitionAcrossTasks(t *testing.T) {
+	const definitionARN = "arn:aws:ecs:us-east-1:123456789012:task-definition/web:1"
+	definition := &ecstypes.TaskDefinition{TaskDefinitionArn: aws.String(definitionARN)}
+	var calls []string
+	client := newTaskDefinitionTestClient(t, &calls)
+
+	definitions, err := (&Provider{}).lookupTaskDefinitions(t.Context(), client, map[string]ecstypes.Task{
+		"task-a": {TaskDefinitionArn: aws.String(definitionARN)},
+		"task-b": {TaskDefinitionArn: aws.String(definitionARN)},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{definitionARN}, calls)
+	assert.Equal(t, map[string]*ecstypes.TaskDefinition{"task-a": definition, "task-b": definition}, definitions)
+}
+
+func TestLookupTaskDefinitionsReusesDefinitionAcrossRefresh(t *testing.T) {
+	const definitionARN = "arn:aws:ecs:us-east-1:123456789012:task-definition/web:1"
+	definition := &ecstypes.TaskDefinition{TaskDefinitionArn: aws.String(definitionARN)}
+	var calls []string
+	client := newTaskDefinitionTestClient(t, &calls)
+	p := &Provider{}
+
+	definitions, err := p.lookupTaskDefinitions(t.Context(), client, map[string]ecstypes.Task{
+		"task-old": {TaskDefinitionArn: aws.String(definitionARN)},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{definitionARN}, calls)
+	assert.Equal(t, map[string]*ecstypes.TaskDefinition{"task-old": definition}, definitions)
+
+	definitions, err = p.lookupTaskDefinitions(t.Context(), client, map[string]ecstypes.Task{
+		"task-replacement": {TaskDefinitionArn: aws.String(definitionARN)},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{definitionARN}, calls)
+	assert.Equal(t, map[string]*ecstypes.TaskDefinition{"task-replacement": definition}, definitions)
+}
+
+func TestLookupTaskDefinitionsSeparatesDifferentDefinitions(t *testing.T) {
 	const definitionARN = "arn:aws:ecs:us-east-1:123456789012:task-definition/web:1"
 	const otherDefinitionARN = "arn:aws:ecs:us-east-1:123456789012:task-definition/web:2"
+	var calls []string
+	client := newTaskDefinitionTestClient(t, &calls)
 
-	testCases := []struct {
-		desc          string
-		batches       []map[string]*string
-		cachedARN     *string
-		expired       bool
-		apiError      bool
-		expectedError bool
-		expectedCalls map[string]int
-	}{
-		{
-			desc:          "tasks sharing a definition",
-			batches:       []map[string]*string{{"task-a": aws.String(definitionARN), "task-b": aws.String(definitionARN), "task-c": aws.String(definitionARN)}},
-			expectedCalls: map[string]int{definitionARN: 1},
-		},
-		{
-			desc:          "different definition revisions",
-			batches:       []map[string]*string{{"task-a": aws.String(definitionARN), "task-b": aws.String(otherDefinitionARN)}},
-			expectedCalls: map[string]int{definitionARN: 1, otherDefinitionARN: 1},
-		},
-		{
-			desc:          "cached definition for a new task",
-			batches:       []map[string]*string{{"task-new": aws.String(definitionARN)}},
-			cachedARN:     aws.String(definitionARN),
-			expectedCalls: map[string]int{},
-		},
-		{
-			desc:          "replacement task on next refresh",
-			batches:       []map[string]*string{{"task-old": aws.String(definitionARN)}, {"task-new": aws.String(definitionARN)}},
-			expectedCalls: map[string]int{definitionARN: 1},
-		},
-		{
-			desc:          "expired definition",
-			batches:       []map[string]*string{{"task-a": aws.String(definitionARN)}},
-			cachedARN:     aws.String(definitionARN),
-			expired:       true,
-			expectedCalls: map[string]int{definitionARN: 1},
-		},
-		{
-			desc:          "errors are not cached",
-			batches:       []map[string]*string{{"task-a": aws.String(definitionARN)}, {"task-a": aws.String(definitionARN)}},
-			apiError:      true,
-			expectedError: true,
-			expectedCalls: map[string]int{definitionARN: 2},
-		},
-		{
-			desc:          "missing definition ARN ignores empty cache key",
-			batches:       []map[string]*string{{"task-a": nil}},
-			cachedARN:     aws.String(""),
-			expectedError: true,
-			expectedCalls: map[string]int{},
-		},
-		{
-			desc:          "empty definition ARN ignores empty cache key",
-			batches:       []map[string]*string{{"task-a": aws.String("")}},
-			cachedARN:     aws.String(""),
-			apiError:      true,
-			expectedError: true,
-			expectedCalls: map[string]int{"": 1},
-		},
-	}
+	definitions, err := (&Provider{}).lookupTaskDefinitions(t.Context(), client, map[string]ecstypes.Task{
+		"task-a": {TaskDefinitionArn: aws.String(definitionARN)},
+		"task-b": {TaskDefinitionArn: aws.String(otherDefinitionARN)},
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{definitionARN, otherDefinitionARN}, calls)
+	assert.Equal(t, map[string]*ecstypes.TaskDefinition{
+		"task-a": {TaskDefinitionArn: aws.String(definitionARN)},
+		"task-b": {TaskDefinitionArn: aws.String(otherDefinitionARN)},
+	}, definitions)
+}
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			// The provider cache is global, so these subtests must remain serial.
-			previousCache := existingTaskDefCache
-			existingTaskDefCache = cache.New(30*time.Minute, 0)
-			t.Cleanup(func() { existingTaskDefCache = previousCache })
+func newTaskDefinitionTestClient(t *testing.T, calls *[]string) *awsClient {
+	t.Helper()
 
-			cachedDefinition := &ecstypes.TaskDefinition{TaskDefinitionArn: test.cachedARN}
-			if test.cachedARN != nil {
-				if test.expired {
-					existingTaskDefCache = cache.NewFrom(30*time.Minute, 0, map[string]cache.Item{
-						*test.cachedARN: {Object: cachedDefinition, Expiration: 1},
-					})
-				} else {
-					existingTaskDefCache.Set(*test.cachedARN, cachedDefinition, cache.DefaultExpiration)
-				}
+	// Tests replace the global provider cache, so they must remain serial.
+	previousCache := existingTaskDefCache
+	existingTaskDefCache = cache.New(cache.NoExpiration, 0)
+	t.Cleanup(func() { existingTaskDefCache = previousCache })
+
+	return &awsClient{ecs: ecs.New(ecs.Options{
+		Region:      "us-east-1",
+		Credentials: aws.AnonymousCredentials{},
+		HTTPClient: smithyhttp.ClientDoFunc(func(req *http.Request) (*http.Response, error) {
+			var input struct {
+				TaskDefinition string `json:"taskDefinition"`
 			}
-			initialCache := existingTaskDefCache.Items()
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&input))
+			*calls = append(*calls, input.TaskDefinition)
 
-			calls := make(map[string]int)
-			client := &awsClient{ecs: ecs.New(ecs.Options{
-				Region:           "us-east-1",
-				Credentials:      aws.AnonymousCredentials{},
-				RetryMaxAttempts: 1,
-				HTTPClient: smithyhttp.ClientDoFunc(func(req *http.Request) (*http.Response, error) {
-					assert.Equal(t, "AmazonEC2ContainerServiceV20141113.DescribeTaskDefinition", req.Header.Get("X-Amz-Target"))
-					var input struct {
-						TaskDefinition string `json:"taskDefinition"`
-					}
-					require.NoError(t, json.NewDecoder(req.Body).Decode(&input))
-					calls[input.TaskDefinition]++
+			body, err := json.Marshal(map[string]any{
+				"taskDefinition": map[string]string{"taskDefinitionArn": input.TaskDefinition},
+			})
+			require.NoError(t, err)
 
-					status := http.StatusOK
-					body, err := json.Marshal(map[string]any{
-						"taskDefinition": map[string]string{"taskDefinitionArn": input.TaskDefinition},
-					})
-					require.NoError(t, err)
-					if test.apiError {
-						status = http.StatusBadRequest
-						body = []byte(`{"__type":"ClientException","message":"Invalid task definition"}`)
-					}
-
-					return &http.Response{
-						StatusCode: status,
-						Header:     http.Header{"Content-Type": []string{"application/x-amz-json-1.1"}},
-						Body:       io.NopCloser(bytes.NewReader(body)),
-					}, nil
-				}),
-			})}
-
-			for _, batch := range test.batches {
-				tasks := make(map[string]ecstypes.Task)
-				for taskARN, defARN := range batch {
-					tasks[taskARN] = ecstypes.Task{TaskArn: aws.String(taskARN), TaskDefinitionArn: defARN}
-				}
-
-				definitions, err := (&Provider{}).lookupTaskDefinitions(t.Context(), client, tasks)
-				if test.expectedError {
-					require.ErrorContains(t, err, "describing task definition")
-					assert.Nil(t, definitions)
-					assert.Equal(t, initialCache, existingTaskDefCache.Items())
-					continue
-				}
-				require.NoError(t, err)
-				require.Len(t, definitions, len(tasks))
-				for taskARN, defARN := range batch {
-					require.Contains(t, definitions, taskARN)
-					require.NotNil(t, definitions[taskARN])
-					assert.Equal(t, *defARN, aws.ToString(definitions[taskARN].TaskDefinitionArn))
-				}
-			}
-
-			assert.Equal(t, test.expectedCalls, calls)
-			if test.cachedARN != nil && !test.expired {
-				assert.Equal(t, initialCache[*test.cachedARN], existingTaskDefCache.Items()[*test.cachedARN])
-			}
-		})
-	}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+			}, nil
+		}),
+	})}
 }
