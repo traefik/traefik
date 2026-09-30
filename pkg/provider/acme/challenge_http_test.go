@@ -179,3 +179,70 @@ func TestParseHTTPChallengeHost(t *testing.T) {
 		})
 	}
 }
+
+func TestChallengeHTTPCleanUpTokenIsolation(t *testing.T) {
+	for _, removedToken := range []string{"first", "second"} {
+		t.Run(removedToken, func(t *testing.T) {
+			t.Parallel()
+
+			challenge := NewChallengeHTTP()
+			tokens := []struct {
+				token   string
+				keyAuth string
+			}{
+				{token: "first", keyAuth: "firstKeyAuth"},
+				{token: "second", keyAuth: "secondKeyAuth"},
+			}
+			for _, token := range tokens {
+				require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", token.token, token.keyAuth))
+			}
+
+			steps := []struct {
+				desc    string
+				domain  string
+				token   string
+				removed bool
+			}{
+				{desc: "unknown host", domain: "2001:db8::2", token: removedToken},
+				{desc: "unknown token", domain: "2001:db8::1", token: "unknown"},
+				{desc: "remove token", domain: "2001:db8::1", token: removedToken, removed: true},
+				{desc: "repeat cleanup", domain: "2001:db8::1", token: removedToken, removed: true},
+			}
+			for _, step := range steps {
+				t.Run(step.desc, func(t *testing.T) {
+					require.NoError(t, challenge.CleanUp(t.Context(), step.domain, step.token, ""))
+					for _, token := range tokens {
+						req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+token.token, nil)
+						rw := httptest.NewRecorder()
+						challenge.ServeHTTP(rw, req)
+
+						expectedStatus := http.StatusOK
+						expectedBody := token.keyAuth
+						if step.removed && token.token == removedToken {
+							expectedStatus = http.StatusNotFound
+							expectedBody = ""
+						}
+						assert.Equal(t, expectedStatus, rw.Code)
+						assert.Equal(t, expectedBody, rw.Body.String())
+					}
+				})
+			}
+
+			for _, token := range tokens {
+				require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", token.token, ""))
+				req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+token.token, nil)
+				rw := httptest.NewRecorder()
+				challenge.ServeHTTP(rw, req)
+				assert.Equal(t, http.StatusNotFound, rw.Code)
+				assert.Empty(t, rw.Body.String())
+			}
+
+			require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", removedToken, "newKeyAuth"))
+			req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+removedToken, nil)
+			rw := httptest.NewRecorder()
+			challenge.ServeHTTP(rw, req)
+			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, "newKeyAuth", rw.Body.String())
+		})
+	}
+}
