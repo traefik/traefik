@@ -18,6 +18,8 @@ type Registry interface {
 	IsRouterEnabled() bool
 	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
 	IsSvcEnabled() bool
+	// NeedsKubernetesLabels shows whether Kubernetes Labels should be sent to counters.
+	NeedsKubernetesLabels() bool
 
 	// server metrics
 
@@ -87,8 +89,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceServerUpGauge []metrics.Gauge
 	var serviceReqsBytesCounter []metrics.Counter
 	var serviceRespsBytesCounter []metrics.Counter
+	var needsKubernetesLabels bool
 
 	for _, r := range registries {
+		if r.NeedsKubernetesLabels() {
+			needsKubernetesLabels = true
+		}
 		if r.ConfigReloadsCounter() != nil {
 			configReloadsCounter = append(configReloadsCounter, r.ConfigReloadsCounter())
 		}
@@ -158,6 +164,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0,
 		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0,
+		needsKubernetesLabels:          needsKubernetesLabels,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		openConnectionsGauge:           multi.NewGauge(openConnectionsGauge...),
@@ -186,6 +193,7 @@ type standardRegistry struct {
 	epEnabled                      bool
 	routerEnabled                  bool
 	svcEnabled                     bool
+	needsKubernetesLabels          bool
 	configReloadsCounter           metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	openConnectionsGauge           metrics.Gauge
@@ -219,6 +227,10 @@ func (r *standardRegistry) IsRouterEnabled() bool {
 
 func (r *standardRegistry) IsSvcEnabled() bool {
 	return r.svcEnabled
+}
+
+func (r *standardRegistry) NeedsKubernetesLabels() bool {
+	return r.needsKubernetesLabels
 }
 
 func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {
