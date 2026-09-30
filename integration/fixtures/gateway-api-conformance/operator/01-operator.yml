@@ -441,10 +441,10 @@ rules:
   resources: [endpointslices]
   verbs: [get, list, watch]
 - apiGroups: [gateway.networking.k8s.io]
-  resources: [gatewayclasses, gateways, httproutes, grpcroutes, tcproutes, tlsroutes, referencegrants, backendtlspolicies]
+  resources: [gatewayclasses, gateways, httproutes, grpcroutes, tcproutes, tlsroutes, listenersets, referencegrants, backendtlspolicies]
   verbs: [get, list, watch]
 - apiGroups: [gateway.networking.k8s.io]
-  resources: [gateways/status, gatewayclasses/status, httproutes/status, grpcroutes/status, tcproutes/status, tlsroutes/status, backendtlspolicies/status]
+  resources: [gateways/status, gatewayclasses/status, httproutes/status, grpcroutes/status, tcproutes/status, tlsroutes/status, listenersets/status, backendtlspolicies/status]
   verbs: [update, patch]
 ---
 apiVersion: v1

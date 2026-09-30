@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-14T10:33:21+02:00"
+date: "2026-09-29T10:04:12+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.6.1
+gatewayAPIVersion: v1.6.2
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -26,8 +26,6 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     - GatewayStaticAddresses
@@ -35,6 +33,8 @@ profiles:
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - ListenerSet
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
@@ -48,14 +48,11 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 33
+      Passed: 29
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
-    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     - GatewayStaticAddresses
@@ -65,7 +62,6 @@ profiles:
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
-    - HTTPRouteCORS
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
@@ -78,10 +74,14 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
+    - BackendTLSPolicySANValidation
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - HTTPRouteBackendTimeout
+    - HTTPRouteCORS
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -91,33 +91,6 @@ profiles:
     - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
-  summary: Core tests succeeded. Extended tests succeeded.
-- core:
-    result: success
-    statistics:
-      Failed: 0
-      Passed: 19
-      Skipped: 0
-  extended:
-    result: success
-    statistics:
-      Failed: 0
-      Passed: 3
-      Skipped: 0
-    supportedFeatures:
-    - GatewayAddressEmpty
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayInfrastructurePropagation
-    - GatewayPort8080
-    - GatewayStaticAddresses
-    - TCPRoute
-    unsupportedFeatures:
-    - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
-    - ListenerSet
-  name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
@@ -133,8 +106,6 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
-    - GatewayHTTPListenerIsolation
-    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayPort8080
     - GatewayStaticAddresses
@@ -144,6 +115,8 @@ profiles:
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
@@ -155,12 +128,5 @@ succeededProvisionalTests:
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
 - HTTPRouteNamedRule
-- TCPRouteInvalidBackendRefNonexistent
-- TCPRouteInvalidCrossNamespaceBackendRef
-- TCPRouteInvalidNonTCPListener
-- TCPRouteParentRefAttachAll
-- TCPRouteParentRefPortAndSectionName
-- TCPRouteReferenceGrant
-- TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace
