@@ -4559,7 +4559,7 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 				UseBindPortIP: true,
 			}, nil, false)
 
-			actualIP, actualPort, actualError := builder.getIPPort(t.Context(), dData, test.serverPort)
+			actualIP, actualPort, actualError := builder.getIPPort(t.Context(), dData, test.serverPort, networktypes.TCP)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
