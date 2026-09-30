@@ -113,7 +113,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		// which a single node cannot do for the several port 80 Services the
 		// operator provisions. nodeLoadBalancer assigns their addresses.
 		testcontainers.WithCmdArgs("--disable=servicelb"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.1.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.2.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/01-operator.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/02-gatewayclass.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/03-bootstrap-gateway.yml"),
@@ -242,27 +242,32 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	})
 	require.NoError(s.T(), err)
 
+	// The suite only stops considering itself running in a cleanup function it
+	// registers when run, so the report is generated from a cleanup function
+	// registered beforehand, for it to run after.
+	s.T().Cleanup(func() {
+		report, err := cSuite.Report()
+		require.NoError(s.T(), err, "failed generating conformance report")
+
+		// Ordering profile reports for the serialized report to be comparable.
+		slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+
+		rawReport, err := yaml.Marshal(report)
+		require.NoError(s.T(), err)
+		s.T().Logf("Conformance report:\n%s", string(rawReport))
+
+		require.NoError(s.T(), os.MkdirAll("./gateway-api-conformance-reports/"+report.GatewayAPIVersion, 0o755))
+		outFile := filepath.Join("gateway-api-conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
+		require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
+		s.T().Logf("Report written to: %s", outFile)
+	})
+
 	cSuite.Setup(s.T(), tests.ConformanceTests)
 
 	err = cSuite.Run(s.T(), tests.ConformanceTests)
 	require.NoError(s.T(), err)
-
-	report, err := cSuite.Report()
-	require.NoError(s.T(), err, "failed generating conformance report")
-
-	// Ordering profile reports for the serialized report to be comparable.
-	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-
-	rawReport, err := yaml.Marshal(report)
-	require.NoError(s.T(), err)
-	s.T().Logf("Conformance report:\n%s", string(rawReport))
-
-	require.NoError(s.T(), os.MkdirAll("./gateway-api-conformance-reports/"+report.GatewayAPIVersion, 0o755))
-	outFile := filepath.Join("gateway-api-conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
-	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
-	s.T().Logf("Report written to: %s", outFile)
 }
 
 // logDataPlanes logs the data plane pods one by one: kubectl logs cannot select

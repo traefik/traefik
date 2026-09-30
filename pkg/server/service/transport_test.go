@@ -748,52 +748,54 @@ func (r roundTripperFn) RoundTrip(request *http.Request) (*http.Response, error)
 
 func TestKerberosRoundTripper(t *testing.T) {
 	testCases := []struct {
-		desc string
-
-		originalRoundTripperHeaders map[string][]string
-
+		desc                   string
+		authorizations         []string
 		expectedStatusCode     []int
 		expectedDedicatedCount int
 		expectedOriginalCount  int
 	}{
 		{
-			desc:                  "without special header",
+			desc:                  "without Authorization header",
+			authorizations:        []string{"", "", ""},
 			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
 			expectedOriginalCount: 3,
 		},
 		{
-			desc:                        "with Negotiate (Kerberos)",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"Negotiate"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a preauthenticated Negotiate (Kerberos) credential on the first request",
+			authorizations:         []string{"Negotiate dj1jdA==", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
 		},
 		{
-			desc:                        "with NTLM",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLM"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a preauthenticated NTLM credential on the first request",
+			authorizations:         []string{"NTLM TlRMTVNTUAAB", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
 		},
 		{
-			desc:                        "with a lowercase negotiate scheme",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"negotiate"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a challenge-first Negotiate flow",
+			authorizations:         []string{"", "Negotiate dj1jdA==", ""},
+			expectedStatusCode:     []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
+			expectedOriginalCount:  1,
+			expectedDedicatedCount: 2,
 		},
 		{
-			desc:                        "with a lowercase ntlm scheme carrying a challenge",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"ntlm TlRMTVNTUAAB"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusOK, http.StatusOK},
-			expectedOriginalCount:       1,
-			expectedDedicatedCount:      2,
+			desc:                   "with a lowercase negotiate scheme",
+			authorizations:         []string{"negotiate dj1jdA==", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
 		},
 		{
-			desc:                        "with a scheme that only starts like NTLM",
-			originalRoundTripperHeaders: map[string][]string{"Www-Authenticate": {"NTLMish"}},
-			expectedStatusCode:          []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
-			expectedOriginalCount:       3,
+			desc:                   "with a lowercase ntlm scheme",
+			authorizations:         []string{"ntlm TlRMTVNTUAAB", "", ""},
+			expectedStatusCode:     []int{http.StatusOK, http.StatusOK, http.StatusOK},
+			expectedDedicatedCount: 3,
+		},
+		{
+			desc:                  "with a scheme that only starts like NTLM",
+			authorizations:        []string{"NTLMish dj1jdA==", "", ""},
+			expectedStatusCode:    []int{http.StatusUnauthorized, http.StatusUnauthorized, http.StatusUnauthorized},
+			expectedOriginalCount: 3,
 		},
 	}
 
@@ -807,24 +809,22 @@ func TestKerberosRoundTripper(t *testing.T) {
 				new: func() http.RoundTripper {
 					return roundTripperFn(func(req *http.Request) (*http.Response, error) {
 						dedicatedCount++
-						return &http.Response{
-							StatusCode: http.StatusOK,
-						}, nil
+						return &http.Response{StatusCode: http.StatusOK}, nil
 					})
 				},
 				OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
 					origCount++
-					return &http.Response{
-						StatusCode: http.StatusUnauthorized,
-						Header:     test.originalRoundTripperHeaders,
-					}, nil
+					return &http.Response{StatusCode: http.StatusUnauthorized}, nil
 				}),
 			}
 
 			ctx := AddTransportOnContext(t.Context())
-			for _, expected := range test.expectedStatusCode {
+			for i, expected := range test.expectedStatusCode {
 				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
 				require.NoError(t, err)
+				if test.authorizations[i] != "" {
+					req.Header.Set("Authorization", test.authorizations[i])
+				}
 				resp, err := rt.RoundTrip(req)
 				require.NoError(t, err)
 				require.Equal(t, expected, resp.StatusCode)
@@ -876,9 +876,10 @@ func TestKerberosRoundTripperDoesNotLeakAcrossServersTransports(t *testing.T) {
 	_, err = pinnedRT.RoundTrip(req)
 	require.ErrorAs(t, err, &certErr)
 
-	// The NTLM challenge sticks a dedicated round tripper for the insecure ServersTransport on this connection.
+	// The NTLM credential sticks a dedicated round tripper for the insecure ServersTransport on this connection.
 	req, err = http.NewRequestWithContext(ctx, http.MethodGet, ntlmSrv.URL, http.NoBody)
 	require.NoError(t, err)
+	req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
 
 	resp, err := insecureRT.RoundTrip(req)
 	require.NoError(t, err)
@@ -905,11 +906,13 @@ func TestStickyRoundTrippersStickOnlyOnce(t *testing.T) {
 	}
 
 	connRoundTrippers := &stickyRoundTrippers{}
-	connRoundTrippers.stick(owner)
-	connRoundTrippers.stick(owner)
+	first := connRoundTrippers.stick(owner)
+	second := connRoundTrippers.stick(owner)
 
 	assert.Equal(t, 1, newCalls)
-	assert.NotNil(t, connRoundTrippers.get(owner))
+	assert.NotNil(t, first)
+	assert.Same(t, first, second)
+	assert.Same(t, first, connRoundTrippers.get(owner))
 }
 
 func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
@@ -926,7 +929,6 @@ func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
 		OriginalRoundTripper: roundTripperFn(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: http.StatusUnauthorized,
-				Header:     map[string][]string{"Www-Authenticate": {"NTLM"}},
 			}, nil
 		}),
 	}
@@ -938,6 +940,7 @@ func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
 		wg.Go(func() {
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
 			assert.NoError(t, err)
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
 
 			_, err = rt.RoundTrip(req)
 			assert.NoError(t, err)
