@@ -315,6 +315,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	// If the entry point exists without an address, which happens when only its options are configured,
+	// this ensures the address defaults to :8080.
+	if ep, ok := c.EntryPoints[DefaultInternalEntryPointName]; ok && ep.Address == "" {
+		ep.Address = ":8080"
+	}
+
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
 	}
