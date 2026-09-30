@@ -19,78 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
-// sink collects the records sent by the middleware, and stands for a Traefik service.
-type sink struct {
-	mu      sync.Mutex
-	records []*record
-	paths   []string
-
-	status int
-}
-
-func (s *sink) BuildHTTP(_ context.Context, serviceName string) (http.Handler, error) {
-	if serviceName == "unknown" {
-		return nil, errors.New("service not found")
-	}
-
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		rec := &record{}
-		if err := json.Unmarshal(body, rec); err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		s.mu.Lock()
-		s.records = append(s.records, rec)
-		s.paths = append(s.paths, req.URL.Path)
-		s.mu.Unlock()
-
-		if s.status != 0 {
-			rw.WriteHeader(s.status)
-		}
-	}), nil
-}
-
-func (s *sink) recorded() []*record {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.records
-}
-
-func newTap(t *testing.T, config dynamic.Tap, next http.Handler, builder serviceBuilder) http.Handler {
-	t.Helper()
-
-	config.Timeout = ptypes.Duration(dynamic.TapDefaultTimeout)
-
-	handler, err := New(context.Background(), next, config, builder, "tapTest")
-	require.NoError(t, err)
-
-	return handler
-}
-
-func requestRecordConfig() *dynamic.TapRequestRecord {
-	config := &dynamic.TapRequestRecord{}
-	config.SetDefaults()
-	config.Service = "requests"
-
-	return config
-}
-
-func responseRecordConfig() *dynamic.TapResponseRecord {
-	config := &dynamic.TapResponseRecord{}
-	config.SetDefaults()
-	config.Service = "responses"
-
-	return config
-}
-
 func TestNew(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -110,7 +38,7 @@ func TestNew(t *testing.T) {
 		{
 			desc:        "unknown service",
 			config:      dynamic.Tap{Response: &dynamic.TapResponseRecord{TapRequestRecord: dynamic.TapRequestRecord{Service: "unknown"}}},
-			expectedErr: "building response destination: service not found",
+			expectedErr: "building response destination: building tap service handler: service not found",
 		},
 		{
 			desc: "request only",
@@ -660,12 +588,6 @@ func TestServeHTTP_failClosedRecordsHeadersSetUpstream(t *testing.T) {
 	assert.Equal(t, "yes", records[0].Response.Headers.Get("X-Upstream"))
 }
 
-type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
-
-func (f serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
-	return f(ctx, serviceName)
-}
-
 // TestServeHTTP_expectContinue asserts that the Expect the middleware honored by reading
 // the body is not forwarded: the backend would answer a second informational response,
 // which the client has no reason to see.
@@ -719,4 +641,82 @@ func TestServeHTTP_expectContinue(t *testing.T) {
 			assert.Equal(t, test.expectedForward, forwarded)
 		})
 	}
+}
+
+// sink collects the records sent by the middleware, and stands for a Traefik service.
+type sink struct {
+	mu      sync.Mutex
+	records []*record
+	paths   []string
+
+	status int
+}
+
+func (s *sink) BuildHTTP(_ context.Context, serviceName string) (http.Handler, error) {
+	if serviceName == "unknown" {
+		return nil, errors.New("service not found")
+	}
+
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rec := &record{}
+		if err := json.Unmarshal(body, rec); err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		s.mu.Lock()
+		s.records = append(s.records, rec)
+		s.paths = append(s.paths, req.URL.Path)
+		s.mu.Unlock()
+
+		if s.status != 0 {
+			rw.WriteHeader(s.status)
+		}
+	}), nil
+}
+
+func (s *sink) recorded() []*record {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.records
+}
+
+func newTap(t *testing.T, config dynamic.Tap, next http.Handler, builder serviceBuilder) http.Handler {
+	t.Helper()
+
+	config.Timeout = ptypes.Duration(dynamic.TapDefaultTimeout)
+
+	handler, err := New(context.Background(), next, config, builder, "tapTest")
+	require.NoError(t, err)
+
+	return handler
+}
+
+func requestRecordConfig() *dynamic.TapRequestRecord {
+	config := &dynamic.TapRequestRecord{}
+	config.SetDefaults()
+	config.Service = "requests"
+
+	return config
+}
+
+func responseRecordConfig() *dynamic.TapResponseRecord {
+	config := &dynamic.TapResponseRecord{}
+	config.SetDefaults()
+	config.Service = "responses"
+
+	return config
+}
+
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
+
+func (f serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return f(ctx, serviceName)
 }

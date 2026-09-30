@@ -149,6 +149,38 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	assert.Equal(t, "pongping", recorder.Body.String())
 }
 
+// TestResponseCapturer_interimResponses asserts that an informational response, as sent by a
+// backend answering an Expect: 100-continue request, is forwarded to the client and is not
+// mistaken for the status of the response.
+func TestResponseCapturer_interimResponses(t *testing.T) {
+	for _, withhold := range []bool{false, true} {
+		t.Run(fmt.Sprintf("withhold=%v", withhold), func(t *testing.T) {
+			writer := &statusSequence{}
+			capturer := newResponseCapturer(writer, &destination{body: true, maxBodySize: -1}, withhold)
+
+			capturer.WriteHeader(http.StatusContinue)
+
+			// The interim response reaches the client even when the response is withheld:
+			// the client is waiting for it before sending its body.
+			require.Equal(t, []int{http.StatusContinue}, writer.codes)
+
+			capturer.WriteHeader(http.StatusCreated)
+
+			_, err := capturer.Write([]byte("pong"))
+			require.NoError(t, err)
+
+			rec := capturer.record(time.Second)
+			assert.Equal(t, http.StatusCreated, rec.Status)
+			assert.Equal(t, "pong", string(rec.Body))
+
+			require.NoError(t, capturer.serve())
+
+			assert.Equal(t, []int{http.StatusContinue, http.StatusCreated}, writer.codes)
+			assert.Equal(t, "pong", writer.body.String())
+		})
+	}
+}
+
 // hijackableRecorder is a http.Hijacker that always fails to hijack,
 // which is enough to assert what the capturer does before hijacking.
 type hijackableRecorder struct {
@@ -182,36 +214,4 @@ func (s *statusSequence) WriteHeader(code int) {
 
 func (s *statusSequence) Write(p []byte) (int, error) {
 	return s.body.Write(p)
-}
-
-// TestResponseCapturer_interimResponses asserts that an informational response, as sent by a
-// backend answering an Expect: 100-continue request, is forwarded to the client and is not
-// mistaken for the status of the response.
-func TestResponseCapturer_interimResponses(t *testing.T) {
-	for _, withhold := range []bool{false, true} {
-		t.Run(fmt.Sprintf("withhold=%v", withhold), func(t *testing.T) {
-			writer := &statusSequence{}
-			capturer := newResponseCapturer(writer, &destination{body: true, maxBodySize: -1}, withhold)
-
-			capturer.WriteHeader(http.StatusContinue)
-
-			// The interim response reaches the client even when the response is withheld:
-			// the client is waiting for it before sending its body.
-			require.Equal(t, []int{http.StatusContinue}, writer.codes)
-
-			capturer.WriteHeader(http.StatusCreated)
-
-			_, err := capturer.Write([]byte("pong"))
-			require.NoError(t, err)
-
-			rec := capturer.record(time.Second)
-			assert.Equal(t, http.StatusCreated, rec.Status)
-			assert.Equal(t, "pong", string(rec.Body))
-
-			require.NoError(t, capturer.serve())
-
-			assert.Equal(t, []int{http.StatusContinue, http.StatusCreated}, writer.codes)
-			assert.Equal(t, "pong", writer.body.String())
-		})
-	}
 }
