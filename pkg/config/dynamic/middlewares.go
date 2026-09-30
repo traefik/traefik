@@ -843,7 +843,7 @@ type TapRequestRecord struct {
 	// Path defines the path of the requests sending the records to the service.
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	// Body defines whether the body is part of the records.
-	Body *bool `json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty" export:"true"`
+	Body bool `json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty" export:"true"`
 	// MaxBodySize defines the maximum body size in bytes kept in a record.
 	// A larger body is truncated, and the record is flagged as truncated.
 	// A negative value means no limit.
@@ -860,7 +860,6 @@ type TapRequestRecord struct {
 // SetDefaults sets the default values.
 func (t *TapRequestRecord) SetDefaults() {
 	t.Path = TapDefaultPath
-	t.Body = new(true)
 	t.MaxBodySize = new(TapDefaultMaxBodySize)
 }
 

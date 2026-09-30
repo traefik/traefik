@@ -808,6 +808,7 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 	conf := &dynamic.TapRequestRecord{}
 	conf.SetDefaults()
 
+	conf.Body = record.Body
 	conf.FailClosed = record.FailClosed
 
 	conf.Service = serviceName
@@ -818,10 +819,6 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 
 	if record.Path != "" {
 		conf.Path = record.Path
-	}
-
-	if record.Body != nil {
-		conf.Body = record.Body
 	}
 
 	if record.MaxBodySize != nil {

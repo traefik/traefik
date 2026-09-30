@@ -156,9 +156,15 @@ func TestServeHTTP_records(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	requestConfig := requestRecordConfig()
+	requestConfig.Body = true
+
+	responseConfig := responseRecordConfig()
+	responseConfig.Body = true
+
 	handler := newTap(t, dynamic.Tap{
-		Request:  requestRecordConfig(),
-		Response: responseRecordConfig(),
+		Request:  requestConfig,
+		Response: responseConfig,
 	}, next, s)
 
 	req := httptest.NewRequest(http.MethodPost, "http://example.com/foo?bar=baz", strings.NewReader("ping"))
@@ -217,27 +223,29 @@ func TestServeHTTP_requestOnly(t *testing.T) {
 func TestServeHTTP_bodyOptions(t *testing.T) {
 	testCases := []struct {
 		desc              string
-		body              *bool
+		body              bool
 		maxBodySize       *int64
 		expectedBody      string
 		expectedTruncated bool
 	}{
 		{
-			desc:         "body kept whole by default",
+			desc: "body dropped by default",
+		},
+		{
+			desc:         "body enabled and kept whole",
+			body:         true,
 			expectedBody: "ping",
 		},
 		{
-			desc: "body disabled",
-			body: new(false),
-		},
-		{
 			desc:              "body truncated",
+			body:              true,
 			maxBodySize:       new(int64(2)),
 			expectedBody:      "pi",
 			expectedTruncated: true,
 		},
 		{
 			desc:        "body at the limit",
+			body:        true,
 			maxBodySize: new(int64(4)),
 			// A body exactly at the limit is not flagged as truncated.
 			expectedBody: "ping",
@@ -251,9 +259,7 @@ func TestServeHTTP_bodyOptions(t *testing.T) {
 			s := &sink{}
 
 			requestConfig := requestRecordConfig()
-			if test.body != nil {
-				requestConfig.Body = test.body
-			}
+			requestConfig.Body = test.body
 			if test.maxBodySize != nil {
 				requestConfig.MaxBodySize = test.maxBodySize
 			}
@@ -667,26 +673,28 @@ func TestServeHTTP_expectContinue(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		expect          string
-		body            *bool
+		body            bool
 		expectedForward string
 	}{
 		{
 			desc:   "the honored expectation is dropped",
 			expect: "100-continue",
+			body:   true,
 		},
 		{
 			desc:   "case insensitive",
 			expect: "100-Continue",
+			body:   true,
 		},
 		{
 			desc:            "an expectation the middleware did not honor is forwarded",
 			expect:          "other-expectation",
+			body:            true,
 			expectedForward: "other-expectation",
 		},
 		{
 			desc:            "nothing is read, nothing is dropped",
 			expect:          "100-continue",
-			body:            new(false),
 			expectedForward: "100-continue",
 		},
 	}
@@ -696,9 +704,7 @@ func TestServeHTTP_expectContinue(t *testing.T) {
 			t.Parallel()
 
 			requestConfig := requestRecordConfig()
-			if test.body != nil {
-				requestConfig.Body = test.body
-			}
+			requestConfig.Body = test.body
 
 			var forwarded string
 			handler := newTap(t, dynamic.Tap{Request: requestConfig}, http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {

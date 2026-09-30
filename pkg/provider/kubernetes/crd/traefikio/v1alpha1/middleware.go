@@ -372,8 +372,8 @@ type TapRequestRecord struct {
 	// Default is `/`.
 	Path string `json:"path,omitempty"`
 	// Body defines whether the body is part of the records.
-	// Default is `true`.
-	Body *bool `json:"body,omitempty"`
+	// Default is `false`.
+	Body bool `json:"body,omitempty"`
 	// MaxBodySize defines the maximum body size in bytes kept in a record.
 	// A larger body is truncated, and the record is flagged as truncated.
 	// Default is `-1`, which means no limit.

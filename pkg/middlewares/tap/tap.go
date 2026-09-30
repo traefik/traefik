@@ -149,7 +149,7 @@ func newDestination(ctx context.Context, config dynamic.TapRequestRecord, servic
 	return &destination{
 		handler:     handler,
 		path:        path,
-		body:        ptr.Deref(config.Body, true),
+		body:        config.Body,
 		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
 		failClosed:  config.FailClosed,
 	}, nil
