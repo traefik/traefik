@@ -3117,6 +3117,162 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "SSL Passthrough with a default backend creates no TLS router for it",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-ssl-passthrough-and-default-backend.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-ingress-with-ssl-passthrough-and-default-backend-passthrough-whoami-localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `HostSNI("passthrough.whoami.localhost")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+							Service: "default-whoami-tls-443",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-whoami-tls-443": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.3:8443",
+									},
+									{
+										Address: "10.10.0.4:8443",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-ssl-passthrough-and-default-backend-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough.whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-ssl-passthrough-and-default-backend-whoami-tls-443",
+							Middlewares: []string{"default-ingress-with-ssl-passthrough-and-default-backend-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-ssl-passthrough-and-default-backend",
+									},
+								},
+							},
+						},
+						"default-ingress-with-ssl-passthrough-and-default-backend-default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough.whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-ssl-passthrough-and-default-backend-default-backend",
+							Middlewares: []string{"default-ingress-with-ssl-passthrough-and-default-backend-default-backend-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-ssl-passthrough-and-default-backend",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-ssl-passthrough-and-default-backend-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-ingress-with-ssl-passthrough-and-default-backend-default-backend-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-ssl-passthrough-and-default-backend-whoami-tls-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: "wrr",
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.3:8443"},
+									{URL: "http://10.10.0.4:8443"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-ssl-passthrough-and-default-backend",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-tls",
+										Port:      "443",
+									},
+								},
+							},
+						},
+						"default-ingress-with-ssl-passthrough-and-default-backend-default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: "wrr",
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-ssl-passthrough-and-default-backend",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-ssl-passthrough-and-default-backend": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "SSL Passthrough applies the access control annotations to the HTTP route",
 			paths: []string{
 				"services.yml",
@@ -22667,36 +22823,4 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
-}
-
-func TestLoadIngresses_SSLPassthroughWithDefaultBackend(t *testing.T) {
-	k8sObjects := readResources(t, []string{
-		"services.yml",
-		"secrets.yml",
-		"ingressclasses.yml",
-		"ingresses/ingress-with-ssl-passthrough-and-default-backend.yml",
-	})
-	client := newClient(kubefake.NewClientset(k8sObjects...))
-
-	eventCh, err := client.WatchAll(t.Context(), "", "")
-	require.NoError(t, err)
-	<-eventCh
-
-	p := Provider{
-		k8sClient:         client,
-		NonTLSEntryPoints: []string{"http"},
-		TLSEntryPoints:    []string{"https"},
-	}
-	p.SetDefaults()
-
-	conf := p.loadConfiguration(t.Context())
-
-	require.Contains(t, conf.TCP.Routers, "default-ingress-with-ssl-passthrough-and-default-backend-passthrough-whoami-localhost")
-
-	// The per-host default backend must not get a TLS router, which would take precedence
-	// over the TCP passthrough router and terminate TLS for the ssl-passthrough host.
-	for name, router := range conf.HTTP.Routers {
-		assert.Nil(t, router.TLS, "HTTP router %q must not be a TLS router for an ssl-passthrough host", name)
-	}
-	assert.Contains(t, conf.HTTP.Routers, "default-ingress-with-ssl-passthrough-and-default-backend-default-backend")
 }
