@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/paerser/env"
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
@@ -858,4 +859,34 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConfiguration_InternalEntryPointAddressFromEnv(t *testing.T) {
+	t.Parallel()
+
+	// Reproduce the reported environment configuration, which omits the internal entry point address.
+	cfg := &Configuration{Providers: &Providers{}}
+	err := env.Decode([]string{
+		"TRAEFIK_PING=true",
+		"TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80",
+		"TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443",
+		"TRAEFIK_ENTRYPOINTS_TRAEFIK_HTTP_ALIASHEADERSSTRATEGY=reject",
+	}, env.DefaultNamePrefix, cfg)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.Ping)
+	require.Equal(t, DefaultInternalEntryPointName, cfg.Ping.EntryPoint)
+	require.False(t, cfg.Ping.ManualRouting)
+	ep := cfg.EntryPoints[DefaultInternalEntryPointName]
+	require.NotNil(t, ep)
+	require.Empty(t, ep.Address)
+	require.Equal(t, AliasHeadersStrategyReject, ep.HTTP.AliasHeadersStrategy)
+
+	cfg.SetEffectiveConfiguration()
+
+	require.Same(t, ep, cfg.EntryPoints[DefaultInternalEntryPointName])
+	assert.Equal(t, ":8080", ep.Address)
+	assert.Equal(t, AliasHeadersStrategyReject, ep.HTTP.AliasHeadersStrategy)
+	assert.Equal(t, ":80", cfg.EntryPoints["web"].Address)
+	assert.Equal(t, ":443", cfg.EntryPoints["websecure"].Address)
 }
