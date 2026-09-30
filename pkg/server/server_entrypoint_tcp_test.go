@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"golang.org/x/net/http2"
 )
 
@@ -1509,6 +1510,88 @@ func Test_isAliasingHeaderName(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, test.expected, isAliasingHeaderName(test.name))
+		})
+	}
+}
+
+// TestHTTP2RequestTLS ensures that the TLS connection state is set on the HTTP/2 requests sent over a TLS connection,
+// whatever their scheme, including CONNECT requests which have no scheme.
+func TestHTTP2RequestTLS(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+	})
+
+	configuration := &static.EntryPoint{}
+	configuration.SetDefaults()
+
+	server, err := createHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	require.NoError(t, err)
+
+	server.Switcher.UpdateHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := generate.DefaultCertificate()
+	require.NoError(t, err)
+
+	go func() {
+		// server is expected to return an error if the listener is closed.
+		_ = server.Server.Serve(tls.NewListener(ln, &tls.Config{
+			Certificates: []tls.Certificate{*cert},
+			NextProtos:   []string{"h2"},
+		}))
+	}()
+
+	// The HTTP/2 transport allowing HTTP is used to send requests with the http scheme over a TLS connection.
+	client := &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+				dialer := &tls.Dialer{Config: &tls.Config{InsecureSkipVerify: true, NextProtos: []string{"h2"}}}
+				return dialer.DialContext(ctx, network, addr)
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc   string
+		method string
+		url    string
+	}{
+		{
+			desc:   "https scheme",
+			method: http.MethodGet,
+			url:    "https://" + ln.Addr().String(),
+		},
+		{
+			desc:   "http scheme",
+			method: http.MethodGet,
+			url:    "http://" + ln.Addr().String(),
+		},
+		{
+			desc:   "CONNECT method",
+			method: http.MethodConnect,
+			url:    "https://" + ln.Addr().String(),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			req, err := http.NewRequestWithContext(t.Context(), test.method, test.url, http.NoBody)
+			require.NoError(t, err)
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			_ = resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
 }

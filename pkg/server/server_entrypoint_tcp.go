@@ -653,12 +653,16 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	// hence the wrapping has to be done last so that it is the first handler executed.
 	handler = denyOpaque(handler)
 
+	handler = populateRequestTLS(handler)
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
+			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
+
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
 				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
 			}
@@ -756,6 +760,22 @@ func denyOpaque(h http.Handler) http.Handler {
 			rw.WriteHeader(http.StatusBadRequest)
 
 			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+type tlsConnKey struct{}
+
+// populateRequestTLS populates the TLS connection state of the request when it is missing on a TLS connection.
+func populateRequestTLS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			if tlsConn, ok := req.Context().Value(tlsConnKey{}).(*tls.Conn); ok {
+				state := tlsConn.ConnectionState()
+				req.TLS = &state
+			}
 		}
 
 		h.ServeHTTP(rw, req)
