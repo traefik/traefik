@@ -722,7 +722,7 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 		expected   *EntryPoint
 	}{
 		{
-			desc:     "missing entry point",
+			desc:     "creates missing internal entry point with defaults",
 			conf:     Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
 			expected: defaultEntryPoint,
 		},
@@ -745,13 +745,13 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 			expected:   &EntryPoint{Address: ":8080", HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject}},
 		},
 		{
-			desc:       "explicit address :8082",
+			desc:       "preserves explicitly configured port 8082",
 			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
 			entryPoint: &EntryPoint{Address: ":8082"},
 			expected:   &EntryPoint{Address: ":8082"},
 		},
 		{
-			desc:       "explicit address :0",
+			desc:       "preserves explicitly configured port zero",
 			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName}},
 			entryPoint: &EntryPoint{Address: ":0"},
 			expected:   &EntryPoint{Address: ":0"},
@@ -780,43 +780,43 @@ func TestConfiguration_InternalEntryPointAddress(t *testing.T) {
 			},
 		},
 		{
-			desc:       "insecure API",
+			desc:       "defaults empty address for insecure API",
 			conf:       Configuration{API: &API{Insecure: true}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{Address: ":8080"},
 		},
 		{
-			desc:       "Prometheus",
+			desc:       "defaults empty address for Prometheus",
 			conf:       Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName}}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{Address: ":8080"},
 		},
 		{
-			desc:       "insecure REST",
+			desc:       "defaults empty address for insecure REST",
 			conf:       Configuration{Providers: &Providers{Rest: &rest.Provider{Insecure: true}}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{Address: ":8080"},
 		},
 		{
-			desc:       "no internal service",
+			desc:       "leaves address empty when no internal service requires it",
 			conf:       Configuration{},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{},
 		},
 		{
-			desc:       "manual ping routing",
+			desc:       "leaves address empty with manual ping routing",
 			conf:       Configuration{Ping: &ping.Handler{EntryPoint: DefaultInternalEntryPointName, ManualRouting: true}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{},
 		},
 		{
-			desc:       "custom ping entry point",
+			desc:       "leaves internal address empty when ping uses another entry point",
 			conf:       Configuration{Ping: &ping.Handler{EntryPoint: "web"}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{},
 		},
 		{
-			desc:       "manual Prometheus routing",
+			desc:       "leaves address empty with manual Prometheus routing",
 			conf:       Configuration{Metrics: &otypes.Metrics{Prometheus: &otypes.Prometheus{EntryPoint: DefaultInternalEntryPointName, ManualRouting: true}}},
 			entryPoint: &EntryPoint{},
 			expected:   &EntryPoint{},
