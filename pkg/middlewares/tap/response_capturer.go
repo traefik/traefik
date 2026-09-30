@@ -80,36 +80,6 @@ func (r *responseCapturer) WriteHeader(status int) {
 	}
 }
 
-// writeInformationalHeader forwards an interim response to the client.
-// A withheld response holds its headers in a detached map, which the client connection cannot
-// see: they are set on it for the write, then restored, so that a header the next handler
-// changes afterwards does not leak into the final response.
-func (r *responseCapturer) writeInformationalHeader(status int) {
-	if !r.withheld || r.hijacked {
-		r.rw.WriteHeader(status)
-		return
-	}
-
-	clientHeaders := r.rw.Header()
-
-	saved := make(http.Header, len(r.headers))
-	for name, values := range r.headers {
-		saved[name] = clientHeaders[name]
-		clientHeaders[name] = values
-	}
-
-	r.rw.WriteHeader(status)
-
-	for name, values := range saved {
-		if values == nil {
-			delete(clientHeaders, name)
-			continue
-		}
-
-		clientHeaders[name] = values
-	}
-}
-
 func (r *responseCapturer) Write(p []byte) (int, error) {
 	if r.status == 0 {
 		// The next handler wrote a body without setting a status.
@@ -286,4 +256,34 @@ func (s *statusRecorder) Flush() {}
 
 func (s *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, fmt.Errorf("connection on %T cannot be hijacked", s)
+}
+
+// writeInformationalHeader forwards an interim response to the client.
+// A withheld response holds its headers in a detached map, which the client connection cannot
+// see: they are set on it for the write, then restored, so that a header the next handler
+// changes afterwards does not leak into the final response.
+func (r *responseCapturer) writeInformationalHeader(status int) {
+	if !r.withheld || r.hijacked {
+		r.rw.WriteHeader(status)
+		return
+	}
+
+	clientHeaders := r.rw.Header()
+
+	saved := make(http.Header, len(r.headers))
+	for name, values := range r.headers {
+		saved[name] = clientHeaders[name]
+		clientHeaders[name] = values
+	}
+
+	r.rw.WriteHeader(status)
+
+	for name, values := range saved {
+		if values == nil {
+			delete(clientHeaders, name)
+			continue
+		}
+
+		clientHeaders[name] = values
+	}
 }

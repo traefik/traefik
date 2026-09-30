@@ -854,7 +854,6 @@ type TapRequestRecord struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
-	// FIXME rename
 	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
 }
 
