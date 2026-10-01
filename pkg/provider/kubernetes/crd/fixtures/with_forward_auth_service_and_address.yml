@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth
+  namespace: default
+
+spec:
+  forwardAuth:
+    address: test.com
+    service:
+      name: whoami
+      port: 80

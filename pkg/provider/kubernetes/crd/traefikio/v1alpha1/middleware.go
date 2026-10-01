@@ -189,7 +189,15 @@ type DigestAuth struct {
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
+	// It is mutually exclusive with the Service option.
 	Address string `json:"address,omitempty"`
+	// Service defines the reference to a Kubernetes Service that will serve as the authentication server.
+	// It is mutually exclusive with the Address and TLS options: the connection to the service is handled by its ServersTransport.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/#service
+	Service *Service `json:"service,omitempty"`
+	// Path defines the path of the authentication request when using the Service option.
+	// It can also contain a query string. It defaults to the root path.
+	Path string `json:"path,omitempty"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
 	//
 	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
