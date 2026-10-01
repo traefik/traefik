@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,61 +11,57 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
-// withSocketActivation temporarily replaces the package-level
-// socketActivation with the given value for the duration of the test.
-func withSocketActivation(t *testing.T, sa *SocketActivation) {
-	t.Helper()
-	prev := socketActivation
-	socketActivation = sa
-	t.Cleanup(func() { socketActivation = prev })
-}
-
-// TestBuildListenerSocketActivationUnix verifies that buildListener
-// returns a clear error instead of panicking when systemd socket
-// activation provides a *net.UnixListener for an entrypoint that
-// expects *net.TCPListener. Regression test for #10924.
-func TestBuildListenerSocketActivationUnix(t *testing.T) {
+func TestBuildListenerSocketActivation(t *testing.T) {
 	// Unix sockets have a per-platform sun_path length limit (104 bytes on
 	// Darwin) so t.TempDir is too long; place the socket under /tmp.
 	dir, err := os.MkdirTemp("/tmp", "traefik-sa-test") //nolint:usetesting // Keep the socket path below the Unix socket path length limit.
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 
-	addr, err := net.ResolveUnixAddr("unix", filepath.Join(dir, "test.sock"))
-	require.NoError(t, err)
+	testCases := []struct {
+		desc          string
+		network       string
+		address       string
+		expectedError string
+	}{
+		{
+			desc:          "rejects Unix listener",
+			network:       "unix",
+			address:       filepath.Join(dir, "test.sock"),
+			expectedError: "listener type *net.UnixListener is not supported for TCP entrypoints",
+		},
+		{
+			desc:    "preserves TCP listener",
+			network: "tcp",
+			address: "127.0.0.1:0",
+		},
+	}
 
-	unixLn, err := net.ListenUnix("unix", addr)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = unixLn.Close() })
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			listener, err := net.Listen(test.network, test.address)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = listener.Close() })
 
-	withSocketActivation(t, &SocketActivation{
-		enabled:   true,
-		listeners: map[string]net.Listener{"web": unixLn},
-	})
+			prev := socketActivation
+			socketActivation = &SocketActivation{
+				enabled:   true,
+				listeners: map[string]net.Listener{"web": listener},
+			}
+			t.Cleanup(func() { socketActivation = prev })
 
-	_, err = buildListener(context.Background(), "web", &static.EntryPoint{Address: ":0"})
-	require.EqualError(t, err, "listener type *net.UnixListener is not supported for TCP entrypoints")
-}
+			ln, err := buildListener(t.Context(), "web", &static.EntryPoint{Address: ":0"})
+			if test.expectedError != "" {
+				require.EqualError(t, err, test.expectedError)
+				return
+			}
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = ln.Close() })
 
-// TestBuildListenerSocketActivationTCP confirms the happy path: a
-// *net.TCPListener provided through socket activation is wrapped in
-// tcpKeepAliveListener and buildListener succeeds.
-func TestBuildListenerSocketActivationTCP(t *testing.T) {
-	tcpLn, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 0})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = tcpLn.Close() })
-
-	withSocketActivation(t, &SocketActivation{
-		enabled:   true,
-		listeners: map[string]net.Listener{"web": tcpLn},
-	})
-
-	ln, err := buildListener(context.Background(), "web", &static.EntryPoint{Address: ":0"})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ln.Close() })
-
-	require.IsType(t, &onceCloseListener{}, ln)
-	listener := ln.(*onceCloseListener).Listener
-	require.IsType(t, tcpKeepAliveListener{}, listener)
-	assert.Same(t, tcpLn, listener.(tcpKeepAliveListener).TCPListener)
+			require.IsType(t, &onceCloseListener{}, ln)
+			wrappedListener := ln.(*onceCloseListener).Listener
+			require.IsType(t, tcpKeepAliveListener{}, wrappedListener)
+			assert.Same(t, listener, wrappedListener.(tcpKeepAliveListener).TCPListener)
+		})
+	}
 }
