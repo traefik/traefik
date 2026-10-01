@@ -229,9 +229,8 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		backendHeaders := catcher.getHeaders()
 		for _, name := range c.forwardHeaders {
 			if vals := backendHeaders.Values(name); len(vals) > 0 {
-				for _, v := range vals {
-					rw.Header().Add(name, v)
-				}
+				// Replace values already copied by an informational response.
+				rw.Header()[name] = append([]string(nil), vals...)
 			}
 		}
 	}
