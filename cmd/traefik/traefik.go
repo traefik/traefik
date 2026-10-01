@@ -99,8 +99,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	}
 
 	if logCloser != nil {
-		// Deferred first, so it runs last.
-		// Logs emitted during the rest of the shutdown still get exported.
+		// Deferred before svr.Close, so logs emitted during the server shutdown still get exported.
 		defer func() {
 			if err := logCloser.Close(); err != nil {
 				log.Error().Err(err).Msg("Unable to shutdown OpenTelemetry logger provider")
