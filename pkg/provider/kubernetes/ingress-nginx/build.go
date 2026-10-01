@@ -76,6 +76,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	allHosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
+	hostsWithRootPath := make(map[string]bool)
 	claimedAliases := make(map[string]string)
 
 	// Provider-level default backend.
@@ -104,6 +105,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	ingressPaths := make(map[string]pathEntry)
 
 	serverSnippets := make(map[string]string) // host → first server-snippet seen
+	serverAppRoots := make(map[string]string)
 
 	// Sort ingresses by creation timestamp (ascending). Ties are broken by
 	// descending namespace/name lexicographic order, matching ingress-nginx
@@ -153,6 +155,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		for _, rule := range ingress.Spec.Rules {
 			allHosts[rule.Host] = true
 
+			// The ingress default backend becomes a host-only catch-all location, which matches "/" as well.
+			if ingress.Spec.DefaultBackend != nil && ingress.Spec.DefaultBackend.Service != nil {
+				hostsWithRootPath[rule.Host] = true
+			}
+
 			if ptr.Deref(cfg.UseRegex, false) || ptr.Deref(cfg.RewriteTarget, "") != "" {
 				hostsWithUseRegex[rule.Host] = true
 			}
@@ -163,11 +170,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 			}
 
+			if appRoot := ptr.Deref(cfg.AppRoot, ""); strings.HasPrefix(appRoot, "/") && serverAppRoots[rule.Host] == "" {
+				serverAppRoots[rule.Host] = appRoot
+			}
+
 			if rule.HTTP != nil {
 				for _, pa := range rule.HTTP.Paths {
 					if pa.Backend.Service == nil {
 						continue
 					}
+
+					// An empty path produces a host-only rule, which matches "/" as well.
+					if pa.Path == "/" || pa.Path == "" {
+						hostsWithRootPath[rule.Host] = true
+					}
+
 					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
 					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
 				}
@@ -259,6 +276,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	// Third pass: build Servers and Locations from regular ingresses.
 	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
+
+	// The app-root "/" router is synthesized at most once per host, on the first
+	// location that needs it, to avoid emitting several routers with the same rule.
+	hostsWithAppRootRouter := make(map[string]bool)
 
 	for _, ing := range regularIngresses {
 		logger := log.Ctx(ctx).With().
@@ -491,6 +512,17 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpointCount = len(backend.Endpoints)
 				}
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				if loc.Path == "/" || loc.Path == "" {
+					inheritServerAppRoot(loc, serverAppRoots[rule.Host])
+				}
+
+				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
+				// even when the Ingress declares no "/" path. In Traefik a request has to match
+				// a router before any middleware runs, hence the extra router.
+				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
+					hostsWithAppRootRouter[rule.Host] = true
+				}
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)
@@ -608,6 +640,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpointCount = len(backend.Endpoints)
 				}
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				inheritServerAppRoot(loc, serverAppRoots[rule.Host])
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)
@@ -616,6 +649,14 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	}
 
 	return mc
+}
+
+// ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
+func inheritServerAppRoot(loc *location, appRoot string) {
+	if loc.AppRoot != nil || appRoot == "" {
+		return
+	}
+	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
