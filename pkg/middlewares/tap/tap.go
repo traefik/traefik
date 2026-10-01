@@ -213,7 +213,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if err := t.send(ctx, t.response, req.Host, rec); err != nil {
 		logger.Error().Err(err).Msg("Unable to send the response record")
-		if t.response.failClosed && !capturer.served() {
+		if t.response.failClosed {
 			t.reject(ctx, rw, kindResponse)
 			return
 		}

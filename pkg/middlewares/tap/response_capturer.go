@@ -18,53 +18,62 @@ var (
 )
 
 // responseCapturer captures the response for the record.
-// When withheld, nothing reaches the client until serve is called, which is what allows
+// When shouldBuffer is true, nothing reaches the client until serve is called, which is what allows
 // the response record to be sent before the response itself.
 type responseCapturer struct {
 	rw   http.ResponseWriter
 	dest *destination
 
-	// withheld reports whether the response is buffered instead of being streamed to the client.
-	withheld bool
-	// headers holds the response headers, either the client ones or, when withheld, a detached map.
+	// shouldBuffer reports whether the response is buffered instead of being streamed to the client.
+	// It is cleared once the buffered response has been served.
+	shouldBuffer bool
+	// headers holds the response headers while the response is buffered. They are kept apart from
+	// the client ones, as the response can end up being replaced by an error that must not carry them.
 	headers http.Header
 	// recordedHeaders is the snapshot of the headers, taken when the response status is known.
 	recordedHeaders http.Header
 
-	// buf holds the whole response body when withheld, and at most dest.maxBodySize bytes otherwise.
+	// buf holds the whole response body when shouldBuffer is true, and at most dest.maxBodySize bytes otherwise.
 	buf bytes.Buffer
 
 	status        int
 	bodyTruncated bool
-	written       bool
-	hijacked      bool
 }
 
-func newResponseCapturer(rw http.ResponseWriter, dest *destination, failClosed bool) *responseCapturer {
-	// A detached header map is needed, because the response can end up being replaced by an error.
-	// It starts as a copy of the client one, so that the headers set by the middlewares standing
-	// before this one in the chain are part of the record.
-	headers := rw.Header()
-	if failClosed {
-		headers = headers.Clone()
-		if headers == nil {
-			headers = make(http.Header)
+func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
+	r := &responseCapturer{rw: rw, dest: dest, shouldBuffer: shouldBuffer}
+
+	if shouldBuffer {
+		// The headers start as a copy of the client ones, so that the headers set by the middlewares
+		// standing before this one in the chain are part of the record and of the served response.
+		r.headers = rw.Header().Clone()
+		if r.headers == nil {
+			r.headers = make(http.Header)
 		}
 	}
 
-	return &responseCapturer{rw: rw, dest: dest, withheld: failClosed, headers: headers}
+	return r
 }
 
 func (r *responseCapturer) Header() http.Header {
-	return r.headers
+	if r.shouldBuffer {
+		return r.headers
+	}
+
+	return r.rw.Header()
 }
 
 func (r *responseCapturer) WriteHeader(status int) {
-	// An informational response is interim: it is forwarded as it comes, even when the
-	// response is withheld, because it commits nothing. The final status is the one that
-	// follows, so it must not be recorded as the status of the response.
+	// An informational response is interim: the final status is the one that follows, so it must
+	// not be recorded as the status of the response.
+	// A buffered response sends nothing before its record is accepted, and an informational
+	// response carries the response headers, so it is dropped. A client waiting for a
+	// 100 Continue still gets it, as the server sends it on its own when the request body is read.
 	if status >= 100 && status <= 199 {
-		r.writeInformationalHeader(status)
+		if !r.shouldBuffer {
+			r.rw.WriteHeader(status)
+		}
+
 		return
 	}
 
@@ -73,9 +82,9 @@ func (r *responseCapturer) WriteHeader(status int) {
 	}
 
 	r.status = status
-	r.recordedHeaders = r.headers.Clone()
+	r.recordedHeaders = r.Header().Clone()
 
-	if !r.withheld {
+	if !r.shouldBuffer {
 		r.rw.WriteHeader(status)
 	}
 }
@@ -86,20 +95,19 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 		r.WriteHeader(http.StatusOK)
 	}
 
-	if r.withheld && !r.hijacked {
+	if r.shouldBuffer {
 		// The whole body is kept, as it still has to be served to the client.
 		return r.buf.Write(p)
 	}
 
-	r.written = true
 	r.capture(p)
 
 	return r.rw.Write(p)
 }
 
 func (r *responseCapturer) Flush() {
-	// A withheld response cannot be flushed, as nothing has been served yet.
-	if r.withheld && !r.hijacked {
+	// A buffered response cannot be flushed, as nothing has been served yet.
+	if r.shouldBuffer {
 		return
 	}
 
@@ -114,13 +122,9 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
 	}
 
-	// A hijacked connection is out of our control, so the response cannot be withheld any longer.
-	if r.withheld && !r.hijacked {
-		if err := r.serve(); err != nil {
-			return nil, nil, err
-		}
-
-		r.hijacked = true
+	// A hijacked connection is out of our control, so the response cannot be buffered any longer.
+	if err := r.serve(); err != nil {
+		return nil, nil, err
 	}
 
 	return h.Hijack()
@@ -152,22 +156,19 @@ func (r *responseCapturer) capture(p []byte) {
 	r.buf.Write(p)
 }
 
-// served reports whether a part of the response already reached the client,
-// which means it is too late to replace it with an error.
-func (r *responseCapturer) served() bool {
-	return !r.withheld || r.hijacked || r.written
-}
-
-// serve serves the withheld response to the client. It is a no-op for a response that has been streamed.
+// serve serves the buffered response to the client.
+// It is a no-op for a response that has been streamed, or already served.
 func (r *responseCapturer) serve() error {
-	if !r.withheld || r.hijacked {
+	if !r.shouldBuffer {
 		return nil
 	}
 
 	// The response is served only once, as Hijack can serve it before ServeHTTP returns.
-	r.withheld = false
-	r.written = true
+	r.shouldBuffer = false
 
+	// The headers are replaced rather than merged, so that a header set upstream that the next
+	// handler removed is not served.
+	clear(r.rw.Header())
 	maps.Copy(r.rw.Header(), r.headers)
 
 	if r.status != 0 {
@@ -194,7 +195,7 @@ func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 
 	headers := r.recordedHeaders
 	if headers == nil {
-		headers = r.headers.Clone()
+		headers = r.Header().Clone()
 	}
 
 	rec := &responseRecord{
@@ -207,7 +208,7 @@ func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 		return rec
 	}
 
-	// When the response is withheld, buf holds the whole body, so the limit is applied here.
+	// When the response is buffered, buf holds the whole body, so the limit is applied here.
 	body := r.buf.Bytes()
 	if r.dest.maxBodySize >= 0 && int64(len(body)) > r.dest.maxBodySize {
 		rec.Body = body[:r.dest.maxBodySize]
@@ -235,7 +236,7 @@ func (s *statusRecorder) Header() http.Header {
 func (s *statusRecorder) WriteHeader(status int) {
 	// An informational response is interim, and commits the tap service to nothing:
 	// the status telling whether the record has been accepted is the one that follows.
-	if status >= http.StatusContinue && status < http.StatusOK {
+	if status >= 100 && status <= 199 {
 		return
 	}
 
@@ -256,34 +257,4 @@ func (s *statusRecorder) Flush() {}
 
 func (s *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, fmt.Errorf("connection on %T cannot be hijacked", s)
-}
-
-// writeInformationalHeader forwards an interim response to the client.
-// A withheld response holds its headers in a detached map, which the client connection cannot
-// see: they are set on it for the write, then restored, so that a header the next handler
-// changes afterwards does not leak into the final response.
-func (r *responseCapturer) writeInformationalHeader(status int) {
-	if !r.withheld || r.hijacked {
-		r.rw.WriteHeader(status)
-		return
-	}
-
-	clientHeaders := r.rw.Header()
-
-	saved := make(http.Header, len(r.headers))
-	for name, values := range r.headers {
-		saved[name] = clientHeaders[name]
-		clientHeaders[name] = values
-	}
-
-	r.rw.WriteHeader(status)
-
-	for name, values := range saved {
-		if values == nil {
-			delete(clientHeaders, name)
-			continue
-		}
-
-		clientHeaders[name] = values
-	}
 }
