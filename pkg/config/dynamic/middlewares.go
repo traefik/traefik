@@ -289,6 +289,7 @@ type ErrorPage struct {
 // More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
+	// Supports the http, https, and h2c schemes.
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
