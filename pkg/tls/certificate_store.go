@@ -89,6 +89,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		serverName = strings.TrimSpace(host)
 	}
 
+	c.CertCache.DeleteExpired()
 	if cert, ok := c.CertCache.Get(serverName); ok {
 		certificateData := cert.(*CertificateData)
 		if c.ocspStapler != nil && certificateData.Hash != "" {
