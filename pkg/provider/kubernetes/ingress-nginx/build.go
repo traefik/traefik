@@ -589,6 +589,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServiceName:             db.Service.Name,
 					ServicePort:             portString(db.Service.Port),
 					IsIngressDefaultBackend: true,
+					SSLPassthrough:          sslPassthrough,
 				}
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
