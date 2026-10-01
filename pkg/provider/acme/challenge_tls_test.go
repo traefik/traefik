@@ -62,17 +62,34 @@ func TestChallengeTLSALPNCertificateLifecycle(t *testing.T) {
 			messages := make(chan dynamic.Message, 1)
 			challenge := NewChallengeTLSALPN()
 			require.NoError(t, challenge.Provide(messages, nil))
+			presentDone := make(chan error, 1)
+			presentFinished := make(chan struct{})
 			t.Cleanup(func() {
-				challenge.muChans.Lock()
-				defer challenge.muChans.Unlock()
+				timer := time.NewTimer(5 * time.Second)
+				defer timer.Stop()
 
-				for key := range challenge.chans {
-					challenge.cleanChan(key)
+				for {
+					challenge.muChans.Lock()
+					for key := range challenge.chans {
+						challenge.cleanChan(key)
+					}
+					challenge.muChans.Unlock()
+
+					select {
+					case <-presentFinished:
+						return
+					case <-messages:
+						// A message may arrive after the test failed, so release its presentation wait on the next iteration.
+					case <-timer.C:
+						t.Error("challenge presentation did not stop during test cleanup")
+						return
+					}
 				}
 			})
-			presentDone := make(chan error, 1)
+			ctx := t.Context()
 			go func() {
-				presentDone <- challenge.Present(t.Context(), test.domain, "token", "keyAuth")
+				defer close(presentFinished)
+				presentDone <- challenge.Present(ctx, test.domain, "token", "keyAuth")
 			}()
 
 			message := receiveTLSChallengeMessage(t, messages)
