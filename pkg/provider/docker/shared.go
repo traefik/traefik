@@ -79,6 +79,9 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 	if container.Config != nil && container.Config.Labels != nil {
 		dData.Labels = container.Config.Labels
 	}
+	if container.Config != nil && container.Config.ExposedPorts != nil {
+		dData.ExposedPorts = container.Config.ExposedPorts
+	}
 
 	if container.NetworkSettings != nil {
 		if container.NetworkSettings.Ports != nil {
@@ -190,13 +193,18 @@ func getPort(container dockerData, serverPort string) string {
 	if len(serverPort) > 0 {
 		return serverPort
 	}
-	if len(container.NetworkSettings.Ports) == 0 {
-		return ""
-	}
 
 	var ports []networktypes.Port
 	for port := range container.NetworkSettings.Ports {
 		ports = append(ports, port)
+	}
+	if len(ports) == 0 {
+		for port := range container.ExposedPorts {
+			ports = append(ports, port)
+		}
+	}
+	if len(ports) == 0 {
+		return ""
 	}
 
 	slices.SortFunc(ports, func(a, b networktypes.Port) int {
