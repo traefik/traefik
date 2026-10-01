@@ -23,7 +23,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v2/pkg/provider/kv"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
@@ -448,11 +447,9 @@ func init() {
 		},
 		Certificates: []*traefiktls.CertAndStores{
 			{
-				Certificate: traefiktls.Certificate{
-					CertFile: "cert.pem",
-					KeyFile:  "key.pem",
-				},
-				Stores: []string{"foo"},
+				CertFile: "cert.pem",
+				KeyFile:  "key.pem",
+				Stores:   []string{"foo"},
 			},
 		},
 		Stores: map[string]traefiktls.Store{
@@ -683,36 +680,34 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.ConsulCatalog = &consulcatalog.ProviderBuilder{
-		Configuration: consulcatalog.Configuration{
-			Constraints: `Label("foo", "bar")`,
-			Endpoint: &consulcatalog.EndpointConfig{
-				Address:    "MyAddress",
-				Scheme:     "MyScheme",
-				DataCenter: "MyDatacenter",
-				Token:      "MyToken",
-				TLS: &types.ClientTLS{
-					CA:                 "myCa",
-					CAOptional:         true,
-					Cert:               "mycert.pem",
-					Key:                "mycert.key",
-					InsecureSkipVerify: true,
-				},
-				HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
-					Username: "MyUsername",
-					Password: "MyPassword",
-				},
-				EndpointWaitTime: 42,
+		Constraints: `Label("foo", "bar")`,
+		Endpoint: &consulcatalog.EndpointConfig{
+			Address:    "MyAddress",
+			Scheme:     "MyScheme",
+			DataCenter: "MyDatacenter",
+			Token:      "MyToken",
+			TLS: &types.ClientTLS{
+				CA:                 "myCa",
+				CAOptional:         true,
+				Cert:               "mycert.pem",
+				Key:                "mycert.key",
+				InsecureSkipVerify: true,
 			},
-			Prefix:            "MyPrefix",
-			RefreshInterval:   42,
-			RequireConsistent: true,
-			Stale:             true,
-			Cache:             true,
-			ExposedByDefault:  true,
-			DefaultRule:       "PathPrefix(`/`)",
+			HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
+				Username: "MyUsername",
+				Password: "MyPassword",
+			},
+			EndpointWaitTime: 42,
 		},
-		Namespace:  "ns",
-		Namespaces: []string{"ns1", "ns2"},
+		Prefix:            "MyPrefix",
+		RefreshInterval:   42,
+		RequireConsistent: true,
+		Stale:             true,
+		Cache:             true,
+		ExposedByDefault:  true,
+		DefaultRule:       "PathPrefix(`/`)",
+		Namespace:         "ns",
+		Namespaces:        []string{"ns1", "ns2"},
 	}
 
 	config.Providers.Ecs = &ecs.Provider{
@@ -729,11 +724,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Consul = &consul.ProviderBuilder{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Token: "secret",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Token:     "secret",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			CAOptional:         true,
@@ -746,12 +739,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Etcd = &etcd.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			CAOptional:         true,
@@ -762,21 +753,17 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.ZooKeeper = &zk.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 	}
 
 	config.Providers.Redis = &redis.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			CAOptional:         true,
