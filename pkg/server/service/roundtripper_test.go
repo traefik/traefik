@@ -261,6 +261,7 @@ func TestDisableHTTP2(t *testing.T) {
 			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
 			}))
+			defer srv.Close()
 
 			srv.EnableHTTP2 = test.serverHTTP2
 			srv.StartTLS()
