@@ -134,7 +134,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.client.Transport = tr
 	}
 
-	// The h2c scheme is not natively supported by the HTTP client
+	// The h2c scheme is not natively supported by the HTTP client.
 	if addr, err := url.Parse(config.Address); err == nil && addr.Scheme == "h2c" {
 		addr.Scheme = "http"
 		fa.address = addr.String()
