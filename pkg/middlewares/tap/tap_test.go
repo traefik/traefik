@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -336,14 +337,17 @@ func TestServeHTTP_interimRecordStatus(t *testing.T) {
 }
 
 // TestServeHTTP_earlyHints asserts that an interim response reaches the client whole, headers
-// included, whether the final response is withheld or not.
+// included, only when the response is streamed: a withheld response sends nothing before its
+// record is accepted.
 func TestServeHTTP_earlyHints(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		failClosed bool
+		desc          string
+		failClosed    bool
+		expectedHints []string
 	}{
 		{
-			desc: "streamed response",
+			desc:          "streamed response",
+			expectedHints: []string{"</app.css>; rel=preload"},
 		},
 		{
 			desc:       "withheld response",
@@ -384,11 +388,97 @@ func TestServeHTTP_earlyHints(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			assert.Equal(t, []string{"</app.css>; rel=preload"}, hints)
+			assert.Equal(t, test.expectedHints, hints)
 			assert.Equal(t, http.StatusCreated, resp.StatusCode)
+			assert.Equal(t, "</app.css>; rel=preload", resp.Header.Get("Link"))
 			assert.Equal(t, "yes", resp.Header.Get("X-Backend"))
 		})
 	}
+}
+
+// TestServeHTTP_earlyHintsRejected asserts that the headers set for an informational response
+// reach the client neither with it nor with the error replacing a rejected response.
+func TestServeHTTP_earlyHintsRejected(t *testing.T) {
+	responseConfig := responseRecordConfig()
+	responseConfig.FailClosed = true
+
+	handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.Header().Add("Link", "</app.css>; rel=preload")
+		rw.Header().Set("X-Backend", "yes")
+		rw.WriteHeader(http.StatusEarlyHints)
+
+		rw.WriteHeader(http.StatusCreated)
+	}), &sink{status: http.StatusServiceUnavailable})
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	var hints []string
+	ctx := httptrace.WithClientTrace(t.Context(), &httptrace.ClientTrace{
+		Got1xxResponse: func(_ int, header textproto.MIMEHeader) error {
+			hints = append(hints, header.Get("Link"))
+			return nil
+		},
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+
+	assert.Empty(t, hints)
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Empty(t, resp.Header.Get("Link"))
+	assert.Empty(t, resp.Header.Get("X-Backend"))
+}
+
+// TestServeHTTP_withheldExpectContinue asserts that a client waiting for a 100 Continue before
+// sending its body still gets it when the response is withheld, as the server answers it on its
+// own when the request body is read.
+func TestServeHTTP_withheldExpectContinue(t *testing.T) {
+	responseConfig := responseRecordConfig()
+	responseConfig.FailClosed = true
+
+	handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusContinue)
+
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		_, err = rw.Write(body)
+		require.NoError(t, err)
+	}), &sink{})
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	var continues int
+	ctx := httptrace.WithClientTrace(t.Context(), &httptrace.ClientTrace{
+		Got100Continue: func() { continues++ },
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, server.URL, strings.NewReader("ping"))
+	require.NoError(t, err)
+	req.Header.Set("Expect", "100-continue")
+
+	// The client would rather time out than send its body without the 100 Continue.
+	client := &http.Client{
+		Transport: &http.Transport{ExpectContinueTimeout: time.Hour},
+		Timeout:   5 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+
+	assert.Equal(t, 1, continues)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "ping", string(body))
 }
 
 // TestServeHTTP_failClosedPerDirection asserts that the directions fail independently:

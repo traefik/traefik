@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -29,7 +28,7 @@ func TestResponseCapturer_streamed(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, recorder.Code)
 	assert.Equal(t, "pong", recorder.Body.String())
 	assert.Equal(t, "yes", recorder.Header().Get("X-Backend"))
-	assert.True(t, capturer.served())
+	assert.False(t, capturer.shouldBuffer)
 
 	capturer.Flush()
 	assert.True(t, recorder.Flushed)
@@ -57,7 +56,7 @@ func TestResponseCapturer_withheld(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Empty(t, recorder.Body.String())
 	assert.Empty(t, recorder.Header().Get("X-Backend"))
-	assert.False(t, capturer.served())
+	assert.True(t, capturer.shouldBuffer)
 
 	// A withheld response cannot be flushed.
 	capturer.Flush()
@@ -72,7 +71,7 @@ func TestResponseCapturer_withheld(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, recorder.Code)
 	assert.Equal(t, "pong", recorder.Body.String())
 	assert.Equal(t, "yes", recorder.Header().Get("X-Backend"))
-	assert.True(t, capturer.served())
+	assert.False(t, capturer.shouldBuffer)
 }
 
 func TestResponseCapturer_withheldRecordsHeadersSetUpstream(t *testing.T) {
@@ -141,7 +140,7 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Equal(t, "pong", recorder.Body.String())
-	assert.True(t, capturer.served())
+	assert.False(t, capturer.shouldBuffer)
 
 	// Once hijacked, the response is streamed.
 	_, err = capturer.Write([]byte("ping"))
@@ -149,20 +148,34 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	assert.Equal(t, "pongping", recorder.Body.String())
 }
 
-// TestResponseCapturer_interimResponses asserts that an informational response, as sent by a
-// backend answering an Expect: 100-continue request, is forwarded to the client and is not
-// mistaken for the status of the response.
+// TestResponseCapturer_interimResponses asserts that an informational response is not mistaken
+// for the status of the response, and reaches the client only when the response is streamed.
 func TestResponseCapturer_interimResponses(t *testing.T) {
-	for _, withhold := range []bool{false, true} {
-		t.Run(fmt.Sprintf("withhold=%v", withhold), func(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		shouldBuffer    bool
+		expectedInterim []int
+		expectedFinal   []int
+	}{
+		{
+			desc:            "streamed response",
+			expectedInterim: []int{http.StatusContinue},
+			expectedFinal:   []int{http.StatusContinue, http.StatusCreated},
+		},
+		{
+			desc:          "buffered response",
+			shouldBuffer:  true,
+			expectedFinal: []int{http.StatusCreated},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
 			writer := &statusSequence{}
-			capturer := newResponseCapturer(writer, &destination{body: true, maxBodySize: -1}, withhold)
+			capturer := newResponseCapturer(writer, &destination{body: true, maxBodySize: -1}, test.shouldBuffer)
 
 			capturer.WriteHeader(http.StatusContinue)
-
-			// The interim response reaches the client even when the response is withheld:
-			// the client is waiting for it before sending its body.
-			require.Equal(t, []int{http.StatusContinue}, writer.codes)
+			assert.Equal(t, test.expectedInterim, writer.codes)
 
 			capturer.WriteHeader(http.StatusCreated)
 
@@ -175,10 +188,61 @@ func TestResponseCapturer_interimResponses(t *testing.T) {
 
 			require.NoError(t, capturer.serve())
 
-			assert.Equal(t, []int{http.StatusContinue, http.StatusCreated}, writer.codes)
+			assert.Equal(t, test.expectedFinal, writer.codes)
 			assert.Equal(t, "pong", writer.body.String())
 		})
 	}
+}
+
+// TestResponseCapturer_bufferedInterimHeaders asserts that the headers set for an informational
+// response that has been dropped are served with the final response, as RFC 8297 expects, unless
+// the next handler removed them.
+func TestResponseCapturer_bufferedInterimHeaders(t *testing.T) {
+	writer := &statusSequence{}
+	capturer := newResponseCapturer(writer, &destination{body: true, maxBodySize: -1}, true)
+
+	capturer.Header().Add("Link", "</app.css>; rel=preload")
+	capturer.Header().Set("X-Hint", "yes")
+	capturer.WriteHeader(http.StatusEarlyHints)
+
+	capturer.Header().Del("X-Hint")
+	capturer.WriteHeader(http.StatusCreated)
+
+	assert.Empty(t, writer.Header())
+
+	require.NoError(t, capturer.serve())
+
+	assert.Equal(t, []int{http.StatusCreated}, writer.codes)
+	assert.Equal(t, []http.Header{{"Link": {"</app.css>; rel=preload"}}}, writer.sent)
+}
+
+func TestResponseCapturer_bufferedServesRemovedUpstreamHeaders(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	recorder.Header().Set("X-Upstream", "yes")
+
+	capturer := newResponseCapturer(recorder, &destination{body: true, maxBodySize: -1}, true)
+	capturer.Header().Del("X-Upstream")
+	capturer.WriteHeader(http.StatusOK)
+
+	require.NoError(t, capturer.serve())
+
+	assert.Empty(t, recorder.Header().Get("X-Upstream"))
+}
+
+// TestResponseCapturer_streamedTrailers asserts that a streamed response writes to the client header
+// map directly, as the trailers are set on it once the body has been written.
+func TestResponseCapturer_streamedTrailers(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	capturer := newResponseCapturer(recorder, &destination{body: true, maxBodySize: -1}, false)
+
+	_, err := capturer.Write([]byte("pong"))
+	require.NoError(t, err)
+
+	capturer.Header().Set(http.TrailerPrefix+"Grpc-Status", "0")
+
+	require.NoError(t, capturer.serve())
+
+	assert.Equal(t, "0", recorder.Result().Trailer.Get("Grpc-Status"))
 }
 
 // hijackableRecorder is a http.Hijacker that always fails to hijack,
@@ -197,7 +261,9 @@ func (h *hijackableRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 type statusSequence struct {
 	header http.Header
 	codes  []int
-	body   bytes.Buffer
+	// sent holds the headers sent along with each status.
+	sent []http.Header
+	body bytes.Buffer
 }
 
 func (s *statusSequence) Header() http.Header {
@@ -210,6 +276,7 @@ func (s *statusSequence) Header() http.Header {
 
 func (s *statusSequence) WriteHeader(code int) {
 	s.codes = append(s.codes, code)
+	s.sent = append(s.sent, s.Header().Clone())
 }
 
 func (s *statusSequence) Write(p []byte) (int, error) {
