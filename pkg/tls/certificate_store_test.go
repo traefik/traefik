@@ -115,46 +115,29 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 func TestGetBestACMEChallengeCertificate(t *testing.T) {
 	cert := &tls.Certificate{}
 
-	dynamicMap := map[string]*CertificateData{
-		"2001:db8::1": {Certificate: cert},
-	}
-
-	store := &CertificateStore{
-		DynamicCerts: safe.New(dynamicMap),
-		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
-	}
-
-	clientHello := &tls.ClientHelloInfo{
-		ServerName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
-	}
-	assert.Nil(t, store.GetBestCertificate(clientHello))
-	assert.Same(t, cert, store.getBestACMEChallengeCertificate(clientHello))
-}
-
-func TestMatchDomainIPReverseAddress(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		serverName string
-		certDomain string
-		expected   bool
+		desc                string
+		serverName          string
+		certDomain          string
+		expectedCertificate *tls.Certificate
 	}{
 		{
-			desc:       "IPv4 reverse address",
-			serverName: "1.2.0.192.in-addr.arpa.",
-			certDomain: "192.0.2.1",
-			expected:   true,
+			desc:                "IPv4 reverse address",
+			serverName:          "1.2.0.192.in-addr.arpa.",
+			certDomain:          "192.0.2.1",
+			expectedCertificate: cert,
 		},
 		{
-			desc:       "IPv6 reverse address",
-			serverName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
-			certDomain: "2001:db8::1",
-			expected:   true,
+			desc:                "IPv6 reverse address",
+			serverName:          "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
+			certDomain:          "2001:db8::1",
+			expectedCertificate: cert,
 		},
 		{
-			desc:       "different IPv6 reverse address",
-			serverName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
-			certDomain: "2001:db8::2",
-			expected:   false,
+			desc:                "different IPv6 reverse address",
+			serverName:          "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
+			certDomain:          "2001:db8::2",
+			expectedCertificate: nil,
 		},
 	}
 
@@ -162,7 +145,22 @@ func TestMatchDomainIPReverseAddress(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, test.expected, matchDomainWithIPReverseAddress(test.serverName, test.certDomain))
+			certificates := map[string]*CertificateData{
+				test.certDomain: {Certificate: cert},
+			}
+			regularStore := NewCertificateStore(nil)
+			regularStore.DynamicCerts.Set(certificates)
+			acmeStore := NewCertificateStore(nil)
+			acmeStore.DynamicCerts.Set(certificates)
+			clientHello := &tls.ClientHelloInfo{ServerName: test.serverName}
+
+			assert.Nil(t, regularStore.GetBestCertificate(clientHello))
+			actual := acmeStore.getBestACMEChallengeCertificate(clientHello)
+			if test.expectedCertificate == nil {
+				assert.Nil(t, actual)
+				return
+			}
+			assert.Same(t, test.expectedCertificate, actual)
 		})
 	}
 }
