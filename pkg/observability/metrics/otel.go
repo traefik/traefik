@@ -244,11 +244,11 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
 	}
 
-	// Only pin the traefik_*_request_duration_seconds histograms to explicit buckets when that is
-	// also the exporter's default histogram aggregation. Forcing it unconditionally would override
-	// an exponential aggregation requested through
-	// OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram,
-	// preventing these metrics from being exported as Prometheus native histograms.
+	// The view applies the configured explicit boundaries to the Traefik histograms.
+	// As a view takes precedence over the exporter's aggregation,
+	// it is only added when the exporter uses explicit bucket histograms (the default).
+	// This lets OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram
+	// switch these histograms to exponential bucket histograms.
 	if _, ok := exporter.Aggregation(sdkmetric.InstrumentKindHistogram).(sdkmetric.AggregationExplicitBucketHistogram); ok {
 		meterProviderOpts = append(meterProviderOpts, sdkmetric.WithView(sdkmetric.NewView(
 			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
