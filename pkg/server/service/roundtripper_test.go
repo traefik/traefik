@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -287,6 +288,67 @@ func TestDisableHTTP2(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			assert.Equal(t, test.expectedProto, resp.Proto)
+		})
+	}
+}
+
+func TestHTTP2Schemes(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		urlScheme      string
+		expectedScheme string
+		tls            bool
+	}{
+		{
+			desc:           "HTTP2 server with h2c scheme",
+			urlScheme:      "h2c",
+			expectedScheme: "http",
+		},
+		{
+			desc:           "HTTP2 server with https scheme",
+			urlScheme:      "https",
+			expectedScheme: "https",
+			tls:            true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				assert.Equal(t, test.tls, req.TLS != nil)
+				assert.Equal(t, test.urlScheme, req.Header.Get(":scheme"))
+			}))
+			defer srv.Close()
+
+			srv.EnableHTTP2 = true
+			srv.StartTLS()
+
+			rtManager := NewRoundTripperManager()
+
+			dynamicConf := map[string]*dynamic.ServersTransport{
+				"test": {
+					InsecureSkipVerify: true,
+				},
+			}
+
+			rtManager.Update(dynamicConf)
+
+			tr, err := rtManager.Get("test")
+			require.NoError(t, err)
+
+			url, err := url.Parse(srv.URL)
+			require.NoError(t, err)
+			url.Scheme = test.urlScheme
+
+			client := http.Client{Transport: tr}
+
+			resp, err := client.Get(url.String())
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
 }
