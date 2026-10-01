@@ -76,13 +76,63 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 
 // GetBestCertificate returns the best match certificate, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
-	return getBestCertificate(c, clientHello, matchDomain)
+	return c.getBestCertificate(clientHello, matchDomain)
+}
+
+// GetCertificate returns the first certificate matching all the given domains.
+func (c *CertificateStore) GetCertificate(domains []string) *CertificateData {
+	if c == nil {
+		return nil
+	}
+
+	sort.Strings(domains)
+	domainsKey := strings.Join(domains, ",")
+
+	if cert, ok := c.CertCache.Get(domainsKey); ok {
+		return cert.(*CertificateData)
+	}
+
+	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
+		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
+			if domainsKey == certDomains {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+
+			var matchedDomains []string
+			for certDomain := range strings.SplitSeq(certDomains, ",") {
+				for _, checkDomain := range domains {
+					if certDomain == checkDomain {
+						matchedDomains = append(matchedDomains, certDomain)
+					}
+				}
+			}
+
+			if len(matchedDomains) == len(domains) {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+		}
+	}
+
+	return nil
+}
+
+// ResetCache clears the cache in the store.
+func (c *CertificateStore) ResetCache() {
+	if c.CertCache != nil {
+		c.CertCache.Flush()
+	}
+}
+
+func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
+	return c.getBestCertificate(clientHello, matchDomainWithIPReverseAddress)
 }
 
 // The matchDomainFunc must remain the same for the lifetime of the store's cache because
 // cache hits bypass matching. The manager uses separate stores for regular TLS
 // and ACME challenges to keep their matching policies and cached results isolated.
-func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, matchDomainFunc func(string, string) bool) *tls.Certificate {
+func (c *CertificateStore) getBestCertificate(clientHello *tls.ClientHelloInfo, matchDomainFunc func(string, string) bool) *tls.Certificate {
 	if c == nil {
 		return nil
 	}
@@ -138,56 +188,6 @@ func getBestCertificate(c *CertificateStore, clientHello *tls.ClientHelloInfo, m
 	}
 
 	return nil
-}
-
-// GetCertificate returns the first certificate matching all the given domains.
-func (c *CertificateStore) GetCertificate(domains []string) *CertificateData {
-	if c == nil {
-		return nil
-	}
-
-	sort.Strings(domains)
-	domainsKey := strings.Join(domains, ",")
-
-	if cert, ok := c.CertCache.Get(domainsKey); ok {
-		return cert.(*CertificateData)
-	}
-
-	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*CertificateData) {
-			if domainsKey == certDomains {
-				c.CertCache.SetDefault(domainsKey, cert)
-				return cert
-			}
-
-			var matchedDomains []string
-			for certDomain := range strings.SplitSeq(certDomains, ",") {
-				for _, checkDomain := range domains {
-					if certDomain == checkDomain {
-						matchedDomains = append(matchedDomains, certDomain)
-					}
-				}
-			}
-
-			if len(matchedDomains) == len(domains) {
-				c.CertCache.SetDefault(domainsKey, cert)
-				return cert
-			}
-		}
-	}
-
-	return nil
-}
-
-// ResetCache clears the cache in the store.
-func (c *CertificateStore) ResetCache() {
-	if c.CertCache != nil {
-		c.CertCache.Flush()
-	}
-}
-
-func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
-	return getBestCertificate(c, clientHello, matchDomainWithIPReverseAddress)
 }
 
 func (c *CertificateStore) getDefaultCertificateDomains() []string {
