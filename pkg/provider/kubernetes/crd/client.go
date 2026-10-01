@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	netv1 "k8s.io/api/networking/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -49,6 +50,7 @@ type Client interface {
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
 	GetNodes() ([]*corev1.Node, bool, error)
+	GetIngressClasses() []*netv1.IngressClass
 	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
 }
 
@@ -280,6 +282,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
+		_, err = c.clusterScopeFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
 		c.clusterScopeFactory.Start(stopCh)
 
 		for t, ok := range c.clusterScopeFactory.WaitForCacheSync(stopCh) {
@@ -498,6 +505,15 @@ func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
 	nodes, err := c.clusterScopeFactory.Core().V1().Nodes().Lister().List(labels.Everything())
 	exist, err := translateNotFoundError(err)
 	return nodes, exist, err
+}
+
+func (c *clientWrapper) GetIngressClasses() []*netv1.IngressClass {
+	ingressClasses, err := c.clusterScopeFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list ingress classes")
+	}
+
+	return ingressClasses
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
