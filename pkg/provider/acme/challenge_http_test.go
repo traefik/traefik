@@ -10,38 +10,41 @@ import (
 )
 
 func TestChallengeHTTPServeHTTP(t *testing.T) {
-	challenge := NewChallengeHTTP()
-	require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", "token", "keyAuth"))
-
-	req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/token", nil)
-	rw := httptest.NewRecorder()
-
-	challenge.ServeHTTP(rw, req)
-
-	assert.Equal(t, http.StatusOK, rw.Code)
-	assert.Equal(t, "keyAuth", rw.Body.String())
-}
-
-func TestChallengeHTTPServeHTTPNotFound(t *testing.T) {
 	testCases := []struct {
-		desc string
-		url  string
+		desc           string
+		url            string
+		expectedStatus int
+		expectedBody   string
 	}{
 		{
-			desc: "unknown host",
-			url:  "http://[2001:db8::2]/.well-known/acme-challenge/token",
+			desc:           "known host and token",
+			url:            "http://[2001:db8::1]/.well-known/acme-challenge/token",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "keyAuth",
 		},
 		{
-			desc: "unknown host with port",
-			url:  "http://[2001:db8::2]:80/.well-known/acme-challenge/token",
+			desc:           "unknown host",
+			url:            "http://[2001:db8::2]/.well-known/acme-challenge/token",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "",
 		},
 		{
-			desc: "unknown token",
-			url:  "http://[2001:db8::1]/.well-known/acme-challenge/unknown",
+			desc:           "unknown host with port",
+			url:            "http://[2001:db8::2]:80/.well-known/acme-challenge/token",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "",
 		},
 		{
-			desc: "unknown token with port",
-			url:  "http://[2001:db8::1]:80/.well-known/acme-challenge/unknown",
+			desc:           "unknown token",
+			url:            "http://[2001:db8::1]/.well-known/acme-challenge/unknown",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "",
+		},
+		{
+			desc:           "unknown token with port",
+			url:            "http://[2001:db8::1]:80/.well-known/acme-challenge/unknown",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "",
 		},
 	}
 
@@ -56,8 +59,8 @@ func TestChallengeHTTPServeHTTPNotFound(t *testing.T) {
 			rw := httptest.NewRecorder()
 			challenge.ServeHTTP(rw, req)
 
-			assert.Equal(t, http.StatusNotFound, rw.Code)
-			assert.Empty(t, rw.Body.String())
+			assert.Equal(t, test.expectedStatus, rw.Code)
+			assert.Equal(t, test.expectedBody, rw.Body.String())
 		})
 	}
 }
@@ -192,10 +195,32 @@ func TestChallengeHTTPCleanUpTokenIsolation(t *testing.T) {
 				cleanupCount int
 				removed      bool
 			}{
-				{desc: "unknown host", domain: "2001:db8::2", token: removedToken, cleanupCount: 1},
-				{desc: "unknown token", domain: "2001:db8::1", token: "unknown", cleanupCount: 1},
-				{desc: "remove token", domain: "2001:db8::1", token: removedToken, cleanupCount: 1, removed: true},
-				{desc: "repeat cleanup", domain: "2001:db8::1", token: removedToken, cleanupCount: 2, removed: true},
+				{
+					desc:         "unknown host",
+					domain:       "2001:db8::2",
+					token:        removedToken,
+					cleanupCount: 1,
+				},
+				{
+					desc:         "unknown token",
+					domain:       "2001:db8::1",
+					token:        "unknown",
+					cleanupCount: 1,
+				},
+				{
+					desc:         "remove token",
+					domain:       "2001:db8::1",
+					token:        removedToken,
+					cleanupCount: 1,
+					removed:      true,
+				},
+				{
+					desc:         "repeat cleanup",
+					domain:       "2001:db8::1",
+					token:        removedToken,
+					cleanupCount: 2,
+					removed:      true,
+				},
 			}
 			for _, test := range testCases {
 				t.Run(test.desc, func(t *testing.T) {
