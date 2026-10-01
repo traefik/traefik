@@ -238,7 +238,8 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 				return config
 			}
 
-			t.Run("regular TLS selects the DNS certificate", func(t *testing.T) {
+			// Regular TLS must use the DNS certificate for the reverse-address SNI.
+			{
 				config := newTLSConfig(t, map[string]*CertificateData{
 					test.reverseAddr: {Certificate: dnsCert},
 					test.ip:          {Certificate: ipCert},
@@ -250,9 +251,10 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 				})
 				require.NoError(t, err)
 				assert.Same(t, dnsCert, certificate)
-			})
+			}
 
-			t.Run("regular TLS does not select the IP certificate", func(t *testing.T) {
+			// An IP certificate alone must not match the reverse-address SNI for regular TLS.
+			{
 				config := newTLSConfig(t, map[string]*CertificateData{
 					test.ip: {Certificate: ipCert},
 				})
@@ -263,9 +265,10 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 				})
 				require.NoError(t, err)
 				assert.Nil(t, certificate)
-			})
+			}
 
-			t.Run("ACME selects the IP challenge certificate", func(t *testing.T) {
+			// ACME validation must select the IP challenge certificate from its own store.
+			{
 				config := newTLSConfig(t, map[string]*CertificateData{
 					test.ip: {Certificate: ipCert},
 				})
@@ -276,7 +279,7 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 				})
 				require.NoError(t, err)
 				assert.Same(t, acmeCert, certificate)
-			})
+			}
 		})
 	}
 }

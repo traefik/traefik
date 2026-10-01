@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,10 +124,9 @@ func TestGetBestACMEChallengeCertificate(t *testing.T) {
 		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 	}
 
-	reverseAddr, err := dns.ReverseAddr("2001:db8::1")
-	require.NoError(t, err)
-
-	clientHello := &tls.ClientHelloInfo{ServerName: reverseAddr}
+	clientHello := &tls.ClientHelloInfo{
+		ServerName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
+	}
 	assert.Nil(t, store.GetBestCertificate(clientHello))
 	assert.Same(t, cert, store.getBestACMEChallengeCertificate(clientHello))
 }
@@ -136,25 +134,25 @@ func TestGetBestACMEChallengeCertificate(t *testing.T) {
 func TestMatchDomainIPReverseAddress(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		serverIP   string
+		serverName string
 		certDomain string
 		expected   bool
 	}{
 		{
 			desc:       "IPv4 reverse address",
-			serverIP:   "192.0.2.1",
+			serverName: "1.2.0.192.in-addr.arpa.",
 			certDomain: "192.0.2.1",
 			expected:   true,
 		},
 		{
 			desc:       "IPv6 reverse address",
-			serverIP:   "2001:db8::1",
+			serverName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
 			certDomain: "2001:db8::1",
 			expected:   true,
 		},
 		{
 			desc:       "different IPv6 reverse address",
-			serverIP:   "2001:db8::1",
+			serverName: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
 			certDomain: "2001:db8::2",
 			expected:   false,
 		},
@@ -164,10 +162,7 @@ func TestMatchDomainIPReverseAddress(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			reverseAddr, err := dns.ReverseAddr(test.serverIP)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expected, matchDomainWithIPReverseAddress(reverseAddr, test.certDomain))
+			assert.Equal(t, test.expected, matchDomainWithIPReverseAddress(test.serverName, test.certDomain))
 		})
 	}
 }

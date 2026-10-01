@@ -184,92 +184,81 @@ func TestParseHTTPChallengeHost(t *testing.T) {
 }
 
 func TestChallengeHTTPCleanUpTokenIsolation(t *testing.T) {
-	for _, removedToken := range []string{"first", "second"} {
-		t.Run(removedToken, func(t *testing.T) {
+	tokenCases := []struct {
+		removedToken     string
+		remainingToken   string
+		remainingKeyAuth string
+	}{
+		{
+			removedToken:     "first",
+			remainingToken:   "second",
+			remainingKeyAuth: "secondKeyAuth",
+		},
+		{
+			removedToken:     "second",
+			remainingToken:   "first",
+			remainingKeyAuth: "firstKeyAuth",
+		},
+	}
+
+	for _, tokenCase := range tokenCases {
+		t.Run(tokenCase.removedToken, func(t *testing.T) {
 			t.Parallel()
 
-			testCases := []struct {
-				desc         string
-				domain       string
-				token        string
-				cleanupCount int
-				removed      bool
-			}{
-				{
-					desc:         "unknown host",
-					domain:       "2001:db8::2",
-					token:        removedToken,
-					cleanupCount: 1,
-				},
-				{
-					desc:         "unknown token",
-					domain:       "2001:db8::1",
-					token:        "unknown",
-					cleanupCount: 1,
-				},
-				{
-					desc:         "remove token",
-					domain:       "2001:db8::1",
-					token:        removedToken,
-					cleanupCount: 1,
-					removed:      true,
-				},
-				{
-					desc:         "repeat cleanup",
-					domain:       "2001:db8::1",
-					token:        removedToken,
-					cleanupCount: 2,
-					removed:      true,
-				},
+			newChallenge := func(t *testing.T) *ChallengeHTTP {
+				t.Helper()
+
+				challenge := NewChallengeHTTP()
+				require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", "first", "firstKeyAuth"))
+				require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", "second", "secondKeyAuth"))
+				return challenge
 			}
-			for _, test := range testCases {
-				t.Run(test.desc, func(t *testing.T) {
-					challenge := NewChallengeHTTP()
-					tokens := []struct {
-						token   string
-						keyAuth string
-					}{
-						{token: "first", keyAuth: "firstKeyAuth"},
-						{token: "second", keyAuth: "secondKeyAuth"},
-					}
-					for _, token := range tokens {
-						require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", token.token, token.keyAuth))
-					}
+			assertTokenResponse := func(t *testing.T, challenge *ChallengeHTTP, token string, status int, body string) {
+				t.Helper()
 
-					for range test.cleanupCount {
-						require.NoError(t, challenge.CleanUp(t.Context(), test.domain, test.token, ""))
-					}
-					for _, token := range tokens {
-						req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+token.token, nil)
-						rw := httptest.NewRecorder()
-						challenge.ServeHTTP(rw, req)
+				req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+token, nil)
+				rw := httptest.NewRecorder()
+				challenge.ServeHTTP(rw, req)
 
-						expectedStatus := http.StatusOK
-						expectedBody := token.keyAuth
-						if test.removed && token.token == removedToken {
-							expectedStatus = http.StatusNotFound
-							expectedBody = ""
-						}
-						assert.Equal(t, expectedStatus, rw.Code)
-						assert.Equal(t, expectedBody, rw.Body.String())
-					}
+				assert.Equal(t, status, rw.Code, "token %s", token)
+				assert.Equal(t, body, rw.Body.String(), "token %s", token)
+			}
+			checkCleanupAndReuse := func(t *testing.T, challenge *ChallengeHTTP) {
+				t.Helper()
 
-					for _, token := range tokens {
-						require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", token.token, ""))
-						req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+token.token, nil)
-						rw := httptest.NewRecorder()
-						challenge.ServeHTTP(rw, req)
-						assert.Equal(t, http.StatusNotFound, rw.Code)
-						assert.Empty(t, rw.Body.String())
-					}
+				for _, token := range []string{"first", "second"} {
+					require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", token, ""))
+					assertTokenResponse(t, challenge, token, http.StatusNotFound, "")
+				}
 
-					require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", removedToken, "newKeyAuth"))
-					req := httptest.NewRequest(http.MethodGet, "http://[2001:db8::1]/.well-known/acme-challenge/"+removedToken, nil)
-					rw := httptest.NewRecorder()
-					challenge.ServeHTTP(rw, req)
-					assert.Equal(t, http.StatusOK, rw.Code)
-					assert.Equal(t, "newKeyAuth", rw.Body.String())
-				})
+				require.NoError(t, challenge.Present(t.Context(), "2001:db8::1", tokenCase.removedToken, "newKeyAuth"))
+				assertTokenResponse(t, challenge, tokenCase.removedToken, http.StatusOK, "newKeyAuth")
+			}
+
+			// Unknown cleanup targets must leave both tokens available.
+			{
+				challenge := newChallenge(t)
+				require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::2", tokenCase.removedToken, ""))
+				assertTokenResponse(t, challenge, "first", http.StatusOK, "firstKeyAuth")
+				assertTokenResponse(t, challenge, "second", http.StatusOK, "secondKeyAuth")
+
+				require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", "unknown", ""))
+				assertTokenResponse(t, challenge, "first", http.StatusOK, "firstKeyAuth")
+				assertTokenResponse(t, challenge, "second", http.StatusOK, "secondKeyAuth")
+				checkCleanupAndReuse(t, challenge)
+			}
+
+			// Repeated cleanup must preserve the other token and allow reuse.
+			{
+				challenge := newChallenge(t)
+				require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", tokenCase.removedToken, ""))
+				assertTokenResponse(t, challenge, tokenCase.removedToken, http.StatusNotFound, "")
+				assertTokenResponse(t, challenge, tokenCase.remainingToken, http.StatusOK, tokenCase.remainingKeyAuth)
+
+				require.NoError(t, challenge.CleanUp(t.Context(), "2001:db8::1", tokenCase.removedToken, ""))
+				assertTokenResponse(t, challenge, tokenCase.removedToken, http.StatusNotFound, "")
+				assertTokenResponse(t, challenge, tokenCase.remainingToken, http.StatusOK, tokenCase.remainingKeyAuth)
+				checkCleanupAndReuse(t, challenge)
 			}
 		})
 	}
