@@ -17,17 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	"golang.org/x/net/http2"
 )
-
-type h2cTransportWrapper struct {
-	*http2.Transport
-}
-
-func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.URL.Scheme = "http"
-	return t.Transport.RoundTrip(req)
-}
 
 // RoundTripperManager handles roundtripper for the reverse proxy.
 type RoundTripperManager struct {
@@ -160,10 +150,8 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 		}, nil
 	}
 
-	rt, err := newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
-	if err != nil {
-		return nil, err
-	}
+	rt := newSmartRoundTripper(transport)
+
 	return &KerberosRoundTripper{
 		OriginalRoundTripper: rt,
 		new: func() http.RoundTripper {
