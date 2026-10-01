@@ -255,6 +255,76 @@ func Test_New(t *testing.T) {
 	}
 }
 
+func Test_NewReturnsParseErrorForMalformedSnippets(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      dynamic.Snippet
+		expectedErr string
+	}{
+		{
+			desc: "unterminated quoted string",
+			config: dynamic.Snippet{
+				ServerSnippet: `add_header X-Test "unterminated;`,
+			},
+			expectedErr: "parsing server-snippet:",
+		},
+		{
+			desc: "unterminated lua block with nested table",
+			config: dynamic.Snippet{
+				ServerSnippet: `content_by_lua_block { local t = { a = 1`,
+			},
+			expectedErr: "parsing server-snippet:",
+		},
+		{
+			desc: "include without path",
+			config: dynamic.Snippet{
+				ServerSnippet: `include;`,
+			},
+			expectedErr: "parsing server-snippet:",
+		},
+		{
+			desc: "include with multiple paths",
+			config: dynamic.Snippet{
+				ServerSnippet: `include first.conf second.conf;`,
+			},
+			expectedErr: "parsing server-snippet:",
+		},
+		{
+			desc: "unterminated quoted string in configuration snippet",
+			config: dynamic.Snippet{
+				ConfigurationSnippet: `add_header X-Test "unterminated;`,
+			},
+			expectedErr: "parsing configuration-snippet:",
+		},
+		{
+			desc: "unterminated quoted string in auth snippet",
+			config: dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address: "http://auth.example.com",
+					Snippet: `add_header X-Test "unterminated;`,
+				},
+			},
+			expectedErr: "parsing auth-snippet:",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			_, err := New(t.Context(), next, &test.config, "test-snippet")
+
+			require.Error(t, err)
+			require.ErrorContains(t, err, test.expectedErr)
+			require.NotContains(t, err.Error(), "snippet parsing recover:")
+		})
+	}
+}
+
 func Test_Directives(t *testing.T) {
 	testCases := []struct {
 		desc                       string
