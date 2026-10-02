@@ -12,28 +12,34 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
-var (
-	_ middlewares.Stateful = &responseCapturer{}
-	_ middlewares.Stateful = &statusRecorder{}
-)
+var _ middlewares.Stateful = &responseCapturer{}
+
+// FIXME the request and response should have a max body size option like in the buffering middleware,
+//  to avoid keeping large body, when the body is larger than the configured max size,
+//  an error can be returned.
+
+// FIXME timeout  must be defined for the tap service request and response
+
+// FIXME what about the trailers, recorded headers.
 
 // responseCapturer captures the response for the record.
-// When shouldBuffer is true, nothing reaches the client until serve is called, which is what allows
-// the response record to be sent before the response itself.
+// While buffering, nothing reaches the client until serve is called,
+// which is what allows the response record to be sent before the response itself.
 type responseCapturer struct {
 	rw   http.ResponseWriter
 	dest *destination
 
-	// shouldBuffer reports whether the response is buffered instead of being streamed to the client.
-	// It is cleared once the buffered response has been served.
-	shouldBuffer bool
+	// buffering reports whether the response is held back instead of being streamed to the client.
+	// It ends once the response has been served, from then on the response is streamed.
+	buffering bool
 	// headers holds the response headers while the response is buffered. They are kept apart from
 	// the client ones, as the response can end up being replaced by an error that must not carry them.
 	headers http.Header
 	// recordedHeaders is the snapshot of the headers, taken when the response status is known.
 	recordedHeaders http.Header
 
-	// buf holds the whole response body when shouldBuffer is true, and at most dest.maxBodySize bytes otherwise.
+	// buf holds the whole response body while buffering,
+	// and at most dest.maxBodySize bytes otherwise.
 	buf bytes.Buffer
 
 	status        int
@@ -41,7 +47,11 @@ type responseCapturer struct {
 }
 
 func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
-	r := &responseCapturer{rw: rw, dest: dest, shouldBuffer: shouldBuffer}
+	r := &responseCapturer{
+		rw:        rw,
+		dest:      dest,
+		buffering: shouldBuffer,
+	}
 
 	if shouldBuffer {
 		// The headers start as a copy of the client ones, so that the headers set by the middlewares
@@ -56,7 +66,7 @@ func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer
 }
 
 func (r *responseCapturer) Header() http.Header {
-	if r.shouldBuffer {
+	if r.buffering {
 		return r.headers
 	}
 
@@ -70,7 +80,7 @@ func (r *responseCapturer) WriteHeader(status int) {
 	// response carries the response headers, so it is dropped. A client waiting for a
 	// 100 Continue still gets it, as the server sends it on its own when the request body is read.
 	if status >= 100 && status <= 199 {
-		if !r.shouldBuffer {
+		if !r.buffering {
 			r.rw.WriteHeader(status)
 		}
 
@@ -84,7 +94,7 @@ func (r *responseCapturer) WriteHeader(status int) {
 	r.status = status
 	r.recordedHeaders = r.Header().Clone()
 
-	if !r.shouldBuffer {
+	if !r.buffering {
 		r.rw.WriteHeader(status)
 	}
 }
@@ -95,7 +105,7 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 		r.WriteHeader(http.StatusOK)
 	}
 
-	if r.shouldBuffer {
+	if r.buffering {
 		// The whole body is kept, as it still has to be served to the client.
 		return r.buf.Write(p)
 	}
@@ -107,7 +117,7 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 
 func (r *responseCapturer) Flush() {
 	// A buffered response cannot be flushed, as nothing has been served yet.
-	if r.shouldBuffer {
+	if r.buffering {
 		return
 	}
 
@@ -122,7 +132,8 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
 	}
 
-	// A hijacked connection is out of our control, so the response cannot be buffered any longer.
+	// A hijacked connection is out of our control,
+	// so the response cannot be buffered any longer.
 	if err := r.serve(); err != nil {
 		return nil, nil, err
 	}
@@ -159,12 +170,12 @@ func (r *responseCapturer) capture(p []byte) {
 // serve serves the buffered response to the client.
 // It is a no-op for a response that has been streamed, or already served.
 func (r *responseCapturer) serve() error {
-	if !r.shouldBuffer {
+	if !r.buffering {
 		return nil
 	}
 
-	// The response is served only once, as Hijack can serve it before ServeHTTP returns.
-	r.shouldBuffer = false
+	// Hijack can serve the response before ServeHTTP does, and it must be served only once.
+	r.buffering = false
 
 	// The headers are replaced rather than merged, so that a header set upstream that the next
 	// handler removed is not served.
