@@ -1972,6 +1972,30 @@ spec:
                   Plugin defines the middleware plugin configuration.
                   More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
                 type: object
+              queryParameters:
+                description: |-
+                  QueryParameters holds the query parameters middleware configuration.
+                  This middleware modifies the query parameters of the request URL.
+                properties:
+                  add:
+                    additionalProperties:
+                      type: string
+                    description: Add defines the query parameters to add, keeping
+                      any existing value of the same parameter.
+                    type: object
+                  delete:
+                    description: Delete defines the names of the query parameters
+                      to remove.
+                    items:
+                      type: string
+                    type: array
+                  set:
+                    additionalProperties:
+                      type: string
+                    description: Set defines the query parameters to set, replacing
+                      every existing value of the same parameter.
+                    type: object
+                type: object
               rateLimit:
                 description: |-
                   RateLimit holds the rate limit configuration.
