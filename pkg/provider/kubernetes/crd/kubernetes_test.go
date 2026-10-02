@@ -20,6 +20,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -1633,6 +1635,49 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
+			desc:         "Simple TCP Ingress Route, without ingressClassName, matching the default IngressClass",
+			paths:        []string{"tcp/services.yml", "tcp/with_default_ingressclass.yml"},
+			ingressClass: "traefik-lb",
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc:         "Simple TCP Ingress Route, with ingressClassName and deprecated annotation",
 			paths:        []string{"tcp/services.yml", "tcp/with_ingressclassname_and_deprecated_annotation.yml"},
 			ingressClass: "traefik-lb",
@@ -2208,6 +2253,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		crossProviderNamespaces      []string
 		defaultTLSResourcesNamespace string
 		safeNaming                   bool
+		disableClusterScopeResources bool
 	}{
 		{
 			desc: "Empty",
@@ -7228,6 +7274,122 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:         "Simple Ingress Route, without ingressClassName, matching the default IngressClass",
+			paths:        []string{"services.yml", "with_default_ingressclass.yml"},
+			ingressClass: "traefik-lb",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "IngressRoute",
+										Namespace: "default",
+										Name:      "test.route",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:         "Simple Ingress Route, without ingressClassName, not matching the default IngressClass",
+			paths:        []string{"services.yml", "with_default_ingressclass.yml"},
+			ingressClass: "not-default",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:                         "Simple Ingress Route, without ingressClassName, with cluster scope resources disabled",
+			paths:                        []string{"services.yml", "with_default_ingressclass.yml"},
+			ingressClass:                 "traefik-lb",
+			disableClusterScopeResources: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc:         "Simple Ingress Route, with ingressClassName and deprecated annotation",
 			paths:        []string{"services.yml", "with_ingressclassname_and_deprecated_annotation.yml"},
 			ingressClass: "traefik-lb",
@@ -10189,6 +10351,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
+			client.disableClusterScopeInformer = test.disableClusterScopeResources
 
 			stopCh := make(chan struct{})
 
@@ -10208,6 +10371,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				CrossProviderNamespaces:      test.crossProviderNamespaces,
 				DefaultTLSResourcesNamespace: test.defaultTLSResourcesNamespace,
 				SafeNaming:                   &test.safeNaming,
+				DisableClusterScopeResources: test.disableClusterScopeResources,
 			}
 			require.NoError(t, p.Init())
 
@@ -10491,6 +10655,48 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		{
 			desc:         "Simple UDP Ingress Route, with ingressClassName",
 			paths:        []string{"udp/services.yml", "udp/with_ingressclassname.yml"},
+			ingressClass: "traefik-lb",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:         "Simple UDP Ingress Route, without ingressClassName, matching the default IngressClass",
+			paths:        []string{"udp/services.yml", "udp/with_default_ingressclass.yml"},
 			ingressClass: "traefik-lb",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -11127,6 +11333,159 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestShouldProcessIngress(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		ingressClass            string
+		ingressClassName        string
+		defaultIngressClassName string
+		expected                bool
+	}{
+		{
+			desc:     "No ingress class and no ingress class name",
+			expected: true,
+		},
+		{
+			desc:             "No ingress class and traefik ingress class name",
+			ingressClassName: "traefik",
+			expected:         true,
+		},
+		{
+			desc:             "No ingress class and another ingress class name",
+			ingressClassName: "foo",
+		},
+		{
+			desc:             "Matching ingress class name",
+			ingressClass:     "foo",
+			ingressClassName: "foo",
+			expected:         true,
+		},
+		{
+			desc:             "Not matching ingress class name",
+			ingressClass:     "foo",
+			ingressClassName: "bar",
+		},
+		{
+			desc:         "No ingress class name and no default ingress class",
+			ingressClass: "foo",
+		},
+		{
+			desc:                    "No ingress class name and matching default ingress class",
+			ingressClass:            "foo",
+			defaultIngressClassName: "foo",
+			expected:                true,
+		},
+		{
+			desc:                    "No ingress class name and not matching default ingress class",
+			ingressClass:            "foo",
+			defaultIngressClassName: "bar",
+		},
+		{
+			desc:                    "Not matching ingress class name and matching default ingress class",
+			ingressClass:            "foo",
+			ingressClassName:        "bar",
+			defaultIngressClassName: "foo",
+		},
+		{
+			desc:                    "No ingress class, no ingress class name and a default ingress class",
+			defaultIngressClassName: "foo",
+			expected:                true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, shouldProcessIngress(test.ingressClass, test.ingressClassName, test.defaultIngressClassName))
+		})
+	}
+}
+
+func TestGetDefaultIngressClassName(t *testing.T) {
+	older := metav1.NewTime(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))
+	newer := metav1.NewTime(time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC))
+
+	ingressClass := func(name, controller, isDefault string, creationTimestamp metav1.Time) *netv1.IngressClass {
+		ic := &netv1.IngressClass{
+			ObjectMeta: metav1.ObjectMeta{Name: name, CreationTimestamp: creationTimestamp},
+			Spec:       netv1.IngressClassSpec{Controller: controller},
+		}
+		if isDefault != "" {
+			ic.Annotations = map[string]string{netv1.AnnotationIsDefaultIngressClass: isDefault}
+		}
+		return ic
+	}
+
+	testCases := []struct {
+		desc           string
+		ingressClasses []*netv1.IngressClass
+		expected       string
+	}{
+		{
+			desc: "No ingress classes",
+		},
+		{
+			desc: "No default ingress class",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", traefikIngressClassController, "", older),
+			},
+		},
+		{
+			desc: "Default annotation not set to true",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", traefikIngressClassController, "false", older),
+			},
+		},
+		{
+			desc: "Default ingress class of another controller",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", "example.com/ingress-controller", "true", older),
+			},
+		},
+		{
+			desc: "Default ingress class",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", traefikIngressClassController, "", older),
+				ingressClass("bar", traefikIngressClassController, "true", older),
+			},
+			expected: "bar",
+		},
+		{
+			desc: "Most recent default ingress class",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", traefikIngressClassController, "true", newer),
+				ingressClass("bar", traefikIngressClassController, "true", older),
+			},
+			expected: "foo",
+		},
+		{
+			desc: "Default ingress classes with the same creation timestamp",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", traefikIngressClassController, "true", older),
+				ingressClass("bar", traefikIngressClassController, "true", older),
+			},
+			expected: "bar",
+		},
+		{
+			desc: "More recent default ingress class of another controller",
+			ingressClasses: []*netv1.IngressClass{
+				ingressClass("foo", "example.com/ingress-controller", "true", newer),
+				ingressClass("bar", traefikIngressClassController, "true", older),
+			},
+			expected: "bar",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, getDefaultIngressClassName(test.ingressClasses))
 		})
 	}
 }

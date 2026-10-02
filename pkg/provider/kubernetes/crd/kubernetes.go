@@ -33,6 +33,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -41,6 +42,7 @@ import (
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass       = "traefik"
+	traefikIngressClassController    = "traefik.io/ingress-controller"
 )
 
 const (
@@ -263,11 +265,16 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		tlsConfigs = make(map[string]*tls.CertAndStores)
 	}
 
+	var defaultIngressClassName string
+	if !p.DisableClusterScopeResources {
+		defaultIngressClassName = getDefaultIngressClassName(client.GetIngressClasses())
+	}
+
 	conf := &dynamic.Configuration{
 		// TODO: choose between mutating and returning tlsConfigs
-		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
-		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
-		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
+		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs, defaultIngressClassName),
+		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs, defaultIngressClassName),
+		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client, defaultIngressClassName),
 		TLS: &dynamic.TLSConfiguration{
 			Options: p.buildTLSOptions(ctx, client),
 			Stores:  stores,
@@ -1533,9 +1540,34 @@ func addToConfig[T any](logger *zerolog.Logger, kind, name string, objects map[s
 	objects[name] = obj
 }
 
-func shouldProcessIngress(ingressClass, ingressClassName string) bool {
+func shouldProcessIngress(ingressClass, ingressClassName, defaultIngressClassName string) bool {
 	return ingressClass == ingressClassName ||
-		(len(ingressClass) == 0 && ingressClassName == traefikDefaultIngressClass)
+		(len(ingressClass) == 0 && ingressClassName == traefikDefaultIngressClass) ||
+		(len(ingressClass) > 0 && len(ingressClassName) == 0 && ingressClass == defaultIngressClassName)
+}
+
+// getDefaultIngressClassName returns the name of the Traefik IngressClass marked as default, or an empty string.
+// Kubernetes sets the default class on Ingresses created without one, but not on IngressRoutes, so we resolve it here.
+// If several classes are marked as default, the most recently created wins, then the first by name, as in Kubernetes.
+func getDefaultIngressClassName(ingressClasses []*netv1.IngressClass) string {
+	var defaultClass *netv1.IngressClass
+	for _, ic := range ingressClasses {
+		if ic.Spec.Controller != traefikIngressClassController || ic.Annotations[netv1.AnnotationIsDefaultIngressClass] != "true" {
+			continue
+		}
+
+		if defaultClass == nil ||
+			ic.CreationTimestamp.After(defaultClass.CreationTimestamp.Time) ||
+			(ic.CreationTimestamp.Equal(&defaultClass.CreationTimestamp) && ic.Name < defaultClass.Name) {
+			defaultClass = ic
+		}
+	}
+
+	if defaultClass == nil {
+		return ""
+	}
+
+	return defaultClass.Name
 }
 
 // getIngressClassName returns the ingress class name from the spec field or falls back to the

@@ -17,7 +17,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores, defaultIngressClassName string) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
 		Routers:           map[string]*dynamic.TCPRouter{},
 		Middlewares:       map[string]*dynamic.TCPMiddleware{},
@@ -32,7 +32,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 		if usingDeprecatedAnnotation {
 			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
 		}
-		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
+		if !shouldProcessIngress(p.IngressClass, ingressClassName, defaultIngressClassName) {
 			continue
 		}
 

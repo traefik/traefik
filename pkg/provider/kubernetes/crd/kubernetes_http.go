@@ -26,7 +26,7 @@ const (
 	httpProtocol  = "http"
 )
 
-func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores, defaultIngressClassName string) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:           map[string]*dynamic.Router{},
 		Middlewares:       map[string]*dynamic.Middleware{},
@@ -41,7 +41,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		if usingDeprecatedAnnotation {
 			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
 		}
-		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
+		if !shouldProcessIngress(p.IngressClass, ingressClassName, defaultIngressClassName) {
 			continue
 		}
 

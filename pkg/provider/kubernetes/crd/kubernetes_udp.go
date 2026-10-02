@@ -14,7 +14,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
+func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client, defaultIngressClassName string) *dynamic.UDPConfiguration {
 	conf := &dynamic.UDPConfiguration{
 		Routers:  map[string]*dynamic.UDPRouter{},
 		Services: map[string]*dynamic.UDPService{},
@@ -27,7 +27,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		if usingDeprecatedAnnotation {
 			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
 		}
-		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
+		if !shouldProcessIngress(p.IngressClass, ingressClassName, defaultIngressClassName) {
 			continue
 		}
 
