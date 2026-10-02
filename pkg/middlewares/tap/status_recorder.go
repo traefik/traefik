@@ -22,8 +22,8 @@ func (s *statusRecorder) Header() http.Header {
 }
 
 func (s *statusRecorder) WriteHeader(status int) {
-	// An informational response is interim, and commits the tap service to nothing:
-	// the status telling whether the record has been accepted is the one that follows.
+	// An informational status commits the tap service to nothing:
+	// the one that follows tells whether the record is accepted.
 	if status >= 100 && status <= 199 {
 		return
 	}

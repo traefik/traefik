@@ -310,9 +310,8 @@ func TestServeHTTP_failClosedRejectsRequest(t *testing.T) {
 	assert.False(t, called, "the request must not reach the backend when its record cannot be sent")
 }
 
-// TestServeHTTP_interimRecordStatus asserts that the status of a record is the final one:
-// a tap service answering an informational response before rejecting the record must not
-// have the record taken for accepted.
+// TestServeHTTP_interimRecordStatus asserts that an informational status from a tap service
+// is not taken for the acceptance of the record.
 func TestServeHTTP_interimRecordStatus(t *testing.T) {
 	builder := serviceBuilderFunc(func(_ context.Context, _ string) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
@@ -336,9 +335,8 @@ func TestServeHTTP_interimRecordStatus(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 }
 
-// TestServeHTTP_earlyHints asserts that an interim response reaches the client whole, headers
-// included, only when the response is streamed: a withheld response sends nothing before its
-// record is accepted.
+// TestServeHTTP_earlyHints asserts that an interim response reaches the client, headers included,
+// only when the response is streamed.
 func TestServeHTTP_earlyHints(t *testing.T) {
 	testCases := []struct {
 		desc          string
@@ -396,8 +394,64 @@ func TestServeHTTP_earlyHints(t *testing.T) {
 	}
 }
 
+// TestServeHTTP_responseTrailers asserts that the trailers of a response, declared or set with the
+// http.TrailerPrefix, reach the client as trailers only, whether the response is withheld or not.
+func TestServeHTTP_responseTrailers(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		failClosed bool
+	}{
+		{
+			desc: "streamed response",
+		},
+		{
+			desc:       "withheld response",
+			failClosed: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			responseConfig := responseRecordConfig()
+			responseConfig.FailClosed = test.failClosed
+
+			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				rw.Header().Set("Content-Type", "application/grpc")
+				rw.Header().Set("Trailer", "X-Checksum")
+				rw.Header().Set(http.TrailerPrefix+"X-Early", "yes")
+				rw.WriteHeader(http.StatusOK)
+
+				_, err := rw.Write([]byte("pong"))
+				require.NoError(t, err)
+
+				rw.Header().Set("X-Checksum", "abc")
+				rw.Header().Set(http.TrailerPrefix+"Grpc-Status", "0")
+			}), &sink{})
+
+			server := httptest.NewServer(handler)
+			t.Cleanup(server.Close)
+
+			resp, err := http.Get(server.URL)
+			require.NoError(t, err)
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			assert.Equal(t, "pong", string(body))
+			assert.Equal(t, "application/grpc", resp.Header.Get("Content-Type"))
+			assert.Empty(t, resp.Header.Values("X-Checksum"))
+			assert.Equal(t, []string{"abc"}, resp.Trailer.Values("X-Checksum"))
+			assert.Equal(t, []string{"0"}, resp.Trailer.Values("Grpc-Status"))
+			assert.Equal(t, []string{"yes"}, resp.Trailer.Values("X-Early"))
+		})
+	}
+}
+
 // TestServeHTTP_earlyHintsRejected asserts that the headers set for an informational response
-// reach the client neither with it nor with the error replacing a rejected response.
+// reach the client neither with it nor with the error of a rejected response.
 func TestServeHTTP_earlyHintsRejected(t *testing.T) {
 	responseConfig := responseRecordConfig()
 	responseConfig.FailClosed = true
@@ -434,9 +488,8 @@ func TestServeHTTP_earlyHintsRejected(t *testing.T) {
 	assert.Empty(t, resp.Header.Get("X-Backend"))
 }
 
-// TestServeHTTP_withheldExpectContinue asserts that a client waiting for a 100 Continue before
-// sending its body still gets it when the response is withheld, as the server answers it on its
-// own when the request body is read.
+// TestServeHTTP_withheldExpectContinue asserts that a withheld response does not hold back the
+// 100 Continue, which the server sends when the body is read.
 func TestServeHTTP_withheldExpectContinue(t *testing.T) {
 	responseConfig := responseRecordConfig()
 	responseConfig.FailClosed = true
@@ -528,8 +581,7 @@ func TestServeHTTP_timeoutPerDirection(t *testing.T) {
 }
 
 // TestServeHTTP_failClosedPerDirection asserts that the directions fail independently:
-// a response record that cannot be sent does not withhold the response when only the
-// request is failing closed.
+// a response record failing to be sent does not withhold the response when only the request fails closed.
 func TestServeHTTP_failClosedPerDirection(t *testing.T) {
 	requestConfig := requestRecordConfig()
 	requestConfig.FailClosed = true
@@ -657,7 +709,7 @@ func TestReadBody_maxBodySize(t *testing.T) {
 			expectedRecorded:  "ping",
 		},
 		{
-			// A body announced too large is not read, so that a client waiting for a 100 Continue is not answered one.
+			// A body announced too large is not read, so that no 100 Continue is sent.
 			desc:              "body announced over the limit",
 			body:              strings.NewReader("ping"),
 			maxRecordBodySize: -1,
@@ -681,7 +733,7 @@ func TestReadBody_maxBodySize(t *testing.T) {
 			expectedRecorded:  "ping",
 		},
 		{
-			// The body is not held whole when the record is limited, so there is nothing to bound.
+			// The body is not held whole with a record limit, so there is nothing to bound.
 			desc:              "record limited",
 			body:              strings.NewReader("ping"),
 			maxRecordBodySize: 2,
@@ -723,8 +775,8 @@ func TestReadBody_maxBodySize(t *testing.T) {
 	}
 }
 
-// TestServeHTTP_requestBodyTooLarge asserts that a request whose body is held whole, and is larger
-// than maxBodySize, is rejected without reaching the backend nor being recorded.
+// TestServeHTTP_requestBodyTooLarge asserts that a request body held whole and over maxBodySize
+// is rejected, without reaching the backend nor being recorded.
 func TestServeHTTP_requestBodyTooLarge(t *testing.T) {
 	s := &sink{}
 
@@ -745,8 +797,8 @@ func TestServeHTTP_requestBodyTooLarge(t *testing.T) {
 	assert.Empty(t, s.recorded())
 }
 
-// TestServeHTTP_responseBodyTooLarge asserts that a response held back by failClosed, and larger than
-// maxBodySize, is replaced by an error and not recorded, while a streamed response is not limited.
+// TestServeHTTP_responseBodyTooLarge asserts that a withheld response over maxBodySize is replaced
+// by an error and not recorded, while a streamed response is not limited.
 func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -890,9 +942,8 @@ func TestServeHTTP_failClosedRecordsHeadersSetUpstream(t *testing.T) {
 	assert.Equal(t, "yes", records[0].Response.Headers.Get("X-Upstream"))
 }
 
-// TestServeHTTP_expectContinue asserts that the Expect the middleware honored by reading
-// the body is not forwarded: the backend would answer a second informational response,
-// which the client has no reason to see.
+// TestServeHTTP_expectContinue asserts that the Expect honored by reading the body is not forwarded,
+// so that the backend does not answer a second informational response.
 func TestServeHTTP_expectContinue(t *testing.T) {
 	testCases := []struct {
 		desc            string

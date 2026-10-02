@@ -57,8 +57,7 @@ func TestStatusRecorder_status(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			// A tap service accepting the record only once it is read must not have it taken
-			// for accepted on its interim response.
+			// The interim response of a tap service is not taken for the acceptance of the record.
 			desc: "informational status written before a final one",
 			write: func(rw http.ResponseWriter) {
 				rw.WriteHeader(http.StatusContinue)
