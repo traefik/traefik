@@ -92,13 +92,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			if p.Watch {
-				startStopHandle := func(m eventtypes.Message) {
+				startStopHandle := func(m eventtypes.Message) error {
 					logger.Debug().Msgf("Provider event received %+v", m)
 					containers, err := p.listContainers(ctx, dockerClient)
 					if err != nil {
 						logger.Error().Err(err).Msg("Failed to list containers for docker")
-						// Call cancel to get out of the monitor
-						return
+						return err
 					}
 
 					configuration := builder.build(ctx, containers)
@@ -112,6 +111,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						case <-ctx.Done():
 						}
 					}
+
+					return nil
 				}
 
 				res := dockerClient.Events(ctx, client.EventsListOptions{
@@ -123,7 +124,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						if event.Action == "start" ||
 							event.Action == "die" ||
 							strings.HasPrefix(string(event.Action), "health_status") {
-							startStopHandle(event)
+							if err := startStopHandle(event); err != nil {
+								return err
+							}
 						}
 					case err := <-res.Err:
 						if errors.Is(err, io.EOF) {
