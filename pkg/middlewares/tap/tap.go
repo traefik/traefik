@@ -23,6 +23,9 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+// FIXME: add a note to the documentation saying that the midlleware should be placed as close to the entry point as possible,
+//  so that every modification to the response will be recorded. What about the request?
+
 const typeName = "Tap"
 
 // Kinds of records sent to the tap services.
@@ -31,14 +34,13 @@ const (
 	kindResponse = "response"
 )
 
-// Headers set on the requests sent to the tap services,
-// so that a service serving several kinds of records can dispatch them without parsing the payload.
+// Headers letting a tap service dispatch the records without parsing them.
 const (
 	headerRecordID   = "X-Tap-Id"
 	headerRecordKind = "X-Tap-Record"
 )
 
-// errBodyTooLarge is returned when a body to hold in memory is larger than the configured maximum size.
+// errBodyTooLarge is returned when a body to hold in memory is over maxBodySize.
 var errBodyTooLarge = errors.New("body too large")
 
 type serviceBuilder interface {
@@ -50,7 +52,6 @@ type record struct {
 	ID   string    `json:"id"`
 	Kind string    `json:"kind"`
 	Time time.Time `json:"time"`
-	// TraceID is the trace the recorded request belongs to, when tracing is enabled.
 	TraceID  string          `json:"traceId,omitempty"`
 	Request  *requestRecord  `json:"request,omitempty"`
 	Response *responseRecord `json:"response,omitempty"`
@@ -63,7 +64,7 @@ type requestRecord struct {
 	Proto      string      `json:"proto"`
 	RemoteAddr string      `json:"remoteAddr,omitempty"`
 	Headers    http.Header `json:"headers,omitempty"`
-	// Body is base64-encoded, as it is not necessarily valid UTF-8.
+	// Body is base64-encoded, as it may not be valid UTF-8.
 	Body          []byte `json:"body,omitempty"`
 	BodyTruncated bool   `json:"bodyTruncated,omitempty"`
 }
@@ -71,10 +72,10 @@ type requestRecord struct {
 type responseRecord struct {
 	Status  int         `json:"status"`
 	Headers http.Header `json:"headers,omitempty"`
-	// Body is base64-encoded, as it is not necessarily valid UTF-8.
+	// Body is base64-encoded, as it may not be valid UTF-8.
 	Body          []byte `json:"body,omitempty"`
 	BodyTruncated bool   `json:"bodyTruncated,omitempty"`
-	// Duration is the time elapsed between the reception of the request and the end of the response, in nanoseconds.
+	// Duration spans from the reception of the request to the end of the response, in nanoseconds.
 	Duration time.Duration `json:"duration"`
 }
 
@@ -105,7 +106,7 @@ func newDestination(ctx context.Context, config dynamic.TapRequest, serviceBuild
 		path = dynamic.TapDefaultPath
 	}
 
-	// The path ends up in the request line sent to the service, where it must be absolute.
+	// The path ends up in the request line, where it must be absolute.
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
@@ -236,20 +237,20 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// When failing closed the response is withheld until the record is sent.
+	// A withheld response is served once its record is sent.
 	if err := capturer.serve(); err != nil {
 		logger.Debug().Err(err).Msg("Unable to serve the response")
 	}
 }
 
-// send sends a record to a tap service, and reports whether it has been accepted.
+// send sends a record to a tap service, and returns an error unless it is accepted.
 func (t *tap) send(ctx context.Context, dest *destination, host string, rec *record) error {
 	payload, err := json.Marshal(rec)
 	if err != nil {
 		return fmt.Errorf("marshaling record: %w", err)
 	}
 
-	// A record must be sent even when the client is gone, and must not outlive the configured timeout.
+	// The record is sent even when the client is gone, within the timeout.
 	sendCtx := context.WithoutCancel(ctx)
 	if dest.timeout > 0 {
 		var cancel context.CancelFunc
@@ -258,7 +259,7 @@ func (t *tap) send(ctx context.Context, dest *destination, host string, rec *rec
 		defer cancel()
 	}
 
-	// The access log data table of the incoming request must not be mutated by the tap service call.
+	// The tap service call must not alter the access log data of the request.
 	sendCtx = context.WithValue(sendCtx, accesslog.DataTableKey, nil)
 
 	sendReq, err := http.NewRequestWithContext(sendCtx, http.MethodPost, "http://"+host+dest.path, bytes.NewReader(payload))
@@ -286,8 +287,7 @@ func (t *tap) reject(ctx context.Context, rw http.ResponseWriter, kind string, s
 	http.Error(rw, http.StatusText(status), status)
 }
 
-// describeRequest describes the request with the given headers only, for a record that is not the
-// request one.
+// describeRequest describes the request with the given headers only, for a response record.
 func describeRequest(req *http.Request, headerNames []string) *requestRecord {
 	headers := make(http.Header, len(headerNames))
 	for _, name := range headerNames {
@@ -331,23 +331,21 @@ func newRequestRecord(req *http.Request, dest *destination) (*requestRecord, err
 	return rec, nil
 }
 
-// readBody reads at most maxRecordBodySize bytes from the request body, and reports whether it has been truncated.
-// The request body is replaced by an equivalent one, so that the next handler still reads it whole.
-// When the whole body is read, it is held in memory, so a body larger than maxBodySize is rejected with errBodyTooLarge.
+// readBody reads at most maxRecordBodySize bytes of the body, and reports whether it was truncated.
+// The body is replaced, so that the next handler still reads it whole. A body read whole is held
+// in memory, so one larger than maxBodySize is rejected with errBodyTooLarge.
 func readBody(req *http.Request, maxRecordBodySize, maxBodySize int64) ([]byte, bool, error) {
 	if req.Body == nil || req.Body == http.NoBody || maxRecordBodySize == 0 {
 		return nil, false, nil
 	}
 
-	// A body announced as too large is rejected before being read, so that a client waiting
-	// for a 100 Continue gets the rejection instead.
+	// A body announced too large is rejected unread, so that a client waiting for a 100 Continue gets the rejection.
 	if maxRecordBodySize < 0 && maxBodySize >= 0 && req.ContentLength > maxBodySize {
 		return nil, false, errBodyTooLarge
 	}
 
-	// Reading the body is what makes Traefik answer an Expect: 100-continue, so the
-	// expectation is satisfied here and must not be forwarded: the backend would answer a
-	// second informational response, which the client has no reason to see.
+	// Reading the body answers an Expect: 100-continue, so it is not forwarded,
+	// which would make the backend answer a second one.
 	if strings.EqualFold(req.Header.Get("Expect"), "100-continue") {
 		req.Header.Del("Expect")
 	}
@@ -355,7 +353,7 @@ func readBody(req *http.Request, maxRecordBodySize, maxBodySize int64) ([]byte, 
 	if maxRecordBodySize < 0 {
 		reader := io.Reader(req.Body)
 		if maxBodySize >= 0 {
-			// One byte more than the limit is read, to tell a body at the limit from a larger one.
+			// One byte more than the limit tells a body at the limit from a larger one.
 			reader = io.LimitReader(req.Body, maxBodySize+1)
 		}
 
@@ -373,20 +371,17 @@ func readBody(req *http.Request, maxRecordBodySize, maxBodySize int64) ([]byte, 
 		return body, false, nil
 	}
 
-	// One byte more than the limit is read, to tell a body at the limit from a truncated one.
+	// One byte more than the limit tells a body at the limit from a truncated one.
 	buf := make([]byte, maxRecordBodySize+1)
 	n, err := io.ReadFull(req.Body, buf)
 	switch {
-	// The whole buffer has been filled, which means the body is larger than the limit.
-	// The bytes already read are put back in front of the body, so that the next handler still reads it whole.
+	// The buffer is full, so the body is over the limit: the bytes read are put back in front of it.
 	case err == nil:
 		req.Body = replayBody(io.MultiReader(bytes.NewReader(buf[:n]), req.Body), req.Body)
 		return buf[:maxRecordBodySize], true, nil
 
-	// io.EOF happens with HTTP/3, where the end of the body is framed at the stream
-	// level rather than declared via Content-Length, so a bodyless request arrives
-	// with a non-nil Body and ContentLength == -1. The same shape is possible for a
-	// chunked request that sends no chunks.
+	// io.EOF happens with HTTP/3, where a bodyless request has a non-nil Body and no
+	// Content-Length, and with a chunked request sending no chunks.
 	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
 		req.Body = replayBody(bytes.NewReader(buf[:n]), req.Body)
 		return buf[:n], false, nil

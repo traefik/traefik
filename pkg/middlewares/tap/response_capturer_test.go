@@ -170,8 +170,8 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	assert.Equal(t, "pongping", recorder.Body.String())
 }
 
-// TestResponseCapturer_interimResponses asserts that an informational response is not mistaken
-// for the status of the response, and reaches the client only when the response is streamed.
+// TestResponseCapturer_interimResponses asserts that an informational status is not taken for the
+// status of the response, and is only forwarded when streaming.
 func TestResponseCapturer_interimResponses(t *testing.T) {
 	testCases := []struct {
 		desc            string
@@ -216,9 +216,8 @@ func TestResponseCapturer_interimResponses(t *testing.T) {
 	}
 }
 
-// TestResponseCapturer_bufferedInterimHeaders asserts that the headers set for an informational
-// response that has been dropped are served with the final response, as RFC 8297 expects, unless
-// the next handler removed them.
+// TestResponseCapturer_bufferedInterimHeaders asserts that the headers set for a dropped informational
+// response are served with the final one, as RFC 8297 expects, unless removed.
 func TestResponseCapturer_bufferedInterimHeaders(t *testing.T) {
 	writer := &statusSequence{}
 	capturer := newResponseCapturer(writer, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
@@ -251,8 +250,8 @@ func TestResponseCapturer_bufferedServesRemovedUpstreamHeaders(t *testing.T) {
 	assert.Empty(t, recorder.Header().Get("X-Upstream"))
 }
 
-// TestResponseCapturer_streamedTrailers asserts that a streamed response writes to the client header
-// map directly, as the trailers are set on it once the body has been written.
+// TestResponseCapturer_streamedTrailers asserts that a streamed response writes to the client headers
+// directly, where the trailers are set once the body is written.
 func TestResponseCapturer_streamedTrailers(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, false)
@@ -267,8 +266,7 @@ func TestResponseCapturer_streamedTrailers(t *testing.T) {
 	assert.Equal(t, "0", recorder.Result().Trailer.Get("Grpc-Status"))
 }
 
-// hijackableRecorder is a http.Hijacker that always fails to hijack,
-// which is enough to assert what the capturer does before hijacking.
+// hijackableRecorder is a http.Hijacker always failing to hijack, which is enough to test what comes before.
 type hijackableRecorder struct {
 	*httptest.ResponseRecorder
 }
@@ -277,9 +275,8 @@ func (h *hijackableRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, errors.New("cannot hijack")
 }
 
-// statusSequence models what an HTTP server accepts: any number of informational
-// responses, then one final status. httptest.ResponseRecorder cannot be used here, as it
-// latches the first status it is given, informational or not.
+// statusSequence accepts informational statuses then a final one, as a server does.
+// httptest.ResponseRecorder latches the first status, informational or not.
 type statusSequence struct {
 	header http.Header
 	codes  []int

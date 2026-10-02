@@ -14,33 +14,27 @@ import (
 
 var _ middlewares.Stateful = &responseCapturer{}
 
-// FIXME what about the trailers, recorded headers.
-
 // responseCapturer captures the response for the record.
-// While buffering, nothing reaches the client until serve is called,
-// which is what allows the response record to be sent before the response itself.
+// While buffering, nothing reaches the client until serve, so that the record is sent first.
 type responseCapturer struct {
 	rw   http.ResponseWriter
 	dest *destination
 
-	// buffering reports whether the response is held back instead of being streamed to the client.
-	// It ends once the response has been served, from then on the response is streamed.
+	// buffering reports whether the response is held back, and ends once the response is served.
 	buffering bool
-	// headers holds the response headers while the response is buffered. They are kept apart from
-	// the client ones, as the response can end up being replaced by an error that must not carry them.
+	// headers holds the headers while buffering, apart from the client ones,
+	// so that an error replacing the response does not carry them.
 	headers http.Header
-	// recordedHeaders is the snapshot of the headers, taken when the response status is known.
-	recordedHeaders http.Header
+	// sentHeaders is the snapshot taken when the status is written:
+	// the headers set afterwards are trailers, or ignored.
+	sentHeaders http.Header
 
-	// buf holds the whole response body while buffering,
-	// and at most dest.maxRecordBodySize bytes otherwise.
+	// buf holds the whole body while buffering, and the recorded part otherwise.
 	buf bytes.Buffer
 
 	status        int
 	bodyTruncated bool
-	// bodyTooLarge reports whether the buffered body went over dest.maxBodySize,
-	// in which case the response cannot be served any longer.
-	bodyTooLarge bool
+	bodyTooLarge  bool
 }
 
 func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
@@ -50,9 +44,8 @@ func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer
 		buffering: shouldBuffer,
 	}
 
+	// A copy of the client headers, so that the ones set by the previous middlewares are kept.
 	if shouldBuffer {
-		// The headers start as a copy of the client ones, so that the headers set by the middlewares
-		// standing before this one in the chain are part of the record and of the served response.
 		r.headers = rw.Header().Clone()
 		if r.headers == nil {
 			r.headers = make(http.Header)
@@ -71,11 +64,8 @@ func (r *responseCapturer) Header() http.Header {
 }
 
 func (r *responseCapturer) WriteHeader(status int) {
-	// An informational response is interim: the final status is the one that follows, so it must
-	// not be recorded as the status of the response.
-	// A buffered response sends nothing before its record is accepted, and an informational
-	// response carries the response headers, so it is dropped. A client waiting for a
-	// 100 Continue still gets it, as the server sends it on its own when the request body is read.
+	// An informational status is not the status of the response.
+	// A buffered response drops it, as it carries the headers which should not be sent to the client.
 	if status >= 100 && status <= 199 {
 		if !r.buffering {
 			r.rw.WriteHeader(status)
@@ -89,7 +79,7 @@ func (r *responseCapturer) WriteHeader(status int) {
 	}
 
 	r.status = status
-	r.recordedHeaders = r.Header().Clone()
+	r.sentHeaders = r.Header().Clone()
 
 	if !r.buffering {
 		r.rw.WriteHeader(status)
@@ -98,7 +88,6 @@ func (r *responseCapturer) WriteHeader(status int) {
 
 func (r *responseCapturer) Write(p []byte) (int, error) {
 	if r.status == 0 {
-		// The next handler wrote a body without setting a status.
 		r.WriteHeader(http.StatusOK)
 	}
 
@@ -112,7 +101,6 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 }
 
 func (r *responseCapturer) Flush() {
-	// A buffered response cannot be flushed, as nothing has been served yet.
 	if r.buffering {
 		return
 	}
@@ -128,8 +116,8 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
 	}
 
-	// A hijacked connection is out of our control,
-	// so the response cannot be buffered any longer.
+	// A hijacked connection is out of our control, so the response is served first,
+	// as it should not be buffered anymore.
 	if err := r.serve(); err != nil {
 		return nil, nil, err
 	}
@@ -163,9 +151,8 @@ func (r *responseCapturer) capture(p []byte) {
 	r.buf.Write(p)
 }
 
-// bufferBody keeps the whole body, as it still has to be served to the client, unless it goes over
-// dest.maxBodySize. The rest of the body is then discarded rather than refused, as a write error
-// would make the reverse proxy abort the connection, leaving no way to answer the client.
+// bufferBody keeps the whole body, up to dest.maxBodySize. Past it, the body is discarded rather than
+// refused, as a write error would make the reverse proxy abort the connection, with no way to answer.
 func (r *responseCapturer) bufferBody(p []byte) (int, error) {
 	if r.bodyTooLarge {
 		return len(p), nil
@@ -173,7 +160,6 @@ func (r *responseCapturer) bufferBody(p []byte) (int, error) {
 
 	if r.dest.maxBodySize >= 0 && int64(r.buf.Len()+len(p)) > r.dest.maxBodySize {
 		r.bodyTooLarge = true
-		// The memory held by the buffer is released, rather than kept for a response that is not served.
 		r.buf = bytes.Buffer{}
 
 		return len(p), nil
@@ -182,8 +168,8 @@ func (r *responseCapturer) bufferBody(p []byte) (int, error) {
 	return r.buf.Write(p)
 }
 
-// serve serves the buffered response to the client.
-// It is a no-op for a response that has been streamed, or already served.
+// serve serves the buffered response.
+// It is a no-op for a streamed, or already served, response.
 func (r *responseCapturer) serve() error {
 	if !r.buffering {
 		return nil
@@ -193,25 +179,29 @@ func (r *responseCapturer) serve() error {
 		return errBodyTooLarge
 	}
 
-	// Hijack can serve the response before ServeHTTP does, and it must be served only once.
+	// Hijack can serve the response before ServeHTTP does.
 	r.buffering = false
 
-	// The headers are replaced rather than merged, so that a header set upstream that the next
-	// handler removed is not served.
-	clear(r.rw.Header())
-	maps.Copy(r.rw.Header(), r.headers)
+	// Serving the sent headers keeps the declared trailers from being sent as headers too.
+	// Replacing rather than merging drops the upstream headers the next handler removed.
+	if r.sentHeaders != nil {
+		clear(r.rw.Header())
+		maps.Copy(r.rw.Header(), r.sentHeaders)
+	}
 
 	if r.status != 0 {
 		r.rw.WriteHeader(r.status)
 	}
 
-	if r.buf.Len() == 0 {
-		return nil
+	if r.buf.Len() > 0 {
+		if _, err := r.rw.Write(r.buf.Bytes()); err != nil {
+			return fmt.Errorf("writing response: %w", err)
+		}
 	}
 
-	if _, err := r.rw.Write(r.buf.Bytes()); err != nil {
-		return fmt.Errorf("writing response: %w", err)
-	}
+	// The server reads the trailers from the header map once the handler has returned.
+	clear(r.rw.Header())
+	maps.Copy(r.rw.Header(), r.headers)
 
 	return nil
 }
@@ -219,11 +209,10 @@ func (r *responseCapturer) serve() error {
 func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 	status := r.status
 	if status == 0 {
-		// The next handler returned without writing anything.
 		status = http.StatusOK
 	}
 
-	headers := r.recordedHeaders
+	headers := r.sentHeaders
 	if headers == nil {
 		headers = r.Header().Clone()
 	}
@@ -238,7 +227,7 @@ func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 		return rec
 	}
 
-	// When the response is buffered, buf holds the whole body, so the limit is applied here.
+	// While buffering, buf holds the whole body, so the limit is applied here.
 	body := r.buf.Bytes()
 	if r.dest.maxRecordBodySize >= 0 && int64(len(body)) > r.dest.maxRecordBodySize {
 		rec.Body = body[:r.dest.maxRecordBodySize]
