@@ -26,6 +26,10 @@ THE SOFTWARE.
 
 package v1alpha1
 
+import (
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
+)
+
 // TapRequestRecordApplyConfiguration represents a declarative configuration of the TapRequestRecord type for use
 // with apply.
 //
@@ -49,6 +53,11 @@ type TapRequestRecordApplyConfiguration struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	FailClosed *bool `json:"failClosed,omitempty"`
+	// Timeout defines the maximum duration allowed to send a record.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// Default is `10s`.
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
 
 // TapRequestRecordApplyConfiguration constructs a declarative configuration of the TapRequestRecord type for use with
@@ -94,5 +103,13 @@ func (b *TapRequestRecordApplyConfiguration) WithMaxBodySize(value int64) *TapRe
 // If called multiple times, the FailClosed field is set to the value of the last call.
 func (b *TapRequestRecordApplyConfiguration) WithFailClosed(value bool) *TapRequestRecordApplyConfiguration {
 	b.FailClosed = &value
+	return b
+}
+
+// WithTimeout sets the Timeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Timeout field is set to the value of the last call.
+func (b *TapRequestRecordApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapRequestRecordApplyConfiguration {
+	b.Timeout = &value
 	return b
 }

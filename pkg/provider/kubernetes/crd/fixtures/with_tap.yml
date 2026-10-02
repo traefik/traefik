@@ -6,7 +6,6 @@ metadata:
 
 spec:
   tap:
-    timeout: 5s
     request:
       service:
         name: whoami
@@ -15,6 +14,7 @@ spec:
       body: true
       maxBodySize: 1024
       failClosed: true
+      timeout: 5s
     response:
       service:
         name: whoami
@@ -22,3 +22,4 @@ spec:
       body: false
       requestHeaders:
         - X-Request-Id
+      timeout: 30

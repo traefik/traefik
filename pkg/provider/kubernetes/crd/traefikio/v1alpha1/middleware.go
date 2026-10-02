@@ -353,13 +353,6 @@ type Tap struct {
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
 	Response *TapResponseRecord `json:"response,omitempty"`
-	// Timeout defines the maximum duration allowed to send a record.
-	// The value of timeout should be provided in seconds or as a valid duration format,
-	// see https://pkg.go.dev/time#ParseDuration.
-	// Default is `10s`.
-	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
-	// +kubebuilder:validation:XIntOrString
-	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -385,6 +378,13 @@ type TapRequestRecord struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	FailClosed bool `json:"failClosed,omitempty"`
+	// Timeout defines the maximum duration allowed to send a record.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// Default is `10s`.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

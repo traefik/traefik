@@ -738,13 +738,6 @@ func (p *Provider) createTapMiddleware(ctx context.Context, client Client, names
 	}
 
 	var conf dynamic.Tap
-	conf.SetDefaults()
-
-	if tap.Timeout != nil {
-		if err := conf.Timeout.Set(tap.Timeout.String()); err != nil {
-			return nil, nil, fmt.Errorf("setting timeout value: %w", err)
-		}
-	}
 
 	services := make(map[string]*dynamic.Service)
 	cb := configBuilder{
@@ -823,6 +816,12 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 
 	if record.MaxBodySize != nil {
 		conf.MaxBodySize = record.MaxBodySize
+	}
+
+	if record.Timeout != nil {
+		if err := conf.Timeout.Set(record.Timeout.String()); err != nil {
+			return nil, fmt.Errorf("setting timeout value: %w", err)
+		}
 	}
 
 	return conf, nil

@@ -7598,16 +7598,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Body:        true,
 									MaxBodySize: new(int64(1024)),
 									FailClosed:  true,
+									Timeout:     ptypes.Duration(5 * time.Second),
 								},
 								Response: &dynamic.TapResponseRecord{
 									TapRequestRecord: dynamic.TapRequestRecord{
 										Service:     "default-tap-tap-response-service",
 										Path:        "/",
 										MaxBodySize: new(int64(-1)),
+										Timeout:     ptypes.Duration(30 * time.Second),
 									},
 									RequestHeaders: []string{"X-Request-Id"},
 								},
-								Timeout: ptypes.Duration(5 * time.Second),
 							},
 						},
 					},

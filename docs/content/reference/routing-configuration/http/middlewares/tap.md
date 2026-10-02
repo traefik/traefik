@@ -89,7 +89,6 @@ spec:
 |:------|:------------|:--------|:---------|
 | <a id="opt-request" href="#opt-request" title="#opt-request">`request`</a> | Where and how the requests are sent. When omitted, requests are not sent. More information [here](#request). | | No |
 | <a id="opt-response" href="#opt-response" title="#opt-response">`response`</a> | Where and how the responses are sent. When omitted, responses are not sent. More information [here](#response). | | No |
-| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. | 10s | No |
 
 At least one of `request` and `response` must be set.
 
@@ -102,6 +101,7 @@ At least one of `request` and `response` must be set.
 | <a id="opt-body" href="#opt-body" title="#opt-body">`body`</a> | Whether the body is part of the records. | false | No |
 | <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
 | <a id="opt-failClosed" href="#opt-failClosed" title="#opt-failClosed">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### response
 
@@ -113,6 +113,7 @@ At least one of `request` and `response` must be set.
 | <a id="opt-maxBodySize-2" href="#opt-maxBodySize-2" title="#opt-maxBodySize-2">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
 | <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. More information [here](#requestheaders). | | No |
 | <a id="opt-failClosed-2" href="#opt-failClosed-2" title="#opt-failClosed-2">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
+| <a id="opt-timeout-2" href="#opt-timeout-2" title="#opt-timeout-2">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### failClosed
 

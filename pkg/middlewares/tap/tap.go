@@ -82,6 +82,7 @@ type destination struct {
 	maxBodySize    int64
 	requestHeaders []string
 	failClosed     bool
+	timeout        time.Duration
 }
 
 func newDestination(ctx context.Context, config dynamic.TapRequestRecord, serviceBuilder serviceBuilder) (*destination, error) {
@@ -110,6 +111,7 @@ func newDestination(ctx context.Context, config dynamic.TapRequestRecord, servic
 		body:        config.Body,
 		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
 		failClosed:  config.FailClosed,
+		timeout:     time.Duration(config.Timeout),
 	}, nil
 }
 
@@ -119,8 +121,6 @@ type tap struct {
 
 	request  *destination
 	response *destination
-
-	timeout time.Duration
 }
 
 // New creates a new tap middleware.
@@ -132,9 +132,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 	}
 
 	t := &tap{
-		name:    name,
-		next:    next,
-		timeout: time.Duration(config.Timeout),
+		name: name,
+		next: next,
 	}
 
 	var err error
@@ -234,9 +233,9 @@ func (t *tap) send(ctx context.Context, dest *destination, host string, rec *rec
 
 	// A record must be sent even when the client is gone, and must not outlive the configured timeout.
 	sendCtx := context.WithoutCancel(ctx)
-	if t.timeout > 0 {
+	if dest.timeout > 0 {
 		var cancel context.CancelFunc
-		sendCtx, cancel = context.WithTimeout(sendCtx, t.timeout)
+		sendCtx, cancel = context.WithTimeout(sendCtx, dest.timeout)
 
 		defer cancel()
 	}

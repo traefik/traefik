@@ -2570,6 +2570,17 @@ spec:
                         required:
                         - name
                         type: object
+                      timeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Timeout defines the maximum duration allowed to send a record.
+                          The value of timeout should be provided in seconds or as a valid duration format,
+                          see https://pkg.go.dev/time#ParseDuration.
+                          Default is `10s`.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
                     type: object
                   response:
                     description: |-
@@ -2861,18 +2872,18 @@ spec:
                         required:
                         - name
                         type: object
+                      timeout:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          Timeout defines the maximum duration allowed to send a record.
+                          The value of timeout should be provided in seconds or as a valid duration format,
+                          see https://pkg.go.dev/time#ParseDuration.
+                          Default is `10s`.
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
                     type: object
-                  timeout:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    description: |-
-                      Timeout defines the maximum duration allowed to send a record.
-                      The value of timeout should be provided in seconds or as a valid duration format,
-                      see https://pkg.go.dev/time#ParseDuration.
-                      Default is `10s`.
-                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
-                    x-kubernetes-int-or-string: true
                 type: object
             type: object
         required:
