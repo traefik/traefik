@@ -98,8 +98,8 @@ At least one of `request` and `response` must be set.
 |:------|:------------|:--------|:---------|
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | Name of the service the records are sent to. | | Yes |
 | <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Path of the requests sending the records to the service. | / | No |
-| <a id="opt-body" href="#opt-body" title="#opt-body">`body`</a> | Whether the body is part of the records. | false | No |
-| <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
+| <a id="opt-recordBody" href="#opt-recordBody" title="#opt-recordBody">`recordBody`</a> | Whether the body is part of the records. | false | No |
+| <a id="opt-maxRecordBodySize" href="#opt-maxRecordBodySize" title="#opt-maxRecordBodySize">`maxRecordBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxrecordbodysize). | -1 | No |
 | <a id="opt-failClosed" href="#opt-failClosed" title="#opt-failClosed">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
@@ -109,8 +109,8 @@ At least one of `request` and `response` must be set.
 |:------|:------------|:--------|:---------|
 | <a id="opt-service-2" href="#opt-service-2" title="#opt-service-2">`service`</a> | Name of the service the records are sent to. | | Yes |
 | <a id="opt-path-2" href="#opt-path-2" title="#opt-path-2">`path`</a> | Path of the requests sending the records to the service. | / | No |
-| <a id="opt-body-2" href="#opt-body-2" title="#opt-body-2">`body`</a> | Whether the body is part of the records. | false | No |
-| <a id="opt-maxBodySize-2" href="#opt-maxBodySize-2" title="#opt-maxBodySize-2">`maxBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxbodysize). | -1 | No |
+| <a id="opt-recordBody-2" href="#opt-recordBody-2" title="#opt-recordBody-2">`recordBody`</a> | Whether the body is part of the records. | false | No |
+| <a id="opt-maxRecordBodySize-2" href="#opt-maxRecordBodySize-2" title="#opt-maxRecordBodySize-2">`maxRecordBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxrecordbodysize). | -1 | No |
 | <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. More information [here](#requestheaders). | | No |
 | <a id="opt-failClosed-2" href="#opt-failClosed-2" title="#opt-failClosed-2">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
 | <a id="opt-timeout-2" href="#opt-timeout-2" title="#opt-timeout-2">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
@@ -148,10 +148,10 @@ It is typically used to carry a correlation identifier set by a middleware stand
 Headers absent from the request are absent from the record.
 The option does not exist on the `request` records, which already describe the whole request.
 
-### maxBodySize
+### maxRecordBodySize
 
-Bodies are not recorded unless `body` is set to `true`, and they are then kept in memory while a record is built.
-`maxBodySize` bounds that memory, at the cost of truncated records: the record carries the first `maxBodySize`
+Bodies are not recorded unless `recordBody` is set to `true`, and they are then kept in memory while a record is built.
+`maxRecordBodySize` bounds that memory, at the cost of truncated records: the record carries the first `maxRecordBodySize`
 bytes and sets `bodyTruncated` to `true`.
 
 Truncation applies to the record only. The backend always receives the whole request, and the client always
@@ -191,8 +191,8 @@ A record is sent as a `POST` request to the configured service and path, with a 
 | <a id="opt-request-2" href="#opt-request-2" title="#opt-request-2">`request`</a> | Method, URL, host, protocol, remote address, headers and body. Set on `request` records, and on `response` records when `requestHeaders` is set. |
 | <a id="opt-response-2" href="#opt-response-2" title="#opt-response-2">`response`</a> | Status, headers, body, and duration in nanoseconds. Set on `response` records. |
 
-Bodies are part of the records only when `body` is enabled.
-They are base64-encoded, as they are not necessarily valid UTF-8, and carry a `bodyTruncated` flag when they exceed `maxBodySize`.
+Bodies are part of the records only when `recordBody` is enabled.
+They are base64-encoded, as they are not necessarily valid UTF-8, and carry a `bodyTruncated` flag when they exceed `maxRecordBodySize`.
 
 The same information is also carried by two headers, so that a service handling both kinds of records can dispatch
 them without parsing the payload:
@@ -208,5 +208,5 @@ Anything else is treated as a failure to record.
 !!! warning "Sensitive data"
 
     Records carry the headers as they go through Traefik, `Authorization` and `Cookie` included, and the bodies
-    too once `body` is enabled. Restrict what is captured with `body` and `maxBodySize`, and treat the tap
+    too once `recordBody` is enabled. Restrict what is captured with `recordBody` and `maxRecordBodySize`, and treat the tap
     services and their storage as holding production secrets.

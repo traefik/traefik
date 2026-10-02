@@ -35,10 +35,10 @@ package v1alpha1
 type TapApplyConfiguration struct {
 	// Request defines where and how the requests are sent.
 	// When omitted, requests are not sent.
-	Request *TapRequestRecordApplyConfiguration `json:"request,omitempty"`
+	Request *TapRequestApplyConfiguration `json:"request,omitempty"`
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
-	Response *TapResponseRecordApplyConfiguration `json:"response,omitempty"`
+	Response *TapResponseApplyConfiguration `json:"response,omitempty"`
 }
 
 // TapApplyConfiguration constructs a declarative configuration of the Tap type for use with
@@ -50,7 +50,7 @@ func Tap() *TapApplyConfiguration {
 // WithRequest sets the Request field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Request field is set to the value of the last call.
-func (b *TapApplyConfiguration) WithRequest(value *TapRequestRecordApplyConfiguration) *TapApplyConfiguration {
+func (b *TapApplyConfiguration) WithRequest(value *TapRequestApplyConfiguration) *TapApplyConfiguration {
 	b.Request = value
 	return b
 }
@@ -58,7 +58,7 @@ func (b *TapApplyConfiguration) WithRequest(value *TapRequestRecordApplyConfigur
 // WithResponse sets the Response field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Response field is set to the value of the last call.
-func (b *TapApplyConfiguration) WithResponse(value *TapResponseRecordApplyConfiguration) *TapApplyConfiguration {
+func (b *TapApplyConfiguration) WithResponse(value *TapResponseApplyConfiguration) *TapApplyConfiguration {
 	b.Response = value
 	return b
 }

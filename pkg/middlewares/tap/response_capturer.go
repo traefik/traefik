@@ -37,7 +37,7 @@ type responseCapturer struct {
 	recordedHeaders http.Header
 
 	// buf holds the whole response body while buffering,
-	// and at most dest.maxBodySize bytes otherwise.
+	// and at most dest.maxRecordBodySize bytes otherwise.
 	buf bytes.Buffer
 
 	status        int
@@ -139,18 +139,18 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return h.Hijack()
 }
 
-// capture keeps at most dest.maxBodySize bytes of the body for the record.
+// capture keeps at most dest.maxRecordBodySize bytes of the body for the record.
 func (r *responseCapturer) capture(p []byte) {
-	if !r.dest.body {
+	if !r.dest.recordBody {
 		return
 	}
 
-	if r.dest.maxBodySize < 0 {
+	if r.dest.maxRecordBodySize < 0 {
 		r.buf.Write(p)
 		return
 	}
 
-	remaining := r.dest.maxBodySize - int64(r.buf.Len())
+	remaining := r.dest.maxRecordBodySize - int64(r.buf.Len())
 	if remaining <= 0 {
 		r.bodyTruncated = len(p) > 0
 		return
@@ -213,14 +213,14 @@ func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 		Duration: duration,
 	}
 
-	if !r.dest.body {
+	if !r.dest.recordBody {
 		return rec
 	}
 
 	// When the response is buffered, buf holds the whole body, so the limit is applied here.
 	body := r.buf.Bytes()
-	if r.dest.maxBodySize >= 0 && int64(len(body)) > r.dest.maxBodySize {
-		rec.Body = body[:r.dest.maxBodySize]
+	if r.dest.maxRecordBodySize >= 0 && int64(len(body)) > r.dest.maxRecordBodySize {
+		rec.Body = body[:r.dest.maxRecordBodySize]
 		rec.BodyTruncated = true
 
 		return rec

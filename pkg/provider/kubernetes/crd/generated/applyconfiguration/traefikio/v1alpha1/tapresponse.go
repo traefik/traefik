@@ -30,76 +30,76 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// TapResponseRecordApplyConfiguration represents a declarative configuration of the TapResponseRecord type for use
+// TapResponseApplyConfiguration represents a declarative configuration of the TapResponse type for use
 // with apply.
 //
-// TapResponseRecord holds the configuration of the response records sent by the tap middleware.
+// TapResponse holds the configuration of the response records sent by the tap middleware.
 // A response record is configured like a request record, with the request headers on top.
-type TapResponseRecordApplyConfiguration struct {
-	TapRequestRecordApplyConfiguration `json:",inline"`
+type TapResponseApplyConfiguration struct {
+	TapRequestApplyConfiguration `json:",inline"`
 	// RequestHeaders defines the request headers described in the records, along with the request line.
 	// It allows a response record to be understood, and correlated, without the matching request record.
 	RequestHeaders []string `json:"requestHeaders,omitempty"`
 }
 
-// TapResponseRecordApplyConfiguration constructs a declarative configuration of the TapResponseRecord type for use with
+// TapResponseApplyConfiguration constructs a declarative configuration of the TapResponse type for use with
 // apply.
-func TapResponseRecord() *TapResponseRecordApplyConfiguration {
-	return &TapResponseRecordApplyConfiguration{}
+func TapResponse() *TapResponseApplyConfiguration {
+	return &TapResponseApplyConfiguration{}
 }
 
 // WithService sets the Service field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Service field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.Service = value
+func (b *TapResponseApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.Service = value
 	return b
 }
 
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithPath(value string) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.Path = &value
-	return b
-}
-
-// WithBody sets the Body field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Body field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithBody(value bool) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.Body = &value
-	return b
-}
-
-// WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the MaxBodySize field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithMaxBodySize(value int64) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.MaxBodySize = &value
-	return b
-}
-
-// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the FailClosed field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithFailClosed(value bool) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.FailClosed = &value
+func (b *TapResponseApplyConfiguration) WithPath(value string) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.Path = &value
 	return b
 }
 
 // WithTimeout sets the Timeout field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Timeout field is set to the value of the last call.
-func (b *TapResponseRecordApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapResponseRecordApplyConfiguration {
-	b.TapRequestRecordApplyConfiguration.Timeout = &value
+func (b *TapResponseApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.Timeout = &value
+	return b
+}
+
+// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the FailClosed field is set to the value of the last call.
+func (b *TapResponseApplyConfiguration) WithFailClosed(value bool) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.FailClosed = &value
+	return b
+}
+
+// WithRecordBody sets the RecordBody field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RecordBody field is set to the value of the last call.
+func (b *TapResponseApplyConfiguration) WithRecordBody(value bool) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.RecordBody = &value
+	return b
+}
+
+// WithMaxRecordBodySize sets the MaxRecordBodySize field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MaxRecordBodySize field is set to the value of the last call.
+func (b *TapResponseApplyConfiguration) WithMaxRecordBodySize(value int64) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.MaxRecordBodySize = &value
 	return b
 }
 
 // WithRequestHeaders adds the given value to the RequestHeaders field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the RequestHeaders field.
-func (b *TapResponseRecordApplyConfiguration) WithRequestHeaders(values ...string) *TapResponseRecordApplyConfiguration {
+func (b *TapResponseApplyConfiguration) WithRequestHeaders(values ...string) *TapResponseApplyConfiguration {
 	for i := range values {
 		b.RequestHeaders = append(b.RequestHeaders, values[i])
 	}

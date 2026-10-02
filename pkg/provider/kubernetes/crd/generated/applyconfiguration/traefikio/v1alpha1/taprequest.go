@@ -30,46 +30,46 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// TapRequestRecordApplyConfiguration represents a declarative configuration of the TapRequestRecord type for use
+// TapRequestApplyConfiguration represents a declarative configuration of the TapRequest type for use
 // with apply.
 //
-// TapRequestRecord holds the configuration of the request records sent by the tap middleware.
-type TapRequestRecordApplyConfiguration struct {
+// TapRequest holds the configuration of the request records sent by the tap middleware.
+type TapRequestApplyConfiguration struct {
 	// Service defines the reference to a Kubernetes Service the records are sent to.
 	Service *ServiceApplyConfiguration `json:"service,omitempty"`
 	// Path defines the path of the requests sending the records to the service.
 	// Default is `/`.
 	Path *string `json:"path,omitempty"`
-	// Body defines whether the body is part of the records.
-	// Default is `false`.
-	Body *bool `json:"body,omitempty"`
-	// MaxBodySize defines the maximum body size in bytes kept in a record.
-	// A larger body is truncated, and the record is flagged as truncated.
-	// Default is `-1`, which means no limit.
-	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// Timeout defines the maximum duration allowed to send a record.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// Default is `10s`.
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 	// FailClosed defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	FailClosed *bool `json:"failClosed,omitempty"`
-	// Timeout defines the maximum duration allowed to send a record.
-	// The value of timeout should be provided in seconds or as a valid duration format,
-	// see https://pkg.go.dev/time#ParseDuration.
-	// Default is `10s`.
-	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// RecordBody defines whether the body is part of the records.
+	// Default is `false`.
+	RecordBody *bool `json:"recordBody,omitempty"`
+	// MaxRecordBodySize defines the maximum body size in bytes kept in a record.
+	// A larger body is truncated, and the record is flagged as truncated.
+	// Default is `-1`, which means no limit.
+	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty"`
 }
 
-// TapRequestRecordApplyConfiguration constructs a declarative configuration of the TapRequestRecord type for use with
+// TapRequestApplyConfiguration constructs a declarative configuration of the TapRequest type for use with
 // apply.
-func TapRequestRecord() *TapRequestRecordApplyConfiguration {
-	return &TapRequestRecordApplyConfiguration{}
+func TapRequest() *TapRequestApplyConfiguration {
+	return &TapRequestApplyConfiguration{}
 }
 
 // WithService sets the Service field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Service field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapRequestRecordApplyConfiguration {
+func (b *TapRequestApplyConfiguration) WithService(value *ServiceApplyConfiguration) *TapRequestApplyConfiguration {
 	b.Service = value
 	return b
 }
@@ -77,39 +77,39 @@ func (b *TapRequestRecordApplyConfiguration) WithService(value *ServiceApplyConf
 // WithPath sets the Path field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Path field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithPath(value string) *TapRequestRecordApplyConfiguration {
+func (b *TapRequestApplyConfiguration) WithPath(value string) *TapRequestApplyConfiguration {
 	b.Path = &value
-	return b
-}
-
-// WithBody sets the Body field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Body field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithBody(value bool) *TapRequestRecordApplyConfiguration {
-	b.Body = &value
-	return b
-}
-
-// WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the MaxBodySize field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithMaxBodySize(value int64) *TapRequestRecordApplyConfiguration {
-	b.MaxBodySize = &value
-	return b
-}
-
-// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the FailClosed field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithFailClosed(value bool) *TapRequestRecordApplyConfiguration {
-	b.FailClosed = &value
 	return b
 }
 
 // WithTimeout sets the Timeout field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Timeout field is set to the value of the last call.
-func (b *TapRequestRecordApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapRequestRecordApplyConfiguration {
+func (b *TapRequestApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapRequestApplyConfiguration {
 	b.Timeout = &value
+	return b
+}
+
+// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the FailClosed field is set to the value of the last call.
+func (b *TapRequestApplyConfiguration) WithFailClosed(value bool) *TapRequestApplyConfiguration {
+	b.FailClosed = &value
+	return b
+}
+
+// WithRecordBody sets the RecordBody field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RecordBody field is set to the value of the last call.
+func (b *TapRequestApplyConfiguration) WithRecordBody(value bool) *TapRequestApplyConfiguration {
+	b.RecordBody = &value
+	return b
+}
+
+// WithMaxRecordBodySize sets the MaxRecordBodySize field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MaxRecordBodySize field is set to the value of the last call.
+func (b *TapRequestApplyConfiguration) WithMaxRecordBodySize(value int64) *TapRequestApplyConfiguration {
+	b.MaxRecordBodySize = &value
 	return b
 }

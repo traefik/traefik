@@ -33,12 +33,12 @@ func TestNew(t *testing.T) {
 		},
 		{
 			desc:        "destination without service",
-			config:      dynamic.Tap{Request: &dynamic.TapRequestRecord{}},
+			config:      dynamic.Tap{Request: &dynamic.TapRequest{}},
 			expectedErr: "building request destination: service must be defined",
 		},
 		{
 			desc:        "unknown service",
-			config:      dynamic.Tap{Response: &dynamic.TapResponseRecord{TapRequestRecord: dynamic.TapRequestRecord{Service: "unknown"}}},
+			config:      dynamic.Tap{Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "unknown"}}},
 			expectedErr: "building response destination: building tap service handler: service not found",
 		},
 		{
@@ -86,10 +86,10 @@ func TestServeHTTP_records(t *testing.T) {
 	})
 
 	requestConfig := requestRecordConfig()
-	requestConfig.Body = true
+	requestConfig.RecordBody = true
 
 	responseConfig := responseRecordConfig()
-	responseConfig.Body = true
+	responseConfig.RecordBody = true
 
 	handler := newTap(t, dynamic.Tap{
 		Request:  requestConfig,
@@ -188,14 +188,14 @@ func TestServeHTTP_bodyOptions(t *testing.T) {
 			s := &sink{}
 
 			requestConfig := requestRecordConfig()
-			requestConfig.Body = test.body
+			requestConfig.RecordBody = test.body
 			if test.maxBodySize != nil {
-				requestConfig.MaxBodySize = test.maxBodySize
+				requestConfig.MaxRecordBodySize = test.maxBodySize
 			}
 
 			responseConfig := responseRecordConfig()
-			responseConfig.Body = requestConfig.Body
-			responseConfig.MaxBodySize = requestConfig.MaxBodySize
+			responseConfig.RecordBody = requestConfig.RecordBody
+			responseConfig.MaxRecordBodySize = requestConfig.MaxRecordBodySize
 
 			var forwarded string
 			handler := newTap(t, dynamic.Tap{
@@ -762,7 +762,7 @@ func TestServeHTTP_expectContinue(t *testing.T) {
 			t.Parallel()
 
 			requestConfig := requestRecordConfig()
-			requestConfig.Body = test.body
+			requestConfig.RecordBody = test.body
 
 			var forwarded string
 			handler := newTap(t, dynamic.Tap{Request: requestConfig}, http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
@@ -833,16 +833,16 @@ func newTap(t *testing.T, config dynamic.Tap, next http.Handler, builder service
 	return handler
 }
 
-func requestRecordConfig() *dynamic.TapRequestRecord {
-	config := &dynamic.TapRequestRecord{}
+func requestRecordConfig() *dynamic.TapRequest {
+	config := &dynamic.TapRequest{}
 	config.SetDefaults()
 	config.Service = "requests"
 
 	return config
 }
 
-func responseRecordConfig() *dynamic.TapResponseRecord {
-	config := &dynamic.TapResponseRecord{}
+func responseRecordConfig() *dynamic.TapResponse {
+	config := &dynamic.TapResponse{}
 	config.SetDefaults()
 	config.Service = "responses"
 
