@@ -481,6 +481,52 @@ func TestServeHTTP_withheldExpectContinue(t *testing.T) {
 	assert.Equal(t, "ping", string(body))
 }
 
+// TestServeHTTP_timeoutPerDirection asserts that the request and response records are each sent
+// within their own timeout, a zero timeout meaning no limit.
+func TestServeHTTP_timeoutPerDirection(t *testing.T) {
+	requestConfig := requestRecordConfig()
+	requestConfig.Timeout = ptypes.Duration(time.Second)
+
+	responseConfig := responseRecordConfig()
+	responseConfig.Timeout = ptypes.Duration(time.Hour)
+
+	noLimitConfig := responseRecordConfig()
+	noLimitConfig.Service = "unlimited"
+	noLimitConfig.Timeout = 0
+
+	type deadline struct {
+		remaining time.Duration
+		ok        bool
+	}
+
+	deadlines := make(map[string]deadline)
+	builder := serviceBuilderFunc(func(_ context.Context, serviceName string) (http.Handler, error) {
+		return http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+			d, ok := req.Context().Deadline()
+			deadlines[serviceName] = deadline{remaining: time.Until(d), ok: ok}
+		}), nil
+	})
+
+	handler := newTap(t, dynamic.Tap{Request: requestConfig, Response: responseConfig}, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}), builder)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://example.com/foo", http.NoBody))
+
+	handler = newTap(t, dynamic.Tap{Response: noLimitConfig}, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}), builder)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://example.com/foo", http.NoBody))
+
+	require.Contains(t, deadlines, "requests")
+	assert.True(t, deadlines["requests"].ok)
+	assert.Positive(t, deadlines["requests"].remaining)
+	assert.LessOrEqual(t, deadlines["requests"].remaining, time.Second)
+
+	require.Contains(t, deadlines, "responses")
+	assert.True(t, deadlines["responses"].ok)
+	assert.Greater(t, deadlines["responses"].remaining, time.Second)
+	assert.LessOrEqual(t, deadlines["responses"].remaining, time.Hour)
+
+	require.Contains(t, deadlines, "unlimited")
+	assert.False(t, deadlines["unlimited"].ok)
+}
+
 // TestServeHTTP_failClosedPerDirection asserts that the directions fail independently:
 // a response record that cannot be sent does not withhold the response when only the
 // request is failing closed.
@@ -780,8 +826,6 @@ func (s *sink) recorded() []*record {
 
 func newTap(t *testing.T, config dynamic.Tap, next http.Handler, builder serviceBuilder) http.Handler {
 	t.Helper()
-
-	config.Timeout = ptypes.Duration(dynamic.TapDefaultTimeout)
 
 	handler, err := New(context.Background(), next, config, builder, "tapTest")
 	require.NoError(t, err)

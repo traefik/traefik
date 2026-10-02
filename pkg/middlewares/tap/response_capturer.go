@@ -18,8 +18,6 @@ var _ middlewares.Stateful = &responseCapturer{}
 //  to avoid keeping large body, when the body is larger than the configured max size,
 //  an error can be returned.
 
-// FIXME timeout  must be defined for the tap service request and response
-
 // FIXME what about the trailers, recorded headers.
 
 // responseCapturer captures the response for the record.

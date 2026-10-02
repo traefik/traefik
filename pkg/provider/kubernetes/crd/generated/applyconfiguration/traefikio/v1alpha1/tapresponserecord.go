@@ -26,6 +26,10 @@ THE SOFTWARE.
 
 package v1alpha1
 
+import (
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
+)
+
 // TapResponseRecordApplyConfiguration represents a declarative configuration of the TapResponseRecord type for use
 // with apply.
 //
@@ -81,6 +85,14 @@ func (b *TapResponseRecordApplyConfiguration) WithMaxBodySize(value int64) *TapR
 // If called multiple times, the FailClosed field is set to the value of the last call.
 func (b *TapResponseRecordApplyConfiguration) WithFailClosed(value bool) *TapResponseRecordApplyConfiguration {
 	b.TapRequestRecordApplyConfiguration.FailClosed = &value
+	return b
+}
+
+// WithTimeout sets the Timeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Timeout field is set to the value of the last call.
+func (b *TapResponseRecordApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapResponseRecordApplyConfiguration {
+	b.TapRequestRecordApplyConfiguration.Timeout = &value
 	return b
 }
 

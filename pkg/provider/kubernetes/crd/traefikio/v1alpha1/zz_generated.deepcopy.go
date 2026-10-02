@@ -2185,11 +2185,6 @@ func (in *Tap) DeepCopyInto(out *Tap) {
 		*out = new(TapResponseRecord)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Timeout != nil {
-		in, out := &in.Timeout, &out.Timeout
-		*out = new(intstr.IntOrString)
-		**out = **in
-	}
 	return
 }
 
@@ -2210,6 +2205,11 @@ func (in *TapRequestRecord) DeepCopyInto(out *TapRequestRecord) {
 	if in.MaxBodySize != nil {
 		in, out := &in.MaxBodySize, &out.MaxBodySize
 		*out = new(int64)
+		**out = **in
+	}
+	if in.Timeout != nil {
+		in, out := &in.Timeout, &out.Timeout
+		*out = new(intstr.IntOrString)
 		**out = **in
 	}
 	return

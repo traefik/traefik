@@ -19,7 +19,7 @@ const (
 	TapDefaultMaxBodySize int64 = -1
 	// TapDefaultPath is the tap records Path option default value.
 	TapDefaultPath = "/"
-	// TapDefaultTimeout is the Tap.Timeout option default value.
+	// TapDefaultTimeout is the tap records Timeout option default value.
 	TapDefaultTimeout = 10 * time.Second
 )
 
@@ -825,13 +825,6 @@ type Tap struct {
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
 	Response *TapResponseRecord `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
-	// Timeout defines the maximum duration allowed to send a record.
-	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
-}
-
-// SetDefaults sets the default values.
-func (t *Tap) SetDefaults() {
-	t.Timeout = ptypes.Duration(TapDefaultTimeout)
 }
 
 // +k8s:deepcopy-gen=true
@@ -855,12 +848,15 @@ type TapRequestRecord struct {
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
 	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
+	// Timeout defines the maximum duration allowed to send a record.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (t *TapRequestRecord) SetDefaults() {
 	t.Path = TapDefaultPath
 	t.MaxBodySize = new(TapDefaultMaxBodySize)
+	t.Timeout = ptypes.Duration(TapDefaultTimeout)
 }
 
 // +k8s:deepcopy-gen=true

@@ -26,10 +26,6 @@ THE SOFTWARE.
 
 package v1alpha1
 
-import (
-	intstr "k8s.io/apimachinery/pkg/util/intstr"
-)
-
 // TapApplyConfiguration represents a declarative configuration of the Tap type for use
 // with apply.
 //
@@ -43,11 +39,6 @@ type TapApplyConfiguration struct {
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
 	Response *TapResponseRecordApplyConfiguration `json:"response,omitempty"`
-	// Timeout defines the maximum duration allowed to send a record.
-	// The value of timeout should be provided in seconds or as a valid duration format,
-	// see https://pkg.go.dev/time#ParseDuration.
-	// Default is `10s`.
-	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
 
 // TapApplyConfiguration constructs a declarative configuration of the Tap type for use with
@@ -69,13 +60,5 @@ func (b *TapApplyConfiguration) WithRequest(value *TapRequestRecordApplyConfigur
 // If called multiple times, the Response field is set to the value of the last call.
 func (b *TapApplyConfiguration) WithResponse(value *TapResponseRecordApplyConfiguration) *TapApplyConfiguration {
 	b.Response = value
-	return b
-}
-
-// WithTimeout sets the Timeout field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Timeout field is set to the value of the last call.
-func (b *TapApplyConfiguration) WithTimeout(value intstr.IntOrString) *TapApplyConfiguration {
-	b.Timeout = &value
 	return b
 }
