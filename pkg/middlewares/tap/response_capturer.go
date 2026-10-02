@@ -14,10 +14,6 @@ import (
 
 var _ middlewares.Stateful = &responseCapturer{}
 
-// FIXME the request and response should have a max body size option like in the buffering middleware,
-//  to avoid keeping large body, when the body is larger than the configured max size,
-//  an error can be returned.
-
 // FIXME what about the trailers, recorded headers.
 
 // responseCapturer captures the response for the record.
@@ -42,6 +38,9 @@ type responseCapturer struct {
 
 	status        int
 	bodyTruncated bool
+	// bodyTooLarge reports whether the buffered body went over dest.maxBodySize,
+	// in which case the response cannot be served any longer.
+	bodyTooLarge bool
 }
 
 func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
@@ -104,8 +103,7 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 	}
 
 	if r.buffering {
-		// The whole body is kept, as it still has to be served to the client.
-		return r.buf.Write(p)
+		return r.bufferBody(p)
 	}
 
 	r.capture(p)
@@ -165,11 +163,34 @@ func (r *responseCapturer) capture(p []byte) {
 	r.buf.Write(p)
 }
 
+// bufferBody keeps the whole body, as it still has to be served to the client, unless it goes over
+// dest.maxBodySize. The rest of the body is then discarded rather than refused, as a write error
+// would make the reverse proxy abort the connection, leaving no way to answer the client.
+func (r *responseCapturer) bufferBody(p []byte) (int, error) {
+	if r.bodyTooLarge {
+		return len(p), nil
+	}
+
+	if r.dest.maxBodySize >= 0 && int64(r.buf.Len()+len(p)) > r.dest.maxBodySize {
+		r.bodyTooLarge = true
+		// The memory held by the buffer is released, rather than kept for a response that is not served.
+		r.buf = bytes.Buffer{}
+
+		return len(p), nil
+	}
+
+	return r.buf.Write(p)
+}
+
 // serve serves the buffered response to the client.
 // It is a no-op for a response that has been streamed, or already served.
 func (r *responseCapturer) serve() error {
 	if !r.buffering {
 		return nil
+	}
+
+	if r.bodyTooLarge {
+		return errBodyTooLarge
 	}
 
 	// Hijack can serve the response before ServeHTTP does, and it must be served only once.

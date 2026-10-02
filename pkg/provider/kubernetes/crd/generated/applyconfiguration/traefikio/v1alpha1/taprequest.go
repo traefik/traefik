@@ -51,6 +51,12 @@ type TapRequestApplyConfiguration struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	FailClosed *bool `json:"failClosed,omitempty"`
+	// MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
+	// recorded with no maxRecordBodySize, and the response body when it is held back by failClosed.
+	// A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
+	// and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+	// Default is `-1`, which means no limit.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 	// RecordBody defines whether the body is part of the records.
 	// Default is `false`.
 	RecordBody *bool `json:"recordBody,omitempty"`
@@ -95,6 +101,14 @@ func (b *TapRequestApplyConfiguration) WithTimeout(value intstr.IntOrString) *Ta
 // If called multiple times, the FailClosed field is set to the value of the last call.
 func (b *TapRequestApplyConfiguration) WithFailClosed(value bool) *TapRequestApplyConfiguration {
 	b.FailClosed = &value
+	return b
+}
+
+// WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MaxBodySize field is set to the value of the last call.
+func (b *TapRequestApplyConfiguration) WithMaxBodySize(value int64) *TapRequestApplyConfiguration {
+	b.MaxBodySize = &value
 	return b
 }
 

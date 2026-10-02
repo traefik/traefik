@@ -377,6 +377,13 @@ type TapRequest struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	FailClosed bool `json:"failClosed,omitempty"`
+	// MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
+	// recorded with no maxRecordBodySize, and the response body when it is held back by failClosed.
+	// A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
+	// and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 
 	// RecordBody defines whether the body is part of the records.
 	// Default is `false`.

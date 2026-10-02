@@ -38,6 +38,9 @@ const (
 	headerRecordKind = "X-Tap-Record"
 )
 
+// errBodyTooLarge is returned when a body to hold in memory is larger than the configured maximum size.
+var errBodyTooLarge = errors.New("body too large")
+
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
@@ -81,6 +84,7 @@ type destination struct {
 	requestHeaders []string
 	failClosed     bool
 	timeout        time.Duration
+	maxBodySize    int64
 
 	recordBody        bool
 	maxRecordBodySize int64
@@ -111,6 +115,7 @@ func newDestination(ctx context.Context, config dynamic.TapRequest, serviceBuild
 		path:              path,
 		failClosed:        config.FailClosed,
 		timeout:           time.Duration(config.Timeout),
+		maxBodySize:       ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
 		recordBody:        config.RecordBody,
 		maxRecordBodySize: ptr.Deref(config.MaxRecordBodySize, dynamic.TapDefaultMaxRecordBodySize),
 	}, nil
@@ -168,7 +173,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	id, err := newRecordID()
 	if err != nil {
 		logger.Error().Err(err).Msg("Unable to generate a record ID")
-		t.reject(ctx, rw, kindRequest)
+		t.reject(ctx, rw, kindRequest, http.StatusInternalServerError)
 		return
 	}
 
@@ -179,9 +184,15 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if t.request != nil {
 		reqRecord, err := newRequestRecord(req, t.request)
+		if errors.Is(err, errBodyTooLarge) {
+			logger.Error().Err(err).Msg("Unable to record the request")
+			t.reject(ctx, rw, kindRequest, http.StatusRequestEntityTooLarge)
+			return
+		}
+
 		if err != nil {
 			logger.Error().Err(err).Msg("Unable to record the request")
-			t.reject(ctx, rw, kindRequest)
+			t.reject(ctx, rw, kindRequest, http.StatusInternalServerError)
 			return
 		}
 
@@ -189,7 +200,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err := t.send(ctx, t.request, req.Host, rec); err != nil {
 			logger.Error().Err(err).Msg("Unable to send the request record")
 			if t.request.failClosed {
-				t.reject(ctx, rw, kindRequest)
+				t.reject(ctx, rw, kindRequest, http.StatusInternalServerError)
 				return
 			}
 		}
@@ -209,12 +220,18 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	capturer := newResponseCapturer(rw, t.response, t.response.failClosed)
 	t.next.ServeHTTP(capturer, req)
 
+	if capturer.bodyTooLarge {
+		logger.Error().Err(errBodyTooLarge).Msg("Unable to record the response")
+		t.reject(ctx, rw, kindResponse, http.StatusInternalServerError)
+		return
+	}
+
 	rec := &record{ID: id, Kind: kindResponse, Time: start, TraceID: traceID, Request: responseRecordRequest, Response: capturer.record(time.Since(start))}
 
 	if err := t.send(ctx, t.response, req.Host, rec); err != nil {
 		logger.Error().Err(err).Msg("Unable to send the response record")
 		if t.response.failClosed {
-			t.reject(ctx, rw, kindResponse)
+			t.reject(ctx, rw, kindResponse, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -264,9 +281,9 @@ func (t *tap) send(ctx context.Context, dest *destination, host string, rec *rec
 	return nil
 }
 
-func (t *tap) reject(ctx context.Context, rw http.ResponseWriter, kind string) {
+func (t *tap) reject(ctx context.Context, rw http.ResponseWriter, kind string, status int) {
 	observability.SetStatusErrorf(ctx, "Unable to record the %s", kind)
-	http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	http.Error(rw, http.StatusText(status), status)
 }
 
 // describeRequest describes the request with the given headers only, for a record that is not the
@@ -303,7 +320,7 @@ func newRequestRecord(req *http.Request, dest *destination) (*requestRecord, err
 		return rec, nil
 	}
 
-	body, truncated, err := readBody(req, dest.maxRecordBodySize)
+	body, truncated, err := readBody(req, dest.maxRecordBodySize, dest.maxBodySize)
 	if err != nil {
 		return nil, fmt.Errorf("reading request body: %w", err)
 	}
@@ -316,9 +333,16 @@ func newRequestRecord(req *http.Request, dest *destination) (*requestRecord, err
 
 // readBody reads at most maxRecordBodySize bytes from the request body, and reports whether it has been truncated.
 // The request body is replaced by an equivalent one, so that the next handler still reads it whole.
-func readBody(req *http.Request, maxRecordBodySize int64) ([]byte, bool, error) {
+// When the whole body is read, it is held in memory, so a body larger than maxBodySize is rejected with errBodyTooLarge.
+func readBody(req *http.Request, maxRecordBodySize, maxBodySize int64) ([]byte, bool, error) {
 	if req.Body == nil || req.Body == http.NoBody || maxRecordBodySize == 0 {
 		return nil, false, nil
+	}
+
+	// A body announced as too large is rejected before being read, so that a client waiting
+	// for a 100 Continue gets the rejection instead.
+	if maxRecordBodySize < 0 && maxBodySize >= 0 && req.ContentLength > maxBodySize {
+		return nil, false, errBodyTooLarge
 	}
 
 	// Reading the body is what makes Traefik answer an Expect: 100-continue, so the
@@ -329,9 +353,19 @@ func readBody(req *http.Request, maxRecordBodySize int64) ([]byte, bool, error) 
 	}
 
 	if maxRecordBodySize < 0 {
-		body, err := io.ReadAll(req.Body)
+		reader := io.Reader(req.Body)
+		if maxBodySize >= 0 {
+			// One byte more than the limit is read, to tell a body at the limit from a larger one.
+			reader = io.LimitReader(req.Body, maxBodySize+1)
+		}
+
+		body, err := io.ReadAll(reader)
 		if err != nil {
 			return nil, false, fmt.Errorf("reading request body: %w", err)
+		}
+
+		if maxBodySize >= 0 && int64(len(body)) > maxBodySize {
+			return nil, false, errBodyTooLarge
 		}
 
 		req.Body = replayBody(bytes.NewReader(body), req.Body)
