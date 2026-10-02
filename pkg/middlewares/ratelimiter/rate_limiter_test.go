@@ -154,6 +154,85 @@ func TestNewRateLimiter(t *testing.T) {
 	}
 }
 
+func TestNewRateLimiter_ttl(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      dynamic.RateLimit
+		expectedTTL int
+	}{
+		{
+			desc: "no ratelimit on Average == 0",
+			config: dynamic.RateLimit{
+				Average: 0,
+				Burst:   10,
+			},
+			expectedTTL: 2,
+		},
+		{
+			desc: "high rate, bucket refills within the default ttl",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+			},
+			expectedTTL: 2,
+		},
+		{
+			desc: "high rate, large burst",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1000,
+			},
+			expectedTTL: 10,
+		},
+		{
+			desc: "low rate, burst of 1",
+			config: dynamic.RateLimit{
+				Average: 30,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   1,
+			},
+			expectedTTL: 3,
+		},
+		{
+			desc: "low rate, large burst",
+			config: dynamic.RateLimit{
+				Average: 30,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   30,
+			},
+			expectedTTL: 60,
+		},
+		{
+			desc: "low rate, refill time is rounded up",
+			config: dynamic.RateLimit{
+				Average: 7,
+				Period:  ptypes.Duration(10 * time.Second),
+				Burst:   5,
+			},
+			expectedTTL: 8,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			require.NoError(t, err)
+
+			rtl, ok := h.(*rateLimiter)
+			require.True(t, ok)
+
+			limiter, ok := rtl.limiter.(*inMemoryRateLimiter)
+			require.True(t, ok)
+
+			assert.Equal(t, test.expectedTTL, limiter.ttl)
+		})
+	}
+}
+
 func TestInMemoryRateLimit(t *testing.T) {
 	testCases := []struct {
 		desc         string
