@@ -28,7 +28,7 @@ func TestResponseCapturer_streamed(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, recorder.Code)
 	assert.Equal(t, "pong", recorder.Body.String())
 	assert.Equal(t, "yes", recorder.Header().Get("X-Backend"))
-	assert.False(t, capturer.shouldBuffer)
+	assert.False(t, capturer.buffering)
 
 	capturer.Flush()
 	assert.True(t, recorder.Flushed)
@@ -56,7 +56,7 @@ func TestResponseCapturer_withheld(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Empty(t, recorder.Body.String())
 	assert.Empty(t, recorder.Header().Get("X-Backend"))
-	assert.True(t, capturer.shouldBuffer)
+	assert.True(t, capturer.buffering)
 
 	// A withheld response cannot be flushed.
 	capturer.Flush()
@@ -71,7 +71,7 @@ func TestResponseCapturer_withheld(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, recorder.Code)
 	assert.Equal(t, "pong", recorder.Body.String())
 	assert.Equal(t, "yes", recorder.Header().Get("X-Backend"))
-	assert.False(t, capturer.shouldBuffer)
+	assert.False(t, capturer.buffering)
 }
 
 func TestResponseCapturer_withheldRecordsHeadersSetUpstream(t *testing.T) {
@@ -140,7 +140,7 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Equal(t, "pong", recorder.Body.String())
-	assert.False(t, capturer.shouldBuffer)
+	assert.False(t, capturer.buffering)
 
 	// Once hijacked, the response is streamed.
 	_, err = capturer.Write([]byte("ping"))
