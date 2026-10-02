@@ -119,8 +119,8 @@ require (
 	knative.dev/pkg v0.0.0-20251216153728-9c8140b780d1
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.24.1
-	sigs.k8s.io/gateway-api v1.6.1
-	sigs.k8s.io/gateway-api/conformance v1.6.1
+	sigs.k8s.io/gateway-api v1.6.2
+	sigs.k8s.io/gateway-api/conformance v1.6.2
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
 	sigs.k8s.io/yaml v1.6.0
 )

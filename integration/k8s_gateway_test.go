@@ -40,8 +40,8 @@ func (s *GatewayAPISuite) TestGatewayConfiguration() {
 			tcpRoute:    "./fixtures/k8s-gateway/03-tcproute-v1alpha2.yml",
 		},
 		{
-			crdVersion:  "v1.6.1",
-			crdManifest: "./fixtures/k8s-gateway/00-experimental-v1.6.1.yml",
+			crdVersion:  "v1.6.2",
+			crdManifest: "./fixtures/k8s-gateway/00-experimental-v1.6.2.yml",
 			tcpRoute:    "./fixtures/k8s-gateway/03-tcproute-v1.yml",
 		},
 	}

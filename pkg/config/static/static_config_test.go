@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -473,6 +474,102 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					"admin":     {Address: ":8081"},
 					"traefik":   {Address: ":8080"},
 					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, missing, created with defaults",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						Transport: &EntryPointsTransport{
+							LifeCycle: &LifeCycle{
+								GraceTimeOut: 10000000000,
+							},
+							RespondingTimeouts: &RespondingTimeouts{
+								ReadTimeout: 60000000000,
+								IdleTimeout: 180000000000,
+							},
+						},
+						ForwardedHeaders: &ForwardedHeaders{},
+						HTTP: HTTPConfig{
+							SanitizePath:   new(true),
+							MaxHeaderBytes: 1048576,
+						},
+						HTTP2: &HTTP2Config{
+							MaxConcurrentStreams:      250,
+							MaxDecoderHeaderTableSize: 4096,
+							MaxEncoderHeaderTableSize: 4096,
+						},
+						UDP: &UDPConfig{
+							Timeout: 3000000000,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no address, default address set and options kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						HTTP:    HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, address set, address kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no internal service enabled, default address set",
+			conf: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8080"},
 				},
 			},
 		},
