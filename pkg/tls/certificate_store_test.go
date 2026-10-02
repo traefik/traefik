@@ -112,6 +112,59 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 	}
 }
 
+func TestGetBestACMEChallengeCertificate(t *testing.T) {
+	cert := &tls.Certificate{}
+
+	testCases := []struct {
+		desc                string
+		serverName          string
+		certDomain          string
+		expectedCertificate *tls.Certificate
+	}{
+		{
+			desc:                "IPv4 reverse address",
+			serverName:          "1.2.0.192.in-addr.arpa.",
+			certDomain:          "192.0.2.1",
+			expectedCertificate: cert,
+		},
+		{
+			desc:                "IPv6 reverse address",
+			serverName:          "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
+			certDomain:          "2001:db8::1",
+			expectedCertificate: cert,
+		},
+		{
+			desc:                "different IPv6 reverse address",
+			serverName:          "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.",
+			certDomain:          "2001:db8::2",
+			expectedCertificate: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			certificates := map[string]*CertificateData{
+				test.certDomain: {Certificate: cert},
+			}
+			regularStore := NewCertificateStore(nil)
+			regularStore.DynamicCerts.Set(certificates)
+			acmeStore := NewCertificateStore(nil)
+			acmeStore.DynamicCerts.Set(certificates)
+			clientHello := &tls.ClientHelloInfo{ServerName: test.serverName}
+
+			assert.Nil(t, regularStore.GetBestCertificate(clientHello))
+			actual := acmeStore.getBestACMEChallengeCertificate(clientHello)
+			if test.expectedCertificate == nil {
+				assert.Nil(t, actual)
+				return
+			}
+			assert.Same(t, test.expectedCertificate, actual)
+		})
+	}
+}
+
 func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	replacement := "wildcard"
 	if uppercase {
