@@ -101,6 +101,7 @@ At least one of `request` and `response` must be set.
 | <a id="opt-recordBody" href="#opt-recordBody" title="#opt-recordBody">`recordBody`</a> | Whether the body is part of the records. | false | No |
 | <a id="opt-maxRecordBodySize" href="#opt-maxRecordBodySize" title="#opt-maxRecordBodySize">`maxRecordBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxrecordbodysize). | -1 | No |
 | <a id="opt-failClosed" href="#opt-failClosed" title="#opt-failClosed">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
+| <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Maximum size in bytes of a request body held whole in memory, which happens when `recordBody` is set with no `maxRecordBodySize`. A larger request is rejected with a `413 Request Entity Too Large` without reaching the backend, and is not recorded. A negative value means no limit. | -1 | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### response
@@ -113,6 +114,7 @@ At least one of `request` and `response` must be set.
 | <a id="opt-maxRecordBodySize-2" href="#opt-maxRecordBodySize-2" title="#opt-maxRecordBodySize-2">`maxRecordBodySize`</a> | Maximum body size in bytes kept in a record. A larger body is truncated, and the record is flagged as truncated. A negative value means no limit. More information [here](#maxrecordbodysize). | -1 | No |
 | <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. More information [here](#requestheaders). | | No |
 | <a id="opt-failClosed-2" href="#opt-failClosed-2" title="#opt-failClosed-2">`failClosed`</a> | Rejects the request when the record cannot be sent. More information [here](#failclosed). | false | No |
+| <a id="opt-maxBodySize-2" href="#opt-maxBodySize-2" title="#opt-maxBodySize-2">`maxBodySize`</a> | Maximum size in bytes of a response body held back by `failClosed`. A larger response is replaced by a `500 Internal Server Error`, and is not recorded. A negative value means no limit. | -1 | No |
 | <a id="opt-timeout-2" href="#opt-timeout-2" title="#opt-timeout-2">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### failClosed
@@ -131,10 +133,10 @@ The guarantee comes with two consequences:
 
 - The client latency and availability are coupled to the tap service. Deploying it close to Traefik, as a sidecar,
   keeps that coupling small.
-- A response failing closed is held until its record is accepted, which means it is buffered whole in memory and
-  cannot be flushed as it goes. Do not set `failClosed` on the `response` records of routes serving large payloads or
-  streamed responses (Server-Sent Events, long polling). Hijacked connections, such as WebSocket upgrades, are served
-  as usual, and the record is then sent on a best-effort basis.
+- A response failing closed is held until its record is accepted, which means it is buffered whole in memory, up to
+  `maxBodySize`, and cannot be flushed as it goes. Do not set `failClosed` on the `response` records of routes serving
+  large payloads or streamed responses (Server-Sent Events, long polling). Hijacked connections, such as WebSocket
+  upgrades, are served as usual, and the record is then sent on a best-effort basis.
 
 ### requestHeaders
 

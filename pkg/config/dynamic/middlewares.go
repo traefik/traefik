@@ -15,6 +15,8 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
+	// TapDefaultMaxBodySize is the tap records MaxBodySize option default value.
+	TapDefaultMaxBodySize int64 = -1
 	// TapDefaultMaxRecordBodySize is the tap records MaxRecordBodySize option default value.
 	TapDefaultMaxRecordBodySize int64 = -1
 	// TapDefaultPath is the tap records Path option default value.
@@ -844,7 +846,12 @@ type TapRequest struct {
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
 	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
-
+	// MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
+	// recorded with no MaxRecordBodySize, and the response body when it is held back by FailClosed.
+	// A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
+	// and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+	// A negative value means no limit.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
 
 	// RecordBody defines whether the body is part of the records.
 	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
@@ -857,6 +864,7 @@ type TapRequest struct {
 // SetDefaults sets the default values.
 func (t *TapRequest) SetDefaults() {
 	t.Path = TapDefaultPath
+	t.MaxBodySize = new(TapDefaultMaxBodySize)
 	t.MaxRecordBodySize = new(TapDefaultMaxRecordBodySize)
 	t.Timeout = ptypes.Duration(TapDefaultTimeout)
 }

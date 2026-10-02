@@ -814,6 +814,10 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 		conf.Path = record.Path
 	}
 
+	if record.MaxBodySize != nil {
+		conf.MaxBodySize = record.MaxBodySize
+	}
+
 	if record.MaxRecordBodySize != nil {
 		conf.MaxRecordBodySize = record.MaxRecordBodySize
 	}
