@@ -262,6 +262,15 @@ func (c connWithTimeouts) Write(b []byte) (n int, err error) {
 		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
 	}
 
+	// While a connection waits in the idle pool, the transport read loop is already blocked in
+	// Read, so the read deadline is anchored to the moment the connection went idle rather than
+	// to the request being sent now. Re-arming it here gives the response the full readTimeout,
+	// instead of only what is left of the idle period, which would otherwise time out a request
+	// the backend goes on to serve normally.
+	if c.readTimeout > 0 {
+		_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+	}
+
 	n, err = c.Conn.Write(b)
 	if err != nil {
 		return n, err
