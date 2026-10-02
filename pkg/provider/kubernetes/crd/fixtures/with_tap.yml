@@ -11,15 +11,15 @@ spec:
         name: whoami
         port: 80
       path: /records/requests
-      body: true
-      maxBodySize: 1024
+      recordBody: true
+      maxRecordBodySize: 1024
       failClosed: true
       timeout: 5s
     response:
       service:
         name: whoami
         port: 80
-      body: false
+      recordBody: false
       requestHeaders:
         - X-Request-Id
       timeout: 30

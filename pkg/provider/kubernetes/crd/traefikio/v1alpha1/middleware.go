@@ -349,35 +349,21 @@ type Compress struct {
 type Tap struct {
 	// Request defines where and how the requests are sent.
 	// When omitted, requests are not sent.
-	Request *TapRequestRecord `json:"request,omitempty"`
+	Request *TapRequest `json:"request,omitempty"`
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
-	Response *TapResponseRecord `json:"response,omitempty"`
+	Response *TapResponse `json:"response,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// TapRequestRecord holds the configuration of the request records sent by the tap middleware.
-type TapRequestRecord struct {
+// TapRequest holds the configuration of the request records sent by the tap middleware.
+type TapRequest struct {
 	// Service defines the reference to a Kubernetes Service the records are sent to.
 	Service Service `json:"service,omitempty"`
 	// Path defines the path of the requests sending the records to the service.
 	// Default is `/`.
 	Path string `json:"path,omitempty"`
-	// Body defines whether the body is part of the records.
-	// Default is `false`.
-	Body bool `json:"body,omitempty"`
-	// MaxBodySize defines the maximum body size in bytes kept in a record.
-	// A larger body is truncated, and the record is flagged as truncated.
-	// Default is `-1`, which means no limit.
-	// +kubebuilder:validation:Minimum=-1
-	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
-	// FailClosed defines whether the record is sent before the data it describes is handed over:
-	// the request record before the request reaches the backend,
-	// and the response record before the response reaches the client.
-	// When the record cannot be sent, the request is rejected with an Internal Server Error.
-	// Default is `false`.
-	FailClosed bool `json:"failClosed,omitempty"`
 	// Timeout defines the maximum duration allowed to send a record.
 	// The value of timeout should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
@@ -385,14 +371,29 @@ type TapRequestRecord struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// FailClosed defines whether the record is sent before the data it describes is handed over:
+	// the request record before the request reaches the backend,
+	// and the response record before the response reaches the client.
+	// When the record cannot be sent, the request is rejected with an Internal Server Error.
+	// Default is `false`.
+	FailClosed bool `json:"failClosed,omitempty"`
+
+	// RecordBody defines whether the body is part of the records.
+	// Default is `false`.
+	RecordBody bool `json:"recordBody,omitempty"`
+	// MaxRecordBodySize defines the maximum body size in bytes kept in a record.
+	// A larger body is truncated, and the record is flagged as truncated.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// TapResponseRecord holds the configuration of the response records sent by the tap middleware.
+// TapResponse holds the configuration of the response records sent by the tap middleware.
 // A response record is configured like a request record, with the request headers on top.
-type TapResponseRecord struct {
-	TapRequestRecord `json:",inline"`
+type TapResponse struct {
+	TapRequest `json:",inline"`
 
 	// RequestHeaders defines the request headers described in the records, along with the request line.
 	// It allows a response record to be understood, and correlated, without the matching request record.

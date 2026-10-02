@@ -78,14 +78,15 @@ type responseRecord struct {
 type destination struct {
 	handler        http.Handler
 	path           string
-	body           bool
-	maxBodySize    int64
 	requestHeaders []string
 	failClosed     bool
 	timeout        time.Duration
+
+	recordBody        bool
+	maxRecordBodySize int64
 }
 
-func newDestination(ctx context.Context, config dynamic.TapRequestRecord, serviceBuilder serviceBuilder) (*destination, error) {
+func newDestination(ctx context.Context, config dynamic.TapRequest, serviceBuilder serviceBuilder) (*destination, error) {
 	if config.Service == "" {
 		return nil, errors.New("service must be defined")
 	}
@@ -106,12 +107,12 @@ func newDestination(ctx context.Context, config dynamic.TapRequestRecord, servic
 	}
 
 	return &destination{
-		handler:     handler,
-		path:        path,
-		body:        config.Body,
-		maxBodySize: ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
-		failClosed:  config.FailClosed,
-		timeout:     time.Duration(config.Timeout),
+		handler:           handler,
+		path:              path,
+		failClosed:        config.FailClosed,
+		timeout:           time.Duration(config.Timeout),
+		recordBody:        config.RecordBody,
+		maxRecordBodySize: ptr.Deref(config.MaxRecordBodySize, dynamic.TapDefaultMaxRecordBodySize),
 	}, nil
 }
 
@@ -144,7 +145,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 	}
 
 	if config.Response != nil {
-		if t.response, err = newDestination(ctx, config.Response.TapRequestRecord, serviceBuilder); err != nil {
+		if t.response, err = newDestination(ctx, config.Response.TapRequest, serviceBuilder); err != nil {
 			return nil, fmt.Errorf("building response destination: %w", err)
 		}
 
@@ -298,11 +299,11 @@ func newRequestRecord(req *http.Request, dest *destination) (*requestRecord, err
 		Headers:    req.Header.Clone(),
 	}
 
-	if !dest.body {
+	if !dest.recordBody {
 		return rec, nil
 	}
 
-	body, truncated, err := readBody(req, dest.maxBodySize)
+	body, truncated, err := readBody(req, dest.maxRecordBodySize)
 	if err != nil {
 		return nil, fmt.Errorf("reading request body: %w", err)
 	}
@@ -313,10 +314,10 @@ func newRequestRecord(req *http.Request, dest *destination) (*requestRecord, err
 	return rec, nil
 }
 
-// readBody reads at most maxBodySize bytes from the request body, and reports whether it has been truncated.
+// readBody reads at most maxRecordBodySize bytes from the request body, and reports whether it has been truncated.
 // The request body is replaced by an equivalent one, so that the next handler still reads it whole.
-func readBody(req *http.Request, maxBodySize int64) ([]byte, bool, error) {
-	if req.Body == nil || req.Body == http.NoBody || maxBodySize == 0 {
+func readBody(req *http.Request, maxRecordBodySize int64) ([]byte, bool, error) {
+	if req.Body == nil || req.Body == http.NoBody || maxRecordBodySize == 0 {
 		return nil, false, nil
 	}
 
@@ -327,7 +328,7 @@ func readBody(req *http.Request, maxBodySize int64) ([]byte, bool, error) {
 		req.Header.Del("Expect")
 	}
 
-	if maxBodySize < 0 {
+	if maxRecordBodySize < 0 {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, false, fmt.Errorf("reading request body: %w", err)
@@ -339,14 +340,14 @@ func readBody(req *http.Request, maxBodySize int64) ([]byte, bool, error) {
 	}
 
 	// One byte more than the limit is read, to tell a body at the limit from a truncated one.
-	buf := make([]byte, maxBodySize+1)
+	buf := make([]byte, maxRecordBodySize+1)
 	n, err := io.ReadFull(req.Body, buf)
 	switch {
 	// The whole buffer has been filled, which means the body is larger than the limit.
 	// The bytes already read are put back in front of the body, so that the next handler still reads it whole.
 	case err == nil:
 		req.Body = replayBody(io.MultiReader(bytes.NewReader(buf[:n]), req.Body), req.Body)
-		return buf[:maxBodySize], true, nil
+		return buf[:maxRecordBodySize], true, nil
 
 	// io.EOF happens with HTTP/3, where the end of the body is framed at the stream
 	// level rather than declared via Content-Length, so a bodyless request arrives

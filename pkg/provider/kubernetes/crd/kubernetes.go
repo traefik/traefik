@@ -758,14 +758,14 @@ func (p *Provider) createTapMiddleware(ctx context.Context, client Client, names
 	}
 
 	if tap.Response != nil {
-		record, err := createTapRecord(ctx, cb, namespace, id+"-tap-response-service", tap.Response.TapRequestRecord, services)
+		record, err := createTapRecord(ctx, cb, namespace, id+"-tap-response-service", tap.Response.TapRequest, services)
 		if err != nil {
 			return nil, nil, fmt.Errorf("creating tap response record: %w", err)
 		}
 
-		conf.Response = &dynamic.TapResponseRecord{
-			TapRequestRecord: *record,
-			RequestHeaders:   tap.Response.RequestHeaders,
+		conf.Response = &dynamic.TapResponse{
+			TapRequest:     *record,
+			RequestHeaders: tap.Response.RequestHeaders,
 		}
 	}
 
@@ -792,16 +792,16 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	return &dynamic.Chain{Middlewares: mds}, nil
 }
 
-func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKey string, record traefikv1alpha1.TapRequestRecord, services map[string]*dynamic.Service) (*dynamic.TapRequestRecord, error) {
+func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKey string, record traefikv1alpha1.TapRequest, services map[string]*dynamic.Service) (*dynamic.TapRequest, error) {
 	serviceName, service, err := cb.nameAndService(ctx, namespace, record.Service.LoadBalancerSpec, serviceKey)
 	if err != nil {
 		return nil, err
 	}
 
-	conf := &dynamic.TapRequestRecord{}
+	conf := &dynamic.TapRequest{}
 	conf.SetDefaults()
 
-	conf.Body = record.Body
+	conf.RecordBody = record.RecordBody
 	conf.FailClosed = record.FailClosed
 
 	conf.Service = serviceName
@@ -814,8 +814,8 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 		conf.Path = record.Path
 	}
 
-	if record.MaxBodySize != nil {
-		conf.MaxBodySize = record.MaxBodySize
+	if record.MaxRecordBodySize != nil {
+		conf.MaxRecordBodySize = record.MaxRecordBodySize
 	}
 
 	if record.Timeout != nil {

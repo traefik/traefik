@@ -15,8 +15,8 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
-	// TapDefaultMaxBodySize is the tap records MaxBodySize option default value.
-	TapDefaultMaxBodySize int64 = -1
+	// TapDefaultMaxRecordBodySize is the tap records MaxRecordBodySize option default value.
+	TapDefaultMaxRecordBodySize int64 = -1
 	// TapDefaultPath is the tap records Path option default value.
 	TapDefaultPath = "/"
 	// TapDefaultTimeout is the tap records Timeout option default value.
@@ -821,26 +821,22 @@ type StripPrefixRegex struct {
 type Tap struct {
 	// Request defines where and how the requests are sent.
 	// When omitted, requests are not sent.
-	Request *TapRequestRecord `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
+	Request *TapRequest `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
 	// Response defines where and how the responses are sent.
 	// When omitted, responses are not sent.
-	Response *TapResponseRecord `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
+	Response *TapResponse `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// TapRequestRecord holds the configuration of the request records sent by the tap middleware.
-type TapRequestRecord struct {
+// TapRequest holds the configuration of the request records sent by the tap middleware.
+type TapRequest struct {
 	// Service defines the name of the service the records are sent to.
 	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	// Path defines the path of the requests sending the records to the service.
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
-	// Body defines whether the body is part of the records.
-	Body bool `json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty" export:"true"`
-	// MaxBodySize defines the maximum body size in bytes kept in a record.
-	// A larger body is truncated, and the record is flagged as truncated.
-	// A negative value means no limit.
-	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	// Timeout defines the maximum duration allowed to send a record.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	// FailClosed defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
@@ -848,23 +844,29 @@ type TapRequestRecord struct {
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
 	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
-	// Timeout defines the maximum duration allowed to send a record.
-	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+
+
+	// RecordBody defines whether the body is part of the records.
+	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
+	// MaxRecordBodySize defines the maximum body size in bytes kept in a record.
+	// A larger body is truncated, and the record is flagged as truncated.
+	// A negative value means no limit.
+	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty" toml:"maxRecordBodySize,omitempty" yaml:"maxRecordBodySize,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (t *TapRequestRecord) SetDefaults() {
+func (t *TapRequest) SetDefaults() {
 	t.Path = TapDefaultPath
-	t.MaxBodySize = new(TapDefaultMaxBodySize)
+	t.MaxRecordBodySize = new(TapDefaultMaxRecordBodySize)
 	t.Timeout = ptypes.Duration(TapDefaultTimeout)
 }
 
 // +k8s:deepcopy-gen=true
 
-// TapResponseRecord holds the configuration of the response records sent by the tap middleware.
+// TapResponse holds the configuration of the response records sent by the tap middleware.
 // A response record is configured like a request record, with the request headers on top.
-type TapResponseRecord struct {
-	TapRequestRecord `json:",inline" yaml:",inline" export:"true"`
+type TapResponse struct {
+	TapRequest `json:",inline" yaml:",inline" export:"true"`
 
 	// RequestHeaders defines the request headers described in the records, along with the request line.
 	// It allows a response record to be understood, and correlated, without the matching request record.

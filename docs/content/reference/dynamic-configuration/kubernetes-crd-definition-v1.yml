@@ -2291,11 +2291,6 @@ spec:
                       Request defines where and how the requests are sent.
                       When omitted, requests are not sent.
                     properties:
-                      body:
-                        description: |-
-                          Body defines whether the body is part of the records.
-                          Default is `false`.
-                        type: boolean
                       failClosed:
                         description: |-
                           FailClosed defines whether the record is sent before the data it describes is handed over:
@@ -2304,9 +2299,9 @@ spec:
                           When the record cannot be sent, the request is rejected with an Internal Server Error.
                           Default is `false`.
                         type: boolean
-                      maxBodySize:
+                      maxRecordBodySize:
                         description: |-
-                          MaxBodySize defines the maximum body size in bytes kept in a record.
+                          MaxRecordBodySize defines the maximum body size in bytes kept in a record.
                           A larger body is truncated, and the record is flagged as truncated.
                           Default is `-1`, which means no limit.
                         format: int64
@@ -2317,6 +2312,11 @@ spec:
                           Path defines the path of the requests sending the records to the service.
                           Default is `/`.
                         type: string
+                      recordBody:
+                        description: |-
+                          RecordBody defines whether the body is part of the records.
+                          Default is `false`.
+                        type: boolean
                       service:
                         description: Service defines the reference to a Kubernetes
                           Service the records are sent to.
@@ -2586,11 +2586,6 @@ spec:
                       Response defines where and how the responses are sent.
                       When omitted, responses are not sent.
                     properties:
-                      body:
-                        description: |-
-                          Body defines whether the body is part of the records.
-                          Default is `false`.
-                        type: boolean
                       failClosed:
                         description: |-
                           FailClosed defines whether the record is sent before the data it describes is handed over:
@@ -2599,9 +2594,9 @@ spec:
                           When the record cannot be sent, the request is rejected with an Internal Server Error.
                           Default is `false`.
                         type: boolean
-                      maxBodySize:
+                      maxRecordBodySize:
                         description: |-
-                          MaxBodySize defines the maximum body size in bytes kept in a record.
+                          MaxRecordBodySize defines the maximum body size in bytes kept in a record.
                           A larger body is truncated, and the record is flagged as truncated.
                           Default is `-1`, which means no limit.
                         format: int64
@@ -2612,6 +2607,11 @@ spec:
                           Path defines the path of the requests sending the records to the service.
                           Default is `/`.
                         type: string
+                      recordBody:
+                        description: |-
+                          RecordBody defines whether the body is part of the records.
+                          Default is `false`.
+                        type: boolean
                       requestHeaders:
                         description: |-
                           RequestHeaders defines the request headers described in the records, along with the request line.
