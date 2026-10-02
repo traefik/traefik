@@ -7573,6 +7573,98 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with tap middleware",
+			paths: []string{"services.yml", "with_tap.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-tap": {
+							Tap: &dynamic.Tap{
+								Request: &dynamic.TapRequest{
+									Service:           "default-tap-tap-request-service",
+									Path:              "/records/requests",
+									RecordBody:        true,
+									MaxRecordBodySize: new(int64(1024)),
+									MaxBodySize:       new(int64(-1)),
+									FailClosed:        true,
+									Timeout:           ptypes.Duration(5 * time.Second),
+								},
+								Response: &dynamic.TapResponse{
+									TapRequest: dynamic.TapRequest{
+										Service:           "default-tap-tap-response-service",
+										Path:              "/",
+										MaxRecordBodySize: new(int64(-1)),
+										MaxBodySize:       new(int64(2048)),
+										Timeout:           ptypes.Duration(30 * time.Second),
+									},
+									RequestHeaders: []string{"X-Request-Id"},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-tap-tap-request-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-tap-tap-response-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
 			desc:  "Simple Ingress Route, with error page middleware",
 			paths: []string{"services.yml", "with_error_page.yml"},
 			expected: &dynamic.Configuration{
