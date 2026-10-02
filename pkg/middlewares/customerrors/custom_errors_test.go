@@ -499,3 +499,95 @@ func TestHandlerURLPlaceholder(t *testing.T) {
 		})
 	}
 }
+
+func TestHandlerStatusRewritesKeySyntax(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		statusRewrites map[string]int
+		backendCode    int
+		expectedError  string
+		expectedCode   int
+		expectedQuery  string
+	}{
+		{
+			desc:           "single code",
+			statusRewrites: map[string]int{"418": 404},
+			backendCode:    http.StatusTeapot,
+			expectedCode:   http.StatusNotFound,
+			expectedQuery:  "/404",
+		},
+		{
+			desc:           "range rewrites its lower bound",
+			statusRewrites: map[string]int{"502-504": 500},
+			backendCode:    http.StatusBadGateway,
+			expectedCode:   http.StatusInternalServerError,
+			expectedQuery:  "/500",
+		},
+		{
+			desc:           "range rewrites a code inside it",
+			statusRewrites: map[string]int{"502-504": 500},
+			backendCode:    http.StatusServiceUnavailable,
+			expectedCode:   http.StatusInternalServerError,
+			expectedQuery:  "/500",
+		},
+		{
+			desc:           "range rewrites its upper bound",
+			statusRewrites: map[string]int{"502-504": 500},
+			backendCode:    http.StatusGatewayTimeout,
+			expectedCode:   http.StatusInternalServerError,
+			expectedQuery:  "/500",
+		},
+		{
+			desc:           "code outside the range is left alone",
+			statusRewrites: map[string]int{"502-504": 500},
+			backendCode:    http.StatusNotImplemented,
+			expectedCode:   http.StatusNotImplemented,
+			expectedQuery:  "/501",
+		},
+		{
+			desc:           "comma-separated key is rejected",
+			statusRewrites: map[string]int{"403,404": 500},
+			backendCode:    http.StatusForbidden,
+			expectedError:  `strconv.Atoi: parsing "403,404": invalid syntax`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var gotRequestURI string
+			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotRequestURI = r.RequestURI
+				_, _ = fmt.Fprintln(w, "My error page.")
+			})}
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(test.backendCode)
+				_, _ = fmt.Fprintln(w, http.StatusText(test.backendCode))
+			})
+
+			errorPage := dynamic.ErrorPage{
+				Service:        "error",
+				Query:          "/{status}",
+				Status:         []string{"400-599"},
+				StatusRewrites: test.statusRewrites,
+			}
+
+			handler, err := New(t.Context(), next, errorPage, serviceBuilderMock, "test")
+			if test.expectedError != "" {
+				require.EqualError(t, err, test.expectedError)
+				return
+			}
+			require.NoError(t, err)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test", nil)
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expectedCode, recorder.Code, "HTTP status")
+			assert.Equal(t, test.expectedQuery, gotRequestURI)
+		})
+	}
+}
