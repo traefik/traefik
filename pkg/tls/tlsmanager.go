@@ -190,11 +190,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 	for storeName, storeConfig := range m.storesConfig {
 		st, ok := m.stores[storeName]
-		if ok {
-			// The cache keys server names to certificates resolved from the
-			// configuration being replaced, so it must not outlive it.
-			st.CertCache.Flush()
-		} else {
+		if !ok {
 			st = NewCertificateStore(m.ocspStapler)
 			m.stores[storeName] = st
 		}
@@ -205,7 +201,12 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			// configuration, which a freshly created one did implicitly.
 			certs = map[string]*CertificateData{}
 		}
-		st.DynamicCerts.Set(certs)
+
+		// A reused store is already reachable from the TLS configurations in
+		// use, so handshakes run against it during this update. update swaps
+		// the certificates and clears the cache as one step, so no handshake
+		// can cache a certificate from the configuration being replaced.
+		st.update(certs)
 
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
 		if storeName == tlsalpn01.ACMETLS1Protocol {
@@ -220,7 +221,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			logger.Error().Err(err).Msg("Error while creating certificate store")
 		}
 
-		st.DefaultCertificate = certificate
+		st.setDefaultCertificate(certificate)
 	}
 
 	if m.ocspStapler != nil {
