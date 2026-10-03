@@ -94,22 +94,26 @@ Now we'll enhance our routing by directing traffic to different services based o
 
 Update your `docker-compose.yml` to add another service:
 
-```yaml
-# ...
-
-# New service
-  whoami-api:
-    image: "traefik/whoami"
-    networks:
-      - proxy
-    container_name: "whoami-api"
-    environment:
-      - WHOAMI_NAME=API Service
-    labels:
-      - "traefik.enable=true"
-      # Path-based routing
-      - "traefik.http.routers.whoami-api.rule=Host(`whoami.docker.localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.whoami-api.entrypoints=web"
+```diff
+ services:
+   …
++
++  whoami-api:
++    image: "traefik/whoami"
++    container_name: "whoami-api"
++    restart: unless-stopped
++    networks:
++      - proxy
++    environment:
++      - WHOAMI_NAME=API Service
++    labels:
++      - "traefik.enable=true"
++      # Path-based routing
++      - "traefik.http.routers.whoami-api.rule=Host(`whoami.docker.localhost`) && PathPrefix(`/api`)"
++      - "traefik.http.routers.whoami-api.entrypoints=web"
+ 
+ networks:
+   …
 ```
 
 Apply the changes:
@@ -161,73 +165,71 @@ EOF
 
 Update your `docker-compose.yml` file with the following changes:
 
-```yaml
-services:
-  traefik:
-    image: "traefik:v3.4"
-    container_name: "traefik"
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - proxy
-    command:
-      - "--api.insecure=false"
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy"
-      - "--providers.file.directory=/etc/traefik/dynamic"
-      - "--entryPoints.web.address=:80"
-      - "--entryPoints.websecure.address=:443"
-      - "--entryPoints.websecure.http.tls=true"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      # Add the following volumes
-      - "./certs:/certs:ro"
-      - "./dynamic:/etc/traefik/dynamic:ro"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      # Add the following label
-      - "traefik.http.routers.dashboard.tls=true"
-
-  whoami:
-    image: "traefik/whoami"
-    restart: unless-stopped
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      # Add the following label
-      - "traefik.http.routers.whoami.tls=true"
-
-  whoami-api:
-    image: "traefik/whoami"
-    container_name: "whoami-api"
-    restart: unless-stopped
-    networks:
-      - proxy
-    environment:
-      - WHOAMI_NAME=API Service
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami-api.rule=Host(`whoami.docker.localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.whoami-api.entrypoints=websecure"
-      # Add the following label
-      - "traefik.http.routers.whoami-api.tls=true"
-
-networks:
-  proxy:
-    name: proxy
+```diff
+ services:
+   traefik:
+     image: "traefik:v3.4"
+     container_name: "traefik"
+     restart: unless-stopped
+     security_opt:
+       - no-new-privileges:true
+     networks:
+       - proxy
+     command:
++      - "--api.insecure=false"
++      - "--api.dashboard=true"
+       - "--providers.docker=true"
+       - "--providers.docker.exposedbydefault=false"
+       - "--providers.docker.network=proxy"
++      - "--providers.file.directory=/etc/traefik/dynamic"
+       - "--entryPoints.web.address=:80"
++      - "--entryPoints.websecure.address=:443"
++      - "--entryPoints.websecure.http.tls=true"
+     ports:
+       - "80:80"
++      - "443:443"
+       - "8080:8080"
+     volumes:
+       - "/var/run/docker.sock:/var/run/docker.sock:ro"
++      - "./certs:/certs:ro"
++      - "./dynamic:/etc/traefik/dynamic:ro"
++    labels:
++      - "traefik.enable=true"
++      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
++      - "traefik.http.routers.dashboard.entrypoints=websecure"
++      - "traefik.http.routers.dashboard.service=api@internal"
++      - "traefik.http.routers.dashboard.tls=true"
+ 
+   whoami:
+     image: "traefik/whoami"
+     restart: unless-stopped
+     networks:
+       - proxy
+     labels:
+       - "traefik.enable=true"
+       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
+-      - "traefik.http.routers.whoami.entrypoints=web"
++      - "traefik.http.routers.whoami.entrypoints=websecure"
++      - "traefik.http.routers.whoami.tls=true"
+ 
+   whoami-api:
+     image: "traefik/whoami"
+     container_name: "whoami-api"
+     restart: unless-stopped
+     networks:
+       - proxy
+     environment:
+       - WHOAMI_NAME=API Service
+     labels:
+       - "traefik.enable=true"
+       # Path-based routing
+       - "traefik.http.routers.whoami-api.rule=Host(`whoami.docker.localhost`) && PathPrefix(`/api`)"
+-      - "traefik.http.routers.whoami-api.entrypoints=web"
++      - "traefik.http.routers.whoami-api.entrypoints=websecure"
++      - "traefik.http.routers.whoami-api.tls=true"
+ 
+ networks:
+   …
 ```
 
 Apply the changes:
