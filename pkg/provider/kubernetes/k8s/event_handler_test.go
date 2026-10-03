@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -362,6 +363,60 @@ func Test_detectChanges(t *testing.T) {
 				}},
 			},
 			want: true,
+		},
+		{
+			name: "Node with heartbeat-only status update",
+			oldObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "1"},
+				Status: corev1.NodeStatus{
+					Conditions: []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}},
+					Addresses:  []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "10.0.0.1"}},
+				},
+			},
+			newObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "2"},
+				Status: corev1.NodeStatus{
+					Conditions: []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionFalse}},
+					Addresses:  []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "10.0.0.1"}},
+				},
+			},
+		},
+		{
+			name: "Node with different internal IP",
+			oldObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "1"},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "10.0.0.1"}},
+				},
+			},
+			newObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "2"},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{{Type: corev1.NodeInternalIP, Address: "10.0.0.2"}},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Node with different hostname only",
+			oldObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "1"},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.0.1"},
+						{Type: corev1.NodeHostName, Address: "node-a"},
+					},
+				},
+			},
+			newObj: &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{ResourceVersion: "2"},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.0.1"},
+						{Type: corev1.NodeHostName, Address: "node-b"},
+					},
+				},
+			},
 		},
 	}
 	for _, test := range tests {
