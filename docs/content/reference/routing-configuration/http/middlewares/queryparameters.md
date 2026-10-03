@@ -75,6 +75,7 @@ With this configuration, a request to `/foo?a=1&c=3&fbclid=abc` is forwarded as 
 
 The options are applied in that order: `delete`, then `set`, then `add`.
 A parameter cannot be listed in `delete` and in `set` or `add` at the same time.
+A parameter can be listed in both `set` and `add`, which gives it exactly those values: `set: {a: "5"}` with `add: {a: "10"}` turns `a=1&a=2` into `a=5&a=10`.
 
 Parameter names are matched after URL decoding, so `delete: [fbclid]` also removes `f%62clid`.
 The configured names and values are URL-encoded when they are written to the query.

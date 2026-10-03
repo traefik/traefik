@@ -11,6 +11,8 @@ import (
 )
 
 func TestQueryParameters(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc               string
 		target             string
@@ -96,6 +98,13 @@ func TestQueryParameters(t *testing.T) {
 			expectedRequestURI: "/foo?a=1&b=2&c=3&d=4",
 		},
 		{
+			desc:               "set and add on the same parameter",
+			target:             "/foo?a=1&a=2",
+			config:             dynamic.QueryParameters{Set: map[string]string{"a": "5"}, Add: map[string]string{"a": "10"}},
+			expectedRawQuery:   "a=5&a=10",
+			expectedRequestURI: "/foo?a=5&a=10",
+		},
+		{
 			desc:   "delete, set and add together",
 			target: "/foo?a=1&b=2&fbclid=x&c=3",
 			config: dynamic.QueryParameters{
@@ -110,6 +119,8 @@ func TestQueryParameters(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			var actualRawQuery, actualRequestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualRawQuery = r.URL.RawQuery
@@ -130,6 +141,8 @@ func TestQueryParameters(t *testing.T) {
 }
 
 func TestNewInvalidConfig(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc   string
 		config dynamic.QueryParameters
@@ -158,6 +171,8 @@ func TestNewInvalidConfig(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 			_, err := New(t.Context(), next, test.config, "foo-query-parameters")
