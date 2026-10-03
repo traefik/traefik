@@ -41,6 +41,7 @@ type MiddlewareSpecApplyConfiguration struct {
 	StripPrefixRegex *dynamic.StripPrefixRegex `json:"stripPrefixRegex,omitempty"`
 	ReplacePath      *dynamic.ReplacePath      `json:"replacePath,omitempty"`
 	ReplacePathRegex *dynamic.ReplacePathRegex `json:"replacePathRegex,omitempty"`
+	QueryParameters  *dynamic.QueryParameters  `json:"queryParameters,omitempty"`
 	Chain            *ChainApplyConfiguration  `json:"chain,omitempty"`
 	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *dynamic.IPWhiteList              `json:"ipWhiteList,omitempty"`
@@ -110,6 +111,14 @@ func (b *MiddlewareSpecApplyConfiguration) WithReplacePath(value dynamic.Replace
 // If called multiple times, the ReplacePathRegex field is set to the value of the last call.
 func (b *MiddlewareSpecApplyConfiguration) WithReplacePathRegex(value dynamic.ReplacePathRegex) *MiddlewareSpecApplyConfiguration {
 	b.ReplacePathRegex = &value
+	return b
+}
+
+// WithQueryParameters sets the QueryParameters field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the QueryParameters field is set to the value of the last call.
+func (b *MiddlewareSpecApplyConfiguration) WithQueryParameters(value dynamic.QueryParameters) *MiddlewareSpecApplyConfiguration {
+	b.QueryParameters = &value
 	return b
 }
 
