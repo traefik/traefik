@@ -137,7 +137,7 @@ spec:
                       description: |-
                         Priority defines the router's priority.
                         More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
-                      maximum: 9223372036854775000
+                      maximum: 9007199254740991
                       type: integer
                     services:
                       description: |-
