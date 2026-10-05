@@ -11,7 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -1552,4 +1554,41 @@ func TestHTTP2RequestTLS(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
+}
+
+func TestKeepAliveListenerSkipsConnectionsWhoseKeepAliveFails(t *testing.T) {
+	failures := 1
+	original := setTCPKeepAlive
+	t.Cleanup(func() { setTCPKeepAlive = original })
+	setTCPKeepAlive = func(tc *net.TCPConn) error {
+		if failures > 0 {
+			failures--
+			// What illumos answers for a connection the peer has already reset.
+			return &net.OpError{Op: "set", Net: "tcp", Err: os.NewSyscallError("setsockopt", syscall.EINVAL)}
+		}
+		return original(tc)
+	}
+
+	tcpListener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	require.NoError(t, err)
+	listener := tcpKeepAliveListener{tcpListener}
+	t.Cleanup(func() { _ = listener.Close() })
+
+	first, err := net.Dial("tcp", listener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = first.Close() })
+	second, err := net.Dial("tcp", listener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = second.Close() })
+
+	accepted, err := listener.Accept()
+	require.NoError(t, err, "a failed keep-alive must not end the listener")
+	t.Cleanup(func() { _ = accepted.Close() })
+	assert.Equal(t, second.LocalAddr().String(), accepted.RemoteAddr().String(), "the next connection is accepted")
+	assert.Equal(t, 0, failures)
+
+	// The connection whose keep-alive failed was closed.
+	require.NoError(t, first.SetReadDeadline(time.Now().Add(5*time.Second)))
+	_, err = first.Read(make([]byte, 1))
+	assert.Error(t, err)
 }
