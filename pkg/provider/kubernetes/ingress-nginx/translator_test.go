@@ -156,3 +156,78 @@ func TestApplyFromToWwwRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestMakeTrailingGroupOptional(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		path     string
+		expected string
+	}{
+		{
+			desc:     "trailing capture group",
+			path:     "/original/(.*)",
+			expected: "/original(?:/(.*))?",
+		},
+		{
+			desc:     "multiple groups wraps only the last one",
+			path:     "/foo/(bar)/(.*)",
+			expected: "/foo/(bar)(?:/(.*))?",
+		},
+		{
+			desc:     "path starting with a capture group is left unchanged",
+			path:     "/(.*)",
+			expected: "/(.*)",
+		},
+		{
+			desc:     "path starting with a capture group followed by another group is left unchanged",
+			path:     "/(something)(/.+)",
+			expected: "/(something)(/.+)",
+		},
+		{
+			desc:     "documented ingress-nginx rewrite pattern is left unchanged",
+			path:     "/something(/|$)(.*)",
+			expected: "/something(/|$)(.*)",
+		},
+		{
+			desc:     "literal after the group is left unchanged",
+			path:     "/foo/(.*)/bar",
+			expected: "/foo/(.*)/bar",
+		},
+		{
+			desc:     "escaped literal after the group is left unchanged",
+			path:     `/foo/(.*)\.json`,
+			expected: `/foo/(.*)\.json`,
+		},
+		{
+			desc:     "anchor after the group is left unchanged",
+			path:     "/foo/(.*)$",
+			expected: "/foo/(.*)$",
+		},
+		{
+			desc:     "nested groups closing at the end",
+			path:     "/foo/((a|b)/.*)",
+			expected: "/foo(?:/((a|b)/.*))?",
+		},
+		{
+			desc:     "unbalanced group is left unchanged",
+			path:     "/foo/((.*)",
+			expected: "/foo/((.*)",
+		},
+		{
+			desc:     "path without capture group",
+			path:     "/foo",
+			expected: "/foo",
+		},
+		{
+			desc:     "path with trailing slash",
+			path:     "/foo/",
+			expected: "/foo/",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			assert.Equal(t, test.expected, makeTrailingGroupOptional(test.path))
+		})
+	}
+}

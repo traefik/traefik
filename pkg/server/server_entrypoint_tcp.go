@@ -30,6 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -730,6 +731,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
+		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
+		ctx = fast.AddConnPoolsOnContext(ctx)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
@@ -872,7 +875,7 @@ func isAliasingHeaderName(name string) bool {
 	return false
 }
 
-// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+// removeHeadersWithUnderscores removes any request header whose name contains an underscore character.
 func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -885,7 +888,7 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header whose name contains an underscore character.
 func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -899,7 +902,7 @@ func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// removeAliasingHeaders removes any request header and trailer whose name contains a character
+// removeAliasingHeaders removes any request header whose name contains a character
 // which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func removeAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -913,7 +916,7 @@ func removeAliasingHeaders(h http.Handler) http.Handler {
 	})
 }
 
-// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header or trailer whose name
+// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header whose name
 // contains a character which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func rejectAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

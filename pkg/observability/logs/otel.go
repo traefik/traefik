@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/types"
+	"go.opentelemetry.io/otel/attribute"
 	otellog "go.opentelemetry.io/otel/log"
 )
 
@@ -44,7 +45,7 @@ func (h *otelLoggerHook) Run(e *zerolog.Event, level zerolog.Level, message stri
 	var record otellog.Record
 	record.SetTimestamp(time.Now().UTC())
 	record.SetSeverity(otelLogSeverity(level))
-	record.SetBody(otellog.StringValue(message))
+	record.SetBody(attribute.StringValue(message))
 
 	// See https://github.com/rs/zerolog/issues/493.
 	// This is a workaround to get the log fields from the event.
@@ -52,12 +53,12 @@ func (h *otelLoggerHook) Run(e *zerolog.Event, level zerolog.Level, message stri
 	logData := make(map[string]any)
 	eventBuffer := fmt.Sprintf("%s}", reflect.ValueOf(e).Elem().FieldByName("buf"))
 	if err := json.Unmarshal([]byte(eventBuffer), &logData); err != nil {
-		record.AddAttributes(otellog.String("parsing_error", fmt.Sprintf("parsing log fields: %s", err)))
+		record.AddAttributes(attribute.String("parsing_error", fmt.Sprintf("parsing log fields: %s", err)))
 		h.logger.Emit(e.GetCtx(), record)
 		return
 	}
 
-	recordAttributes := make([]otellog.KeyValue, 0, len(logData))
+	recordAttributes := make([]attribute.KeyValue, 0, len(logData))
 	for k, v := range logData {
 		if k == "level" {
 			continue
@@ -73,25 +74,25 @@ func (h *otelLoggerHook) Run(e *zerolog.Event, level zerolog.Level, message stri
 				continue
 			}
 		}
-		var attributeValue otellog.Value
+		var attributeValue attribute.Value
 		switch v := v.(type) {
 		case string:
-			attributeValue = otellog.StringValue(v)
+			attributeValue = attribute.StringValue(v)
 		case int:
-			attributeValue = otellog.IntValue(v)
+			attributeValue = attribute.IntValue(v)
 		case int64:
-			attributeValue = otellog.Int64Value(v)
+			attributeValue = attribute.Int64Value(v)
 		case float64:
-			attributeValue = otellog.Float64Value(v)
+			attributeValue = attribute.Float64Value(v)
 		case bool:
-			attributeValue = otellog.BoolValue(v)
+			attributeValue = attribute.BoolValue(v)
 		case []byte:
-			attributeValue = otellog.BytesValue(v)
+			attributeValue = attribute.ByteSliceValue(v)
 		default:
-			attributeValue = otellog.StringValue(fmt.Sprintf("%v", v))
+			attributeValue = attribute.StringValue(fmt.Sprintf("%v", v))
 		}
-		recordAttributes = append(recordAttributes, otellog.KeyValue{
-			Key:   k,
+		recordAttributes = append(recordAttributes, attribute.KeyValue{
+			Key:   attribute.Key(k),
 			Value: attributeValue,
 		})
 	}
