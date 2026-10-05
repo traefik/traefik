@@ -442,23 +442,39 @@ type tcpKeepAliveListener struct {
 }
 
 func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
-	tc, err := ln.AcceptTCP()
-	if err != nil {
-		return nil, err
-	}
+	for {
+		tc, err := ln.AcceptTCP()
+		if err != nil {
+			return nil, err
+		}
 
+		if err := setTCPKeepAlive(tc); err != nil {
+			// The peer may already have reset the connection: some systems (illumos, also in LX zones)
+			// then refuse socket options with EINVAL. Returning the error would stop the entry point for
+			// good, so only this connection is dropped.
+			log.Debug().Err(err).Msg("Closing an accepted connection whose TCP keep-alive could not be set")
+			_ = tc.Close()
+			continue
+		}
+
+		return tc, nil
+	}
+}
+
+// setTCPKeepAlive enables TCP keep-alive on an accepted connection (a variable for tests).
+var setTCPKeepAlive = func(tc *net.TCPConn) error {
 	if err := tc.SetKeepAlive(true); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
 		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
-			return nil, err
+			return err
 		}
 	}
 
-	return tc, nil
+	return nil
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
