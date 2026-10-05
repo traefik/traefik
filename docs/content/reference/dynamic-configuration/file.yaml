@@ -237,6 +237,7 @@ http:
         maxResponseBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
+        timeout: 42s
     Middleware11:
       grpcWeb:
         allowOrigins:
