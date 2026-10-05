@@ -1,3 +1,15 @@
+## [v2.11.58](https://github.com/traefik/traefik/tree/v2.11.58) (2026-10-05)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.57...v2.11.58)
+
+**Bug fixes:**
+- **[docker]** Bump github.com/docker/cli to v29.8.1 ([#13934](https://github.com/traefik/traefik/pull/13934) @kevinpollet)
+- **[rules]** Ignore negated matchers when parsing rule domains ([#13863](https://github.com/traefik/traefik/pull/13863) @rtribotte)
+- **[server]** Bump golang.org/x/crypto to v0.57.0 ([#13930](https://github.com/traefik/traefik/pull/13930) @kevinpollet)
+- **[server]** Ensure that the request TLS state is always set ([#13985](https://github.com/traefik/traefik/pull/13985) @rtribotte)
+- **[service]** Dedicate a sticky transport per ServersTransport ([#13838](https://github.com/traefik/traefik/pull/13838) @sdelicata)
+- **[service]** Isolate preauthenticated NTLM and Kerberos backend connections ([#13902](https://github.com/traefik/traefik/pull/13902) @kevinpollet)
+- **[udp]** Copy UDP datagrams into right-sized buffers before queuing ([#13941](https://github.com/traefik/traefik/pull/13941) @rtribotte)
+
 ## [v3.7.13](https://github.com/traefik/traefik/tree/v3.7.13) (2026-09-04)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.12...v3.7.13)
 
