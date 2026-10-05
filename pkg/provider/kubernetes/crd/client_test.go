@@ -8,24 +8,19 @@ import (
 	"github.com/stretchr/testify/require"
 	traefikcrdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "secret",
-		},
+		Namespace: "default",
+		Name:      "secret",
 	}
 	helmSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "helm-secret",
-			Labels: map[string]string{
-				"owner": "helm",
-			},
+		Namespace: "default",
+		Name:      "helm-secret",
+		Labels: map[string]string{
+			"owner": "helm",
 		},
 	}
 
