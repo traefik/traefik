@@ -113,5 +113,5 @@ For development purposes, you can specify which tests to run by using (only work
 TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
 
 # Run the test "MyTest" in the MyTest suite
-TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog$" make test-integration
+TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog\$\$" make test-integration
 ```

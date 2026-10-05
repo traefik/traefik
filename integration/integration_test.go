@@ -76,6 +76,7 @@ type BaseSuite struct {
 	suite.Suite
 
 	containers map[string]testcontainers.Container
+	vpn        testcontainers.Container
 	network    *testcontainers.DockerNetwork
 	hostIP     string
 }
@@ -83,7 +84,7 @@ type BaseSuite struct {
 func (s *BaseSuite) SetupSuite() {
 	if isDockerDesktop(s.T()) {
 		_, err := os.Stat(tailscaleSecretFilePath)
-		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/v2.11/contributing/building-testing/#testing)")
+		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/contributing/building-testing/#testing)")
 	}
 
 	// configure default standard log.
@@ -162,6 +163,11 @@ func isDockerDesktop(t *testing.T) bool {
 
 func (s *BaseSuite) TearDownSuite() {
 	s.composeDown()
+
+	if s.vpn != nil {
+		err := s.vpn.Terminate(s.T().Context())
+		require.NoError(s.T(), err)
+	}
 
 	err := try.Do(5*time.Second, func() error {
 		if s.network != nil {
@@ -475,6 +481,10 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 	// If we ever change the docker subnet in the Makefile,
 	// we need to change this one below correspondingly.
 	s.composeExec("tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
+
+	// Keep the suite VPN alive when individual tests tear down their compose services.
+	s.vpn = s.containers["tailscaled"]
+	delete(s.containers, "tailscaled")
 }
 
 // composeExec runs the command in the given args in the given compose service container.

@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-auth-tls-pass-cert-ssl-redirect-disabled
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - auth-tls-pass-cert-ssl-redirect-disabled.localhost
+    - secretName: whoami-tls
+  rules:
+    - host: auth-tls-pass-cert-ssl-redirect-disabled.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

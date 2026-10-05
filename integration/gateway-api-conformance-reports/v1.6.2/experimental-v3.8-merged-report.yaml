@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-07-31T16:55:17+02:00"
+date: "2026-09-29T10:07:48+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.6.1
+gatewayAPIVersion: v1.6.2
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -10,7 +10,7 @@ implementation:
   url: https://traefik.io/
   version: v3.8
 kind: ConformanceReport
-mode: default
+mode: merged
 profiles:
 - core:
     result: success
@@ -32,11 +32,10 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 28
+      Passed: 26
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
-    - BackendTLSPolicySANValidation
     - GatewayPort8080
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
@@ -44,7 +43,6 @@ profiles:
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
-    - HTTPRouteCORS
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
@@ -57,6 +55,7 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
+    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -66,6 +65,7 @@ profiles:
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
+    - HTTPRouteCORS
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -77,19 +77,13 @@ profiles:
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 - core:
-    result: success
+    result: partial
+    skippedTests:
+    - TLSRouteHostnameIntersection
     statistics:
       Failed: 0
       Passed: 19
-      Skipped: 0
-  name: GATEWAY-TCP
-  summary: Core tests succeeded.
-- core:
-    result: success
-    statistics:
-      Failed: 0
-      Passed: 20
-      Skipped: 0
+      Skipped: 1
   extended:
     result: success
     statistics:
@@ -111,19 +105,12 @@ profiles:
     - GatewayStaticAddresses
     - ListenerSet
   name: GATEWAY-TLS
-  summary: Core tests succeeded. Extended tests succeeded.
+  summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
 succeededProvisionalTests:
 - GRPCRouteNamedRule
 - HTTPRoute303Redirect
 - HTTPRoute307Redirect
 - HTTPRoute308Redirect
 - HTTPRouteNamedRule
-- TCPRouteInvalidBackendRefNonexistent
-- TCPRouteInvalidCrossNamespaceBackendRef
-- TCPRouteInvalidNonTCPListener
-- TCPRouteParentRefAttachAll
-- TCPRouteParentRefPortAndSectionName
-- TCPRouteReferenceGrant
-- TCPRouteWeightedRouting
 - TLSRouteMixedTerminationSameNamespace
 - TLSRouteTerminateSimpleSameNamespace

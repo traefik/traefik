@@ -68,6 +68,9 @@ func method(tree *matchersTree, methods ...string) error {
 	return nil
 }
 
+// wildcardHost is the shape of a wildcard host expression, the bare catch-all aside.
+var wildcardHost = regexp.MustCompile(`^\*\*?\.[^*]+$`)
+
 func host(tree *matchersTree, hosts ...string) error {
 	hostExpr := hosts[0]
 
@@ -80,6 +83,10 @@ func host(tree *matchersTree, hosts ...string) error {
 
 	if !muxer.IsASCII(hostExpr) {
 		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
+	}
+
+	if strings.Contains(hostExpr, "*") && !wildcardHost.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value %q for Host matcher, a wildcard is either the catch-all \"*\" or a \"*.\" or \"**.\" prefix", hostExpr)
 	}
 
 	hostExpr = strings.ToLower(hostExpr)

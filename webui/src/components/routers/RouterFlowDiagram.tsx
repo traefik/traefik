@@ -151,12 +151,12 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
               <ScrollableCard>
                 <Flex direction="column" gap={3}>
                   {data.middlewares.map((mw, idx) => {
-                    const data = {
+                    const mwData = {
                       name: mw.name,
                       status: mw.status,
                       href: `/${protocol}/middlewares/${mw.name}`,
                     }
-                    return <LinkedNameAndStatus key={`mw-${idx}`} data={data} />
+                    return <LinkedNameAndStatus key={`mw-${idx}`} data={mwData} />
                   })}
                 </Flex>
               </ScrollableCard>
