@@ -102,6 +102,10 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 	}
 
+	if echOptions, cappedOptions := echIncompatibleOptions(m.configs); len(echOptions) > 0 && len(cappedOptions) > 0 {
+		log.Ctx(ctx).Warn().Msgf("TLS options %v set maxVersion below VersionTLS13 while TLS options %v configure ECH keys: ECH connections re-selected to them by their protected server name will fail", cappedOptions, echOptions)
+	}
+
 	m.storesConfig = stores
 	m.certs = certs
 
@@ -525,7 +529,77 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
+	if len(tlsOption.ECHKeys) > 0 || len(tlsOption.ECHDecryptOnlyKeys) > 0 {
+		// Rejected ECH clients must receive retry configurations (RFC 9849, Section 7.1).
+		if len(tlsOption.ECHKeys) == 0 {
+			return nil, errors.New("echDecryptOnlyKeys requires at least one echKeys entry")
+		}
+		// ECH requires TLS 1.3 (RFC 9849).
+		if conf.MinVersion != 0 && conf.MinVersion < tls.VersionTLS13 {
+			return nil, fmt.Errorf("minVersion must be VersionTLS13 when ECH keys are configured, got %s", tlsOption.MinVersion)
+		}
+		if conf.MaxVersion != 0 && conf.MaxVersion < tls.VersionTLS13 {
+			return nil, fmt.Errorf("maxVersion must allow TLS 1.3 when ECH keys are configured, got %s", tlsOption.MaxVersion)
+		}
+
+		for _, content := range tlsOption.ECHKeys {
+			echKeys, err := loadECHKeys(content)
+			if err != nil {
+				return nil, err
+			}
+
+			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, echKeys...)
+		}
+
+		for _, content := range tlsOption.ECHDecryptOnlyKeys {
+			echKeys, err := loadECHKeys(content)
+			if err != nil {
+				return nil, err
+			}
+
+			for i := range echKeys {
+				echKeys[i].SendAsRetry = false
+			}
+			conf.EncryptedClientHelloKeys = append(conf.EncryptedClientHelloKeys, echKeys...)
+		}
+	}
+
 	return conf, nil
+}
+
+// echIncompatibleOptions returns the names of the options carrying ECH keys
+// and the names of the options whose maxVersion forbids TLS 1.3: re-selection
+// by the decrypted server name onto the latter always fails, as ECH requires TLS 1.3.
+func echIncompatibleOptions(configs map[string]Options) (echOptions, cappedOptions []string) {
+	for name, option := range configs {
+		if len(option.ECHKeys) > 0 {
+			echOptions = append(echOptions, name)
+			continue
+		}
+
+		if maxConst, exists := MaxVersion[option.MaxVersion]; exists && maxConst < tls.VersionTLS13 {
+			cappedOptions = append(cappedOptions, name)
+		}
+	}
+
+	slices.Sort(echOptions)
+	slices.Sort(cappedOptions)
+
+	return echOptions, cappedOptions
+}
+
+func loadECHKeys(content types.FileOrContent) ([]tls.EncryptedClientHelloKey, error) {
+	data, err := content.Read()
+	if err != nil {
+		return nil, fmt.Errorf("reading ECH key file failed: %w", err)
+	}
+
+	echKeys, err := UnmarshalECHKeys(data)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling ECH keys failed: %w", err)
+	}
+
+	return echKeys, nil
 }
 
 func hashRawCert(rawCert []byte) string {
