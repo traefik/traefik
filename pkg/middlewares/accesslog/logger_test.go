@@ -255,6 +255,70 @@ func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 	}
 }
 
+func TestOTelAccessLogFlushedOnClose(t *testing.T) {
+	// Buffered: the export runs inside Close, an unbuffered send would deadlock.
+	logCh := make(chan string, 1)
+	collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
+		require.NoError(t, err)
+
+		req := plogotlp.NewExportRequest()
+		err = req.UnmarshalProto(body)
+		require.NoError(t, err)
+
+		marshalledReq, err := json.Marshal(req)
+		require.NoError(t, err)
+
+		logCh <- string(marshalledReq)
+	}))
+	t.Cleanup(collector.Close)
+
+	config := &otypes.AccessLog{
+		Format: JSONFormat,
+		OTLP: &otypes.OTelLog{
+			ServiceName: "test",
+			HTTP: &otypes.OTelHTTP{
+				Endpoint: collector.URL,
+			},
+		},
+	}
+	logHandler, err := NewHandler(t.Context(), config)
+	require.NoError(t, err)
+
+	chain := alice.New(capture.Wrap)
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+	chain = chain.Append(logHandler.AliceConstructor())
+
+	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	require.NoError(t, err)
+
+	req := &http.Request{Header: map[string][]string{}, URL: &url.URL{Path: "/health"}}
+	handler.ServeHTTP(httptest.NewRecorder(), req.WithContext(t.Context()))
+
+	// The batch processor only exports every second.
+	// Closing now, only a Shutdown can still flush the record.
+	require.NoError(t, logHandler.Close())
+
+	// No wait: Shutdown exports synchronously.
+	// Waiting would let the periodic export pass the test instead.
+	select {
+	case log := <-logCh:
+		assert.Regexp(t, `{"key":"DownstreamStatus","value":{"intValue":"200"}}`, log)
+
+	default:
+		t.Error("AccessLog not exported on Close")
+	}
+}
+
 func TestLogRotation(t *testing.T) {
 	fileName := filepath.Join(t.TempDir(), "traefik.log")
 	rotatedFileName := fileName + ".rotated"
