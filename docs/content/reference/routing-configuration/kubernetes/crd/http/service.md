@@ -392,6 +392,7 @@ spec:
     To avoid creating the server load-balancer with the pod IPs and use Kubernetes Service clusterIP directly,
     one should set the service `NativeLB` option to true.
     Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
+    Sticky sessions have no effect when the option is set, as the Kubernetes Service clusterIP is the only server.
     By default, `NativeLB` is false.
 
     ??? example "Example"
