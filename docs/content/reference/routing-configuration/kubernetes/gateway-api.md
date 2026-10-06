@@ -222,6 +222,12 @@ spec:
 
     When any listener uses `AllowInsecureFallback`, Traefik sets the `InsecureFrontendValidationMode` condition to `True` on the `Gateway` status to make the reduced security guarantee visible.
 
+!!! warning "Gateways sharing an entry point"
+
+    A client certificate validation is selected during the TLS handshake, from the hostname (SNI) the client connects to.
+    When several `Gateway` resources share an entry point, the validation of a listener applies to the hostnames of the routes attached to it, which are then no longer served by the other `Gateway` resources on that entry point.
+    A route without hostnames attached to a listener without hostname extends the validation to every hostname the other `Gateway` resources do not claim.
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 

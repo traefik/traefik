@@ -162,8 +162,9 @@ type gatewayListener struct {
 
 	EPName string
 
-	// RouterNames holds one parent router per entry point hostname
-	// the listener is the most specific match for.
+	// RouterNames holds one parent router per entry point hostname the listener is the most specific match for.
+	// It stays empty for a listener with a frontend validation, whose parent routers depend on the hostnames of
+	// its routes, see listenerRouters.
 	RouterNames []string
 
 	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
@@ -463,17 +464,16 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	statusReport.gatewayListeners = gatewaysWithListeners
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, conf)
+	parentRouters := newListenerRouters(gatewaysWithListeners)
 
-	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, conf, statusReport)
+	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, parentRouters, conf, statusReport)
 
 	p.loadTLSRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
 	p.loadTCPRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
-	// A listener with no route attached gives a parent router with no child,
-	// which the router manager reports in error as it has no service either.
-	dropChildlessListenerRouters(conf, listenerRouters)
+	// The hostnames a frontend validation is bound to are only known once the routes are loaded.
+	parentRouters.build(conf)
 
 	for _, gwl := range gatewaysWithListeners {
 		logger := log.Ctx(ctx).With().
@@ -533,7 +533,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 // creation timestamp then by "{namespace}/{name}".
 // As stated in the specification, when an HTTPRoute and a GRPCRoute attached to the same
 // listener have intersecting hostnames, only the first one in that order is accepted.
-func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, parentRouters *listenerRouters, conf *dynamic.Configuration, statusReport *statusReport) {
 	routes := make([]metav1.Object, 0)
 
 	httpRoutes, err := p.client.ListHTTPRoutes()
@@ -559,9 +559,9 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	for _, route := range routes {
 		switch route := route.(type) {
 		case *gatev1.HTTPRoute:
-			p.loadHTTPRoute(ctx, gateways, route, conf, attached, served, statusReport)
+			p.loadHTTPRoute(ctx, gateways, route, conf, attached, served, parentRouters, statusReport)
 		case *gatev1.GRPCRoute:
-			p.loadGRPCRoute(ctx, gateways, route, conf, attached, served, statusReport)
+			p.loadGRPCRoute(ctx, gateways, route, conf, attached, served, parentRouters, statusReport)
 		}
 	}
 }
@@ -876,25 +876,50 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	return gatewayListeners
 }
 
-// uniqListener identifies a unique listener configuration.
+// uniqListener identifies the listeners served by the same entry point handler.
 // The protocol is part of it because a TLS parent router and a plain one are built on the two
 // distinct handlers of an entry point, and because merging them would put the routes of an HTTP
 // listener behind the TLS configuration of an HTTPS one.
 //
 // TODO: The listener TLS options (listener.TLS.Options) have to be part of it once supported.
 type uniqListener struct {
-	epName                       string
-	protocol                     gatev1.ProtocolType
-	frontendValidationClientAuth *tls.ClientAuth
+	epName   string
+	protocol gatev1.ProtocolType
 }
 
-// buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
-// is the most specific match for. Electing the listener per Gateway isolates the listeners of a
-// Gateway without hiding the routes of the other Gateways sharing the entry point.
-func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
-	var listenerRouterNames []string
+// listenerRouter is a parent router scoped to the requests an entry point hostname is the most specific match for.
+type listenerRouter struct {
+	uniq     uniqListener
+	hostname string
 
-	hostnamesByListener := map[uniqListener][]string{}
+	// clientAuth is the frontend validation of the listener the router is bound to, nil for a shared one.
+	clientAuth *tls.ClientAuth
+}
+
+// listenerRouters collects the parent routers of the entry points, to build them once the routes are loaded.
+//
+// The listeners without frontend validation share one parent router per entry point hostname, elected per Gateway,
+// which isolates the listeners of a Gateway without hiding the routes of the other Gateways sharing the entry point.
+//
+// A frontend validation is a TLS configuration, which the TLS handshake selects by SNI. The routes attached to a listener
+// with one are thus served through a parent router per hostname they are matched on, carrying that TLS configuration,
+// and the shared parent routers exclude these hostnames. Serving them through a shared catch-all parent router would be
+// ambiguous: several Gateways with different validations would compete for the same SNI, and the default TLS options,
+// enforcing no client certificate, would win.
+type listenerRouters struct {
+	// hostnames holds, per entry point handler, the hostnames isolated by a parent router.
+	hostnames map[uniqListener][]string
+	routers   map[string]listenerRouter
+}
+
+// newListenerRouters elects the shared parent routers of the listeners without frontend validation.
+func newListenerRouters(gateways []gatewayWithListeners) *listenerRouters {
+	lr := &listenerRouters{
+		hostnames: map[uniqListener][]string{},
+		routers:   map[string]listenerRouter{},
+	}
+
+	sharedHostnames := map[uniqListener][]string{}
 	for _, gateway := range gateways {
 		for _, listener := range gateway.listeners {
 			if !listener.Attached ||
@@ -902,49 +927,27 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				continue
 			}
 
-			uniq := uniqListener{
-				epName:                       listener.EPName,
-				protocol:                     listener.Protocol,
-				frontendValidationClientAuth: listener.FrontendValidationClientAuth,
-			}
-
+			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
 			hostname := string(ptr.Deref(listener.Hostname, ""))
-			if !slices.Contains(hostnamesByListener[uniq], hostname) {
-				hostnamesByListener[uniq] = append(hostnamesByListener[uniq], hostname)
+
+			lr.addHostname(uniq, hostname)
+
+			if listener.FrontendValidationClientAuth == nil && !slices.Contains(sharedHostnames[uniq], hostname) {
+				sharedHostnames[uniq] = append(sharedHostnames[uniq], hostname)
 			}
 		}
 	}
 
-	uniqListeners := slices.SortedFunc(maps.Keys(hostnamesByListener), func(a, b uniqListener) int {
+	uniqListeners := slices.SortedFunc(maps.Keys(sharedHostnames), func(a, b uniqListener) int {
 		return cmp.Or(cmp.Compare(a.epName, b.epName), cmp.Compare(a.protocol, b.protocol))
 	})
 
 	for _, uniq := range uniqListeners {
-		hostnames := hostnamesByListener[uniq]
+		hostnames := sharedHostnames[uniq]
 		slices.Sort(hostnames)
 
-		// Hostnames across every validation group sharing this entry point, so exclusions
-		// account for listeners with different frontend validation too.
-		var epHostnames []string
-		for other, others := range hostnamesByListener {
-			if other.epName != uniq.epName || other.protocol != uniq.protocol {
-				continue
-			}
-			for _, h := range others {
-				if !slices.Contains(epHostnames, h) {
-					epHostnames = append(epHostnames, h)
-				}
-			}
-		}
-		slices.Sort(epHostnames)
-
 		for _, hostname := range hostnames {
-			listenerRouterName := makeListenerRouterName(uniq, hostname)
-
-			listenerRouter := &dynamic.Router{
-				Rule:        buildListenerRule(hostname, epHostnames),
-				EntryPoints: []string{uniq.epName},
-			}
+			name := lr.register(listenerRouter{uniq: uniq, hostname: hostname})
 
 			for _, gateway := range gateways {
 				listener := mostSpecificListener(gateway.listeners, uniq, hostname)
@@ -952,56 +955,103 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 					continue
 				}
 
-				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
+				listener.RouterNames = append(listener.RouterNames, name)
 			}
-
-			if uniq.protocol == gatev1.HTTPSProtocolType {
-				listenerTLSOptions := tls.Options{}
-				listenerTLSOptions.SetDefaults()
-
-				if uniq.frontendValidationClientAuth != nil {
-					listenerTLSOptions.ClientAuth = *uniq.frontendValidationClientAuth
-				}
-
-				conf.TLS.Options[listenerRouterName] = listenerTLSOptions
-
-				listenerRouter.TLS = &dynamic.RouterTLSConfig{
-					Options: listenerRouterName,
-				}
-			}
-
-			conf.HTTP.Routers[listenerRouterName] = listenerRouter
-			listenerRouterNames = append(listenerRouterNames, listenerRouterName)
 		}
 	}
 
-	return listenerRouterNames
+	return lr
 }
 
-// dropChildlessListenerRouters removes the parent routers no route is attached to.
-func dropChildlessListenerRouters(conf *dynamic.Configuration, listenerRouterNames []string) {
-	parents := map[string]struct{}{}
+// routerNames returns the parent routers serving the routes attached to the listener for the given hostnames.
+// For a listener with a frontend validation, the parent routers are registered on the way.
+func (lr *listenerRouters) routerNames(listener gatewayListener, hostnames []gatev1.Hostname) []string {
+	if listener.FrontendValidationClientAuth == nil {
+		return listener.RouterNames
+	}
+
+	// A route matching every hostname is served through the catch-all parent router of the validation.
+	if len(hostnames) == 0 {
+		hostnames = []gatev1.Hostname{""}
+	}
+
+	uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+
+	names := make([]string, 0, len(hostnames))
+	for _, hostname := range hostnames {
+		lr.addHostname(uniq, string(hostname))
+
+		names = append(names, lr.register(listenerRouter{
+			uniq:       uniq,
+			hostname:   string(hostname),
+			clientAuth: listener.FrontendValidationClientAuth,
+		}))
+	}
+
+	return names
+}
+
+func (lr *listenerRouters) addHostname(uniq uniqListener, hostname string) {
+	if !slices.Contains(lr.hostnames[uniq], hostname) {
+		lr.hostnames[uniq] = append(lr.hostnames[uniq], hostname)
+	}
+}
+
+func (lr *listenerRouters) register(router listenerRouter) string {
+	name := makeListenerRouterName(router)
+	lr.routers[name] = router
+
+	return name
+}
+
+// build adds the parent routers to the configuration, except those no route is attached to:
+// a parent router with no child has no service either, which the router manager reports in error.
+func (lr *listenerRouters) build(conf *dynamic.Configuration) {
+	referenced := map[string]struct{}{}
 	for _, router := range conf.HTTP.Routers {
 		for _, parent := range router.ParentRefs {
-			parents[parent] = struct{}{}
+			referenced[parent] = struct{}{}
 		}
 	}
 
-	for _, name := range listenerRouterNames {
-		if _, ok := parents[name]; ok {
+	for name, router := range lr.routers {
+		if _, ok := referenced[name]; !ok {
 			continue
 		}
 
-		delete(conf.HTTP.Routers, name)
-		delete(conf.TLS.Options, name)
+		epHostnames := slices.Sorted(slices.Values(lr.hostnames[router.uniq]))
+
+		parent := &dynamic.Router{
+			Rule:        buildListenerRule(router.hostname, epHostnames),
+			EntryPoints: []string{router.uniq.epName},
+		}
+
+		if router.uniq.protocol == gatev1.HTTPSProtocolType {
+			listenerTLSOptions := tls.Options{}
+			listenerTLSOptions.SetDefaults()
+
+			if router.clientAuth != nil {
+				listenerTLSOptions.ClientAuth = *router.clientAuth
+			}
+
+			conf.TLS.Options[name] = listenerTLSOptions
+
+			parent.TLS = &dynamic.RouterTLSConfig{
+				Options: name,
+			}
+		}
+
+		conf.HTTP.Routers[name] = parent
 	}
 }
 
+// mostSpecificListener elects, among the listeners of a Gateway sharing a parent router, the one covering the hostname
+// most specifically. The listeners with a frontend validation have parent routers of their own.
 func mostSpecificListener(listeners []gatewayListener, uniq uniqListener, hostname string) *gatewayListener {
 	var elected *gatewayListener
 	for i, listener := range listeners {
 		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol ||
-			listener.FrontendValidationClientAuth != uniq.frontendValidationClientAuth || !listener.Attached {
+			listener.FrontendValidationClientAuth != nil || !listener.Attached {
 			continue
 		}
 
@@ -1903,17 +1953,17 @@ func makeRouterName(kind, rule, namespace, name, gatewayNamespace, gatewayName, 
 // makeListenerRouterName hashes the hostname, as provider.Normalize drops the characters
 // telling two of them apart: the "*.example.com" and "example.com" hostnames of an entry
 // point both normalize to the "listener-web-http-example-com" label.
-func makeListenerRouterName(uniq uniqListener, hostname string) string {
-	protocol := strings.ToLower(string(uniq.protocol))
+func makeListenerRouterName(router listenerRouter) string {
+	protocol := strings.ToLower(string(router.uniq.protocol))
 
-	label := provider.Normalize(fmt.Sprintf("listener-%s-%s-%s", uniq.epName, protocol, hostname))
+	label := provider.Normalize(fmt.Sprintf("listener-%s-%s-%s", router.uniq.epName, protocol, router.hostname))
 
 	h := sha256.New()
 
-	components := []string{uniq.epName, protocol, hostname}
-	if uniq.frontendValidationClientAuth != nil {
-		components = append(components, uniq.frontendValidationClientAuth.ClientAuthType)
-		for _, caFile := range uniq.frontendValidationClientAuth.CAFiles {
+	components := []string{router.uniq.epName, protocol, router.hostname}
+	if router.clientAuth != nil {
+		components = append(components, router.clientAuth.ClientAuthType)
+		for _, caFile := range router.clientAuth.CAFiles {
 			components = append(components, string(caFile))
 		}
 	}
