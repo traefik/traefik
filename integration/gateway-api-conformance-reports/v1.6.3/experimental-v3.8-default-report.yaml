@@ -26,6 +26,8 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -34,8 +36,6 @@ profiles:
     - ListenerSet
     unsupportedFeatures:
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -48,7 +48,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 49
+      Passed: 51
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -106,6 +106,8 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -115,8 +117,6 @@ profiles:
     - TCPRoute
     unsupportedFeatures:
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
