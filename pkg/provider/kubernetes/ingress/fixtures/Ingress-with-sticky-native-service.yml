@@ -1,0 +1,51 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          service:
+            name: service1
+            port:
+              number: 8080
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+
+spec:
+  ports:
+    - port: 8080
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
