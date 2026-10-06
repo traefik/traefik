@@ -149,13 +149,14 @@ type listenerOwner struct {
 type gatewayListener struct {
 	SectionName string
 
-	Port              gatev1.PortNumber
-	Protocol          gatev1.ProtocolType
-	TLS               *gatev1.ListenerTLSConfig
-	Hostname          *gatev1.Hostname
-	Status            *gatev1.ListenerStatus
-	AllowedNamespaces []string
-	AllowedRouteKinds []string
+	Port                         gatev1.PortNumber
+	Protocol                     gatev1.ProtocolType
+	TLS                          *gatev1.ListenerTLSConfig
+	FrontendValidationClientAuth *tls.ClientAuth
+	Hostname                     *gatev1.Hostname
+	Status                       *gatev1.ListenerStatus
+	AllowedNamespaces            []string
+	AllowedRouteKinds            []string
 
 	Attached bool
 
@@ -586,6 +587,17 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	tlsCerts := make(map[string]*tls.CertAndStores)
 	gatewayListeners := make([]gatewayListener, len(listeners))
 
+	var defaultFrontendValidation frontendValidation
+	frontendValidationPerPort := make(map[gatev1.PortNumber]frontendValidation)
+
+	if gateway.Spec.TLS != nil && gateway.Spec.TLS.Frontend != nil {
+		defaultFrontendValidation = p.resolveFrontendValidation(gateway, gateway.Spec.TLS.Frontend.Default.Validation)
+
+		for _, entry := range gateway.Spec.TLS.Frontend.PerPort {
+			frontendValidationPerPort[entry.Port] = p.resolveFrontendValidation(gateway, entry.TLS.Validation)
+		}
+	}
+
 	for i, listener := range listeners {
 		gatewayListeners[i] = gatewayListener{
 			SectionName: string(listener.Name),
@@ -803,6 +815,55 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					}
 				}
 			}
+
+			// Frontend validation.
+			if listener.Protocol == gatev1.HTTPSProtocolType {
+				fv := defaultFrontendValidation
+
+				if perPortFV, ok := frontendValidationPerPort[listener.Port]; ok {
+					fv = perPortFV
+				}
+
+				if fv.resolvedRefsErr != nil {
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, *fv.resolvedRefsErr)
+					if fv.acceptedErr == nil {
+						// A valid CA certificate was still found among the CACertificateRefs, so the Listener
+						// remains Accepted and Programmed even though ResolvedRefs reports the invalid ones.
+						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionAccepted),
+								Status:             metav1.ConditionTrue,
+								ObservedGeneration: generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonAccepted),
+								Message:            "No error found",
+							},
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionProgrammed),
+								Status:             metav1.ConditionTrue,
+								ObservedGeneration: generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonProgrammed),
+								Message:            "No error found",
+							},
+						)
+					}
+				}
+
+				if fv.acceptedErr != nil {
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+						*fv.acceptedErr,
+						metav1.Condition{
+							Type:               string(gatev1.ListenerConditionProgrammed),
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: generation,
+							LastTransitionTime: metav1.Now(),
+							Reason:             string(gatev1.ListenerReasonInvalid),
+							Message:            "Invalid CA certificate configuration",
+						})
+				}
+				gatewayListeners[i].FrontendValidationClientAuth = fv.clientAuth
+			}
 		}
 
 		gatewayListeners[i].Attached = true
@@ -820,11 +881,11 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 // distinct handlers of an entry point, and because merging them would put the routes of an HTTP
 // listener behind the TLS configuration of an HTTPS one.
 //
-// TODO: The Gateway frontend TLS configuration (client certificate validation) has to be part of it once supported.
 // TODO: The listener TLS options (listener.TLS.Options) have to be part of it once supported.
 type uniqListener struct {
-	epName   string
-	protocol gatev1.ProtocolType
+	epName                       string
+	protocol                     gatev1.ProtocolType
+	frontendValidationClientAuth *tls.ClientAuth
 }
 
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
@@ -841,7 +902,11 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				continue
 			}
 
-			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+			uniq := uniqListener{
+				epName:                       listener.EPName,
+				protocol:                     listener.Protocol,
+				frontendValidationClientAuth: listener.FrontendValidationClientAuth,
+			}
 
 			hostname := string(ptr.Deref(listener.Hostname, ""))
 			if !slices.Contains(hostnamesByListener[uniq], hostname) {
@@ -858,11 +923,26 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 		hostnames := hostnamesByListener[uniq]
 		slices.Sort(hostnames)
 
+		// Hostnames across every validation group sharing this entry point, so exclusions
+		// account for listeners with different frontend validation too.
+		var epHostnames []string
+		for other, others := range hostnamesByListener {
+			if other.epName != uniq.epName || other.protocol != uniq.protocol {
+				continue
+			}
+			for _, h := range others {
+				if !slices.Contains(epHostnames, h) {
+					epHostnames = append(epHostnames, h)
+				}
+			}
+		}
+		slices.Sort(epHostnames)
+
 		for _, hostname := range hostnames {
 			listenerRouterName := makeListenerRouterName(uniq, hostname)
 
 			listenerRouter := &dynamic.Router{
-				Rule:        buildListenerRule(hostname, hostnames),
+				Rule:        buildListenerRule(hostname, epHostnames),
 				EntryPoints: []string{uniq.epName},
 			}
 
@@ -878,6 +958,10 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 			if uniq.protocol == gatev1.HTTPSProtocolType {
 				listenerTLSOptions := tls.Options{}
 				listenerTLSOptions.SetDefaults()
+
+				if uniq.frontendValidationClientAuth != nil {
+					listenerTLSOptions.ClientAuth = *uniq.frontendValidationClientAuth
+				}
 
 				conf.TLS.Options[listenerRouterName] = listenerTLSOptions
 
@@ -916,7 +1000,8 @@ func dropChildlessListenerRouters(conf *dynamic.Configuration, listenerRouterNam
 func mostSpecificListener(listeners []gatewayListener, uniq uniqListener, hostname string) *gatewayListener {
 	var elected *gatewayListener
 	for i, listener := range listeners {
-		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol || !listener.Attached {
+		if listener.EPName != uniq.epName || listener.Protocol != uniq.protocol ||
+			listener.FrontendValidationClientAuth != uniq.frontendValidationClientAuth || !listener.Attached {
 			continue
 		}
 
@@ -1007,8 +1092,150 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 	return listeners
 }
 
+type frontendValidation struct {
+	clientAuth      *tls.ClientAuth
+	resolvedRefsErr *metav1.Condition
+	acceptedErr     *metav1.Condition
+}
+
+func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation *gatev1.FrontendTLSValidation) frontendValidation {
+	if validation == nil {
+		return frontendValidation{}
+	}
+
+	var caCerts []types.FileOrContent
+	var refErr string
+	var reason gatev1.ListenerConditionReason
+
+	for _, ref := range validation.CACertificateRefs {
+		if (ref.Group != "" && ref.Group != groupCore) || (ref.Kind != kindConfigMap && ref.Kind != kindSecret) {
+			if refErr == "" {
+				refErr = fmt.Sprintf("unsupported CACertificateRef group/kind: %s/%s", ref.Group, ref.Kind)
+				reason = gatev1.ListenerReasonInvalidCACertificateKind
+			}
+			continue
+		}
+
+		refNamespace := string(ptr.Deref(ref.Namespace, gatev1.Namespace(gateway.Namespace)))
+		if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, string(ref.Kind), string(ref.Name), refNamespace); err != nil {
+			if refErr == "" {
+				refErr = fmt.Sprintf("Cannot reference CACertificateRef: %s/%s: %s", ref.Group, ref.Kind, err)
+				reason = gatev1.ListenerReasonRefNotPermitted
+			}
+			continue
+		}
+
+		var caCRT string
+		switch ref.Kind {
+		case kindSecret:
+			secret, err := p.client.GetSecret(refNamespace, string(ref.Name))
+			if err != nil {
+				if refErr == "" {
+					refErr = fmt.Sprintf("Cannot resolve secret: %s/%s: %s", refNamespace, ref.Name, err)
+					reason = gatev1.ListenerReasonInvalidCACertificateRef
+				}
+				continue
+			}
+			caCRT = string(secret.Data["ca.crt"])
+
+		case kindConfigMap:
+			cm, err := p.client.GetConfigMap(refNamespace, string(ref.Name))
+			if err != nil {
+				if refErr == "" {
+					refErr = fmt.Sprintf("Cannot resolve configmap: %s/%s: %s", refNamespace, ref.Name, err)
+					reason = gatev1.ListenerReasonInvalidCACertificateRef
+				}
+				continue
+			}
+			caCRT = cm.Data["ca.crt"]
+		}
+
+		if caCRT == "" {
+			if refErr == "" {
+				refErr = fmt.Sprintf("Cannot find ca.crt: %s %s/%s", ref.Kind, refNamespace, ref.Name)
+				reason = gatev1.ListenerReasonInvalidCACertificateRef
+			}
+			continue
+		}
+
+		caCerts = append(caCerts, types.FileOrContent(caCRT))
+	}
+
+	var res frontendValidation
+	if refErr != "" {
+		res.resolvedRefsErr = &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            refErr,
+		}
+	}
+
+	if len(caCerts) == 0 {
+		res.acceptedErr = &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+			Message:            "No valid CA certificate found in CACertificateRefs",
+		}
+		// RequireAndVerifyClientCert without CAFiles can never build a valid TLS config,
+		// so any router that references these options fails closed
+		// instead of silently serving without client-cert enforcement.
+		res.clientAuth = &tls.ClientAuth{ClientAuthType: tls.RequireAndVerifyClientCert}
+		return res
+	}
+
+	clientAuthType := tls.RequireAndVerifyClientCert
+	if validation.Mode == gatev1.AllowInsecureFallback {
+		clientAuthType = tls.RequestClientCert
+	}
+
+	res.clientAuth = &tls.ClientAuth{
+		CAFiles:        caCerts,
+		ClientAuthType: clientAuthType,
+	}
+
+	return res
+}
+
+func hasInsecureFrontendValidationMode(gateway *gatev1.Gateway) bool {
+	if gateway.Spec.TLS == nil || gateway.Spec.TLS.Frontend == nil {
+		return false
+	}
+
+	frontendValidation := gateway.Spec.TLS.Frontend
+	if frontendValidation.Default.Validation != nil && frontendValidation.Default.Validation.Mode == gatev1.AllowInsecureFallback {
+		return true
+	}
+
+	for _, perPort := range frontendValidation.PerPort {
+		if perPort.TLS.Validation != nil && perPort.TLS.Validation.Mode == gatev1.AllowInsecureFallback {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
+
+	// When FrontendValidationModeType is changed to AllowInsecureFallback ,
+	// the InsecureFrontendValidationMode condition MUST be set to True with Reason ConfigurationChanged on gateway.
+	if hasInsecureFrontendValidationMode(gateway) {
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
+			Type:               string(gatev1.GatewayConditionInsecureFrontendValidationMode),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonConfigurationChanged),
+			Message:            "FrontendValidationMode is set to AllowInsecureFallback",
+		})
+	}
 
 	var errorConditions []metav1.Condition
 	for _, listener := range listeners {
@@ -1683,7 +1910,15 @@ func makeListenerRouterName(uniq uniqListener, hostname string) string {
 
 	h := sha256.New()
 
-	for _, c := range []string{uniq.epName, protocol, hostname} {
+	components := []string{uniq.epName, protocol, hostname}
+	if uniq.frontendValidationClientAuth != nil {
+		components = append(components, uniq.frontendValidationClientAuth.ClientAuthType)
+		for _, caFile := range uniq.frontendValidationClientAuth.CAFiles {
+			components = append(components, string(caFile))
+		}
+	}
+
+	for _, c := range components {
 		// Length-prefixing to avoid ambiguity between distinct components with embedded delimiter.
 		fmt.Fprintf(h, "%d:%s", len(c), c)
 	}

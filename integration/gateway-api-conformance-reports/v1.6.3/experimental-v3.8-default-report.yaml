@@ -48,12 +48,14 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 46
+      Passed: 48
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -80,8 +82,6 @@ profiles:
     - ListenerSet
     unsupportedFeatures:
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
     - HTTPRouteBackendTimeout
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
@@ -133,6 +133,8 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -143,7 +145,5 @@ profiles:
     - TLSRouteModeTerminate
     unsupportedFeatures:
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
