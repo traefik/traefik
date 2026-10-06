@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestCrlEnforcerLax_NoDistributionPoints_Allowed(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, nil)
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{}}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -62,7 +63,7 @@ func TestCrlEnforcerLax_ValidCert_Allowed(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot(999)}}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot(999)}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -73,7 +74,7 @@ func TestCrlEnforcerLax_RevokedCert_Denied(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot(1)}}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot(1)}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -84,12 +85,12 @@ func TestCrlEnforcerLax_GlobalStoreTakesPrecedence(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	global := &CRLStore{}
+	global := NewCRLStore(new(time.Hour), new(time.Hour))
 	global.getOrCreateEntry("http://dp1").storeSnapshot(revokedSnapshot(1))
 
 	e := &crlEnforcer{
-		strict: false, store: &CRLStore{}, globalStore: global,
-		snaphotProvider: &stubSnapshotProvider{err: fmt.Errorf("should not be called")},
+		strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: global,
+		snapshotProvider: &stubSnapshotProvider{err: fmt.Errorf("should not be called")},
 	}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
@@ -103,7 +104,7 @@ func TestCrlEnforcerLax_WhitelistBlocksDisallowedDP(t *testing.T) {
 
 	e := &crlEnforcer{
 		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
-		store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
+		store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
 	}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
@@ -117,7 +118,7 @@ func TestCrlEnforcerLax_WhitelistAllowsListedDP(t *testing.T) {
 
 	e := &crlEnforcer{
 		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
-		store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
+		store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
 	}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
@@ -134,7 +135,7 @@ func TestCrlEnforcerLax_FallsBackToNextDPOnFailure(t *testing.T) {
 		errs: map[string]error{"http://down": fmt.Errorf("unreachable")},
 	}
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: provider}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: provider}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -150,7 +151,7 @@ func TestCrlEnforcerLax_AllDPsFail_ReturnsError(t *testing.T) {
 		"http://down2": fmt.Errorf("unreachable"),
 	}}
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: provider}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: provider}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	assert.False(t, allowed)
@@ -173,7 +174,7 @@ func TestCrlEnforcerLax_RevokedOnSecondDP_Denied(t *testing.T) {
 		},
 	}
 
-	e := &crlEnforcer{strict: false, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: provider}
+	e := &crlEnforcer{strict: false, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: provider}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -186,7 +187,7 @@ func TestCrlEnforcerStrict_NoDistributionPoints_Denied(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, nil)
 
-	e := &crlEnforcer{strict: true, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{}}
+	e := &crlEnforcer{strict: true, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	assert.False(t, allowed)
@@ -197,7 +198,7 @@ func TestCrlEnforcerStrict_ValidCert_Allowed(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	e := &crlEnforcer{strict: true, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot(999)}}
+	e := &crlEnforcer{strict: true, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot(999)}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -208,7 +209,7 @@ func TestCrlEnforcerStrict_RevokedCert_Denied(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	e := &crlEnforcer{strict: true, store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot(1)}}
+	e := &crlEnforcer{strict: true, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot(1)}}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	require.NoError(t, err)
@@ -219,12 +220,12 @@ func TestCrlEnforcerStrict_GlobalStoreTakesPrecedence(t *testing.T) {
 	ca := newTestCA(t)
 	leaf := newTestLeaf(t, ca, 1, []string{"http://dp1"})
 
-	global := &CRLStore{}
+	global := NewCRLStore(new(time.Hour), new(time.Hour))
 	global.getOrCreateEntry("http://dp1").storeSnapshot(revokedSnapshot())
 
 	e := &crlEnforcer{
-		strict: true, store: &CRLStore{}, globalStore: global,
-		snaphotProvider: &stubSnapshotProvider{err: fmt.Errorf("should not be called")},
+		strict: true, store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: global,
+		snapshotProvider: &stubSnapshotProvider{err: fmt.Errorf("should not be called")},
 	}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
@@ -238,10 +239,102 @@ func TestCrlEnforcerStrict_WhitelistBlocksDisallowedDP(t *testing.T) {
 
 	e := &crlEnforcer{
 		strict: true, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
-		store: &CRLStore{}, globalStore: &CRLStore{}, snaphotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
+		store: NewCRLStore(new(time.Hour), new(time.Hour)), globalStore: NewCRLStore(new(time.Hour), new(time.Hour)), snapshotProvider: &stubSnapshotProvider{snap: revokedSnapshot()},
 	}
 
 	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
 	assert.False(t, allowed)
 	assert.Error(t, err)
+}
+
+// --- Whitelist with multiple CRL distribution points ---
+
+func TestCrlEnforcerLax_Whitelist_MultipleDPs_AllowedWhenAnyAllowedDPIsClean(t *testing.T) {
+	ca := newTestCA(t)
+	leaf := newTestLeaf(t, ca, 1, []string{"http://not-allowed", "http://allowed"})
+
+	provider := &multiDPProvider{byDP: map[string]crlSnapshot{
+		"http://allowed": revokedSnapshot(), // leaf not revoked
+	}}
+
+	e := &crlEnforcer{
+		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
+		store: &CRLStore{}, globalStore: &CRLStore{}, snapshotProvider: provider,
+	}
+
+	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
+	require.NoError(t, err)
+	assert.True(t, allowed)
+}
+
+func TestCrlEnforcerLax_Whitelist_MultipleDPs_DeniedWhenAllowedDPReportsRevoked(t *testing.T) {
+	ca := newTestCA(t)
+	leaf := newTestLeaf(t, ca, 1, []string{"http://not-allowed", "http://allowed"})
+
+	provider := &multiDPProvider{byDP: map[string]crlSnapshot{
+		"http://allowed": revokedSnapshot(1), // leaf revoked
+	}}
+
+	e := &crlEnforcer{
+		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
+		store: &CRLStore{}, globalStore: &CRLStore{}, snapshotProvider: provider,
+	}
+
+	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
+	require.NoError(t, err)
+	assert.False(t, allowed)
+}
+
+func TestCrlEnforcerLax_Whitelist_MultipleDPs_AllDisallowed_Denied(t *testing.T) {
+	ca := newTestCA(t)
+	leaf := newTestLeaf(t, ca, 1, []string{"http://not-allowed-1", "http://not-allowed-2"})
+
+	e := &crlEnforcer{
+		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
+		store: &CRLStore{}, globalStore: &CRLStore{},
+		snapshotProvider: &stubSnapshotProvider{
+			err: fmt.Errorf("should not be called: both DPs must be rejected by the whitelist before reaching the provider"),
+		},
+	}
+
+	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
+	assert.False(t, allowed)
+	assert.Error(t, err)
+}
+
+func TestCrlEnforcerLax_Whitelist_MultipleDPs_OrderDoesNotMatter(t *testing.T) {
+	ca := newTestCA(t)
+	// Allowed DP listed first this time.
+	leaf := newTestLeaf(t, ca, 1, []string{"http://allowed", "http://not-allowed"})
+
+	provider := &multiDPProvider{byDP: map[string]crlSnapshot{
+		"http://allowed": revokedSnapshot(),
+	}}
+
+	e := &crlEnforcer{
+		strict: false, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
+		store: &CRLStore{}, globalStore: &CRLStore{}, snapshotProvider: provider,
+	}
+
+	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
+	require.NoError(t, err)
+	assert.True(t, allowed)
+}
+
+func TestCrlEnforcerStrict_Whitelist_MultipleDPs_AllowedWhenAnyAllowedDPIsClean(t *testing.T) {
+	ca := newTestCA(t)
+	leaf := newTestLeaf(t, ca, 1, []string{"http://not-allowed", "http://allowed"})
+
+	provider := &multiDPProvider{byDP: map[string]crlSnapshot{
+		"http://allowed": revokedSnapshot(),
+	}}
+
+	e := &crlEnforcer{
+		strict: true, whitelistEnabled: true, AllowedCRLDistributionPoints: []string{"http://allowed"},
+		store: &CRLStore{}, globalStore: &CRLStore{}, snapshotProvider: provider,
+	}
+
+	allowed, err := e.IsChainAllowed([]*x509.Certificate{leaf, ca.cert})
+	require.NoError(t, err)
+	assert.True(t, allowed)
 }

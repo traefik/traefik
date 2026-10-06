@@ -138,7 +138,7 @@ func NewCRLManager(ctx context.Context, cfg CRLManagerConfig) (*CRLManager, erro
 	}
 
 	if len(cfg.FileCRLs) > 0 {
-		store, err := NewFileCRLStore(cfg.FileCRLs, reloadInterval, defaultErrorBackoff)
+		store, err := NewFileCRLStore(cfg.FileCRLs, &reloadInterval, &defaultErrorBackoff)
 		if err != nil {
 			return nil, fmt.Errorf("initializing global file based CRL store: %w", err)
 		}
@@ -153,7 +153,7 @@ func NewCRLManager(ctx context.Context, cfg CRLManagerConfig) (*CRLManager, erro
 		}
 	} else {
 		// Empty but non-nil store, so enforcers can unconditionally query it.
-		m.global = &CRLStore{crlReloadInterval: reloadInterval, crlErrorBackoff: defaultErrorBackoff}
+		m.global = NewCRLStore(&reloadInterval, &defaultErrorBackoff)
 	}
 
 	return m, nil
@@ -191,6 +191,7 @@ func (m *CRLManager) GetEnforcer(optionsName string, cfg CRL) (CRLEnforcer, erro
 
 	state, ok := m.states[optionsName]
 	if !ok {
+		// new store
 		timeout := time.Duration(cfg.HTTP.Timeout)
 		if timeout <= 0 {
 			timeout = m.defaultHTTPTimeout
@@ -204,7 +205,7 @@ func (m *CRLManager) GetEnforcer(optionsName string, cfg CRL) (CRLEnforcer, erro
 			errorBackoff = m.defaultErrorBackoff
 		}
 		state = &crlOptionsState{
-			store:        &CRLStore{crlReloadInterval: time.Duration(cfg.ReloadInterval), crlErrorBackoff: errorBackoff},
+			store:        NewCRLStore(new(time.Duration(cfg.ReloadInterval)), &errorBackoff),
 			clientHolder: newCRLHTTPClientHolder(m.transport, timeout, maxCRLBytes),
 		}
 		m.states[optionsName] = state
@@ -213,6 +214,7 @@ func (m *CRLManager) GetEnforcer(optionsName string, cfg CRL) (CRLEnforcer, erro
 	}
 
 	if state.clientHash != clientHash {
+		// client config update
 		timeout := time.Duration(cfg.HTTP.Timeout)
 		if timeout <= 0 {
 			timeout = m.defaultHTTPTimeout
@@ -229,12 +231,19 @@ func (m *CRLManager) GetEnforcer(optionsName string, cfg CRL) (CRLEnforcer, erro
 	}
 
 	if state.enforcer == nil || state.policyHash != policyHash {
+		// other config update
 		snapProvider, err := m.snapshotProvider(cfg.HTTP, state.clientHolder)
 		if err != nil {
 			return nil, fmt.Errorf("building CRL snapshot provider for %q: %w", optionsName, err)
 		}
 
 		state.enforcer = buildEnforcerFromStore(cfg, state.store, m.global, snapProvider)
+		errorBackoff := time.Duration(cfg.HTTP.ErrorBackoff)
+		if errorBackoff <= 0 {
+			errorBackoff = m.defaultErrorBackoff
+		}
+		state.store.crlReloadInterval.Store(new(time.Duration(cfg.ReloadInterval)))
+		state.store.crlErrorBackoff.Store(&errorBackoff)
 		state.policyHash = policyHash
 
 		log.Debug().Str("tlsOptions", optionsName).Msg("CRL policy changed, rebuilt enforcer (cache preserved)")
@@ -262,7 +271,7 @@ func (m *CRLManager) Prune(activeOptionsNames map[string]Options) {
 func (m *CRLManager) snapshotProvider(cfg CRLHTTP, holder *crlHTTPClientHolder) (crlSnapshotProvider, error) {
 	switch cfg.ExpirationStrategy {
 	case "", CRLExpirationOpen:
-		return &openSnaphotProvider{clientHolder: holder}, nil
+		return &openSnapshotProvider{clientHolder: holder}, nil
 	case CRLExpirationFailedClosed:
 		return &failedCloseSnapshotProvider{clientHolder: holder}, nil
 	default:
@@ -281,7 +290,7 @@ func buildEnforcerFromStore(cfg CRL, store, global *CRLStore, snapProvider crlSn
 			AllowedCRLDistributionPoints: cfg.HTTP.Whitelist.DistributionPoints,
 			store:                        store,
 			globalStore:                  global,
-			snaphotProvider:              snapProvider,
+			snapshotProvider:             snapProvider,
 		}
 	case CRLStrict:
 		return &crlEnforcer{
@@ -290,7 +299,7 @@ func buildEnforcerFromStore(cfg CRL, store, global *CRLStore, snapProvider crlSn
 			AllowedCRLDistributionPoints: cfg.HTTP.Whitelist.DistributionPoints,
 			store:                        store,
 			globalStore:                  global,
-			snaphotProvider:              snapProvider,
+			snapshotProvider:             snapProvider,
 		}
 	default:
 		return &crlEnforcerNOOP{}

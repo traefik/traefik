@@ -2,6 +2,7 @@ package tls
 
 import (
 	"context"
+	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
@@ -204,4 +205,112 @@ func TestHashClientConfig_Deterministic(t *testing.T) {
 
 	h3 := hashClientConfig(CRLHTTP{Timeout: ptypes.Duration(2 * time.Second)})
 	assert.NotEqual(t, h1, h3)
+}
+
+func TestCRLManager_GetEnforcer_UpdatesReloadIntervalInPlace(t *testing.T) {
+	m := newTestManager(t)
+
+	_, err := m.GetEnforcer("options1", CRL{Mode: CRLLax, ReloadInterval: ptypes.Duration(time.Minute)})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	store := m.states["options1"].store
+	enforcerBefore := m.states["options1"].enforcer
+	clientBefore := m.states["options1"].clientHolder.get()
+	m.mu.RUnlock()
+
+	assert.Equal(t, time.Minute, *store.crlReloadInterval.Load())
+
+	// Seed the store with an entry to make sure the cache survives the change.
+	store.getOrCreateEntry("dp1").storeSnapshot(&dynamicCrlSnapshot{crlSnapshotCommon{number: big.NewInt(1)}})
+
+	_, err = m.GetEnforcer("options1", CRL{Mode: CRLLax, ReloadInterval: ptypes.Duration(5 * time.Minute)})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	storeAfter := m.states["options1"].store
+	enforcerAfter := m.states["options1"].enforcer
+	clientAfter := m.states["options1"].clientHolder.get()
+	m.mu.RUnlock()
+
+	// Same store instance (cache preserved)...
+	assert.Same(t, store, storeAfter)
+	// ...but with the new reload interval applied.
+	assert.Equal(t, 5*time.Minute, *storeAfter.crlReloadInterval.Load())
+	// HTTP client untouched since only ReloadInterval changed.
+	assert.Same(t, clientBefore, clientAfter)
+	// Enforcer is rebuilt (policy fingerprint changed) but that's cheap and expected.
+	assert.NotSame(t, enforcerBefore, enforcerAfter)
+
+	entry, ok := storeAfter.getEntry("dp1")
+	require.True(t, ok)
+	assert.NotNil(t, entry.snapshot(), "cached CRL entries must survive a reloadInterval-only change")
+}
+
+func TestCRLManager_GetEnforcer_UpdatesErrorBackoffInPlace(t *testing.T) {
+	m := newTestManager(t)
+
+	_, err := m.GetEnforcer("options1", CRL{Mode: CRLLax, HTTP: CRLHTTP{ErrorBackoff: ptypes.Duration(10 * time.Second)}})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	store := m.states["options1"].store
+	m.mu.RUnlock()
+	assert.Equal(t, 10*time.Second, *store.crlErrorBackoff.Load())
+
+	_, err = m.GetEnforcer("options1", CRL{Mode: CRLLax, HTTP: CRLHTTP{ErrorBackoff: ptypes.Duration(time.Minute)}})
+	require.NoError(t, err)
+
+	assert.Equal(t, time.Minute, *store.crlErrorBackoff.Load())
+}
+
+func TestCRLManager_GetEnforcer_ErrorBackoffFallsBackToDefaultWhenUnset(t *testing.T) {
+	m, err := NewCRLManager(context.Background(), CRLManagerConfig{
+		ReloadInterval:      time.Minute,
+		DefaultHTTPTimeout:  time.Second,
+		DefaultErrorBackoff: 42 * time.Second,
+	})
+	require.NoError(t, err)
+
+	_, err = m.GetEnforcer("options1", CRL{Mode: CRLLax, HTTP: CRLHTTP{ErrorBackoff: ptypes.Duration(10 * time.Second)}})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	store := m.states["options1"].store
+	m.mu.RUnlock()
+	assert.Equal(t, 10*time.Second, *store.crlErrorBackoff.Load())
+
+	// Explicit value removed: must fall back to the manager-level default again,
+	// not keep the previously applied value indefinitely.
+	_, err = m.GetEnforcer("options1", CRL{Mode: CRLLax})
+	require.NoError(t, err)
+	assert.Equal(t, 42*time.Second, *store.crlErrorBackoff.Load())
+}
+
+func TestCRLManager_GetEnforcer_ReloadIntervalChange_DoesNotSwapClient(t *testing.T) {
+	m := newTestManager(t)
+
+	_, err := m.GetEnforcer("options1", CRL{
+		Mode:           CRLLax,
+		ReloadInterval: ptypes.Duration(time.Minute),
+		HTTP:           CRLHTTP{Timeout: ptypes.Duration(time.Second)},
+	})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	client1 := m.states["options1"].clientHolder.get()
+	m.mu.RUnlock()
+
+	_, err = m.GetEnforcer("options1", CRL{
+		Mode:           CRLLax,
+		ReloadInterval: ptypes.Duration(10 * time.Minute),
+		HTTP:           CRLHTTP{Timeout: ptypes.Duration(time.Second)},
+	})
+	require.NoError(t, err)
+
+	m.mu.RLock()
+	client2 := m.states["options1"].clientHolder.get()
+	m.mu.RUnlock()
+
+	assert.Same(t, client1, client2, "changing only ReloadInterval must not trigger an HTTP client swap")
 }

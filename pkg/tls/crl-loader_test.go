@@ -360,3 +360,27 @@ func TestCrlHTTPLoader_Load_NoIssuerRecorded(t *testing.T) {
 	_, err := entry.loader.Load(entry)
 	assert.Error(t, err)
 }
+
+func TestCrlHTTPLoader_Load_IssuerRotationWithLowerCRLNumber_FalsePositiveRollback(t *testing.T) {
+	// KNOWN LIMITATION: anti-rollback is tracked per distribution point URL, not
+	// per issuing CA. Here the cached snapshot (number=100) conceptually comes
+	// from a previous CA that used to publish CRLs at this same URL. The entry's
+	// issuer has since rotated to a new CA whose own CRL numbering restarts at a
+	// lower value. The legitimate new CRL ends up being rejected as a rollback.
+	newCA := newTestCA(t)
+
+	entry := &crlEntry{}
+	entry.storeSnapshot(&dynamicCrlSnapshot{crlSnapshotCommon{number: big.NewInt(100)}})
+	entry.issuerPtr.Store(newCA.cert)
+
+	der := newTestCRLDER(t, newCA, 1, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
+	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
+
+	loader := &crlHTTPLoader{
+		distributionPoint: srv.URL,
+		clientHolder:      newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024),
+	}
+
+	_, err := loader.Load(entry)
+	assert.ErrorContains(t, err, "rollback")
+}

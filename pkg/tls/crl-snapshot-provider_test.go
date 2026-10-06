@@ -16,8 +16,8 @@ func TestOpenSnapshotProvider_NewEntry_Success(t *testing.T) {
 	der := newTestCRLDER(t, ca, 1, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
 	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
 
-	store := &CRLStore{crlReloadInterval: time.Hour}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	snap, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	require.NoError(t, err)
@@ -30,8 +30,8 @@ func TestOpenSnapshotProvider_NewEntry_LoadFailure(t *testing.T) {
 	})
 
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Hour}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	assert.Error(t, err)
@@ -39,8 +39,8 @@ func TestOpenSnapshotProvider_NewEntry_LoadFailure(t *testing.T) {
 
 func TestOpenSnapshotProvider_FreshSnapshot_NoReload(t *testing.T) {
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Hour}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry("dp1")
 	fresh := &dynamicCrlSnapshot{crlSnapshotCommon{
@@ -62,8 +62,8 @@ func TestOpenSnapshotProvider_StaleSnapshot_Refreshes(t *testing.T) {
 	der := newTestCRLDER(t, ca, 2, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
 	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
 	entry.loader = &crlHTTPLoader{
@@ -81,8 +81,9 @@ func TestOpenSnapshotProvider_StaleSnapshot_Refreshes(t *testing.T) {
 
 func TestOpenSnapshotProvider_ConcurrentRefresh_ReturnsStale(t *testing.T) {
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Millisecond}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry("dp1")
 	stale := &dynamicCrlSnapshot{crlSnapshotCommon{
@@ -107,8 +108,9 @@ func TestOpenSnapshotProvider_NewEntry_BackoffSkipsSubsequentRetries(t *testing.
 	})
 
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: time.Minute}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	require.Error(t, err)
@@ -134,8 +136,9 @@ func TestOpenSnapshotProvider_NewEntry_BackoffExpired_RetrySucceeds(t *testing.T
 		_, _ = w.Write(der)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: 10 * time.Millisecond}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(10 * time.Millisecond))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	require.Error(t, err)
@@ -163,8 +166,9 @@ func TestOpenSnapshotProvider_NewEntry_NoBackoffConfigured_AlwaysRetries(t *test
 		_, _ = w.Write(der)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: 0}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(time.Millisecond * 0))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	require.Error(t, err)
@@ -181,8 +185,11 @@ func TestOpenSnapshotProvider_NewEntry_NoBackoffConfigured_AlwaysRetries(t *test
 
 func TestOpenSnapshotProvider_StaleSnapshot_BackoffActive_ReturnsStaleWithoutReload(t *testing.T) {
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Millisecond, crlErrorBackoff: time.Minute}
-	provider := &openSnaphotProvider{}
+
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	store.crlErrorBackoff.Store(new(time.Minute))
+	provider := &openSnapshotProvider{}
 
 	entry := store.getOrCreateEntry("dp1")
 	stale := &dynamicCrlSnapshot{crlSnapshotCommon{
@@ -205,8 +212,10 @@ func TestOpenSnapshotProvider_StaleSnapshot_BackoffExpired_AttemptsReload(t *tes
 	der := newTestCRLDER(t, ca, 7, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
 	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond, crlErrorBackoff: time.Minute}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	store.crlErrorBackoff.Store(new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
 	entry.loader = &crlHTTPLoader{
@@ -226,7 +235,7 @@ func TestOpenSnapshotProvider_StaleSnapshot_BackoffExpired_AttemptsReload(t *tes
 
 func TestFailedCloseProvider_FreshSnapshot_FastPath(t *testing.T) {
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Hour}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry("dp1")
@@ -249,7 +258,8 @@ func TestFailedCloseProvider_StaleSnapshot_BlockingRefreshSuccess(t *testing.T) 
 	der := newTestCRLDER(t, ca, 2, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
 	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
@@ -272,7 +282,8 @@ func TestFailedCloseProvider_RefreshFailure_FailsClosedEvenWithStaleSnapshot(t *
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
@@ -294,7 +305,7 @@ func TestFailedCloseProvider_NoSnapshot_LoadFailure(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Hour}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
@@ -309,7 +320,8 @@ func TestFailedCloseProvider_NewEntry_BackoffSkipsSubsequentRetries(t *testing.T
 	})
 
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: time.Minute}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(time.Minute))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
@@ -324,7 +336,9 @@ func TestFailedCloseProvider_NewEntry_BackoffSkipsSubsequentRetries(t *testing.T
 
 func TestFailedCloseProvider_StaleSnapshot_BackoffActive_FailsClosedWithoutReload(t *testing.T) {
 	ca := newTestCA(t)
-	store := &CRLStore{crlReloadInterval: time.Millisecond, crlErrorBackoff: time.Minute}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	store.crlErrorBackoff.Store(new(time.Minute))
 	provider := &failedCloseSnapshotProvider{}
 
 	entry := store.getOrCreateEntry("dp1")
@@ -348,7 +362,9 @@ func TestFailedCloseProvider_StaleSnapshot_BackoffExpired_AttemptsReload(t *test
 	der := newTestCRLDER(t, ca, 9, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
 	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond, crlErrorBackoff: time.Minute}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	store.crlErrorBackoff.Store(new(time.Minute))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
@@ -379,7 +395,9 @@ func TestFailedCloseProvider_SuccessfulReload_ClearsBackoff(t *testing.T) {
 		_, _ = w.Write(der)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Millisecond, crlErrorBackoff: 10 * time.Millisecond}
+	store := NewCRLStore(new(time.Millisecond), new(time.Minute))
+	store.crlReloadInterval.Store(new(time.Millisecond))
+	store.crlErrorBackoff.Store(new(10 * time.Millisecond))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	entry := store.getOrCreateEntry(srv.URL)
@@ -394,7 +412,7 @@ func TestFailedCloseProvider_SuccessfulReload_ClearsBackoff(t *testing.T) {
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca.cert)
 	require.Error(t, err)
 
-	skip, _ := entry.inBackoff(store.crlErrorBackoff)
+	skip, _ := entry.inBackoff(*store.crlErrorBackoff.Load())
 	assert.True(t, skip, "backoff should be active right after a failure")
 
 	time.Sleep(20 * time.Millisecond)
@@ -404,11 +422,11 @@ func TestFailedCloseProvider_SuccessfulReload_ClearsBackoff(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, big.NewInt(11), snap.crlSerial())
 
-	skip, _ = entry.inBackoff(store.crlErrorBackoff)
+	skip, _ = entry.inBackoff(*store.crlErrorBackoff.Load())
 	assert.False(t, skip, "backoff should be cleared after a successful reload")
 }
 
-// --- Issuer rotation: openSnaphotProvider ---
+// --- Issuer rotation: openSnapshotProvider ---
 
 func TestOpenSnapshotProvider_IssuerRotation_TriggersReload(t *testing.T) {
 	ca1 := newTestCA(t)
@@ -424,8 +442,8 @@ func TestOpenSnapshotProvider_IssuerRotation_TriggersReload(t *testing.T) {
 
 	// Long reload interval: any further reload can only be explained by the
 	// issuer rotation, not by time-based staleness.
-	store := &CRLStore{crlReloadInterval: time.Hour}
-	provider := &openSnaphotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca1.cert)
 	require.NoError(t, err)
@@ -453,8 +471,9 @@ func TestOpenSnapshotProvider_IssuerRotation_BackoffActive_ReturnsStale(t *testi
 	ca1 := newTestCA(t)
 	ca2 := newTestCA(t)
 
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: time.Minute}
-	provider := &openSnaphotProvider{}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(time.Minute))
+	provider := &openSnapshotProvider{}
 
 	entry := store.getOrCreateEntry("dp1")
 	stale := &dynamicCrlSnapshot{crlSnapshotCommon{
@@ -489,7 +508,7 @@ func TestFailedCloseProvider_IssuerRotation_TriggersBlockingReload(t *testing.T)
 		_, _ = w.Write(der)
 	})
 
-	store := &CRLStore{crlReloadInterval: time.Hour}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
 	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
 
 	_, err := provider.getVerifiedSnapshot(store, srv.URL, ca1.cert)
@@ -514,7 +533,8 @@ func TestFailedCloseProvider_IssuerRotation_BackoffActive_FailsClosed(t *testing
 	ca1 := newTestCA(t)
 	ca2 := newTestCA(t)
 
-	store := &CRLStore{crlReloadInterval: time.Hour, crlErrorBackoff: time.Minute}
+	store := NewCRLStore(new(time.Hour), new(time.Minute))
+	store.crlErrorBackoff.Store(new(time.Minute))
 	provider := &failedCloseSnapshotProvider{}
 
 	entry := store.getOrCreateEntry("dp1")
@@ -534,4 +554,65 @@ func TestFailedCloseProvider_IssuerRotation_BackoffActive_FailsClosed(t *testing
 	_, err := provider.getVerifiedSnapshot(store, "dp1", ca2.cert)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "retry not attempted")
+}
+
+func TestOpenSnapshotProvider_IssuerRotation_RollbackFalsePositive_ServesStaleSnapshotFromOldIssuer(t *testing.T) {
+	// Companion test for TestCrlHTTPLoader_Load_IssuerRotationWithLowerCRLNumber_FalsePositiveRollback:
+	// when the issuer rotation forced reload fails (perceived rollback), it is
+	// only logged as a warning. Since a snapshot is still present (the stale
+	// one, signed by the old issuer), it is served as-is, without surfacing any
+	// error or indication that it was never validated against the new issuer.
+	oldCA := newTestCA(t)
+	newCA := newTestCA(t)
+
+	var reqCount int32
+	der := newTestCRLDER(t, newCA, 1, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
+	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&reqCount, 1)
+		_, _ = w.Write(der)
+	})
+
+	store := NewCRLStore(new(time.Hour), new(time.Hour))
+	provider := &openSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+
+	entry := store.getOrCreateEntry(srv.URL)
+	entry.loader = &crlHTTPLoader{distributionPoint: srv.URL, clientHolder: provider.clientHolder}
+	stale := &dynamicCrlSnapshot{crlSnapshotCommon{
+		number: big.NewInt(100), modTime: time.Now(), nextUpdate: time.Now().Add(time.Hour),
+	}}
+	entry.storeSnapshot(stale)
+	entry.updateIssuer(oldCA.cert)
+
+	snap, err := provider.getVerifiedSnapshot(store, srv.URL, newCA.cert)
+	require.NoError(t, err) // no error surfaced despite the reload having failed
+	assert.Equal(t, int32(1), atomic.LoadInt32(&reqCount), "a reload must have been attempted")
+
+	// The snapshot served is still the stale one, signed by the old issuer,
+	// not the (rejected) new CRL from the rotated issuer.
+	assert.Same(t, crlSnapshot(stale), snap)
+}
+
+func TestFailedCloseProvider_IssuerRotation_RollbackFalsePositive_FailsClosed(t *testing.T) {
+	// Unlike openSnapshotProvider, failedCloseSnapshotProvider does not silently
+	// serve the stale snapshot when the forced reload triggered by an issuer
+	// rotation fails: it fails closed instead. Safer outcome, same root cause
+	// (a false-positive rollback detection across the issuer rotation).
+	oldCA := newTestCA(t)
+	newCA := newTestCA(t)
+
+	der := newTestCRLDER(t, newCA, 1, nil, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
+	srv := newHTTPTestServer(t, func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(der) })
+
+	store := NewCRLStore(new(time.Hour), new(time.Hour))
+	provider := &failedCloseSnapshotProvider{clientHolder: newCRLHTTPClientHolder(http.DefaultTransport.(*http.Transport).Clone(), time.Second, 1024)}
+
+	entry := store.getOrCreateEntry(srv.URL)
+	entry.loader = &crlHTTPLoader{distributionPoint: srv.URL, clientHolder: provider.clientHolder}
+	entry.storeSnapshot(&dynamicCrlSnapshot{crlSnapshotCommon{
+		number: big.NewInt(100), modTime: time.Now(), nextUpdate: time.Now().Add(time.Hour),
+	}})
+	entry.updateIssuer(oldCA.cert)
+
+	_, err := provider.getVerifiedSnapshot(store, srv.URL, newCA.cert)
+	assert.ErrorContains(t, err, "rollback")
 }

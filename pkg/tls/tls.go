@@ -75,8 +75,7 @@ const (
 
 // +k8s:deepcopy-gen=true
 
-// CRLHTTP defines the parameters of the client authentication regarding client certificate expiry based on CRLs
-// when loading CRLs from HTTP endpoints.
+// CRLHTTPWhitelist defines how CDP whitelist should be handled for CRLs fetched through HTTP
 type CRLHTTPWhitelist struct {
 	// Enables whitelist handling, setting it to false may lead to high memory usage
 	// due to a high number of CRL being stored

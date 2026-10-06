@@ -232,19 +232,18 @@ type CRLStore struct {
 	entries sync.Map
 
 	// Interval between manual refresh of all held entries
-	crlReloadInterval time.Duration
+	crlReloadInterval atomic.Pointer[time.Duration]
 
 	// crlErrorBackoff bounds how often a distribution point is retried after a
 	// resolution/download failure, preventing a persistently unreachable CRL
 	// endpoint from being hit on every TLS handshake.
-	crlErrorBackoff time.Duration
+	crlErrorBackoff atomic.Pointer[time.Duration]
 }
 
-func NewFileCRLStore(files map[string]string, reloadInterval time.Duration, errorBackoff time.Duration) (*CRLStore, error) {
-	store := &CRLStore{
-		crlReloadInterval: reloadInterval,
-		crlErrorBackoff:   errorBackoff,
-	}
+func NewFileCRLStore(files map[string]string, reloadInterval *time.Duration, errorBackoff *time.Duration) (*CRLStore, error) {
+	store := &CRLStore{}
+	store.crlReloadInterval.Store(reloadInterval)
+	store.crlErrorBackoff.Store(errorBackoff)
 
 	err := store.loadFiles(files)
 	if err != nil {
@@ -252,6 +251,14 @@ func NewFileCRLStore(files map[string]string, reloadInterval time.Duration, erro
 	}
 
 	return store, nil
+}
+
+func NewCRLStore(reloadInterval *time.Duration, errorBackoff *time.Duration) *CRLStore {
+	store := &CRLStore{}
+	store.crlReloadInterval.Store(reloadInterval)
+	store.crlErrorBackoff.Store(errorBackoff)
+
+	return store
 }
 
 // getOrCreateEntry returns existing entry for a distribution point (empty if no entry is known).
@@ -308,7 +315,7 @@ func (s *CRLStore) WatchEntries(ctx context.Context) {
 		case <-ctx.Done():
 			log.Debug().Msg("stopping CRL watch loop")
 			return
-		case <-time.After(s.crlReloadInterval):
+		case <-time.After(*s.crlReloadInterval.Load()):
 			s.reload()
 		}
 	}

@@ -251,7 +251,9 @@ func TestCRLStore_Reload_RefreshesAllEntries(t *testing.T) {
 }
 
 func TestCRLStore_WatchEntries_StopsOnContextCancel(t *testing.T) {
-	store := &CRLStore{crlReloadInterval: time.Millisecond}
+	store := &CRLStore{}
+	reloadInterval := time.Millisecond
+	store.crlReloadInterval.Store(&reloadInterval)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	done := make(chan struct{})
@@ -270,7 +272,9 @@ func TestCRLStore_WatchEntries_StopsOnContextCancel(t *testing.T) {
 }
 
 func TestCRLStore_WatchEntries_PeriodicReload(t *testing.T) {
-	store := &CRLStore{crlReloadInterval: 10 * time.Millisecond}
+	store := &CRLStore{}
+	reloadInterval := 10 * time.Millisecond
+	store.crlReloadInterval.Store(&reloadInterval)
 	entry := store.getOrCreateEntry("dp1")
 
 	var mu sync.Mutex

@@ -46,8 +46,8 @@ type crlEnforcer struct {
 	// local http based store
 	store *CRLStore
 	// global store with file based CRLs
-	globalStore     *CRLStore
-	snaphotProvider crlSnapshotProvider
+	globalStore      *CRLStore
+	snapshotProvider crlSnapshotProvider
 }
 
 // IsChainAllowed checks each certificate in the chain against its issuer.
@@ -127,7 +127,7 @@ func (e *crlEnforcer) resolveSnapshot(dp string, issuer *x509.Certificate) (snap
 		return nil, fmt.Errorf("CRL URI %q is not in the allow-list", dp)
 	}
 
-	snap, err := e.snaphotProvider.getVerifiedSnapshot(e.store, dp, issuer)
+	snap, err := e.snapshotProvider.getVerifiedSnapshot(e.store, dp, issuer)
 	if err != nil {
 		return nil, err
 	}
