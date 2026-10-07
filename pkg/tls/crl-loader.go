@@ -241,11 +241,16 @@ func newCRLHTTPClientHolder(transport *http.Transport, timeout time.Duration, ma
 func (h *crlHTTPClientHolder) set(transport *http.Transport, timeout time.Duration, maxCRLBytes int64) {
 	h.client.Store(&crlHTTPClient{
 		client: http.Client{
-			Transport: transport,
-			Timeout:   timeout,
+			Transport:     transport,
+			Timeout:       timeout,
+			CheckRedirect: h.checkRedirect,
 		},
 		maxCRLBytes: maxCRLBytes,
 	})
+}
+
+func (h *crlHTTPClientHolder) checkRedirect(req *http.Request, via []*http.Request) error {
+	return http.ErrUseLastResponse
 }
 
 func (h *crlHTTPClientHolder) get() *crlHTTPClient {

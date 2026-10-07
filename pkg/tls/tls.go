@@ -33,9 +33,10 @@ const (
 	// during the handshake, and that at least one valid certificate is required
 	// to be sent by the client.
 	RequireAndVerifyClientCert = "RequireAndVerifyClientCert"
-	// RequireAndVerifyClientCert indicates that a client certificate should be requested
+	// RequireAndVerifyClientCertWithExpiry indicates that a client certificate should be requested
 	// during the handshake, and that at least one valid certificate is required
-	// to be sent by the client.
+	// to be sent by the client,
+	// and the provided certificate verified chain does not contain a revoked certificate.
 	RequireAndVerifyClientCertWithExpiry = "RequireAndVerifyClientCertWithExpiry"
 
 	//////////////////////
@@ -67,7 +68,7 @@ const (
 	// other requests will be using stale data
 	CRLExpirationOpen = "Open"
 
-	// Open indicates that when expired,
+	// FailedClosed indicates that when expired,
 	// CRL loaded through HTTP should be refreshed by the first request using it,
 	// other requests will be locked (expect high latency burst)
 	CRLExpirationFailedClosed = "FailedClosed"
