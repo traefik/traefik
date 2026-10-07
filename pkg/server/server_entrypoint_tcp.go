@@ -726,6 +726,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// hence the wrapping has to be done last so that it is the first handler executed.
 	handler = denyOpaque(handler)
 
+	handler = populateRequestTLS(handler)
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
@@ -734,6 +736,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		ctx = fast.AddConnPoolsOnContext(ctx)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
+			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
+
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
 				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
 			}
@@ -839,6 +843,22 @@ func denyOpaque(h http.Handler) http.Handler {
 	})
 }
 
+type tlsConnKey struct{}
+
+// populateRequestTLS populates the TLS connection state of the request when it is missing on a TLS connection.
+func populateRequestTLS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			if tlsConn, ok := req.Context().Value(tlsConnKey{}).(*tls.Conn); ok {
+				state := tlsConn.ConnectionState()
+				req.TLS = &state
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
 // denyFragment rejects the request if the URL path contains a fragment (hash character).
 // When go receives an HTTP request, it assumes the absence of fragment URL.
 // However, it is still possible to send a fragment in the request.
@@ -874,7 +894,7 @@ func isAliasingHeaderName(name string) bool {
 	return false
 }
 
-// removeHeadersWithUnderscores removes any request header and trailer whose name contains an underscore character.
+// removeHeadersWithUnderscores removes any request header whose name contains an underscore character.
 func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -887,7 +907,7 @@ func removeHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header or trailer whose name contains an underscore character.
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header whose name contains an underscore character.
 func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		for key := range req.Header {
@@ -901,7 +921,7 @@ func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
 	})
 }
 
-// removeAliasingHeaders removes any request header and trailer whose name contains a character
+// removeAliasingHeaders removes any request header whose name contains a character
 // which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func removeAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -915,7 +935,7 @@ func removeAliasingHeaders(h http.Handler) http.Handler {
 	})
 }
 
-// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header or trailer whose name
+// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header whose name
 // contains a character which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
 func rejectAliasingHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

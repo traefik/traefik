@@ -19,7 +19,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules) {
 	logger := log.Ctx(ctx).With().
 		Str("grpc_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -81,13 +81,21 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 
 			// The ResolvedRefs condition must be reported for every parentRef,
 			// even when the route does not attach to the listener.
-			routeConf, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
+			routerConfs, condition := p.loadGRPCRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames)
 			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 				resolvedRefCondition = new(condition)
 			}
 
 			if accepted && listener.Attached {
-				mergeHTTPConfiguration(routeConf, conf)
+				for _, rc := range routerConfs {
+					router := rc.Conf.HTTP.Routers[rc.Name]
+					if servedBy, alreadyServed := servedRules.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
+						logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
+						continue
+					}
+
+					mergeHTTPConfiguration(rc.Conf, conf)
+				}
 
 				// Only consider the route attached if the listener is in an "attached" state.
 				acceptedCondition.Reason = string(gatev1.RouteReasonAccepted)
@@ -119,15 +127,14 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 	}
 }
 
-func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) (*dynamic.Configuration, metav1.Condition) {
-	conf := &dynamic.Configuration{
-		HTTP: &dynamic.HTTPConfiguration{
-			Routers:           make(map[string]*dynamic.Router),
-			Middlewares:       make(map[string]*dynamic.Middleware),
-			Services:          make(map[string]*dynamic.Service),
-			ServersTransports: make(map[string]*dynamic.ServersTransport),
-		},
-	}
+// grpcRouteRouter is a router of a GRPCRoute, with the configuration of its resources.
+type grpcRouteRouter struct {
+	Name string
+	Conf *dynamic.Configuration
+}
+
+func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.GRPCRoute, hostnames []gatev1.Hostname) ([]grpcRouteRouter, metav1.Condition) {
+	var routers []grpcRouteRouter
 
 	condition := metav1.Condition{
 		Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -145,7 +152,6 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 
 		for _, match := range matches {
 			rule, priority := buildGRPCMatchRule(hostnames, match)
-
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax:  "default",
@@ -157,15 +163,25 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 				router.TLS = &dynamic.RouterTLSConfig{}
 			}
 
-			var err error
 			routerName := makeRouterName(strings.ToLower(kindGRPCRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
-			router.Middlewares, err = p.loadGRPCMiddlewares(conf, route.Namespace, routerName, routeRule.Filters)
+
+			routerConf := &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           make(map[string]*dynamic.Router),
+					Middlewares:       make(map[string]*dynamic.Middleware),
+					Services:          make(map[string]*dynamic.Service),
+					ServersTransports: make(map[string]*dynamic.ServersTransport),
+				},
+			}
+
+			var err error
+			router.Middlewares, err = p.loadGRPCMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters)
 			switch {
 			case err != nil:
 				log.Ctx(ctx).Error().Err(err).Msg("Unable to load GRPC route filters")
 
 				errWrrName := routerName + "-err-wrr"
-				conf.HTTP.Services[errWrrName] = &dynamic.Service{
+				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
 					Weighted: &dynamic.WeightedRoundRobin{
 						Services: []dynamic.WRRService{
 							{
@@ -183,17 +199,18 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadGRPCService(conf, routerName, routeRule, route)
+				router.Service, serviceCondition = p.loadGRPCService(routerConf, routerName, routeRule, route)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
 			}
 
-			conf.HTTP.Routers[routerName] = &router
+			routerConf.HTTP.Routers[routerName] = &router
+			routers = append(routers, grpcRouteRouter{Name: routerName, Conf: routerConf})
 		}
 	}
 
-	return conf, condition
+	return routers, condition
 }
 
 func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routerName string, routeRule gatev1.GRPCRouteRule, route *gatev1.GRPCRoute) (string, *metav1.Condition) {
