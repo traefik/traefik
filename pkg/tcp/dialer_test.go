@@ -372,7 +372,7 @@ func TestSpiffeMTLS(t *testing.T) {
 	// if no certificate is previously set on the configured TLS config.
 	// It makes the test server always serve the httptest default certificate, and not the SPIFFE certificate,
 	// as GetCertificate is in that case never called (there's a default cert, and SNI is not used).
-	// To bypass this issue, we're manually extracting the server ceritificate from the server SVID
+	// To bypass this issue, we're manually extracting the server certificate from the server SVID
 	// and use another initialization method that forces serving the server SPIFFE certificate.
 	serverCert, err := tlsconfig.GetCertificate(&serverSource)(nil)
 	require.NoError(t, err)
