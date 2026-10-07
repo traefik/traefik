@@ -802,7 +802,7 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 	conf.SetDefaults()
 
 	conf.RecordBody = record.RecordBody
-	conf.FailClosed = record.FailClosed
+	conf.RejectOnRecordError = record.RejectOnRecordError
 
 	conf.Service = serviceName
 	if service != nil {

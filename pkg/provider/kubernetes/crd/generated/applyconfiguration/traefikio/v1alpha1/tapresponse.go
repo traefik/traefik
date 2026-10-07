@@ -72,11 +72,11 @@ func (b *TapResponseApplyConfiguration) WithTimeout(value intstr.IntOrString) *T
 	return b
 }
 
-// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
+// WithRejectOnRecordError sets the RejectOnRecordError field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the FailClosed field is set to the value of the last call.
-func (b *TapResponseApplyConfiguration) WithFailClosed(value bool) *TapResponseApplyConfiguration {
-	b.TapRequestApplyConfiguration.FailClosed = &value
+// If called multiple times, the RejectOnRecordError field is set to the value of the last call.
+func (b *TapResponseApplyConfiguration) WithRejectOnRecordError(value bool) *TapResponseApplyConfiguration {
+	b.TapRequestApplyConfiguration.RejectOnRecordError = &value
 	return b
 }
 

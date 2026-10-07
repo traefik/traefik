@@ -229,31 +229,31 @@ func TestServeHTTP_bodyOptions(t *testing.T) {
 	}
 }
 
-func TestServeHTTP_failClosed(t *testing.T) {
+func TestServeHTTP_rejectOnRecordError(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		failClosed     bool
-		sinkStatus     int
-		expectedStatus int
-		expectedBody   string
-		expectedHeader string
+		desc                string
+		rejectOnRecordError bool
+		sinkStatus          int
+		expectedStatus      int
+		expectedBody        string
+		expectedHeader      string
 	}{
 		{
-			desc:           "sink accepts the records",
-			failClosed:     true,
-			expectedStatus: http.StatusCreated,
-			expectedBody:   "pong",
-			expectedHeader: "yes",
+			desc:                "sink accepts the records",
+			rejectOnRecordError: true,
+			expectedStatus:      http.StatusCreated,
+			expectedBody:        "pong",
+			expectedHeader:      "yes",
 		},
 		{
-			desc:           "failing closed, sink rejects the records",
-			failClosed:     true,
-			sinkStatus:     http.StatusServiceUnavailable,
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   http.StatusText(http.StatusInternalServerError) + "\n",
+			desc:                "rejecting on record error, sink rejects the records",
+			rejectOnRecordError: true,
+			sinkStatus:          http.StatusServiceUnavailable,
+			expectedStatus:      http.StatusInternalServerError,
+			expectedBody:        http.StatusText(http.StatusInternalServerError) + "\n",
 		},
 		{
-			desc:           "not failing closed, sink rejects the records",
+			desc:           "not rejecting on record error, sink rejects the records",
 			sinkStatus:     http.StatusServiceUnavailable,
 			expectedStatus: http.StatusCreated,
 			expectedBody:   "pong",
@@ -268,7 +268,7 @@ func TestServeHTTP_failClosed(t *testing.T) {
 			s := &sink{status: test.sinkStatus}
 
 			responseConfig := responseRecordConfig()
-			responseConfig.FailClosed = test.failClosed
+			responseConfig.RejectOnRecordError = test.rejectOnRecordError
 
 			handler := newTap(t, dynamic.Tap{
 				Response: responseConfig,
@@ -290,11 +290,11 @@ func TestServeHTTP_failClosed(t *testing.T) {
 	}
 }
 
-func TestServeHTTP_failClosedRejectsRequest(t *testing.T) {
+func TestServeHTTP_rejectOnRecordErrorRejectsRequest(t *testing.T) {
 	s := &sink{status: http.StatusServiceUnavailable}
 
 	requestConfig := requestRecordConfig()
-	requestConfig.FailClosed = true
+	requestConfig.RejectOnRecordError = true
 
 	var called bool
 	handler := newTap(t, dynamic.Tap{
@@ -321,7 +321,7 @@ func TestServeHTTP_interimRecordStatus(t *testing.T) {
 	})
 
 	requestConfig := requestRecordConfig()
-	requestConfig.FailClosed = true
+	requestConfig.RejectOnRecordError = true
 
 	var called bool
 	handler := newTap(t, dynamic.Tap{Request: requestConfig}, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
@@ -339,17 +339,17 @@ func TestServeHTTP_interimRecordStatus(t *testing.T) {
 // only when the response is streamed.
 func TestServeHTTP_earlyHints(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		failClosed    bool
-		expectedHints []string
+		desc                string
+		rejectOnRecordError bool
+		expectedHints       []string
 	}{
 		{
 			desc:          "streamed response",
 			expectedHints: []string{"</app.css>; rel=preload"},
 		},
 		{
-			desc:       "withheld response",
-			failClosed: true,
+			desc:                "withheld response",
+			rejectOnRecordError: true,
 		},
 	}
 
@@ -358,7 +358,7 @@ func TestServeHTTP_earlyHints(t *testing.T) {
 			t.Parallel()
 
 			responseConfig := responseRecordConfig()
-			responseConfig.FailClosed = test.failClosed
+			responseConfig.RejectOnRecordError = test.rejectOnRecordError
 
 			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.Header().Add("Link", "</app.css>; rel=preload")
@@ -398,15 +398,15 @@ func TestServeHTTP_earlyHints(t *testing.T) {
 // http.TrailerPrefix, reach the client as trailers only, whether the response is withheld or not.
 func TestServeHTTP_responseTrailers(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		failClosed bool
+		desc                string
+		rejectOnRecordError bool
 	}{
 		{
 			desc: "streamed response",
 		},
 		{
-			desc:       "withheld response",
-			failClosed: true,
+			desc:                "withheld response",
+			rejectOnRecordError: true,
 		},
 	}
 
@@ -415,7 +415,7 @@ func TestServeHTTP_responseTrailers(t *testing.T) {
 			t.Parallel()
 
 			responseConfig := responseRecordConfig()
-			responseConfig.FailClosed = test.failClosed
+			responseConfig.RejectOnRecordError = test.rejectOnRecordError
 
 			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.Header().Set("Content-Type", "application/grpc")
@@ -454,7 +454,7 @@ func TestServeHTTP_responseTrailers(t *testing.T) {
 // reach the client neither with it nor with the error of a rejected response.
 func TestServeHTTP_earlyHintsRejected(t *testing.T) {
 	responseConfig := responseRecordConfig()
-	responseConfig.FailClosed = true
+	responseConfig.RejectOnRecordError = true
 
 	handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 		rw.Header().Add("Link", "</app.css>; rel=preload")
@@ -492,7 +492,7 @@ func TestServeHTTP_earlyHintsRejected(t *testing.T) {
 // 100 Continue, which the server sends when the body is read.
 func TestServeHTTP_withheldExpectContinue(t *testing.T) {
 	responseConfig := responseRecordConfig()
-	responseConfig.FailClosed = true
+	responseConfig.RejectOnRecordError = true
 
 	handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusContinue)
@@ -580,11 +580,11 @@ func TestServeHTTP_timeoutPerDirection(t *testing.T) {
 	assert.False(t, deadlines["unlimited"].ok)
 }
 
-// TestServeHTTP_failClosedPerDirection asserts that the directions fail independently:
-// a response record failing to be sent does not withhold the response when only the request fails closed.
-func TestServeHTTP_failClosedPerDirection(t *testing.T) {
+// TestServeHTTP_rejectOnRecordErrorPerDirection asserts that the directions fail independently:
+// a response record failing to be sent does not withhold the response when only the request rejects on record error.
+func TestServeHTTP_rejectOnRecordErrorPerDirection(t *testing.T) {
 	requestConfig := requestRecordConfig()
-	requestConfig.FailClosed = true
+	requestConfig.RejectOnRecordError = true
 
 	builder := serviceBuilderFunc(func(_ context.Context, _ string) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -801,12 +801,12 @@ func TestServeHTTP_requestBodyTooLarge(t *testing.T) {
 // by an error and not recorded, while a streamed response is not limited.
 func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		failClosed     bool
-		expectedStatus int
-		expectedBody   string
-		expectedHeader string
-		expectedRecord bool
+		desc                string
+		rejectOnRecordError bool
+		expectedStatus      int
+		expectedBody        string
+		expectedHeader      string
+		expectedRecord      bool
 	}{
 		{
 			desc:           "streamed response",
@@ -816,10 +816,10 @@ func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
 			expectedRecord: true,
 		},
 		{
-			desc:           "withheld response",
-			failClosed:     true,
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   http.StatusText(http.StatusInternalServerError) + "\n",
+			desc:                "withheld response",
+			rejectOnRecordError: true,
+			expectedStatus:      http.StatusInternalServerError,
+			expectedBody:        http.StatusText(http.StatusInternalServerError) + "\n",
 		},
 	}
 
@@ -830,7 +830,7 @@ func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
 			s := &sink{}
 
 			responseConfig := responseRecordConfig()
-			responseConfig.FailClosed = test.failClosed
+			responseConfig.RejectOnRecordError = test.rejectOnRecordError
 			responseConfig.MaxBodySize = new(int64(3))
 
 			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
@@ -856,9 +856,9 @@ func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
 	}
 }
 
-// TestServeHTTP_failClosedHoldsResponse asserts the guarantee of the failClosed mode:
+// TestServeHTTP_rejectOnRecordErrorHoldsResponse asserts the guarantee of the rejectOnRecordError mode:
 // the response record is accepted before any byte of the response reaches the client.
-func TestServeHTTP_failClosedHoldsResponse(t *testing.T) {
+func TestServeHTTP_rejectOnRecordErrorHoldsResponse(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	builder := serviceBuilderFunc(func(_ context.Context, _ string) (http.Handler, error) {
@@ -869,7 +869,7 @@ func TestServeHTTP_failClosedHoldsResponse(t *testing.T) {
 	})
 
 	responseConfig := responseRecordConfig()
-	responseConfig.FailClosed = true
+	responseConfig.RejectOnRecordError = true
 
 	handler := newTap(t, dynamic.Tap{
 		Response: responseConfig,
@@ -916,11 +916,11 @@ func TestServeHTTP_requestHeaders(t *testing.T) {
 	assert.Empty(t, records[0].Request.Body)
 }
 
-func TestServeHTTP_failClosedRecordsHeadersSetUpstream(t *testing.T) {
+func TestServeHTTP_rejectOnRecordErrorRecordsHeadersSetUpstream(t *testing.T) {
 	s := &sink{}
 
 	responseConfig := responseRecordConfig()
-	responseConfig.FailClosed = true
+	responseConfig.RejectOnRecordError = true
 
 	handler := newTap(t, dynamic.Tap{
 		Response: responseConfig,

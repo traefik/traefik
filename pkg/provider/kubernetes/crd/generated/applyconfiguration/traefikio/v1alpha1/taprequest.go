@@ -45,23 +45,23 @@ type TapRequestApplyConfiguration struct {
 	// see https://pkg.go.dev/time#ParseDuration.
 	// Default is `10s`.
 	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
-	// FailClosed defines whether the record is sent before the data it describes is handed over:
+	// RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
-	FailClosed *bool `json:"failClosed,omitempty"`
-	// MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
-	// recorded with no maxRecordBodySize, and the response body when it is held back by failClosed.
-	// A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
-	// and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+	RejectOnRecordError *bool `json:"rejectOnRecordError,omitempty"`
+	// MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
+	// A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
+	// A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
+	// The record of a response streamed to the client carries at most maxBodySize bytes.
 	// Default is `-1`, which means no limit.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 	// RecordBody defines whether the body is part of the records.
 	// Default is `false`.
 	RecordBody *bool `json:"recordBody,omitempty"`
-	// MaxRecordBodySize defines the maximum body size in bytes kept in a record.
-	// A larger body is truncated, and the record is flagged as truncated.
+	// MaxRecordBodySize defines the maximum number of body bytes in a record.
+	// A larger body is cut in the record, which is flagged as truncated.
 	// Default is `-1`, which means no limit.
 	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty"`
 }
@@ -96,11 +96,11 @@ func (b *TapRequestApplyConfiguration) WithTimeout(value intstr.IntOrString) *Ta
 	return b
 }
 
-// WithFailClosed sets the FailClosed field in the declarative configuration to the given value
+// WithRejectOnRecordError sets the RejectOnRecordError field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the FailClosed field is set to the value of the last call.
-func (b *TapRequestApplyConfiguration) WithFailClosed(value bool) *TapRequestApplyConfiguration {
-	b.FailClosed = &value
+// If called multiple times, the RejectOnRecordError field is set to the value of the last call.
+func (b *TapRequestApplyConfiguration) WithRejectOnRecordError(value bool) *TapRequestApplyConfiguration {
+	b.RejectOnRecordError = &value
 	return b
 }
 

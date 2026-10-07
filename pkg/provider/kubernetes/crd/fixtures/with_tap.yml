@@ -13,7 +13,7 @@ spec:
       path: /records/requests
       recordBody: true
       maxRecordBodySize: 1024
-      failClosed: true
+      rejectOnRecordError: true
       timeout: 5s
     response:
       service:

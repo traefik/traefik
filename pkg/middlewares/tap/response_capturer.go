@@ -125,18 +125,25 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return h.Hijack()
 }
 
-// capture keeps at most dest.maxRecordBodySize bytes of the body for the record.
+// capture keeps the first bytes of the body for the record, up to the smallest of
+// dest.maxRecordBodySize and dest.maxBodySize, as the copy is held in memory.
+// The record is truncated past it, as the response is already on its way to the client.
 func (r *responseCapturer) capture(p []byte) {
 	if !r.dest.recordBody {
 		return
 	}
 
-	if r.dest.maxRecordBodySize < 0 {
+	limit := r.dest.maxRecordBodySize
+	if maxBodySize := r.dest.maxBodySize; maxBodySize >= 0 && (limit < 0 || limit > maxBodySize) {
+		limit = maxBodySize
+	}
+
+	if limit < 0 {
 		r.buf.Write(p)
 		return
 	}
 
-	remaining := r.dest.maxRecordBodySize - int64(r.buf.Len())
+	remaining := limit - int64(r.buf.Len())
 	if remaining <= 0 {
 		r.bodyTruncated = len(p) > 0
 		return

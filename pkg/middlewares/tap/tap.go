@@ -23,9 +23,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-// FIXME: add a note to the documentation saying that the midlleware should be placed as close to the entry point as possible,
-//  so that every modification to the response will be recorded. What about the request?
-
 const typeName = "Tap"
 
 // Kinds of records sent to the tap services.
@@ -49,9 +46,9 @@ type serviceBuilder interface {
 
 // record is the payload sent to the tap services.
 type record struct {
-	ID   string    `json:"id"`
-	Kind string    `json:"kind"`
-	Time time.Time `json:"time"`
+	ID       string          `json:"id"`
+	Kind     string          `json:"kind"`
+	Time     time.Time       `json:"time"`
 	TraceID  string          `json:"traceId,omitempty"`
 	Request  *requestRecord  `json:"request,omitempty"`
 	Response *responseRecord `json:"response,omitempty"`
@@ -80,12 +77,12 @@ type responseRecord struct {
 }
 
 type destination struct {
-	handler        http.Handler
-	path           string
-	requestHeaders []string
-	failClosed     bool
-	timeout        time.Duration
-	maxBodySize    int64
+	handler             http.Handler
+	path                string
+	requestHeaders      []string
+	rejectOnRecordError bool
+	timeout             time.Duration
+	maxBodySize         int64
 
 	recordBody        bool
 	maxRecordBodySize int64
@@ -112,13 +109,13 @@ func newDestination(ctx context.Context, config dynamic.TapRequest, serviceBuild
 	}
 
 	return &destination{
-		handler:           handler,
-		path:              path,
-		failClosed:        config.FailClosed,
-		timeout:           time.Duration(config.Timeout),
-		maxBodySize:       ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
-		recordBody:        config.RecordBody,
-		maxRecordBodySize: ptr.Deref(config.MaxRecordBodySize, dynamic.TapDefaultMaxRecordBodySize),
+		handler:             handler,
+		path:                path,
+		rejectOnRecordError: config.RejectOnRecordError,
+		timeout:             time.Duration(config.Timeout),
+		maxBodySize:         ptr.Deref(config.MaxBodySize, dynamic.TapDefaultMaxBodySize),
+		recordBody:          config.RecordBody,
+		maxRecordBodySize:   ptr.Deref(config.MaxRecordBodySize, dynamic.TapDefaultMaxRecordBodySize),
 	}, nil
 }
 
@@ -200,7 +197,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		rec := &record{ID: id, Kind: kindRequest, Time: start, TraceID: traceID, Request: reqRecord}
 		if err := t.send(ctx, t.request, req.Host, rec); err != nil {
 			logger.Error().Err(err).Msg("Unable to send the request record")
-			if t.request.failClosed {
+			if t.request.rejectOnRecordError {
 				t.reject(ctx, rw, kindRequest, http.StatusInternalServerError)
 				return
 			}
@@ -218,7 +215,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		responseRecordRequest = describeRequest(req, t.response.requestHeaders)
 	}
 
-	capturer := newResponseCapturer(rw, t.response, t.response.failClosed)
+	capturer := newResponseCapturer(rw, t.response, t.response.rejectOnRecordError)
 	t.next.ServeHTTP(capturer, req)
 
 	if capturer.bodyTooLarge {
@@ -231,7 +228,7 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if err := t.send(ctx, t.response, req.Host, rec); err != nil {
 		logger.Error().Err(err).Msg("Unable to send the response record")
-		if t.response.failClosed {
+		if t.response.rejectOnRecordError {
 			t.reject(ctx, rw, kindResponse, http.StatusInternalServerError)
 			return
 		}

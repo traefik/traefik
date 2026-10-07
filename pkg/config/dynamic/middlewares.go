@@ -819,13 +819,13 @@ type StripPrefixRegex struct {
 
 // Tap holds the tap middleware configuration.
 // This middleware sends a copy of the requests and responses going through it to Traefik services.
-// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/tap/
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/tap/
 type Tap struct {
-	// Request defines where and how the requests are sent.
-	// When omitted, requests are not sent.
+	// Request defines where and how the request records are sent.
+	// When omitted, requests are not recorded.
 	Request *TapRequest `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
-	// Response defines where and how the responses are sent.
-	// When omitted, responses are not sent.
+	// Response defines where and how the response records are sent.
+	// When omitted, responses are not recorded.
 	Response *TapResponse `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
 }
 
@@ -839,24 +839,24 @@ type TapRequest struct {
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	// Timeout defines the maximum duration allowed to send a record.
 	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
-	// FailClosed defines whether the record is sent before the data it describes is handed over:
+	// RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
 	// the request record before the request reaches the backend,
 	// and the response record before the response reaches the client.
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
-	FailClosed bool `json:"failClosed,omitempty" toml:"failClosed,omitempty" yaml:"failClosed,omitempty" export:"true"`
-	// MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
-	// recorded with no MaxRecordBodySize, and the response body when it is held back by FailClosed.
-	// A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
-	// and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+	RejectOnRecordError bool `json:"rejectOnRecordError,omitempty" toml:"rejectOnRecordError,omitempty" yaml:"rejectOnRecordError,omitempty" export:"true"`
+	// MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
+	// A request recorded with no MaxRecordBodySize is rejected with a Request Entity Too Large error when larger.
+	// A response with RejectOnRecordError is replaced by an Internal Server Error when larger.
+	// The record of a response streamed to the client carries at most MaxBodySize bytes.
 	// A negative value means no limit.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
 
 	// RecordBody defines whether the body is part of the records.
 	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
-	// MaxRecordBodySize defines the maximum body size in bytes kept in a record.
-	// A larger body is truncated, and the record is flagged as truncated.
+	// MaxRecordBodySize defines the maximum number of body bytes in a record.
+	// A larger body is cut in the record, which is flagged as truncated.
 	// A negative value means no limit.
 	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty" toml:"maxRecordBodySize,omitempty" yaml:"maxRecordBodySize,omitempty" export:"true"`
 }

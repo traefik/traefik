@@ -7593,13 +7593,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-tap": {
 							Tap: &dynamic.Tap{
 								Request: &dynamic.TapRequest{
-									Service:           "default-tap-tap-request-service",
-									Path:              "/records/requests",
-									RecordBody:        true,
-									MaxRecordBodySize: new(int64(1024)),
-									MaxBodySize:       new(int64(-1)),
-									FailClosed:        true,
-									Timeout:           ptypes.Duration(5 * time.Second),
+									Service:             "default-tap-tap-request-service",
+									Path:                "/records/requests",
+									RecordBody:          true,
+									MaxRecordBodySize:   new(int64(1024)),
+									MaxBodySize:         new(int64(-1)),
+									RejectOnRecordError: true,
+									Timeout:             ptypes.Duration(5 * time.Second),
 								},
 								Response: &dynamic.TapResponse{
 									TapRequest: dynamic.TapRequest{

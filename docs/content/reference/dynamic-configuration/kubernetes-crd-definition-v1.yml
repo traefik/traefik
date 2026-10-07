@@ -2288,31 +2288,23 @@ spec:
                 properties:
                   request:
                     description: |-
-                      Request defines where and how the requests are sent.
-                      When omitted, requests are not sent.
+                      Request defines where and how the request records are sent.
+                      When omitted, requests are not recorded.
                     properties:
-                      failClosed:
-                        description: |-
-                          FailClosed defines whether the record is sent before the data it describes is handed over:
-                          the request record before the request reaches the backend,
-                          and the response record before the response reaches the client.
-                          When the record cannot be sent, the request is rejected with an Internal Server Error.
-                          Default is `false`.
-                        type: boolean
                       maxBodySize:
                         description: |-
-                          MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
-                          recorded with no maxRecordBodySize, and the response body when it is held back by failClosed.
-                          A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
-                          and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+                          MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
+                          A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
+                          A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
+                          The record of a response streamed to the client carries at most maxBodySize bytes.
                           Default is `-1`, which means no limit.
                         format: int64
                         minimum: -1
                         type: integer
                       maxRecordBodySize:
                         description: |-
-                          MaxRecordBodySize defines the maximum body size in bytes kept in a record.
-                          A larger body is truncated, and the record is flagged as truncated.
+                          MaxRecordBodySize defines the maximum number of body bytes in a record.
+                          A larger body is cut in the record, which is flagged as truncated.
                           Default is `-1`, which means no limit.
                         format: int64
                         minimum: -1
@@ -2325,6 +2317,14 @@ spec:
                       recordBody:
                         description: |-
                           RecordBody defines whether the body is part of the records.
+                          Default is `false`.
+                        type: boolean
+                      rejectOnRecordError:
+                        description: |-
+                          RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
+                          the request record before the request reaches the backend,
+                          and the response record before the response reaches the client.
+                          When the record cannot be sent, the request is rejected with an Internal Server Error.
                           Default is `false`.
                         type: boolean
                       service:
@@ -2593,31 +2593,23 @@ spec:
                     type: object
                   response:
                     description: |-
-                      Response defines where and how the responses are sent.
-                      When omitted, responses are not sent.
+                      Response defines where and how the response records are sent.
+                      When omitted, responses are not recorded.
                     properties:
-                      failClosed:
-                        description: |-
-                          FailClosed defines whether the record is sent before the data it describes is handed over:
-                          the request record before the request reaches the backend,
-                          and the response record before the response reaches the client.
-                          When the record cannot be sent, the request is rejected with an Internal Server Error.
-                          Default is `false`.
-                        type: boolean
                       maxBodySize:
                         description: |-
-                          MaxBodySize defines the maximum body size in bytes held in memory: the request body when it is
-                          recorded with no maxRecordBodySize, and the response body when it is held back by failClosed.
-                          A larger request is rejected with a Request Entity Too Large error, without reaching the backend,
-                          and a larger response is replaced by an Internal Server Error. No record is sent in both cases.
+                          MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
+                          A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
+                          A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
+                          The record of a response streamed to the client carries at most maxBodySize bytes.
                           Default is `-1`, which means no limit.
                         format: int64
                         minimum: -1
                         type: integer
                       maxRecordBodySize:
                         description: |-
-                          MaxRecordBodySize defines the maximum body size in bytes kept in a record.
-                          A larger body is truncated, and the record is flagged as truncated.
+                          MaxRecordBodySize defines the maximum number of body bytes in a record.
+                          A larger body is cut in the record, which is flagged as truncated.
                           Default is `-1`, which means no limit.
                         format: int64
                         minimum: -1
@@ -2630,6 +2622,14 @@ spec:
                       recordBody:
                         description: |-
                           RecordBody defines whether the body is part of the records.
+                          Default is `false`.
+                        type: boolean
+                      rejectOnRecordError:
+                        description: |-
+                          RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
+                          the request record before the request reaches the backend,
+                          and the response record before the response reaches the client.
+                          When the record cannot be sent, the request is rejected with an Internal Server Error.
                           Default is `false`.
                         type: boolean
                       requestHeaders:

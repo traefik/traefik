@@ -105,6 +105,78 @@ func TestResponseCapturer_withheldTruncatesRecordOnly(t *testing.T) {
 	assert.Equal(t, "pong", recorder.Body.String())
 }
 
+func TestResponseCapturer_streamedTruncatesRecordToMaxBodySize(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		maxBodySize       int64
+		maxRecordBodySize int64
+		expectedBody      string
+		expectedTruncated bool
+	}{
+		{
+			desc:              "no limit",
+			maxBodySize:       -1,
+			maxRecordBodySize: -1,
+			expectedBody:      "pong!",
+		},
+		{
+			desc:              "body at maxBodySize",
+			maxBodySize:       5,
+			maxRecordBodySize: -1,
+			expectedBody:      "pong!",
+		},
+		{
+			desc:              "body over maxBodySize",
+			maxBodySize:       3,
+			maxRecordBodySize: -1,
+			expectedBody:      "pon",
+			expectedTruncated: true,
+		},
+		{
+			desc:              "maxRecordBodySize under maxBodySize",
+			maxBodySize:       4,
+			maxRecordBodySize: 2,
+			expectedBody:      "po",
+			expectedTruncated: true,
+		},
+		{
+			desc:              "maxRecordBodySize over maxBodySize",
+			maxBodySize:       1,
+			maxRecordBodySize: 4,
+			expectedBody:      "p",
+			expectedTruncated: true,
+		},
+		{
+			desc:              "maxRecordBodySize with no maxBodySize",
+			maxBodySize:       -1,
+			maxRecordBodySize: 4,
+			expectedBody:      "pong",
+			expectedTruncated: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := httptest.NewRecorder()
+			capturer := newResponseCapturer(recorder, &destination{maxBodySize: test.maxBodySize, recordBody: true, maxRecordBodySize: test.maxRecordBodySize}, false)
+
+			for _, chunk := range []string{"po", "ng", "!"} {
+				_, err := capturer.Write([]byte(chunk))
+				require.NoError(t, err)
+			}
+
+			rec := capturer.record(time.Second)
+			assert.Equal(t, test.expectedBody, string(rec.Body))
+			assert.Equal(t, test.expectedTruncated, rec.BodyTruncated)
+
+			// The client still gets the whole response.
+			assert.Equal(t, "pong!", recorder.Body.String())
+		})
+	}
+}
+
 func TestResponseCapturer_withheldBodyTooLarge(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	capturer := newResponseCapturer(recorder, &destination{maxBodySize: 3, recordBody: true, maxRecordBodySize: -1}, true)
