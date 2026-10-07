@@ -505,6 +505,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
 				loc.UseRegex = hostsWithUseRegex[rule.Host]
+				resolveNegativeLookahead(loc)
 
 				// Build all middleware configurations so the translator only registers them.
 				endpointCount := 0
@@ -626,6 +627,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
 				loc.UseRegex = hostsWithUseRegex[rule.Host]
+				resolveNegativeLookahead(loc)
 
 				// Inherit basic/digest auth and custom headers like the rule paths
 				// do, so the per-host fallback is not an unauthenticated bypass.
