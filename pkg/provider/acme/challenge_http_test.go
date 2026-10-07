@@ -46,6 +46,13 @@ func TestChallengeHTTPServeHTTP(t *testing.T) {
 			expectedBody:   "keyAuth",
 		},
 		{
+			desc:           "IPv4 without port",
+			domain:         "192.0.2.1",
+			url:            "http://192.0.2.1/.well-known/acme-challenge/token",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "keyAuth",
+		},
+		{
 			desc:           "IPv4 with port",
 			domain:         "192.0.2.1",
 			url:            "http://192.0.2.1:80/.well-known/acme-challenge/token",
