@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-07T11:11:56+02:00"
+date: "2026-10-07T14:20:11+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -91,6 +91,33 @@ profiles:
     - HTTPRouteRetryConnectionError
     - ListenerSet
   name: GATEWAY-HTTP
+  summary: Core tests succeeded. Extended tests succeeded.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 18
+      Skipped: 0
+  extended:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 4
+      Skipped: 0
+    supportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayInfrastructure
+    - GatewayPort8080
+    - GatewayStaticAddresses
+    - TCPRoute
+    unsupportedFeatures:
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - ListenerSet
+  name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
