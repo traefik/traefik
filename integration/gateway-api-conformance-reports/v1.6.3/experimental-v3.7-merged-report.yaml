@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-29T10:07:48+02:00"
+date: "2026-10-07T09:23:20+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.6.2
+gatewayAPIVersion: v1.6.3
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -16,7 +16,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 15
+      Passed: 14
       Skipped: 0
   name: GATEWAY-GRPC
   summary: Core tests succeeded.
@@ -26,7 +26,7 @@ profiles:
     - HTTPRouteMultipleGateways
     statistics:
       Failed: 0
-      Passed: 36
+      Passed: 35
       Skipped: 1
   extended:
     result: success
@@ -62,7 +62,7 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayInfrastructurePropagation
+    - GatewayInfrastructure
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
@@ -82,7 +82,7 @@ profiles:
     - TLSRouteHostnameIntersection
     statistics:
       Failed: 0
-      Passed: 19
+      Passed: 18
       Skipped: 1
   extended:
     result: success
@@ -101,16 +101,8 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
-    - GatewayInfrastructurePropagation
+    - GatewayInfrastructure
     - GatewayStaticAddresses
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests partially succeeded with 1 test skips. Extended tests succeeded.
-succeededProvisionalTests:
-- GRPCRouteNamedRule
-- HTTPRoute303Redirect
-- HTTPRoute307Redirect
-- HTTPRoute308Redirect
-- HTTPRouteNamedRule
-- TLSRouteMixedTerminationSameNamespace
-- TLSRouteTerminateSimpleSameNamespace

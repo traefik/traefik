@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-09-29T10:04:12+02:00"
+date: "2026-10-07T11:11:56+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.6.2
+gatewayAPIVersion: v1.6.3
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -16,17 +16,17 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 15
+      Passed: 14
       Skipped: 0
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 3
+      Passed: 4
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
-    - GatewayInfrastructurePropagation
+    - GatewayInfrastructure
     - GatewayPort8080
     - GatewayStaticAddresses
     unsupportedFeatures:
@@ -42,18 +42,18 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 37
+      Passed: 36
       Skipped: 0
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 29
+      Passed: 30
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - GatewayAddressEmpty
-    - GatewayInfrastructurePropagation
+    - GatewayInfrastructure
     - GatewayPort8080
     - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
@@ -96,17 +96,17 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 20
+      Passed: 19
       Skipped: 0
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 7
+      Passed: 8
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
-    - GatewayInfrastructurePropagation
+    - GatewayInfrastructure
     - GatewayPort8080
     - GatewayStaticAddresses
     - TLSRouteModeMixed
@@ -120,13 +120,3 @@ profiles:
     - ListenerSet
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
-succeededProvisionalTests:
-- GRPCRouteNamedRule
-- GatewayInfrastructure
-- GatewayOptionalAddressValue
-- HTTPRoute303Redirect
-- HTTPRoute307Redirect
-- HTTPRoute308Redirect
-- HTTPRouteNamedRule
-- TLSRouteMixedTerminationSameNamespace
-- TLSRouteTerminateSimpleSameNamespace

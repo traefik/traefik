@@ -44,7 +44,7 @@ import (
 // It is the counterpart to the operator-provisioned per-Gateway data planes the
 // GatewayAPIConformanceSuite exercises: here one Traefik merges all Gateways
 // behind a single address, so the features a single instance cannot satisfy
-// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructurePropagation,
+// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructure,
 // and the multiple-Gateways test) are left out.
 type GatewayAPIConformanceMergedSuite struct {
 	BaseSuite
@@ -87,7 +87,7 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.2.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
