@@ -657,17 +657,20 @@ location /api {
 			},
 		},
 		{
-			desc: "location directive with prefix match - not matching continues to next",
+			desc: "location directive with no exact prefix or regex match continues to next",
 			serverSnippet: `
 location /api {
 	return 200 "OK";
 }
+location = /web { return 200 exact; }
+location ~ ^/v1 { return 200 regex; }
 add_header X-Always "present";
 `,
 			path: "/web/users",
 			expectedResponseHeaders: map[string]string{
 				"X-Always": "present",
 			},
+			expectNextCalled: new(true),
 		},
 		{
 			desc: "location directive with exact match and return",
@@ -716,6 +719,138 @@ add_header X-Always "present";
 			expectedResponseHeaders: map[string]string{
 				"X-Always": "present",
 			},
+		},
+		{
+			desc: "location selection - exact before prefix and regex",
+			serverSnippet: `location = /api { return 200 exact; }
+location / { return 200 prefix; }
+location ~ ^/api { return 200 regex; }`,
+			path:             "/api",
+			expectedBody:     "exact",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - exact after regex and prefix",
+			serverSnippet: `location ~ ^/api { return 200 regex; }
+location / { return 200 prefix; }
+location = /api { return 200 exact; }`,
+			path:             "/api",
+			expectedBody:     "exact",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - longest prefix first",
+			serverSnippet: `location /api/v1 { return 200 longest; }
+location /api { return 200 shorter; }
+location / { return 200 root; }`,
+			path:             "/api/v1/users",
+			expectedBody:     "longest",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - longest prefix last",
+			serverSnippet: `location / { return 200 root; }
+location /api { return 200 shorter; }
+location /api/v1 { return 200 longest; }`,
+			path:             "/api/v1/users",
+			expectedBody:     "longest",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - preferred prefix before regex",
+			serverSnippet: `location ^~ /api { return 200 prefix; }
+location ~ ^/api { return 200 regex; }`,
+			path:             "/api/users",
+			expectedBody:     "prefix",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - preferred prefix after regex",
+			serverSnippet: `location ~ ^/api { return 200 regex; }
+location ^~ /api { return 200 prefix; }`,
+			path:             "/api/users",
+			expectedBody:     "prefix",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - shorter preferred prefix does not suppress regex",
+			serverSnippet: `location /api/v1 { return 200 longest; }
+location ~ ^/api { return 200 regex; }
+location ^~ /api { return 200 shorter; }`,
+			path:             "/api/v1/users",
+			expectedBody:     "regex",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - first matching regex wins over later regex and prefix",
+			serverSnippet: `location ~ ^/other { return 200 unrelated; }
+location ~* ^/API { return 200 first; }
+location ~ ^/api { return 200 second; }
+location /api { return 200 prefix; }`,
+			path:             "/api/users",
+			expectedBody:     "first",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - regex wins without a matching prefix",
+			serverSnippet: `location ~ ^/api { return 200 regex; }
+location /other { return 200 other; }`,
+			path:             "/api/users",
+			expectedBody:     "regex",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - nonmatching regex falls back to longest prefix",
+			serverSnippet: `location /api { return 200 prefix; }
+location / { return 200 root; }
+location ~ ^/other { return 200 regex; }`,
+			path:             "/api/users",
+			expectedBody:     "prefix",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - server return prevents location execution",
+			serverSnippet: `return 200 server;
+location /api { return 200 location; }`,
+			path:             "/api",
+			expectedBody:     "server",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - server set runs before location regardless of declaration order",
+			serverSnippet: `location /api { return 200 $result; }
+set $result server;`,
+			path:             "/api",
+			expectedBody:     "server",
+			expectNextCalled: new(false),
+		},
+		{
+			desc: "location selection - only selected location headers reach backend and response",
+			serverSnippet: `
+location /api {
+	add_header X-Selected yes;
+	more_set_input_headers "X-Selected: yes";
+}
+location / {
+	add_header X-Unselected yes;
+	more_set_headers "X-Unselected-More: yes";
+	more_set_input_headers "X-Unselected: yes";
+	return 200 root;
+}
+add_header X-Server yes;
+more_set_headers "X-Server-More: yes";
+`,
+			path: "/api/users",
+			expectedRequestHeaders: map[string]string{
+				"X-Selected":   "yes",
+				"X-Unselected": "",
+			},
+			expectedResponseHeaders: map[string]string{
+				"X-Selected":    "yes",
+				"X-Server-More": "yes",
+			},
+			unexpectedResponseHeaders: []string{"X-Unselected", "X-Unselected-More", "X-Server"},
+			expectNextCalled:          new(true),
 		},
 		{
 			desc: "location with return applies add_header always from same block",
