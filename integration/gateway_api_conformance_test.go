@@ -64,7 +64,7 @@ const (
 //
 // The operator owns the infrastructure part of the specification, which a
 // single statically deployed instance cannot satisfy: a per-Gateway
-// status.addresses, GatewayStaticAddresses, GatewayInfrastructurePropagation,
+// status.addresses, GatewayStaticAddresses, GatewayInfrastructure,
 // and the tests needing two Gateways reachable at two distinct addresses.
 type GatewayAPIConformanceSuite struct {
 	BaseSuite
@@ -113,7 +113,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		// which a single node cannot do for the several port 80 Services the
 		// operator provisions. nodeLoadBalancer assigns their addresses.
 		testcontainers.WithCmdArgs("--disable=servicelb"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.2.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/01-operator.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/02-gatewayclass.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/03-bootstrap-gateway.yml"),
@@ -230,12 +230,16 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 				ksuite.GatewayHTTPConformanceProfileName,
 				ksuite.GatewayGRPCConformanceProfileName,
 				ksuite.GatewayTLSConformanceProfileName,
+				ksuite.GatewayTCPConformanceProfileName,
 			},
 			// Here we are concatenating the features supported by the Traefik Gateway API implementation with the
 			// features supported by the Traefik Gateway API operator.
+			// TCPRoute is only supported with the experimental channel enabled,
+			// which is why it is not part of the provider supported features.
 			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
+				features.SupportTCPRoute,
 				features.GatewayEmptyAddressFeature.Name,
-				features.GatewayInfrastructurePropagationFeature.Name,
+				features.GatewayInfrastructureFeature.Name,
 				features.GatewayStaticAddressesFeature.Name,
 			}),
 		},

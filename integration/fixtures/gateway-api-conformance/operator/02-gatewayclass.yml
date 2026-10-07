@@ -15,6 +15,12 @@ spec:
     type: LoadBalancer
   logs:
     level: DEBUG
+  providers:
+    # The data plane reports a route as accepted before the configuration
+    # reload serving it, while the suite sends traffic as soon as the route is
+    # accepted: the default 2s throttle leaves the previous test routes served
+    # in the meantime.
+    throttleDuration: 0s
 
 ---
 kind: GatewayClass
