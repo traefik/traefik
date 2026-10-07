@@ -193,10 +193,10 @@ At least one of `request` and `response` must be set.
 
 ### rejectOnRecordError
 
-| `rejectOnRecordError` | When the record cannot be sent |
-|:----------------------|:-------------------------------|
-| `false` | The error is logged, and the request is served. |
-| `true` | The request is rejected with a `500 Internal Server Error`. |
+When the record cannot be sent:
+
+- With `false`, the error is logged, and the request is served.
+- With `true`, the request is rejected with a `500 Internal Server Error`.
 
 With `true`, the record is sent first:
 the request record before the request reaches the backend,
@@ -238,9 +238,9 @@ A value of `-1` means no limit.
 
 | Case | Held in memory | Over `maxBodySize` |
 |:-----|:---------------|:-------------------|
-| `request` with `recordBody` | The first `maxRecordBodySize` bytes, or the whole body when `maxRecordBodySize` is `-1`. | With the whole body held: `413 Request Entity Too Large`, the request is neither forwarded nor recorded. |
-| `response` with `recordBody` | A copy of the first `maxRecordBodySize` bytes, for the record. | The record is cut at `maxBodySize`. |
-| `response` with `rejectOnRecordError` | The whole response. | `500 Internal Server Error`, the response is not recorded. |
+| <a id="opt-request-with-recordBody" href="#opt-request-with-recordBody" title="#opt-request-with-recordBody">`request` with `recordBody`</a> | The first `maxRecordBodySize` bytes, or the whole body when `maxRecordBodySize` is `-1`. | With the whole body held: `413 Request Entity Too Large`, the request is neither forwarded nor recorded. |
+| <a id="opt-response-with-recordBody" href="#opt-response-with-recordBody" title="#opt-response-with-recordBody">`response` with `recordBody`</a> | A copy of the first `maxRecordBodySize` bytes, for the record. | The record is cut at `maxBodySize`. |
+| <a id="opt-response-with-rejectOnRecordError" href="#opt-response-with-rejectOnRecordError" title="#opt-response-with-rejectOnRecordError">`response` with `rejectOnRecordError`</a> | The whole response. | `500 Internal Server Error`, the response is not recorded. |
 
 ## Records
 
