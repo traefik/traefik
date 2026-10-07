@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -83,4 +84,32 @@ func TestLocalStore_SaveAccount(t *testing.T) {
 }`
 
 	assert.Equal(t, expected, string(file))
+}
+
+func TestLocalStore_SaveAccount_replacesExistingFile(t *testing.T) {
+	acmeFile := filepath.Join(t.TempDir(), "acme.json")
+
+	err := os.WriteFile(acmeFile, []byte(`{"test":{"Account":{"Email":"previous@email.com"}}}`), 0o600)
+	require.NoError(t, err)
+
+	s := NewLocalStore(acmeFile, safe.NewPool(t.Context()))
+
+	err = s.SaveAccount("test", &Account{Email: "some@email.com"})
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	file, err := os.ReadFile(acmeFile)
+	require.NoError(t, err)
+	assert.Contains(t, string(file), `"Email": "some@email.com"`)
+
+	if runtime.GOOS != "windows" {
+		fi, err := os.Stat(acmeFile)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o600), fi.Mode().Perm())
+	}
+
+	entries, err := os.ReadDir(filepath.Dir(acmeFile))
+	require.NoError(t, err)
+	assert.Len(t, entries, 1, "temporary file left behind")
 }
