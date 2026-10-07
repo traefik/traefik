@@ -12,9 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
@@ -181,6 +183,237 @@ func TestManager_Get(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, test.expectedMinVersion, config.MinVersion)
+		})
+	}
+}
+
+func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
+	addresses := []struct {
+		desc        string
+		ip          string
+		reverseAddr string
+	}{
+		{
+			desc:        "IPv4",
+			ip:          "192.0.2.1",
+			reverseAddr: "1.2.0.192.in-addr.arpa",
+		},
+		{
+			desc:        "IPv6",
+			ip:          "2001:db8::1",
+			reverseAddr: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa",
+		},
+	}
+
+	for _, address := range addresses {
+		dnsCert := new(tls.Certificate)
+		ipCert := new(tls.Certificate)
+		acmeCert := new(tls.Certificate)
+
+		testCases := []struct {
+			desc                string
+			regularCertificates map[string]*CertificateData
+			supportedProtos     []string
+			expectedCertificate *tls.Certificate
+		}{
+			{
+				desc: "regular TLS selects the exact DNS certificate",
+				regularCertificates: map[string]*CertificateData{
+					address.reverseAddr: {Certificate: dnsCert},
+					address.ip:          {Certificate: ipCert},
+				},
+				supportedProtos:     []string{"h2", "http/1.1"},
+				expectedCertificate: dnsCert,
+			},
+			{
+				desc: "regular TLS does not match an IP certificate",
+				regularCertificates: map[string]*CertificateData{
+					address.ip: {Certificate: ipCert},
+				},
+				supportedProtos:     []string{"h2", "http/1.1"},
+				expectedCertificate: nil,
+			},
+			{
+				desc: "ACME selects the IP challenge certificate from its own store",
+				regularCertificates: map[string]*CertificateData{
+					address.ip: {Certificate: ipCert},
+				},
+				supportedProtos:     []string{tlsalpn01.ACMETLS1Protocol},
+				expectedCertificate: acmeCert,
+			},
+		}
+
+		for _, test := range testCases {
+			t.Run(address.desc+"/"+test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				defaultStore := NewCertificateStore(nil)
+				defaultStore.DynamicCerts.Set(test.regularCertificates)
+
+				acmeStore := NewCertificateStore(nil)
+				acmeStore.DynamicCerts.Set(map[string]*CertificateData{
+					address.ip: {Certificate: acmeCert},
+				})
+
+				tlsManager := NewManager(nil)
+				tlsOption := DefaultTLSOptions
+				tlsOption.SniStrict = true
+				tlsManager.configs[DefaultTLSConfigName] = tlsOption
+				tlsManager.stores = map[string]*CertificateStore{
+					DefaultTLSStoreName:        defaultStore,
+					tlsalpn01.ACMETLS1Protocol: acmeStore,
+				}
+
+				config, err := tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+				require.NoError(t, err)
+
+				certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
+					ServerName:      address.reverseAddr,
+					SupportedProtos: test.supportedProtos,
+				})
+				require.NoError(t, err)
+				if test.expectedCertificate == nil {
+					assert.Nil(t, certificate)
+				} else {
+					assert.Same(t, test.expectedCertificate, certificate)
+				}
+			})
+		}
+	}
+}
+
+func TestManager_ACMEChallengeCertificateLifecycle(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		ip          string
+		reverseAddr string
+	}{
+		{
+			desc:        "IPv4",
+			ip:          "192.0.2.1",
+			reverseAddr: "1.2.0.192.in-addr.arpa",
+		},
+		{
+			desc:        "IPv6",
+			ip:          "2001:db8::1",
+			reverseAddr: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dnsCertPEM, dnsKeyPEM, err := generate.KeyPair(test.reverseAddr, time.Time{})
+			require.NoError(t, err)
+			dnsCert, err := tls.X509KeyPair(dnsCertPEM, dnsKeyPEM)
+			require.NoError(t, err)
+
+			acmeCertPEM, acmeKeyPEM, err := tlsalpn01.ChallengeBlocks(test.ip, "keyAuth")
+			require.NoError(t, err)
+			acmeCert, err := tls.X509KeyPair(acmeCertPEM, acmeKeyPEM)
+			require.NoError(t, err)
+
+			type certificateSelection struct {
+				protocol            string
+				expectedCertificate *tls.Certificate
+			}
+
+			orders := []struct {
+				desc  string
+				steps []certificateSelection
+			}{
+				{
+					desc: "regular TLS first",
+					steps: []certificateSelection{
+						{
+							protocol:            "h2",
+							expectedCertificate: &dnsCert,
+						},
+						{
+							protocol:            tlsalpn01.ACMETLS1Protocol,
+							expectedCertificate: &acmeCert,
+						},
+						{
+							protocol:            "h2",
+							expectedCertificate: &dnsCert,
+						},
+					},
+				},
+				{
+					desc: "ACME first",
+					steps: []certificateSelection{
+						{
+							protocol:            tlsalpn01.ACMETLS1Protocol,
+							expectedCertificate: &acmeCert,
+						},
+						{
+							protocol:            "h2",
+							expectedCertificate: &dnsCert,
+						},
+						{
+							protocol:            tlsalpn01.ACMETLS1Protocol,
+							expectedCertificate: &acmeCert,
+						},
+					},
+				},
+			}
+
+			for _, order := range orders {
+				t.Run(order.desc, func(t *testing.T) {
+					stores := map[string]Store{
+						DefaultTLSStoreName: {
+							DefaultCertificate: &Certificate{CertFile: localhostCert, KeyFile: localhostKey},
+						},
+					}
+					tlsOption := DefaultTLSOptions
+					tlsOption.SniStrict = true
+					configs := map[string]Options{DefaultTLSConfigName: tlsOption}
+					dnsCertConfig := &CertAndStores{
+						Certificate: Certificate{CertFile: types.FileOrContent(dnsCertPEM), KeyFile: types.FileOrContent(dnsKeyPEM)},
+						Stores:      []string{DefaultTLSStoreName},
+					}
+					acmeCertConfig := &CertAndStores{
+						Certificate: Certificate{CertFile: types.FileOrContent(acmeCertPEM), KeyFile: types.FileOrContent(acmeKeyPEM)},
+						Stores:      []string{tlsalpn01.ACMETLS1Protocol},
+					}
+					tlsManager := NewManager(nil)
+					tlsManager.UpdateConfigs(t.Context(), stores, configs, []*CertAndStores{dnsCertConfig, acmeCertConfig})
+					config, err := tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+					require.NoError(t, err)
+
+					for i, step := range order.steps {
+						certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
+							ServerName:      test.reverseAddr,
+							SupportedProtos: []string{step.protocol},
+						})
+						require.NoError(t, err)
+						require.NotNil(t, certificate)
+
+						assert.Equal(t, step.expectedCertificate.Certificate, certificate.Certificate, "step %d (%s)", i+1, step.protocol)
+					}
+
+					// New connections use the TLS configuration rebuilt after the challenge is removed.
+					tlsManager.UpdateConfigs(t.Context(), stores, configs, []*CertAndStores{dnsCertConfig})
+					config, err = tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
+					require.NoError(t, err)
+
+					certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
+						ServerName:      test.reverseAddr,
+						SupportedProtos: []string{tlsalpn01.ACMETLS1Protocol},
+					})
+					require.NoError(t, err)
+					assert.Nil(t, certificate)
+
+					certificate, err = config.GetCertificate(&tls.ClientHelloInfo{
+						ServerName:      test.reverseAddr,
+						SupportedProtos: []string{"h2"},
+					})
+					require.NoError(t, err)
+					require.NotNil(t, certificate)
+					assert.Equal(t, dnsCert.Certificate, certificate.Certificate)
+				})
+			}
 		})
 	}
 }
