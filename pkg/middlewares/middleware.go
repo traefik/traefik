@@ -8,6 +8,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
+// RetryResponseWriterContextKey allows asynchronous services to isolate retry state.
+type RetryResponseWriterContextKey struct{}
+
 // GetLogger creates a logger with the middleware fields.
 func GetLogger(ctx context.Context, middleware, middlewareType string) *zerolog.Logger {
 	logger := log.Ctx(ctx).With().
