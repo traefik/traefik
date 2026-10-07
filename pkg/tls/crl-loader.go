@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 )
@@ -55,7 +56,22 @@ type crlFileLoader struct {
 
 // Load CRL from file
 func (l *crlFileLoader) Load(entry *crlEntry) (crlSnapshot, error) {
-	data, err := os.ReadFile(l.path)
+	cleanPath := filepath.Clean(l.path)
+
+	resolvedPath, err := filepath.EvalSymlinks(cleanPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolving CRL path %q: %w", l.path, err)
+	}
+
+	info, err := os.Stat(resolvedPath)
+	if err != nil {
+		return nil, fmt.Errorf("stating CRL file %q: %w", l.path, err)
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("CRL path %q is not a regular file", l.path)
+	}
+
+	data, err := os.ReadFile(resolvedPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading CRL file %q: %w", l.path, err)
 	}
