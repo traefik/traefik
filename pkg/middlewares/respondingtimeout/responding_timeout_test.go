@@ -360,25 +360,66 @@ func TestSlowBackendGets504(t *testing.T) {
 	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
 }
 
-// TestSlowBackendGets504OverHTTP2 guards the lazy write-deadline arming: arming the write deadline up front made
-// HTTP/2 reset the stream at the deadline before the 504 could be written, so the client saw a stream error, not the status.
-func TestSlowBackendGets504OverHTTP2(t *testing.T) {
-	t.Parallel()
+// TestSlowBackendOverHTTP2 guards the write deadline handling over HTTP/2, where a write deadline is a timer
+// that resets the stream when it fires, even before anything is written.
+func TestSlowBackendOverHTTP2(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		timeout      time.Duration
+		writeTimeout time.Duration
+		next         func(t *testing.T) http.Handler
+		expected     int
+	}{
+		{
+			desc:     "backend slower than the timeout gets 504",
+			timeout:  50 * time.Millisecond,
+			next:     func(t *testing.T) http.Handler { t.Helper(); return reverseProxy(hungBackend(t)) },
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc:         "backend slower than the entrypoint writeTimeout but within the timeout gets 200",
+			timeout:      time.Second,
+			writeTimeout: 50 * time.Millisecond,
+			next: func(t *testing.T) http.Handler {
+				t.Helper()
 
-	ts := httptest.NewUnstartedServer(wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
-	ts.EnableHTTP2 = true
-	ts.StartTLS()
-	t.Cleanup(ts.Close)
+				return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					time.Sleep(200 * time.Millisecond)
+					rw.WriteHeader(http.StatusOK)
+				})
+			},
+			expected: http.StatusOK,
+		},
+		{
+			desc:         "backend slower than the timeout gets 504 despite a shorter entrypoint writeTimeout",
+			timeout:      200 * time.Millisecond,
+			writeTimeout: 50 * time.Millisecond,
+			next:         func(t *testing.T) http.Handler { t.Helper(); return reverseProxy(hungBackend(t)) },
+			expected:     http.StatusGatewayTimeout,
+		},
+	}
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
-	require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	res, err := ts.Client().Do(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
+			ts := httptest.NewUnstartedServer(wrap(t, test.timeout, test.next(t)))
+			ts.EnableHTTP2 = true
+			ts.Config.WriteTimeout = test.writeTimeout
+			ts.StartTLS()
+			t.Cleanup(ts.Close)
 
-	require.Equal(t, "HTTP/2.0", res.Proto)
-	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
+			require.NoError(t, err)
+
+			res, err := ts.Client().Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			require.Equal(t, "HTTP/2.0", res.Proto)
+			assert.Equal(t, test.expected, res.StatusCode)
+		})
+	}
 }
 
 // TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: a timed-out request must not
