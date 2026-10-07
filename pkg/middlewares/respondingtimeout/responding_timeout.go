@@ -57,9 +57,16 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// The write deadline is set on the first write (see armWriteDeadline), not here: over HTTP/2 it is a timer
-	// that resets the stream when it fires, which at the deadline would prevent the 504.
 	writeTimeout := entryPointWriteTimeout(req)
+
+	// Over HTTP/2, the entrypoint writeTimeout is a timer started with the stream, which resets it even before
+	// anything is written. Moving it past the deadline keeps it from cutting a slow backend short or preventing the 504.
+	// The actual write deadline is set on the first write (see armWriteDeadline).
+	if writeTimeout > 0 {
+		if err := rc.SetWriteDeadline(deadline.Add(writeTimeout)); err != nil {
+			logger.Debug().Err(err).Msg("Unable to extend write deadline")
+		}
+	}
 
 	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, writeTimeout: writeTimeout, logger: logger}
 
