@@ -9662,15 +9662,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:    "default-child-single-2bba0a3de1b50b70a519",
 							Rule:       "Path(`/api`)",
 							ParentRefs: []string{"default-parent-single-3c07cfffe8e5f876a01e"},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "child-single",
-									},
-								},
-							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9753,15 +9744,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:    "default-child-multi-routes-b0479051e6a353d66211",
 							Rule:       "Path(`/users`)",
 							ParentRefs: []string{"default-parent-multi-4aac0d541c2b669a2d5d", "default-parent-multi-0af1ca0a94f5b87a125e"},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "child-multi-routes",
-									},
-								},
-							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9844,15 +9826,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:    "default-child-multi-parents-8013b5025acddd1761d1",
 							Rule:       "Path(`/shared`)",
 							ParentRefs: []string{"default-parent-a-629990b524bf9a1a8d27", "default-parent-b-add617f9b95cff009054"},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "child-multi-parents",
-									},
-								},
-							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -9946,15 +9919,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:    "ns-b-child-cross-allowed-0bad04de665623bf2362",
 							Rule:       "Path(`/cross`)",
 							ParentRefs: []string{"ns-a-parent-cross-74575ab54671a3ede28c"},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "ns-b",
-										Name:      "child-cross-allowed",
-									},
-								},
-							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -10062,15 +10026,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:    "default-child-same-9234eba1edcfbd8a7723",
 							Rule:       "Path(`/same`)",
 							ParentRefs: []string{"default-parent-default-9b8ab283eeed3eb66561"},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "child-same",
-									},
-								},
-							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
