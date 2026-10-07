@@ -188,7 +188,7 @@ func TestManager_Get(t *testing.T) {
 }
 
 func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
-	testCases := []struct {
+	addresses := []struct {
 		desc        string
 		ip          string
 		reverseAddr string
@@ -205,23 +205,54 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	for _, address := range addresses {
+		dnsCert := new(tls.Certificate)
+		ipCert := new(tls.Certificate)
+		acmeCert := new(tls.Certificate)
 
-			dnsCert := new(tls.Certificate)
-			ipCert := new(tls.Certificate)
-			acmeCert := new(tls.Certificate)
+		testCases := []struct {
+			desc                string
+			regularCertificates map[string]*CertificateData
+			supportedProtos     []string
+			expectedCertificate *tls.Certificate
+		}{
+			{
+				desc: "regular TLS selects the exact DNS certificate",
+				regularCertificates: map[string]*CertificateData{
+					address.reverseAddr: {Certificate: dnsCert},
+					address.ip:          {Certificate: ipCert},
+				},
+				supportedProtos:     []string{"h2", "http/1.1"},
+				expectedCertificate: dnsCert,
+			},
+			{
+				desc: "regular TLS does not match an IP certificate",
+				regularCertificates: map[string]*CertificateData{
+					address.ip: {Certificate: ipCert},
+				},
+				supportedProtos:     []string{"h2", "http/1.1"},
+				expectedCertificate: nil,
+			},
+			{
+				desc: "ACME selects the IP challenge certificate from its own store",
+				regularCertificates: map[string]*CertificateData{
+					address.ip: {Certificate: ipCert},
+				},
+				supportedProtos:     []string{tlsalpn01.ACMETLS1Protocol},
+				expectedCertificate: acmeCert,
+			},
+		}
 
-			newTLSConfig := func(t *testing.T, regularCertificates map[string]*CertificateData) *tls.Config {
-				t.Helper()
+		for _, test := range testCases {
+			t.Run(address.desc+"/"+test.desc, func(t *testing.T) {
+				t.Parallel()
 
 				defaultStore := NewCertificateStore(nil)
-				defaultStore.DynamicCerts.Set(regularCertificates)
+				defaultStore.DynamicCerts.Set(test.regularCertificates)
 
 				acmeStore := NewCertificateStore(nil)
 				acmeStore.DynamicCerts.Set(map[string]*CertificateData{
-					test.ip: {Certificate: acmeCert},
+					address.ip: {Certificate: acmeCert},
 				})
 
 				tlsManager := NewManager(nil)
@@ -235,52 +266,19 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 
 				config, err := tlsManager.Get(DefaultTLSStoreName, DefaultTLSConfigName)
 				require.NoError(t, err)
-				return config
-			}
-
-			// Regular TLS must use the DNS certificate for the reverse-address SNI.
-			{
-				config := newTLSConfig(t, map[string]*CertificateData{
-					test.reverseAddr: {Certificate: dnsCert},
-					test.ip:          {Certificate: ipCert},
-				})
 
 				certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
-					ServerName:      test.reverseAddr,
-					SupportedProtos: []string{"h2", "http/1.1"},
+					ServerName:      address.reverseAddr,
+					SupportedProtos: test.supportedProtos,
 				})
 				require.NoError(t, err)
-				assert.Same(t, dnsCert, certificate)
-			}
-
-			// An IP certificate alone must not match the reverse-address SNI for regular TLS.
-			{
-				config := newTLSConfig(t, map[string]*CertificateData{
-					test.ip: {Certificate: ipCert},
-				})
-
-				certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
-					ServerName:      test.reverseAddr,
-					SupportedProtos: []string{"h2", "http/1.1"},
-				})
-				require.NoError(t, err)
-				assert.Nil(t, certificate)
-			}
-
-			// ACME validation must select the IP challenge certificate from its own store.
-			{
-				config := newTLSConfig(t, map[string]*CertificateData{
-					test.ip: {Certificate: ipCert},
-				})
-
-				certificate, err := config.GetCertificate(&tls.ClientHelloInfo{
-					ServerName:      test.reverseAddr,
-					SupportedProtos: []string{tlsalpn01.ACMETLS1Protocol},
-				})
-				require.NoError(t, err)
-				assert.Same(t, acmeCert, certificate)
-			}
-		})
+				if test.expectedCertificate == nil {
+					assert.Nil(t, certificate)
+				} else {
+					assert.Same(t, test.expectedCertificate, certificate)
+				}
+			})
+		}
 	}
 }
 
