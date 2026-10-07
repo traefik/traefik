@@ -13,7 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -21,8 +20,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
@@ -209,47 +206,35 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
-	var resAttrs []attribute.KeyValue
-	for k, v := range config.ResourceAttributes {
-		resAttrs = append(resAttrs, attribute.String(k, v))
-	}
-
-	res, err := resource.New(ctx,
-		resource.WithContainer(),
-		resource.WithHost(),
-		resource.WithOS(),
-		resource.WithProcess(),
-		resource.WithTelemetrySDK(),
-		resource.WithDetectors(types.K8sAttributesDetector{}),
-		// The following order allows the user to override the service name and version,
-		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(config.ServiceName),
-			semconv.ServiceVersion(version.Version),
-		),
-		resource.WithAttributes(resAttrs...),
-		// Use the environment variables to allow overriding above resource attributes.
-		resource.WithFromEnv(),
-	)
+	res, err := observability.NewOTelResource(ctx, config.ServiceName, config.ResourceAttributes)
 	if err != nil {
-		return nil, fmt.Errorf("building resource: %w", err)
+		return nil, err
 	}
 
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
-	meterProvider := sdkmetric.NewMeterProvider(
+	meterProviderOpts := []sdkmetric.Option{
 		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
-		// View to customize histogram buckets and rename a single histogram instrument.
-		sdkmetric.WithView(sdkmetric.NewView(
+	}
+
+	// The view applies the configured explicit boundaries to the Traefik histograms.
+	// As a view takes precedence over the exporter's aggregation,
+	// it is only added when the exporter uses explicit bucket histograms (the default).
+	// This lets OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram
+	// switch these histograms to exponential bucket histograms.
+	if _, ok := exporter.Aggregation(sdkmetric.InstrumentKindHistogram).(sdkmetric.AggregationExplicitBucketHistogram); ok {
+		meterProviderOpts = append(meterProviderOpts, sdkmetric.WithView(sdkmetric.NewView(
 			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
 			sdkmetric.Stream{Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
 				Boundaries: config.ExplicitBoundaries,
 			}},
-		)),
-	)
+		)))
+	}
+
+	meterProvider := sdkmetric.NewMeterProvider(meterProviderOpts...)
 
 	otel.SetMeterProvider(meterProvider)
 

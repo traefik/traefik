@@ -123,8 +123,16 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		loadBalancer := tcp.NewWRRLoadBalancer(conf.Weighted.HealthCheck != nil)
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
+			if service.Weight != nil && *service.Weight < 0 {
+				err := fmt.Errorf("invalid negative weight %d for service %q", *service.Weight, service.Name)
+				conf.AddError(err, true)
+				logger.Error().Err(err).Msg("Invalid service weight")
+				return nil, err
+			}
+
 			handler, err := m.BuildTCP(ctx, service.Name)
 			if err != nil {
+				conf.AddError(err, true)
 				logger.Error().Err(err).Msg("Failed to build TCP handler")
 				return nil, err
 			}
@@ -137,13 +145,17 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 			updater, ok := handler.(healthcheck.StatusUpdater)
 			if !ok {
-				return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", service.Name, serviceName, handler)
+				err := fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", service.Name, serviceName, handler)
+				conf.AddError(err, true)
+				return nil, err
 			}
 
 			if err := updater.RegisterStatusUpdater(func(up bool) {
 				loadBalancer.SetStatus(ctx, service.Name, up)
 			}); err != nil {
-				return nil, fmt.Errorf("cannot register %v as updater for %v: %w", service.Name, serviceName, err)
+				err = fmt.Errorf("cannot register %v as updater for %v: %w", service.Name, serviceName, err)
+				conf.AddError(err, true)
+				return nil, err
 			}
 
 			log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", service.Name).

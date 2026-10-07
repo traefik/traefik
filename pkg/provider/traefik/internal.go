@@ -420,6 +420,8 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
 			ResponseHeaderTimeout: i.staticCfg.ServersTransport.ForwardingTimeouts.ResponseHeaderTimeout,
 			IdleConnTimeout:       i.staticCfg.ServersTransport.ForwardingTimeouts.IdleConnTimeout,
+			ReadTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.ReadTimeout,
+			WriteTimeout:          i.staticCfg.ServersTransport.ForwardingTimeouts.WriteTimeout,
 		}
 	}
 

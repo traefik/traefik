@@ -34,6 +34,8 @@ const (
 // XHeadersSet contains the canonical X-headers managed by Traefik. Used by
 // isManagedXHeader to detect both the canonical form and underscore variants
 // that Go's HTTP server preserves (e.g. X_Forwarded_Proto).
+// Note: the other aliasing forms (e.g. X.Forwarded.Proto) are not handled here,
+// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 var XHeadersSet = map[string]struct{}{
 	XForwardedProto:             {},
 	xForwardedScheme:            {},

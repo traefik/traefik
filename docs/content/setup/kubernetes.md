@@ -5,16 +5,16 @@ description: "Learn how to Setup Traefik on Kubernetes with HTTP/HTTPS entrypoin
 
 This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Kubernetes cluster using the official Helm chart. In this guide, we'll cover the following:
 
-- Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points, 
+- Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points
 - Implement automatic redirection from HTTP to HTTPS
-- Secure the Traefik Dashboard using Basic Authentication.
+- Secure the Traefik Dashboard using Basic Authentication
 - Deploy a demo application to test the setup
 - Explore some other key configuration options
 
 ## Prerequisites
 
 - A Kubernetes cluster
-- Helm v3, 
+- Helm v3 
 - Kubectl 
 
 ## Create the Cluster

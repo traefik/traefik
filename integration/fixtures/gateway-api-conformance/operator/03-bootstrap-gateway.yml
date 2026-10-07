@@ -1,0 +1,16 @@
+---
+# The data plane is the single writer of the GatewayClass status, and the
+# operator only provisions one once a Gateway exists. The conformance suite
+# waits for the GatewayClass to be accepted before it creates any Gateway, so
+# this one exists for the whole run to keep the status written.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik-bootstrap
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80

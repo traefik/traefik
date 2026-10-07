@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/go-acme/lego/v5/certificate"
 	"github.com/go-acme/lego/v5/challenge"
 	"github.com/go-acme/lego/v5/challenge/dns01"
@@ -37,6 +38,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"k8s.io/utils/ptr"
 )
 
 const resolverSuffix = ".acme"
@@ -53,6 +55,8 @@ type Configuration struct {
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+
+	ReusePrivateKey *bool `description:"Reuse the private key from the previous certificate generation during the renewal." json:"reusePrivateKey,omitempty" toml:"reusePrivateKey,omitempty" yaml:"reusePrivateKey,omitempty" export:"true"`
 
 	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -76,6 +80,7 @@ func (a *Configuration) SetDefaults() {
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
 	a.CertificateTimeout = ptypes.Duration(30 * time.Second)
+	a.ReusePrivateKey = new(true)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -100,9 +105,9 @@ type EAB struct {
 
 // DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider    string       `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
-	Resolvers   []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	Propagation *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Provider    string      `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	Resolvers   []string    `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	Propagation Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	// Deprecated: please use Propagation.DelayBeforeChecks instead.
 	DelayBeforeCheck ptypes.Duration `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
@@ -358,13 +363,9 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 		err = client.Challenge.SetDNS01Provider(
 			provider,
-			dns01.LazyCondOption(propagation != nil, func() dns01.ChallengeOption {
-				return dns01.CombineOptions(
-					dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
-					dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
-					dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
-				)
-			}),
+			dns01.CondOptions(propagation.DisableANSChecks, dns01.DisableAuthoritativeNssPropagationRequirement()),
+			dns01.CondOptions(!propagation.RequireAllRNS, dns01.DisableRecursiveNSsPropagationRequirement()),
+			dns01.PropagationWait(time.Duration(propagation.DelayBeforeChecks), propagation.DisableChecks),
 		)
 		if err != nil {
 			return nil, err
@@ -620,6 +621,10 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 					validDomains, err := p.sanitizeDomains(ctx, *tlsStore.DefaultGeneratedCert.Domain)
 					if err != nil {
 						logger.Error().Err(err).Strs("domains", tlsStore.DefaultGeneratedCert.Domain.ToStrArray()).Msg("domains validation")
+					}
+
+					if len(validDomains) == 0 {
+						continue
 					}
 
 					if p.certExists(validDomains) {
@@ -936,15 +941,25 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		res := certificate.Resource{
 			ID:          cert.Domain.Main,
 			Domains:     cert.Domain.ToStrArray(),
-			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
+			KeyType:     GetKeyType(ctx, p.KeyType),
+		}
+
+		if ptr.Deref(p.ReusePrivateKey, true) && len(cert.Key) > 0 {
+			keyType, err := getPrivateKeyType(cert)
+			if err != nil {
+				logger.Error().Err(err).Msgf("Error getting ACME private certificate key type: %+v, fallback to %s key type", cert.Domain, res.KeyType)
+			} else if keyType == GetKeyType(ctx, p.KeyType) {
+				res.PrivateKey = cert.Key
+			}
 		}
 
 		opts := &certificate.RenewOptions{
-			Bundle:         true,
-			EmailAddresses: p.EmailAddresses,
-			Profile:        p.Profile,
-			PreferredChain: p.PreferredChain,
+			Bundle:           true,
+			EmailAddresses:   p.EmailAddresses,
+			Profile:          p.Profile,
+			PreferredChain:   p.PreferredChain,
+			EnableCommonName: !p.DisableCommonName,
 		}
 
 		renewedCert, err := client.Certificate.Renew(ctx, res, opts)
@@ -1055,7 +1070,12 @@ func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]
 	var cleanDomains []string
 	for _, dom := range domains {
 		if strings.HasPrefix(dom, "*.*") {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+		}
+
+		if strings.HasPrefix(dom, "**.") {
+			// ACME only issues single-level wildcard certificates.
+			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domains %q : ACME does not allow '**.' wildcard domain", strings.Join(domains, ","))
 		}
 
 		canonicalDomain := types.CanonicalDomain(dom)
@@ -1088,6 +1108,20 @@ func (p *Provider) certExists(validDomains []string) bool {
 	}
 
 	return false
+}
+
+func getPrivateKeyType(cert *CertAndStore) (certcrypto.KeyType, error) {
+	key, err := certcrypto.ParsePEMPrivateKey(cert.Key)
+	if err != nil {
+		return certcrypto.RSA4096, err
+	}
+
+	keyType, err := certcrypto.GetPrivateKeyType(key)
+	if err != nil {
+		return certcrypto.RSA4096, err
+	}
+
+	return keyType, nil
 }
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {

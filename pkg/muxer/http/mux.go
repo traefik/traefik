@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
@@ -71,9 +72,20 @@ func (m *Muxer) SetDefaultHandler(handler http.Handler) {
 }
 
 // GetRulePriority computes the priority for a given rule.
-// The priority is calculated using the length of rule.
+// The priority is calculated using the length of rule, the stars of a double wildcard host not counting.
 func GetRulePriority(rule string) int {
-	return len(rule)
+	priority := len(rule)
+
+	domains, err := ParseDomains(rule)
+	if err != nil {
+		return priority
+	}
+
+	for _, domain := range domains {
+		priority -= muxer.DoubleWildcardPenalty(domain)
+	}
+
+	return priority
 }
 
 // AddRoute add a new route to the router.
@@ -175,7 +187,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 	), nil
 }
 
-// ParseDomains extract domains from rule.
+// ParseDomains extract the domains from positive Host matchers (not negated) in a rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
@@ -200,7 +212,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{"Host"}), nil
+	return buildTree().ParsePositiveMatchers([]string{"Host"}), nil
 }
 
 // routes implements sort.Interface.

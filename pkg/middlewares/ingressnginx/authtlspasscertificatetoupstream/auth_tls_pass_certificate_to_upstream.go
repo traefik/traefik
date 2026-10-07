@@ -25,6 +25,56 @@ const (
 	sslClientIssuerDN  = "Ssl-Client-Issuer-Dn"
 )
 
+// managedHeaders holds, in their normalized form, the header names this middleware owns.
+var managedHeaders = func() map[string]struct{} {
+	names := []string{sslClientCert, sslClientVerify, sslClientSubjectDN, sslClientIssuerDN}
+
+	set := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		set[normalizeHeaderName(name)] = struct{}{}
+	}
+
+	return set
+}()
+
+// deleteManagedHeaders removes from headers every name this middleware owns, whichever spelling it
+// was received with. A client has no legitimate reason to send any of them, and they are removed
+// before the middleware writes its own values, on the mutual TLS path as well as without it.
+//
+// The deletion goes through the map directly, and not through Header.Del, which canonicalizes the
+// name it is given and would therefore miss the very aliasing spellings this guards against.
+func deleteManagedHeaders(headers http.Header) {
+	for key := range headers {
+		if _, ok := managedHeaders[normalizeHeaderName(key)]; ok {
+			delete(headers, key)
+		}
+	}
+}
+
+// normalizeHeaderName upper-cases the letters of name, and replaces every byte that is neither a
+// letter nor a digit with a dash.
+//
+// Go canonicalizes a header name on dashes only, whereas the backends deriving variable names from
+// the header names, which are the consumers of the Ssl-Client-* fields, replace every character that
+// is neither a letter nor a digit with an underscore. They read Ssl-Client-Verify, Ssl_Client_Verify
+// and Ssl.Client.Verify as the same variable, and all of those spellings reach the handlers: the
+// fourteen characters building such an alias (!, #, $, %, &, ', *, +, ., ^, _, `, |, ~) are all
+// valid in a header name. Comparing this form is what recognizes them as one name.
+func normalizeHeaderName(name string) string {
+	buf := []byte(name)
+	for i, c := range buf {
+		switch {
+		case c >= 'a' && c <= 'z':
+			buf[i] = c - ('a' - 'A')
+		case c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
+		default:
+			buf[i] = '-'
+		}
+	}
+
+	return string(buf)
+}
+
 type authTLSPassCertificateToUpstream struct {
 	next           http.Handler
 	name           string
@@ -62,13 +112,23 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
 	ctx := logger.WithContext(req.Context())
 
-	if req.TLS == nil || len(req.TLS.PeerCertificates) == 0 {
+	// This middleware owns the Ssl-Client-* headers, so no value a client sent for them may reach the
+	// upstream, whether the request carries a client certificate or not.
+	deleteManagedHeaders(req.Header)
+
+	// Nginx builds these headers from the $ssl_client_* variables, which are empty outside of a TLS
+	// connection, and proxy_set_header omits a header whose value is empty.
+	// A plaintext request therefore carries none of them, rather than carrying NONE, which would tell
+	// the backend that the client presented no certificate over a connection that was never TLS.
+	if req.TLS == nil {
+		logger.Debug().Msg("Tried to extract a certificate on a request without TLS")
+		p.next.ServeHTTP(rw, req)
+		return
+	}
+
+	if len(req.TLS.PeerCertificates) == 0 {
 		logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		req.Header.Set(sslClientVerify, "NONE")
-		// Prevent client-supplied values from reaching the upstream on the no-mTLS path.
-		req.Header.Del(sslClientCert)
-		req.Header.Del(sslClientSubjectDN)
-		req.Header.Del(sslClientIssuerDN)
 		p.next.ServeHTTP(rw, req)
 		return
 	}

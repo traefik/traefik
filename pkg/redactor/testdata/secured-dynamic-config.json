@@ -359,7 +359,9 @@
           "responseHeaderTimeout": "42ns",
           "idleConnTimeout": "42ns",
           "readIdleTimeout": "42ns",
-          "pingTimeout": "42ns"
+          "pingTimeout": "42ns",
+          "readTimeout": "42ns",
+          "writeTimeout": "42ns"
         }
       }
     }

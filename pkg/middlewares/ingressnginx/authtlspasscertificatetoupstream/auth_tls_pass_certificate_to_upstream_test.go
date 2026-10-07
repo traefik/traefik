@@ -262,13 +262,21 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		clientAuthType       string
 		caFiles              []types.FileOrContent
 		certContents         []string
+		noTLS                bool
 		expectedClientVerify string
 		expectedSubjectDN    string
 		expectedIssuerDN     string
 		expectedCert         string
 	}{
 		{
-			desc:                 "No TLS",
+			// Nginx builds these headers from variables that are empty outside of a TLS connection,
+			// and omits a header whose value is empty, so none of them is set.
+			desc:           "No TLS",
+			clientAuthType: tls.RequireAndVerifyClientCert,
+			noTLS:          true,
+		},
+		{
+			desc:                 "TLS without client certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
 			expectedClientVerify: "NONE",
 		},
@@ -318,7 +326,12 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:                 "No TLS with optional_no_ca",
+			desc:           "No TLS with optional_no_ca",
+			clientAuthType: tls.RequestClientCert,
+			noTLS:          true,
+		},
+		{
+			desc:                 "TLS without client certificate and optional_no_ca",
 			clientAuthType:       tls.RequestClientCert,
 			expectedClientVerify: "NONE",
 		},
@@ -339,7 +352,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
-			if len(test.certContents) > 0 {
+			if !test.noTLS {
 				req.TLS = buildTLSWith(test.certContents)
 			}
 
@@ -367,7 +380,8 @@ func TestAuthTLSNoMTLSClearsCertHeaders(t *testing.T) {
 	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
 	require.NoError(t, err)
 
-	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, "https://example.com/foo", nil)
+	req.TLS = &cryptoTLS.ConnectionState{}
 	req.Header.Set(sslClientCert, "client-cert")
 	req.Header.Set(sslClientSubjectDN, "CN=client")
 	req.Header.Set(sslClientIssuerDN, "CN=client-CA")
@@ -378,6 +392,27 @@ func TestAuthTLSNoMTLSClearsCertHeaders(t *testing.T) {
 	assert.Empty(t, req.Header.Get(sslClientCert))
 	assert.Empty(t, req.Header.Get(sslClientSubjectDN))
 	assert.Empty(t, req.Header.Get(sslClientIssuerDN))
+}
+
+// TestAuthTLSNoTLSClearsCertHeaders checks a request that never was over TLS, which is what the HTTP
+// router serves. Nginx builds these headers from variables that are empty there, and omits them, so
+// Traefik sends none of them either, Ssl-Client-Verify included.
+func TestAuthTLSNoTLSClearsCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Set(sslClientVerify, "SUCCESS")
+	req.Header.Set(sslClientCert, "client-cert")
+	req.Header.Set(sslClientSubjectDN, "CN=client")
+	req.Header.Set(sslClientIssuerDN, "CN=client-CA")
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, http.Header{}, req.Header)
 }
 
 func buildTLSWith(certContents []string) *cryptoTLS.ConnectionState {
@@ -408,4 +443,98 @@ func getCertificate(certContent string) *x509.Certificate {
 	}
 
 	return cert
+}
+
+// aliasChars holds the characters that are valid in a header name and that a backend deriving
+// variable names from the header names replaces by an underscore, hence making a name carrying one of
+// them alias another name.
+const aliasChars = "!#$%&'*+.^_`|~"
+
+// aliasesOf returns every spelling of name built by replacing its dashes with an aliasing character.
+func aliasesOf(name string) []string {
+	var aliases []string
+	for _, char := range aliasChars {
+		aliases = append(aliases, strings.ReplaceAll(name, "-", string(char)))
+	}
+
+	return aliases
+}
+
+// TestAuthTLSNoTLSClearsAliasingCertHeaders checks the plaintext path, the one an Ingress reaches when
+// ssl-redirect is disabled, against a client spelling the managed names so that they alias the
+// canonical ones. A backend deriving variable names from the header names reads Ssl_Client_Verify as
+// the Ssl-Client-Verify field, so none of those spellings may survive.
+func TestAuthTLSNoTLSClearsAliasingCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	for _, name := range []string{sslClientVerify, sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		for _, alias := range aliasesOf(name) {
+			// Assigning to the map directly: Header.Set would canonicalize these names on dashes.
+			req.Header[alias] = []string{"spoofed"}
+		}
+	}
+	// A name that merely carries an aliasing character is none of ours, and is left alone.
+	req.Header["X_Request_Id"] = []string{"42"}
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, http.Header{"X_Request_Id": {"42"}}, req.Header)
+}
+
+// TestAuthTLSMTLSClearsAliasingCertHeaders checks the same on the mutual TLS path: the middleware
+// sets the canonical names there, so an aliasing spelling the client supplied would otherwise reach
+// the backend beside Traefik's own value.
+func TestAuthTLSMTLSClearsAliasingCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.RequireAndVerifyClientCert,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.TLS = buildTLSWith([]string{minimalCheeseCrt})
+	for _, name := range []string{sslClientVerify, sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		for _, alias := range aliasesOf(name) {
+			req.Header[alias] = []string{"spoofed"}
+		}
+	}
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	// Exactly the four canonical names, each carrying the value derived from the presented
+	// certificate, and no aliasing spelling beside them.
+	require.Len(t, req.Header, 4)
+	assert.Equal(t, "SUCCESS", req.Header.Get(sslClientVerify))
+	for _, name := range []string{sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		assert.NotEqual(t, "spoofed", req.Header.Get(name))
+		assert.NotEmpty(t, req.Header.Get(name))
+	}
+}
+
+func TestNormalizeHeaderName(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected string
+	}{
+		{desc: "canonical name", name: "Ssl-Client-Verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "lower case", name: "ssl-client-verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "underscores", name: "Ssl_Client_Verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "dots", name: "ssl.client.verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "digits are kept", name: "X-Ssl-2", expected: "X-SSL-2"},
+		{desc: "empty name", name: "", expected: ""},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, normalizeHeaderName(test.name))
+		})
+	}
 }

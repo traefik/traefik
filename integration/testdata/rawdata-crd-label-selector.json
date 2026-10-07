@@ -1,6 +1,6 @@
 {
 	"routers": {
-		"default-api-route-0-3b5cb0444180c95901ba@kubernetescrd": {
+		"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
@@ -11,28 +11,42 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "api.route",
+						"kind": "IngressRoute"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
 				"web"
 			]
 		},
-		"default-test-route-0-bfddf9467dc588639f54@kubernetescrd": {
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test-route-0-lb-611f3105c4cbbc8cca31",
+			"service": "default-test-route-6b204d94623b3df4370c",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
-				"options": "default-mytlsoption-a1ef27074b0a3c4e1d2f"
+				"options": "default-mytlsoption"
 			},
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "test.route",
+						"kind": "IngressRoute"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -44,20 +58,20 @@
 		"api@internal": {
 			"status": "enabled",
 			"usedBy": [
-				"default-api-route-0-3b5cb0444180c95901ba@kubernetescrd"
+				"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd"
 			]
 		},
 		"dashboard@internal": {
 			"status": "enabled"
 		},
-		"default-test-route-0-lb-611f3105c4cbbc8cca31@kubernetescrd": {
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -66,13 +80,22 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test-route-0-bfddf9467dc588639f54@kubernetescrd"
+				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"noop@internal": {

@@ -57,6 +57,8 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				continue
 			}
 
+			// Note: the header names aliasing the ForwardedPrefixHeader (e.g. X_Forwarded_Prefix) are not handled here,
+			// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 			req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix)
 
 			req.URL.Path = ensureLeadingSlash(strings.Replace(req.URL.Path, prefix, "", 1))

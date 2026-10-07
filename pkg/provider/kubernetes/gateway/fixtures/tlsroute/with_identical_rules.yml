@@ -1,0 +1,74 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-tls-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tls
+      protocol: TLS
+      port: 9000
+      hostname: foo.com
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+
+# This route has no host name. The listener gives it the host name foo.com.
+# Thus this route gives the same rule as the route below.
+# This route is also the older of the two routes. The creation time makes the decision.
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-catch-all
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-hostname
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - foo.com
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""

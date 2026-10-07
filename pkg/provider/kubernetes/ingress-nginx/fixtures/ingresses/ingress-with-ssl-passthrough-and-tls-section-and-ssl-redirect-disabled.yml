@@ -1,0 +1,27 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-ssl-passthrough-and-tls-section-and-ssl-redirect-disabled
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - passthrough-no-redirect.whoami.localhost
+      secretName: whoami-tls
+  rules:
+    - host: passthrough-no-redirect.whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami-tls
+                port:
+                  number: 443
