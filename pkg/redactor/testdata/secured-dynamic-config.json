@@ -490,7 +490,24 @@
           "caFiles": [
             "ca.pem"
           ],
-          "clientAuthType": "RequireAndVerifyClientCert"
+          "clientAuthType": "RequireAndVerifyClientCert",
+          "expiry": {
+            "crl": {
+              "mode": "NOOP",
+              "reloadInterval": "40ns",
+              "http": {
+                "errorBackoff": "40ns",
+                "expirationStrategy": "Open",
+                "maxCRLBytes": 1024,
+                "timeout": "40ns",
+                "whitelist": {
+                  "distributionPoints": [
+                    "http://localhost:8001/crl/issuer1.crl"
+                  ]
+                }
+              }
+            }
+          }
         },
         "sniStrict": true
       }

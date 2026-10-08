@@ -1341,6 +1341,53 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
+func (p *Provider) buildClientAuthExpiry(logger *zerolog.Logger, expiry *traefikv1alpha1.Expiry) tls.Expiry {
+	if expiry == nil || expiry.CRL == nil {
+		return tls.Expiry{}
+	}
+
+	crl := tls.CRL{
+		Mode: expiry.CRL.Mode,
+	}
+
+	if expiry.CRL.ReloadInterval != nil {
+		if err := crl.ReloadInterval.Set(expiry.CRL.ReloadInterval.String()); err != nil {
+			logger.Error().Err(err).Msg("Failed to parse CRL reload interval")
+		}
+	}
+
+	if expiry.CRL.HTTP != nil {
+		crl.HTTP = tls.CRLHTTP{
+			ExpirationStrategy: expiry.CRL.HTTP.ExpirationStrategy,
+		}
+
+		if expiry.CRL.HTTP.Timeout != nil {
+			if err := crl.HTTP.Timeout.Set(expiry.CRL.HTTP.Timeout.String()); err != nil {
+				logger.Error().Err(err).Msg("Failed to parse CRL HTTP timeout")
+			}
+		}
+
+		if expiry.CRL.HTTP.ErrorBackoff != nil {
+			if err := crl.HTTP.ErrorBackoff.Set(expiry.CRL.HTTP.ErrorBackoff.String()); err != nil {
+				logger.Error().Err(err).Msg("Failed to parse CRL HTTP error backoff")
+			}
+		}
+
+		if expiry.CRL.HTTP.MaxCRLBytes != nil {
+			crl.HTTP.MaxCRLBytes = *expiry.CRL.HTTP.MaxCRLBytes
+		}
+
+		if expiry.CRL.HTTP.Whitelist != nil {
+			crl.HTTP.Whitelist = tls.CRLHTTPWhitelist{
+				Enabled:            expiry.CRL.HTTP.Whitelist.Enabled,
+				DistributionPoints: expiry.CRL.HTTP.Whitelist.DistributionPoints,
+			}
+		}
+	}
+
+	return tls.Expiry{CRL: crl}
+}
+
 func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
 	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
@@ -1405,7 +1452,9 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 		tlsOption.ClientAuth = tls.ClientAuth{
 			CAFiles:        clientCAs,
 			ClientAuthType: tlsOptionsCRD.Spec.ClientAuth.ClientAuthType,
+			Expiry:         p.buildClientAuthExpiry(&logger, tlsOptionsCRD.Spec.ClientAuth.Expiry),
 		}
+
 		tlsOption.SniStrict = tlsOptionsCRD.Spec.SniStrict
 
 		if tlsOptionsCRD.Spec.ALPNProtocols != nil {

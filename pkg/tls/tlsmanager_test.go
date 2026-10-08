@@ -6,9 +6,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"io"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -84,7 +88,7 @@ func TestTLSInStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
@@ -101,7 +105,7 @@ func TestTLSInvalidStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(t.Context(),
 		map[string]Store{
 			"default": {
@@ -165,7 +169,7 @@ func TestManager_Get(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
@@ -224,6 +228,15 @@ func TestClientAuth(t *testing.T) {
 			ClientAuth: ClientAuth{
 				CAFiles:        []types.FileOrContent{"Bad content"},
 				ClientAuthType: "RequireAndVerifyClientCert",
+			},
+		},
+		"ravccwe": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequireAndVerifyClientCertWithExpiry"},
+		},
+		"ravccwewca": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []types.FileOrContent{localhostCert},
+				ClientAuthType: "RequireAndVerifyClientCertWithExpiry",
 			},
 		},
 		"ucat": {
@@ -302,9 +315,21 @@ func TestClientAuth(t *testing.T) {
 			expectedClientAuth: tls.NoClientCert,
 			expectedError:      true,
 		},
+		{
+			desc:               "RequireAndVerifyClientCertWithExpiry option without CAFiles yields a default ClientAuthType (NoClientCert)",
+			tlsOptionsName:     "ravccwe",
+			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
+		},
+		{
+			desc:               "RequireAndVerifyClientCertWithExpiry option should get a tls.RequireAndVerifyClientCert as ClientAuthType with CA files",
+			tlsOptionsName:     "ravccwewca",
+			expectedClientAuth: tls.RequireAndVerifyClientCert,
+			expectedRawSubject: cert.RawSubject,
+		},
 	}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
@@ -383,7 +408,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 		ResponderOverrides: map[string]string{
 			"ocsp.example.com": responder.URL,
 		},
-	})
+	}, nil)
 
 	go tlsManager.Run(testContext)
 
@@ -432,7 +457,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 }
 
 func TestManager_Get_DefaultValues(t *testing.T) {
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 
 	// Ensures we won't break things for Traefik users when updating Go
 	config, _ := tlsManager.Get("default", "default")
@@ -454,4 +479,368 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
 	}, config.CipherSuites)
+}
+
+// newFileBackedCRLManager builds a CRLManager backed by a single file based CRL,
+// revoking the given serials, and returns the manager along with the distribution
+// point URL to use on test leaf certificates.
+func newFileBackedCRLManager(t *testing.T, ca *testCA, revokedSerials ...int64) (*CRLManager, string) {
+	t.Helper()
+
+	entries := make([]x509.RevocationListEntry, 0, len(revokedSerials))
+	for _, s := range revokedSerials {
+		entries = append(entries, x509.RevocationListEntry{
+			SerialNumber:   big.NewInt(s),
+			RevocationTime: time.Now(),
+		})
+	}
+
+	der := newTestCRLDER(t, ca, 1, entries, time.Now().Add(-time.Minute), time.Now().Add(time.Hour))
+
+	path := filepath.Join(t.TempDir(), "test.crl")
+	require.NoError(t, os.WriteFile(path, der, 0o600))
+
+	const distributionPoint = "http://dp1"
+
+	m, err := NewCRLManager(context.Background(), CRLManagerConfig{
+		FileCRLs:       map[string]string{distributionPoint: path},
+		ReloadInterval: time.Minute,
+	})
+	require.NoError(t, err)
+
+	return m, distributionPoint
+}
+
+// --- No-op paths ---
+
+func TestApplyExpiryEnforcement_NoopClientAuthTypeMismatch(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCert, // not WithExpiry
+			Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+	assert.Nil(t, tlsConfig.VerifyConnection)
+}
+
+func TestApplyExpiryEnforcement_NoopCRLModeEmpty(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{ClientAuthType: RequireAndVerifyClientCertWithExpiry},
+	}
+	tlsConfig := &tls.Config{}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+	assert.Nil(t, tlsConfig.VerifyConnection)
+}
+
+func TestApplyExpiryEnforcement_NoopCRLModeNOOP(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLNOOP}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+	assert.Nil(t, tlsConfig.VerifyConnection)
+}
+
+func TestApplyExpiryEnforcement_NoopCRLManagerNil(t *testing.T) {
+	m := NewManager(nil, nil)
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+	assert.Nil(t, tlsConfig.VerifyConnection)
+}
+
+// --- Error propagation ---
+
+func TestApplyExpiryEnforcement_PropagatesGetEnforcerError(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry: Expiry{CRL: CRL{
+				Mode: CRLLax,
+				HTTP: CRLHTTP{ExpirationStrategy: "bogus"},
+			}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+
+	err := m.applyExpiryEnforcement("opt1", opt, tlsConfig)
+	assert.Error(t, err)
+}
+
+// --- VerifyConnection wiring ---
+
+func TestApplyExpiryEnforcement_SetsVerifyConnection(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+	assert.NotNil(t, tlsConfig.VerifyConnection)
+}
+
+func TestApplyExpiryEnforcement_CallsPreviousVerifyConnection_ErrorShortCircuits(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+
+	previousErr := errors.New("previous failed")
+	tlsConfig := &tls.Config{
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			return previousErr
+		},
+	}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	err := tlsConfig.VerifyConnection(tls.ConnectionState{})
+	assert.ErrorIs(t, err, previousErr)
+}
+
+func TestApplyExpiryEnforcement_CallsPreviousVerifyConnection_ThenProceeds(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+
+	previousCalled := false
+	tlsConfig := &tls.Config{
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			previousCalled = true
+			return nil
+		},
+	}
+
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	// No verified chains, Lax mode -> allowed, but the previous callback must still run.
+	require.NoError(t, tlsConfig.VerifyConnection(tls.ConnectionState{}))
+	assert.True(t, previousCalled)
+}
+
+// --- Behavior with no verified chains ---
+
+func TestApplyExpiryEnforcement_NoVerifiedChains_StrictDenied(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	err := tlsConfig.VerifyConnection(tls.ConnectionState{})
+	assert.Error(t, err)
+}
+
+func TestApplyExpiryEnforcement_NoVerifiedChains_LaxAllowed(t *testing.T) {
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	assert.NoError(t, tlsConfig.VerifyConnection(tls.ConnectionState{}))
+}
+
+// --- End-to-end chain evaluation ---
+
+func TestApplyExpiryEnforcement_AllowedChain_NoError(t *testing.T) {
+	ca := newTestCA(t)
+	leaf := newTestLeaf(t, ca, 1, nil) // no CRL distribution points
+
+	m := NewManager(nil, newTestManager(t))
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	cs := tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{leaf, ca.cert}}}
+	assert.NoError(t, tlsConfig.VerifyConnection(cs))
+}
+
+func TestApplyExpiryEnforcement_RevokedChain_LaxDenied(t *testing.T) {
+	ca := newTestCA(t)
+	crlManager, dp := newFileBackedCRLManager(t, ca, 42)
+	leaf := newTestLeaf(t, ca, 42, []string{dp})
+
+	m := NewManager(nil, crlManager)
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	cs := tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{leaf, ca.cert}}}
+	err := tlsConfig.VerifyConnection(cs)
+	assert.ErrorContains(t, err, "revoked")
+}
+
+func TestApplyExpiryEnforcement_RevokedChain_StrictErrorMessage(t *testing.T) {
+	ca := newTestCA(t)
+	crlManager, dp := newFileBackedCRLManager(t, ca, 7)
+	leaf := newTestLeaf(t, ca, 7, []string{dp})
+
+	m := NewManager(nil, crlManager)
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	cs := tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{leaf, ca.cert}}}
+	err := tlsConfig.VerifyConnection(cs)
+	assert.ErrorContains(t, err, "certificate chain rejected")
+}
+
+func TestApplyExpiryEnforcement_NonRevokedChain_WithDistributionPoint_Allowed(t *testing.T) {
+	ca := newTestCA(t)
+	crlManager, dp := newFileBackedCRLManager(t, ca, 999) // unrelated serial revoked
+	leaf := newTestLeaf(t, ca, 1, []string{dp})
+
+	m := NewManager(nil, crlManager)
+	opt := Options{
+		ClientAuth: ClientAuth{
+			ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+			Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+		},
+	}
+	tlsConfig := &tls.Config{}
+	require.NoError(t, m.applyExpiryEnforcement("opt1", opt, tlsConfig))
+
+	cs := tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{leaf, ca.cert}}}
+	assert.NoError(t, tlsConfig.VerifyConnection(cs))
+}
+
+// --- Integration through Manager.Get ---
+
+func TestManagerGet_CRLConfigIgnored_WhenClientAuthTypeNotExpiry(t *testing.T) {
+	tlsConfigs := map[string]Options{
+		"ravccwca": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []types.FileOrContent{localhostCert},
+				ClientAuthType: RequireAndVerifyClientCert,
+				Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+			},
+		},
+	}
+
+	tlsManager := NewManager(nil, newTestManager(t))
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
+
+	config, err := tlsManager.Get("default", "ravccwca")
+	require.NoError(t, err)
+	assert.Nil(t, config.VerifyConnection)
+}
+
+// TestManagerGet_ClientAuthTypeWithExpiry_RequiresCAFiles ensures that, like
+// RequireAndVerifyClientCert, RequireAndVerifyClientCertWithExpiry requires CAFiles
+// to be set.
+func TestManagerGet_ClientAuthTypeWithExpiry_RequiresCAFiles(t *testing.T) {
+	tlsConfigs := map[string]Options{
+		"withExpiry": {
+			ClientAuth: ClientAuth{
+				ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+				Expiry:         Expiry{CRL: CRL{Mode: CRLLax}},
+			},
+		},
+	}
+
+	tlsManager := NewManager(nil, newTestManager(t))
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
+
+	_, err := tlsManager.Get("default", "withExpiry")
+	assert.ErrorContains(t, err, "CAFiles is required")
+}
+
+// TestManagerGet_ClientAuthTypeWithExpiry_EndToEnd_CRLEnforced exercises the full
+// Manager.Get path (buildTLSConfig + applyExpiryEnforcement) for
+// RequireAndVerifyClientCertWithExpiry, checking that CRL enforcement is correctly
+// wired and effective on real certificate chains.
+func TestManagerGet_ClientAuthTypeWithExpiry_EndToEnd_CRLEnforced(t *testing.T) {
+	ca := newTestCA(t)
+	crlManager, dp := newFileBackedCRLManager(t, ca, 7)
+
+	revokedLeaf := newTestLeaf(t, ca, 7, []string{dp})
+	validLeaf := newTestLeaf(t, ca, 1, []string{dp})
+
+	caPEM := types.FileOrContent(pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: ca.cert.Raw,
+	}))
+
+	tlsConfigs := map[string]Options{
+		"withExpiry": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []types.FileOrContent{caPEM},
+				ClientAuthType: RequireAndVerifyClientCertWithExpiry,
+				Expiry:         Expiry{CRL: CRL{Mode: CRLStrict}},
+			},
+		},
+	}
+
+	tlsManager := NewManager(nil, crlManager)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
+
+	config, err := tlsManager.Get("default", "withExpiry")
+	require.NoError(t, err)
+	assert.Equal(t, tls.RequireAndVerifyClientCert, config.ClientAuth)
+	require.NotNil(t, config.VerifyConnection)
+
+	// Revoked certificate: the chain must be rejected.
+	err = config.VerifyConnection(tls.ConnectionState{
+		VerifiedChains: [][]*x509.Certificate{{revokedLeaf, ca.cert}},
+	})
+	assert.ErrorContains(t, err, "revoked")
+
+	// Non-revoked certificate: the chain must be accepted.
+	err = config.VerifyConnection(tls.ConnectionState{
+		VerifiedChains: [][]*x509.Certificate{{validLeaf, ca.cert}},
+	})
+	assert.NoError(t, err)
 }

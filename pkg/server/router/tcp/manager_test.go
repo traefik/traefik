@@ -346,7 +346,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			dialerManager := tcp2.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 			tlsManager.UpdateConfigs(
 				t.Context(),
 				map[string]traefiktls.Store{},
@@ -448,7 +448,7 @@ func TestConflictingTLSOptions(t *testing.T) {
 			dialerManager := tcp2.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 			tlsManager.UpdateConfigs(
 				t.Context(),
 				map[string]traefiktls.Store{},

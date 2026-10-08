@@ -533,6 +533,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-tcpserverstransport-tls-spiffe" href="#opt-tcpserverstransport-tls-spiffe" title="#opt-tcpserverstransport-tls-spiffe">tcpserverstransport.tls.spiffe</a> | Defines the SPIFFE TLS configuration. | false |
 | <a id="opt-tcpserverstransport-tls-spiffe-ids" href="#opt-tcpserverstransport-tls-spiffe-ids" title="#opt-tcpserverstransport-tls-spiffe-ids">tcpserverstransport.tls.spiffe.ids</a> | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain). | |
 | <a id="opt-tcpserverstransport-tls-spiffe-trustdomain" href="#opt-tcpserverstransport-tls-spiffe-trustdomain" title="#opt-tcpserverstransport-tls-spiffe-trustdomain">tcpserverstransport.tls.spiffe.trustdomain</a> | Defines the allowed SPIFFE trust domain. | |
+| <a id="opt-tls" href="#opt-tls" title="#opt-tls">tls</a> | TLS client auth configuration. | false |
+| <a id="opt-tls-crlfiles-name" href="#opt-tls-crlfiles-name" title="#opt-tls-crlfiles-name">tls.crlfiles._name_</a> | CRLPaths to CRL files used globally for client certificate revocation checks. (key: CRL distribution point as listed in certificate) | |
+| <a id="opt-tls-crlreloadinterval" href="#opt-tls-crlreloadinterval" title="#opt-tls-crlreloadinterval">tls.crlreloadinterval</a> | Interval between files reload, setting it to 0 will turn off reload | 0 |
 | <a id="opt-tracing" href="#opt-tracing" title="#opt-tracing">tracing</a> | Tracing configuration. | false |
 | <a id="opt-tracing-addinternals" href="#opt-tracing-addinternals" title="#opt-tracing-addinternals">tracing.addinternals</a> | Enables tracing for internal services (ping, dashboard, etc...). | false |
 | <a id="opt-tracing-capturedrequestheaders" href="#opt-tracing-capturedrequestheaders" title="#opt-tracing-capturedrequestheaders">tracing.capturedrequestheaders</a> | Request headers to add as attributes for server and client spans. | |
