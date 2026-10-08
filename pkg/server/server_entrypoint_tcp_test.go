@@ -5,13 +5,16 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -1552,4 +1555,63 @@ func TestHTTP2RequestTLS(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
+}
+
+func TestKeepAliveListenerSkipsConnectionsWhoseKeepAliveFails(t *testing.T) {
+	failures := 2
+	original := setTCPKeepAlive
+	t.Cleanup(func() { setTCPKeepAlive = original })
+	setTCPKeepAlive = func(tc *net.TCPConn) error {
+		if failures > 0 {
+			failures--
+			// What illumos answers for a connection the peer has already reset.
+			return &net.OpError{Op: "set", Net: "tcp", Err: os.NewSyscallError("setsockopt", syscall.EINVAL)}
+		}
+		return original(tc)
+	}
+
+	tcpListener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	require.NoError(t, err)
+	var logs bytes.Buffer
+	logger := zerolog.New(&logs).Level(zerolog.DebugLevel)
+	listener := newTCPKeepAliveListener(logger.WithContext(t.Context()), tcpListener)
+	t.Cleanup(func() { _ = listener.Close() })
+
+	var clients []net.Conn
+	for range 3 {
+		client, err := net.Dial("tcp", listener.Addr().String())
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = client.Close() })
+		clients = append(clients, client)
+	}
+
+	accepted, err := listener.Accept()
+	require.NoError(t, err, "a failed keep-alive must not end the listener")
+	t.Cleanup(func() { _ = accepted.Close() })
+	assert.Equal(t, clients[2].LocalAddr().String(), accepted.RemoteAddr().String(), "the next connection is accepted")
+	assert.Equal(t, 0, failures)
+
+	// The connections whose keep-alive failed were closed.
+	for _, client := range clients[:2] {
+		require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
+		_, err = client.Read(make([]byte, 1))
+		assert.Error(t, err)
+	}
+
+	// Each closed connection is logged at debug level, and the first one also as a warning; the
+	// second is within the warning's rate limit.
+	levels := map[string]int{}
+	var warning map[string]any
+	for line := range strings.SplitSeq(strings.TrimSpace(logs.String()), "\n") {
+		var entry map[string]any
+		require.NoError(t, json.Unmarshal([]byte(line), &entry))
+		levels[entry["level"].(string)]++
+		if entry["level"] == "warn" {
+			warning = entry
+		}
+	}
+	assert.Equal(t, map[string]int{"debug": 2, "warn": 1}, levels)
+	require.NotNil(t, warning)
+	assert.InDelta(t, 1, warning["connections"], 0)
+	assert.Contains(t, warning["error"], "setsockopt: invalid argument")
 }
