@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +24,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/api"
+	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kclientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
@@ -115,6 +122,101 @@ func (s *K8sSuite) TestDisableIngressClassLookup() {
 	s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
 
 	s.testConfiguration("testdata/rawdata-ingressclass-disabled.json", "8080")
+}
+
+// TestIngressSecretsRestrictedRBAC checks that the secrets option allows Traefik to run
+// with a Role that only grants access to the listed Secrets (resourceNames).
+func (s *K8sSuite) TestIngressSecretsRestrictedRBAC() {
+	s.useServiceAccountKubeconfig("traefik-restricted")
+
+	s.traefikCmd(withConfigFile("fixtures/k8s_ingress_secrets.toml"))
+
+	// The certificate of the tls-cert Secret is served only if Traefik was able to watch this Secret.
+	err := try.Do(1*time.Minute, func() error {
+		conn, err := tls.Dial("tcp", "127.0.0.1:8443", &tls.Config{
+			ServerName:         "snitest.com",
+			InsecureSkipVerify: true,
+		})
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		certs := conn.ConnectionState().PeerCertificates
+		if len(certs) == 0 {
+			return errors.New("no certificate served")
+		}
+
+		if certs[0].Subject.CommonName != "snitest.com" {
+			return fmt.Errorf("unexpected certificate %q", certs[0].Subject.CommonName)
+		}
+
+		return nil
+	})
+	require.NoError(s.T(), err)
+}
+
+// TestIngressSecretsUnrestrictedForbidden is the control of TestIngressSecretsRestrictedRBAC:
+// without the secrets option, Traefik lists all the Secrets of the namespace, which the Role does not allow.
+func (s *K8sSuite) TestIngressSecretsUnrestrictedForbidden() {
+	s.useServiceAccountKubeconfig("traefik-restricted")
+
+	_, output := s.cmdTraefik(withConfigFile("fixtures/k8s_ingress_secrets_unrestricted.toml"))
+
+	err := try.Do(1*time.Minute, func() error {
+		expected := "secrets is forbidden"
+		actual := output.String()
+
+		if !strings.Contains(actual, expected) {
+			return fmt.Errorf("got %s, wanted %s", actual, expected)
+		}
+
+		return nil
+	})
+	require.NoError(s.T(), err)
+}
+
+// useServiceAccountKubeconfig makes the Traefik processes started by the current test
+// authenticate with a token of the given ServiceAccount of the default namespace, instead of using the cluster-admin credentials.
+func (s *K8sSuite) useServiceAccountKubeconfig(serviceAccount string) {
+	ctx := s.T().Context()
+
+	kubeConfigYaml, err := s.k3sContainer.GetKubeConfig(ctx)
+	require.NoError(s.T(), err)
+
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeConfigYaml)
+	require.NoError(s.T(), err)
+
+	clientSet, err := kclientset.NewForConfig(restConfig)
+	require.NoError(s.T(), err)
+
+	// The manifests are applied asynchronously, so the ServiceAccount may not exist yet.
+	var token string
+	err = try.Do(30*time.Second, func() error {
+		resp, err := clientSet.CoreV1().ServiceAccounts("default").CreateToken(ctx, serviceAccount, &authenticationv1.TokenRequest{}, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+
+		token = resp.Status.Token
+
+		return nil
+	})
+	require.NoError(s.T(), err)
+
+	config := clientcmdapi.NewConfig()
+	config.Clusters["k3s"] = &clientcmdapi.Cluster{
+		Server:                   restConfig.Host,
+		CertificateAuthorityData: restConfig.CAData,
+	}
+	config.AuthInfos[serviceAccount] = &clientcmdapi.AuthInfo{Token: token}
+	config.Contexts["k3s"] = &clientcmdapi.Context{Cluster: "k3s", AuthInfo: serviceAccount}
+	config.CurrentContext = "k3s"
+
+	kubeconfigPath := filepath.Join(s.T().TempDir(), "kubeconfig-"+serviceAccount+".yaml")
+	require.NoError(s.T(), clientcmd.WriteToFile(*config, kubeconfigPath))
+
+	s.T().Setenv("KUBECONFIG", kubeconfigPath)
 }
 
 func (s *K8sSuite) testConfiguration(path, apiPort string) {

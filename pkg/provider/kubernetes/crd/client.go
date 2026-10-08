@@ -62,7 +62,8 @@ type clientWrapper struct {
 
 	factoriesCrd    map[string]traefikinformers.SharedInformerFactory
 	factoriesKube   map[string]kinformers.SharedInformerFactory
-	factoriesSecret map[string]kinformers.SharedInformerFactory
+	secrets         map[string][]string
+	secretInformers *k8s.SecretInformers
 
 	labelSelector string
 
@@ -94,11 +95,10 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 
 func newClientImpl(csKube kclientset.Interface, csCrd traefikclientset.Interface) *clientWrapper {
 	return &clientWrapper{
-		csCrd:           csCrd,
-		csKube:          csKube,
-		factoriesCrd:    make(map[string]traefikinformers.SharedInformerFactory),
-		factoriesKube:   make(map[string]kinformers.SharedInformerFactory),
-		factoriesSecret: make(map[string]kinformers.SharedInformerFactory),
+		csCrd:         csCrd,
+		csKube:        csKube,
+		factoriesCrd:  make(map[string]traefikinformers.SharedInformerFactory),
+		factoriesKube: make(map[string]kinformers.SharedInformerFactory),
 	}
 }
 
@@ -167,13 +167,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	notOwnedByHelm := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = "owner!=helm"
-	}
-
 	matchesLabelSelector := func(opts *metav1.ListOptions) {
 		opts.LabelSelector = c.labelSelector
 	}
+
+	secretInformers, err := k8s.NewSecretInformers(c.csKube, resyncPeriod, namespaces, c.secrets, eventHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	c.secretInformers = secretInformers
 
 	for _, ns := range namespaces {
 		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector), traefikinformers.WithTransform(k8s.StripManagedFields))
@@ -236,21 +239,19 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-
 		c.factoriesCrd[ns] = factoryCrd
 		c.factoriesKube[ns] = factoryKube
-		c.factoriesSecret[ns] = factorySecret
 	}
 
 	for _, ns := range namespaces {
 		c.factoriesCrd[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
-		c.factoriesSecret[ns].Start(stopCh)
+	}
+
+	c.secretInformers.Start(stopCh)
+
+	if err := c.secretInformers.WaitForCacheSync(stopCh); err != nil {
+		return nil, err
 	}
 
 	for _, ns := range namespaces {
@@ -261,12 +262,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		for t, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
-			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
-			}
-		}
-
-		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
@@ -478,7 +473,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	secret, err := c.secretInformers.Get(c.lookupNamespace(namespace), namespace, name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
 }
