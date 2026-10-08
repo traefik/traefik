@@ -66,6 +66,7 @@ spec:
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-users" href="#opt-users" title="#opt-users">`users`</a> | Array of authorized users. Each user must be declared using the `name:hashed-password` format. (More information [here](#users-usersfile))| ""      | No      |
 | <a id="opt-usersFile" href="#opt-usersFile" title="#opt-usersFile">`usersFile`</a> | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:hashed-password`. (More information [here](#users-usersfile)) | ""      | No      |
+| <a id="opt-secret" href="#opt-secret" title="#opt-secret">`secret`</a> | Name of a Kubernetes secret containing only one key, the key's content is read as `usersFile` would. <br />This is only supported on Kubernetes (More information [here](#Kubernestes-Secrets)) | ""      | No      |
 | <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
 | <a id="opt-removeHeader" href="#opt-removeHeader" title="#opt-removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
@@ -82,7 +83,7 @@ Use `htpasswd` to generate the passwords.
 
 #### Kubernetes Secrets
 
-The option `users` supports Kubernetes secrets.
+When using the Kubernetes CRD, the content of the users and their password hashes can be specified in a Kubernetes secret. Use the field `secret` to declare which secret is used. The secret must contain only a single key, the name does not matter.
 
 !!! note "Kubernetes `kubernetes.io/basic-auth` secret type"
 
