@@ -95,7 +95,7 @@ spec:
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
+| <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> Each entry is either a status code as a number (`500`) or a range of two codes separated by a dash (`505-599`).<br /> In the label and tag syntax, where the option is a single string, entries are separated by commas (`404,418,505-599`).  | []     | No      | 
 | <a id="opt-statusRewrites" href="#opt-statusRewrites" title="#opt-statusRewrites">`statusRewrites`</a> | An optional mapping of status codes to be rewritten. More information [here](#statusrewrites).  | []     | No      |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | Yes      |
 | <a id="opt-query" href="#opt-query" title="#opt-query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
@@ -138,7 +138,8 @@ the [`passHostHeader`](../load-balancing/service.md#opt-passHostHeader) option m
 For example, if a service returns a 418, you might want to rewrite it to a 404.
 You can map individual status codes or even ranges to a different status code.
 
-The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
+Each key is either a single status code (`418`) or an inclusive range of two codes separated by a dash (`502-504` matches `502`, `503` and `504`).
+A comma-separated list such as `403,404` is not a valid key: declare one entry per code or range instead.
 
 ### query
 
