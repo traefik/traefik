@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -1557,7 +1558,7 @@ func TestHTTP2RequestTLS(t *testing.T) {
 }
 
 func TestKeepAliveListenerSkipsConnectionsWhoseKeepAliveFails(t *testing.T) {
-	failures := 1
+	failures := 2
 	original := setTCPKeepAlive
 	t.Cleanup(func() { setTCPKeepAlive = original })
 	setTCPKeepAlive = func(tc *net.TCPConn) error {
@@ -1571,24 +1572,46 @@ func TestKeepAliveListenerSkipsConnectionsWhoseKeepAliveFails(t *testing.T) {
 
 	tcpListener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	require.NoError(t, err)
-	listener := tcpKeepAliveListener{tcpListener}
+	var logs bytes.Buffer
+	logger := zerolog.New(&logs).Level(zerolog.DebugLevel)
+	listener := newTCPKeepAliveListener(logger.WithContext(t.Context()), tcpListener)
 	t.Cleanup(func() { _ = listener.Close() })
 
-	first, err := net.Dial("tcp", listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = first.Close() })
-	second, err := net.Dial("tcp", listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = second.Close() })
+	var clients []net.Conn
+	for range 3 {
+		client, err := net.Dial("tcp", listener.Addr().String())
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = client.Close() })
+		clients = append(clients, client)
+	}
 
 	accepted, err := listener.Accept()
 	require.NoError(t, err, "a failed keep-alive must not end the listener")
 	t.Cleanup(func() { _ = accepted.Close() })
-	assert.Equal(t, second.LocalAddr().String(), accepted.RemoteAddr().String(), "the next connection is accepted")
+	assert.Equal(t, clients[2].LocalAddr().String(), accepted.RemoteAddr().String(), "the next connection is accepted")
 	assert.Equal(t, 0, failures)
 
-	// The connection whose keep-alive failed was closed.
-	require.NoError(t, first.SetReadDeadline(time.Now().Add(5*time.Second)))
-	_, err = first.Read(make([]byte, 1))
-	assert.Error(t, err)
+	// The connections whose keep-alive failed were closed.
+	for _, client := range clients[:2] {
+		require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
+		_, err = client.Read(make([]byte, 1))
+		assert.Error(t, err)
+	}
+
+	// Each closed connection is logged at debug level, and the first one also as a warning; the
+	// second is within the warning's rate limit.
+	levels := map[string]int{}
+	var warning map[string]any
+	for line := range strings.SplitSeq(strings.TrimSpace(logs.String()), "\n") {
+		var entry map[string]any
+		require.NoError(t, json.Unmarshal([]byte(line), &entry))
+		levels[entry["level"].(string)]++
+		if entry["level"] == "warn" {
+			warning = entry
+		}
+	}
+	assert.Equal(t, map[string]int{"debug": 2, "warn": 1}, levels)
+	require.NotNil(t, warning)
+	assert.InDelta(t, 1, warning["connections"], 0)
+	assert.Contains(t, warning["error"], "setsockopt: invalid argument")
 }
