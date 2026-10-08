@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -3506,6 +3508,37 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestLoadConfigurationFromIngressesWithStickyAndNativeLB(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		nativeLBByDefault bool
+		expectWarning     bool
+	}{
+		{
+			desc: "Sticky without nativeLB",
+		},
+		{
+			desc:              "Sticky with nativeLB",
+			nativeLBByDefault: true,
+			expectWarning:     true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var logs bytes.Buffer
+			ctx := zerolog.New(&logs).WithContext(t.Context())
+
+			p := Provider{NativeLBByDefault: test.nativeLBByDefault}
+			p.loadConfigurationFromIngresses(ctx, newClientMock("fixtures/Ingress-with-sticky-native-service.yml"))
+
+			assert.Equal(t, test.expectWarning, strings.Contains(logs.String(), "Sticky sessions have no effect when nativeLB is enabled"))
 		})
 	}
 }

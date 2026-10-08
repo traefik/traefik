@@ -1,6 +1,7 @@
 package crd
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -14312,6 +14314,54 @@ func TestNativeLB(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
+func TestNativeLBWithSticky(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		paths         []string
+		expectWarning bool
+	}{
+		{
+			desc:  "Sticky without nativeLB",
+			paths: []string{"services.yml", "with_sticky.yml"},
+		},
+		{
+			desc:          "Sticky with nativeLB",
+			paths:         []string{"services.yml", "with_sticky_native_service.yml"},
+			expectWarning: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, crdObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll([]string{"default", "cross-ns"}, stopCh)
+			require.NoError(t, err)
+
+			// just wait for the first event
+			<-eventCh
+
+			var logs bytes.Buffer
+			ctx := zerolog.New(&logs).WithContext(t.Context())
+
+			p := Provider{}
+			conf := p.loadConfigurationFromCRD(ctx, client)
+			require.NotEmpty(t, conf.HTTP.Services)
+
+			assert.Equal(t, test.expectWarning, strings.Contains(logs.String(), "Sticky sessions have no effect when nativeLB is enabled"))
 		})
 	}
 }
