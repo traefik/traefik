@@ -26,6 +26,7 @@ type Middleware struct {
 	StripPrefixRegex *StripPrefixRegex `json:"stripPrefixRegex,omitempty" toml:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty" export:"true"`
 	ReplacePath      *ReplacePath      `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
 	ReplacePathRegex *ReplacePathRegex `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
+	QueryParameters  *QueryParameters  `json:"queryParameters,omitempty" toml:"queryParameters,omitempty" yaml:"queryParameters,omitempty" export:"true"`
 	Chain            *Chain            `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
 	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
@@ -725,6 +726,19 @@ type RedirectScheme struct {
 	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
 	// Used by the provider ingress-nginx.
 	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// QueryParameters holds the query parameters middleware configuration.
+// This middleware modifies the query parameters of the request URL.
+type QueryParameters struct {
+	// Set defines the query parameters to set, replacing every existing value of the same parameter.
+	Set map[string]string `json:"set,omitempty" toml:"set,omitempty" yaml:"set,omitempty" export:"true"`
+	// Add defines the query parameters to add, keeping any existing value of the same parameter.
+	Add map[string]string `json:"add,omitempty" toml:"add,omitempty" yaml:"add,omitempty" export:"true"`
+	// Delete defines the names of the query parameters to remove.
+	Delete []string `json:"delete,omitempty" toml:"delete,omitempty" yaml:"delete,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
