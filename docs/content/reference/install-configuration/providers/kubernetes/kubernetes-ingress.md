@@ -70,7 +70,7 @@ which in turn creates the resulting routers, services, handlers, etc.
 | <a id="opt-providers-kubernetesIngress-allowExternalNameServices" href="#opt-providers-kubernetesIngress-allowExternalNameServices" title="#opt-providers-kubernetesIngress-allowExternalNameServices">`providers.kubernetesIngress.allowExternalNameServices`</a> | Allows the `Ingress` to reference ExternalName services.                                                                                                                                                                                                                                                                                                                                                                                                              | false   | No       |
 | <a id="opt-providers-kubernetesIngress-crossProviderNamespaces" href="#opt-providers-kubernetesIngress-crossProviderNamespaces" title="#opt-providers-kubernetesIngress-crossProviderNamespaces">`providers.kubernetesIngress.crossProviderNamespaces`</a> | List of namespaces from which Ingresses or Services are allowed to use `traefik.ingress.kubernetes.io/router.middlewares`, `traefik.ingress.kubernetes.io/router.tls.options`, `traefik.ingress.kubernetes.io/service.middlewares`, or `traefik.ingress.kubernetes.io/service.serverstransport` annotations.<br />When unset, all namespaces are allowed. When set to `[]`, every cross-provider reference is rejected.                                                                                                          | []      | No       |
 | <a id="opt-providers-kubernetesIngress-nativeLBByDefault" href="#opt-providers-kubernetesIngress-nativeLBByDefault" title="#opt-providers-kubernetesIngress-nativeLBByDefault">`providers.kubernetesIngress.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `Ingress` by default.<br />It can be overridden in the [`Service`](../../../../reference/routing-configuration/kubernetes/crd/http/service.md#opt-nativeLB)                                                                                                                                                                                       | false   | No       |
-| <a id="opt-providers-kubernetesIngress-secrets" href="#opt-providers-kubernetesIngress-secrets" title="#opt-providers-kubernetesIngress-secrets">`providers.kubernetesIngress.secrets`</a> | Restricts the Secrets watched by Traefik to the given names, grouped by namespace (e.g. `--providers.kubernetesIngress.secrets.default=cert1,cert2`).<br />One watcher is started per Secret, so Traefik only needs `get`, `list` and `watch` rights on these Secrets (`resourceNames`).<br />Use `*` as the name (e.g. `--providers.kubernetesIngress.secrets.infra=*`) to watch all the Secrets of a namespace, which requires `get`, `list` and `watch` rights on all the Secrets of that namespace.<br />When unset, all the Secrets of the watched namespaces are watched. | | No |
+| <a id="opt-providers-kubernetesIngress-secrets" href="#opt-providers-kubernetesIngress-secrets" title="#opt-providers-kubernetesIngress-secrets">`providers.kubernetesIngress.secrets`</a> | Restricts the Secrets watched by Traefik to the given names, grouped by namespace (e.g. `--providers.kubernetesIngress.secrets.default=cert1,cert2`).<br />One watcher is started per Secret, so Traefik only needs `get`, `list` and `watch` rights on these Secrets (`resourceNames`).<br />Use `*` as the name (e.g. `--providers.kubernetesIngress.secrets.infra=*`) to watch all the Secrets of a namespace, which requires `get`, `list` and `watch` rights on all the Secrets of that namespace.<br />When unset, all the Secrets of the watched namespaces are watched.<br />More information [here](#secrets). | | No |
 | <a id="opt-providers-kubernetesIngress-disableClusterScopeResources" href="#opt-providers-kubernetesIngress-disableClusterScopeResources" title="#opt-providers-kubernetesIngress-disableClusterScopeResources">`providers.kubernetesIngress.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services and is incompatible with `reportNodeInternalIPs`. | false   | No       |
 | <a id="opt-providers-kubernetesIngress-strictPrefixMatching" href="#opt-providers-kubernetesIngress-strictPrefixMatching" title="#opt-providers-kubernetesIngress-strictPrefixMatching">`providers.kubernetesIngress.strictPrefixMatching`</a> | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.                                                                                                                                                                                                      | false   | No       |
 
@@ -170,6 +170,80 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesingress.reportnodeinternalips=true
 ```
+
+### `secrets`
+
+By default, Traefik watches all the Secrets of the watched namespaces, which requires `get`, `list` and `watch` rights on all of them.
+
+The `secrets` option restricts the watched Secrets to the given names, grouped by namespace.
+Traefik then starts one watcher per Secret, filtered by name, so the rights granted to Traefik can be limited to these Secrets with `resourceNames`.
+
+A Secret that is not listed is reported as not found, even if it exists in a watched namespace.
+Secrets of the namespaces that are not listed are not watched.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    secrets:
+      default:
+        - cert1
+        - cert2
+      infra:
+        - wildcard
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress.secrets]
+  default = ["cert1", "cert2"]
+  infra = ["wildcard"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.secrets.default=cert1,cert2
+--providers.kubernetesingress.secrets.infra=wildcard
+```
+
+Use `*` as the name to watch all the Secrets of a namespace (in YAML, `"*"` must be quoted).
+This requires `get`, `list` and `watch` rights on all the Secrets of that namespace, as a rule restricted with `resourceNames` is not enough.
+
+#### RBAC
+
+Create a `Role` and a `RoleBinding` in each namespace listed in `secrets`,
+and remove `secrets` from the rules of the `ClusterRole` of Traefik, otherwise the cluster-wide rights still apply.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: traefik-secrets
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["cert1", "cert2"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: traefik-secrets
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: traefik-secrets
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: traefik
+```
+
+Kubernetes [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) authorizes a `list` or `watch` request restricted with `resourceNames`
+only if the request has a matching `metadata.name` field selector, which is what the watchers of Traefik send.
+This is standard RBAC behavior and does not depend on any feature gate.
 
 ## Routing Configuration
 
