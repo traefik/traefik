@@ -450,6 +450,119 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 	assert.NotEqual(t, secondStickyConn, thirdStickyConn)
 }
 
+func TestHTTP3Shutdown(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.LifeCycle.RequestAcceptGraceTimeout = 0
+	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(5 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	started := make(chan struct{}, 1)
+	router.AddHTTPTLSConfig("example.com", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		select {
+		case started <- struct{}{}:
+		default:
+		}
+		time.Sleep(time.Second)
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	http3Addr := entryPoint.http3Server.http3conn.LocalAddr().String()
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, http3Addr, tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com/", http.NoBody)
+	require.NoError(t, err)
+
+	respCh := make(chan *http.Response, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		resp, err := transport.RoundTrip(req)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		respCh <- resp
+	}()
+
+	select {
+	case <-started:
+	case err := <-errCh:
+		t.Fatalf("request failed before handler started: %v", err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("handler never started")
+	}
+
+	shutdownDone := make(chan struct{})
+	shutdownStart := time.Now()
+	go func() {
+		entryPoint.Shutdown(ctx)
+		close(shutdownDone)
+	}()
+
+	select {
+	case resp := <-respCh:
+		t.Cleanup(func() { _ = resp.Body.Close() })
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		_ = transport.Close()
+	case err := <-errCh:
+		_ = transport.Close()
+		t.Fatalf("in-flight HTTP/3 request was cut: %v", err)
+	case <-time.After(3 * time.Second):
+		_ = transport.Close()
+		t.Fatal("in-flight HTTP/3 request did not complete during graceful shutdown")
+	}
+
+	select {
+	case <-shutdownDone:
+		assert.GreaterOrEqual(t, time.Since(shutdownStart), 500*time.Millisecond)
+	case <-time.After(3 * time.Second):
+		t.Fatal("HTTP/3 shutdown did not wait for the in-flight request")
+	}
+}
+
 func TestNewHTTP3ServerTimeouts(t *testing.T) {
 	certContent, err := localhostCert.Read()
 	require.NoError(t, err)
