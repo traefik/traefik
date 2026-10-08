@@ -157,6 +157,77 @@ Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) r
     Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
     Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
 
+### Frontend Client Certificate Validation
+
+The `tls.frontend` field on a `Gateway` (`spec.tls.frontend`, a sibling of `spec.listeners`) allows requiring a client certificate (mTLS) for incoming connections, as defined by [GEP-91](https://gateway-api.sigs.k8s.io/geps/gep-91/).
+
+Validation can be set for all HTTPS listeners on the `Gateway` via `default`, and optionally overridden per port via `perPort`. The CA certificates used to validate client certificates are provided through `caCertificateRefs`, referencing `ConfigMap` or `Secret` resources containing a `ca.crt` key.
+
+The `mode` field controls how a missing or invalid client certificate is handled:
+
+- `AllowValidOnly` (default): the connection is rejected unless the client presents a certificate signed by one of the referenced CAs.
+- `AllowInsecureFallback`: the client certificate is requested but connections without one, or with an invalid one, are still accepted.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    frontend:
+      # Applies to every HTTPS listener, unless overridden by a perPort entry below.
+      default:
+        validation:
+          caCertificateRefs:
+            - name: client-ca
+              kind: ConfigMap
+      # Overrides the default validation for listeners bound to port 8443.
+      perPort:
+        - port: 8443
+          tls:
+            validation:
+              mode: AllowInsecureFallback
+              caCertificateRefs:
+                - name: other-client-ca
+                  kind: ConfigMap
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+    - name: https-relaxed
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! info "Insecure fallback"
+
+    When any listener uses `AllowInsecureFallback`, Traefik sets the `InsecureFrontendValidationMode` condition to `True` on the `Gateway` status to make the reduced security guarantee visible.
+
+!!! warning "Gateways sharing an entry point"
+
+    A client certificate validation is selected during the TLS handshake, from the hostname (SNI) the client connects to.
+    When several `Gateway` resources share an entry point, the validation of a listener applies to the hostnames of the routes attached to it, which are then no longer served by the other `Gateway` resources on that entry point.
+    A route without hostnames attached to a listener without hostname extends the validation to every hostname the other `Gateway` resources do not claim.
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
