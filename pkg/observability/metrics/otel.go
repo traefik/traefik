@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -237,6 +238,14 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 	meterProvider := sdkmetric.NewMeterProvider(meterProviderOpts...)
 
 	otel.SetMeterProvider(meterProvider)
+
+	// Register Go runtime instrumentation so that process.runtime.go.*
+	// metrics (goroutines, heap, GC, etc.) are exported via OTLP alongside
+	// the Traefik application meter. Failure here is non-fatal: a missing
+	// runtime gauge should not prevent Traefik from starting.
+	if err := runtime.Start(runtime.WithMeterProvider(meterProvider)); err != nil {
+		log.Ctx(ctx).Err(err).Msg("Unable to start Go runtime instrumentation for OTLP metrics")
+	}
 
 	return meterProvider, nil
 }
