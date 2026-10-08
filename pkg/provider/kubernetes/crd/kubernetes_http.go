@@ -154,14 +154,25 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:        route.Match,
 				Service:     serviceName,
 				ParentRefs:  parentRouterNames,
-				Observability: &dynamic.RouterObservabilityConfig{
+			}
+
+			// Only root routers may carry observability configuration.
+			// The core rejects any non-root router with a non-nil
+			// Observability ("non-root router cannot have Observability
+			// configuration"), disabling the router entirely, so child
+			// routers must not get the metadata stamped.
+			if len(parentRouterNames) == 0 {
+				r.Observability = &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
 						Ingress: buildIngressRouteMetadata(ingressRoute),
 					},
-				},
+				}
 			}
 
 			if route.Observability != nil {
+				if r.Observability == nil {
+					r.Observability = &dynamic.RouterObservabilityConfig{}
+				}
 				r.Observability.AccessLogs = route.Observability.AccessLogs
 				r.Observability.Metrics = route.Observability.Metrics
 				r.Observability.Tracing = route.Observability.Tracing
