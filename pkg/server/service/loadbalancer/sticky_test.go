@@ -117,13 +117,14 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 
 	// Should return an error if the handler does not exist.
 	res := httptest.NewRecorder()
-	require.Error(t, sticky.WriteStickyCookie(res, "first"))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	require.Error(t, sticky.WriteStickyCookie(res, req, "first"))
 
 	// Should write the sticky cookie and use the sha256 hash.
 	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
 	res = httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+	require.NoError(t, sticky.WriteStickyCookie(res, req, "first"))
 
 	assert.Len(t, res.Result().Cookies(), 1)
 
@@ -138,6 +139,56 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.WithinRange(t, cookie.Expires, time.Now(), time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second))
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
+}
+
+func TestSticky_WriteStickyCookieConditionalSameSiteNone(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		conditionalSameSiteNone bool
+		userAgent               string
+		wantSameSiteNone        bool
+	}{
+		{
+			desc:                    "Compatible Chrome version keeps SameSite None",
+			conditionalSameSiteNone: true,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
+			wantSameSiteNone:        true,
+		},
+		{
+			desc:                    "Incompatible client omits SameSite None",
+			conditionalSameSiteNone: true,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36",
+		},
+		{
+			desc:                    "Disabled conditional SameSite None keeps SameSite None",
+			conditionalSameSiteNone: false,
+			userAgent:               "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36",
+			wantSameSiteNone:        true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			sticky := NewSticky(dynamic.Cookie{Name: "test", SameSite: "none", ConditionalSameSiteNone: test.conditionalSameSiteNone})
+			sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set("User-Agent", test.userAgent)
+			res := httptest.NewRecorder()
+
+			require.NoError(t, sticky.WriteStickyCookie(res, req, "first"))
+			require.Len(t, res.Result().Cookies(), 1)
+
+			setCookie := res.Header().Get("Set-Cookie")
+			if test.wantSameSiteNone {
+				assert.Contains(t, setCookie, "SameSite=None")
+			} else {
+				assert.NotContains(t, setCookie, "SameSite")
+			}
+		})
+	}
 }
 
 func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
@@ -178,7 +229,7 @@ func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
 			sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
 			res := httptest.NewRecorder()
-			require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+			require.NoError(t, sticky.WriteStickyCookie(res, nil, "first"))
 
 			assert.Equal(t, test.wantSetCookie, res.Header().Get("Set-Cookie"))
 		})
@@ -217,7 +268,7 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 
 		wantExp1 := time.Now().Add(expiration)
 		res1 := httptest.NewRecorder()
-		require.NoError(t, sticky.WriteStickyCookie(res1, "first"))
+		require.NoError(t, sticky.WriteStickyCookie(res1, nil, "first"))
 		cookies1 := res1.Result().Cookies()
 		require.Len(t, cookies1, 1)
 		exp1 := cookies1[0].Expires
@@ -228,7 +279,7 @@ func TestSticky_WriteStickyCookie_ExpiresAdvancesPerRequest(t *testing.T) {
 
 		wantExp2 := time.Now().Add(expiration)
 		res2 := httptest.NewRecorder()
-		require.NoError(t, sticky.WriteStickyCookie(res2, "first"))
+		require.NoError(t, sticky.WriteStickyCookie(res2, nil, "first"))
 		cookies2 := res2.Result().Cookies()
 		require.Len(t, cookies2, 1)
 		exp2 := cookies2[0].Expires
@@ -243,7 +294,7 @@ func TestSticky_WriteStickyCookie_NoExpiresIsSessionCookie(t *testing.T) {
 	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 
 	res := httptest.NewRecorder()
-	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+	require.NoError(t, sticky.WriteStickyCookie(res, nil, "first"))
 
 	cookies := res.Result().Cookies()
 	require.Len(t, cookies, 1)
