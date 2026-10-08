@@ -220,10 +220,17 @@ func isGRPCRequest(req *http.Request) bool {
 	return strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc")
 }
 
-// grpcStatusCode parses and returns the gRPC status code from the Grpc-Status header.
+// grpcStatusCode parses and returns the gRPC status code from the Grpc-Status header or trailer.
 func grpcStatusCode(rw http.ResponseWriter) int {
 	code := codes.Unknown
-	if status := rw.Header().Get("Grpc-Status"); status != "" {
+
+	status := rw.Header().Get("Grpc-Status")
+	if status == "" {
+		// Trailers not announced by the backend are written with the http.TrailerPrefix.
+		status = rw.Header().Get(http.TrailerPrefix + "Grpc-Status")
+	}
+
+	if status != "" {
 		if err := code.UnmarshalJSON([]byte(status)); err != nil {
 			return int(code)
 		}
