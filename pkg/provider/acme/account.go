@@ -13,7 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
-// Account is used to store lets encrypt registration info.
+// Account is used to store ACME registration info.
 type Account struct {
 	Email        string
 	Registration *Resource
@@ -27,7 +27,7 @@ type Resource struct {
 
 // NewAccount creates an account.
 func NewAccount(email string) (*Account, error) {
-	// Create a user. New accounts need an email and private key to start
+	// Create a user. New accounts need a private key and optionally an email to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (a *Account) GetEmail() string {
 	return a.Email
 }
 
-// GetRegistration returns lets encrypt registration resource.
+// GetRegistration returns ACME registration resource.
 func (a *Account) GetRegistration() *acme.ExtendedAccount {
 	if a.Registration == nil {
 		return nil

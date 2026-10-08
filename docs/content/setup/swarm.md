@@ -256,7 +256,7 @@ To make the `websecure` entry point serve valid HTTPS certificates automatically
 ```yaml
 command:
   # ...
-  - "--certificatesresolvers.le.acme.email=you@example.com"
+  - "--certificatesresolvers.le.acme.email=you@example.com" # optional
   - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
   - "--entrypoints.websecure.http.tls.certresolver=le"
