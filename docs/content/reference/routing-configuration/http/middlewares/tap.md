@@ -194,7 +194,9 @@ The `request` and `response` settings are independent.
 
 On `response`, `true` also means:
 
-- The response is held whole in memory until its record is accepted.
+- The response is held until its record is complete, then the rest of it is streamed.
+  The record is complete once the status is known, or with `recordBody`,
+  once the first `maxRecordBodySize` bytes of the body are captured, or the response ends.
   WebSocket upgrades are served as usual, and their record is sent as with `false`.
 - Informational responses, such as `103 Early Hints`, are dropped.
 
@@ -221,8 +223,7 @@ A larger body is cut in the record, which sets `bodyTruncated` to `true`.
 The backend and the client still get the whole body.
 
 It also bounds the memory used for the body:
-only the recorded bytes are held, and the rest of the body is streamed,
-except for a response with `rejectOnRecordError`, which is held whole.
+only the recorded bytes are held, and the rest of the body is streamed.
 It has no default, as no limit fits every route, and must be set with `recordBody`.
 A value of `-1` means no limit, and holds the whole body in memory.
 
@@ -254,7 +255,7 @@ A record is sent as a `POST` request to the configured service and path, with a 
 | <a id="opt-time" href="#opt-time" title="#opt-time">`time`</a> | Time at which the request was received. |
 | <a id="opt-traceId" href="#opt-traceId" title="#opt-traceId">`traceId`</a> | Trace the request belongs to, when tracing is enabled. |
 | <a id="opt-request-2" href="#opt-request-2" title="#opt-request-2">`request`</a> | Method, URL, host, protocol, remote address, headers and body. Set on `request` records, and on `response` records when `requestHeaders` is set. |
-| <a id="opt-response-2" href="#opt-response-2" title="#opt-response-2">`response`</a> | Status, headers, body, and duration in nanoseconds. Set on `response` records. |
+| <a id="opt-response-2" href="#opt-response-2" title="#opt-response-2">`response`</a> | Status, headers, body, and duration in nanoseconds. The duration ends with the response, or when the record is sent with `rejectOnRecordError`. Set on `response` records. |
 
 Bodies are part of the records only when `recordBody` is enabled.
 They are base64-encoded, as they are not necessarily valid UTF-8, and carry a `bodyTruncated` flag when they exceed `maxRecordBodySize`.

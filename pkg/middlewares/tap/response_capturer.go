@@ -3,6 +3,7 @@ package tap
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"maps"
 	"net"
@@ -16,9 +17,11 @@ var _ middlewares.Stateful = &responseCapturer{}
 
 // responseCapturer captures the response for the record.
 // While buffering, nothing reaches the client until serve, so that the record is sent first.
+// The response is buffered until its record is complete, then sent, and the rest of the response is streamed.
 type responseCapturer struct {
 	rw   http.ResponseWriter
 	dest *destination
+	send func() error
 
 	// buffering reports whether the response is held back, and ends once the response is served.
 	buffering bool
@@ -29,17 +32,23 @@ type responseCapturer struct {
 	// the headers set afterwards are trailers, or ignored.
 	sentHeaders http.Header
 
-	// buf holds the whole body while buffering, and the recorded part otherwise.
+	// buf holds the body while buffering, and the recorded part otherwise.
 	buf bytes.Buffer
 
 	status        int
 	bodyTruncated bool
+
+	sent    bool
+	sendErr error
+	// discarding reports whether the buffered response is dropped, as its record could not be sent.
+	discarding bool
 }
 
-func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
+func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool, send func() error) *responseCapturer {
 	r := &responseCapturer{
 		rw:        rw,
 		dest:      dest,
+		send:      send,
 		buffering: shouldBuffer,
 	}
 
@@ -82,6 +91,12 @@ func (r *responseCapturer) WriteHeader(status int) {
 
 	if !r.buffering {
 		r.rw.WriteHeader(status)
+		return
+	}
+
+	// With no body to record, the record is complete once the status is known.
+	if !r.dest.recordBody {
+		_ = r.complete()
 	}
 }
 
@@ -91,7 +106,20 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 	}
 
 	if r.buffering {
-		return r.buf.Write(p)
+		// Once the record is rejected, the body is discarded rather than refused,
+		// as a write error would make the reverse proxy abort the connection, with no way to answer.
+		if r.discarding {
+			return len(p), nil
+		}
+
+		r.buf.Write(p)
+
+		// The record is complete once its body is, which a byte past dest.maxRecordBodySize tells.
+		if r.dest.maxRecordBodySize >= 0 && int64(r.buf.Len()) > r.dest.maxRecordBodySize {
+			_ = r.complete()
+		}
+
+		return len(p), nil
 	}
 
 	r.capture(p)
@@ -150,11 +178,37 @@ func (r *responseCapturer) capture(p []byte) {
 	r.buf.Write(p)
 }
 
+// complete sends the record, once, and serves the buffered response when the record is accepted.
+func (r *responseCapturer) complete() error {
+	if r.sent {
+		return r.sendErr
+	}
+
+	r.sent = true
+	r.sendErr = r.send()
+
+	if r.sendErr != nil && r.buffering {
+		r.discarding = true
+		r.buf = bytes.Buffer{}
+
+		return r.sendErr
+	}
+
+	// A client failing to read the response is left to the next writes to report.
+	_ = r.serve()
+
+	return r.sendErr
+}
+
 // serve serves the buffered response.
 // It is a no-op for a streamed, or already served, response.
 func (r *responseCapturer) serve() error {
 	if !r.buffering {
 		return nil
+	}
+
+	if r.discarding {
+		return errors.New("response record rejected")
 	}
 
 	// Hijack can serve the response before ServeHTTP does.
@@ -205,7 +259,7 @@ func (r *responseCapturer) record(duration time.Duration) *responseRecord {
 		return rec
 	}
 
-	// While buffering, buf holds the whole body, so the limit is applied here.
+	// While buffering, buf holds the buffered body, so the limit is applied here.
 	body := r.buf.Bytes()
 	if r.dest.maxRecordBodySize >= 0 && int64(len(body)) > r.dest.maxRecordBodySize {
 		rec.Body = body[:r.dest.maxRecordBodySize]

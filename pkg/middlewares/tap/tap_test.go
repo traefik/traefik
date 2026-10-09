@@ -722,6 +722,74 @@ func TestReadBody(t *testing.T) {
 	}
 }
 
+// TestServeHTTP_withheldResponseStreamsOnceRecorded asserts that a response with rejectOnRecordError is only
+// withheld until its record is complete, and replaced by an error when the record cannot be sent.
+func TestServeHTTP_withheldResponseStreamsOnceRecorded(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		sinkStatus     int
+		expectedStatus int
+		expectedBody   string
+		expectedHeader string
+	}{
+		{
+			desc:           "record accepted",
+			expectedStatus: http.StatusCreated,
+			expectedBody:   "pong!",
+			expectedHeader: "yes",
+		},
+		{
+			desc:           "record rejected",
+			sinkStatus:     http.StatusServiceUnavailable,
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   http.StatusText(http.StatusInternalServerError) + "\n",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			s := &sink{status: test.sinkStatus}
+
+			responseConfig := responseRecordConfig()
+			responseConfig.RejectOnRecordError = true
+			responseConfig.RecordBody = true
+			responseConfig.MaxRecordBodySize = new(int64(2))
+
+			recorder := httptest.NewRecorder()
+
+			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				rw.Header().Set("X-Backend", "yes")
+				rw.WriteHeader(http.StatusCreated)
+
+				// The writes after a rejected record are not refused, so that the next handler completes.
+				for _, chunk := range []string{"po", "ng", "!"} {
+					n, err := rw.Write([]byte(chunk))
+					require.NoError(t, err)
+					assert.Equal(t, len(chunk), n)
+				}
+
+				// The record is complete once its body is, so the rest of the response is streamed.
+				if test.sinkStatus == 0 {
+					assert.Equal(t, "pong!", recorder.Body.String())
+				}
+			}), s)
+
+			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://example.com/foo", http.NoBody))
+
+			assert.Equal(t, test.expectedStatus, recorder.Code)
+			assert.Equal(t, test.expectedBody, recorder.Body.String())
+			assert.Equal(t, test.expectedHeader, recorder.Header().Get("X-Backend"))
+
+			records := s.recorded()
+			require.Len(t, records, 1)
+			assert.Equal(t, "po", string(records[0].Response.Body))
+			assert.True(t, records[0].Response.BodyTruncated)
+		})
+	}
+}
+
 // TestServeHTTP_rejectOnRecordErrorHoldsResponse asserts the guarantee of the rejectOnRecordError mode:
 // the response record is accepted before any byte of the response reaches the client.
 func TestServeHTTP_rejectOnRecordErrorHoldsResponse(t *testing.T) {

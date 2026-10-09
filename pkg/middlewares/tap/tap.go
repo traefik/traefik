@@ -69,7 +69,8 @@ type responseRecord struct {
 	// Body is base64-encoded, as it may not be valid UTF-8.
 	Body          []byte `json:"body,omitempty"`
 	BodyTruncated bool   `json:"bodyTruncated,omitempty"`
-	// Duration spans from the reception of the request to the end of the response, in nanoseconds.
+	// Duration spans from the reception of the request to the end of the response,
+	// or to the record being sent for a withheld response, in nanoseconds.
 	Duration time.Duration `json:"duration"`
 }
 
@@ -213,22 +214,20 @@ func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		responseRecordRequest = describeRequest(req, t.response.requestHeaders)
 	}
 
-	capturer := newResponseCapturer(rw, t.response, t.response.rejectOnRecordError)
+	var capturer *responseCapturer
+	capturer = newResponseCapturer(rw, t.response, t.response.rejectOnRecordError, func() error {
+		rec := &record{ID: id, Kind: kindResponse, Time: start, TraceID: traceID, Request: responseRecordRequest, Response: capturer.record(time.Since(start))}
+		return t.send(ctx, t.response, req.Host, rec)
+	})
 	t.next.ServeHTTP(capturer, req)
 
-	rec := &record{ID: id, Kind: kindResponse, Time: start, TraceID: traceID, Request: responseRecordRequest, Response: capturer.record(time.Since(start))}
-
-	if err := t.send(ctx, t.response, req.Host, rec); err != nil {
+	// The record is sent here, unless the capturer sent it already, once complete.
+	if err := capturer.complete(); err != nil {
 		logger.Error().Err(err).Msg("Unable to send the response record")
-		if t.response.rejectOnRecordError {
-			t.reject(ctx, rw, kindResponse)
-			return
-		}
 	}
 
-	// A withheld response is served once its record is sent.
-	if err := capturer.serve(); err != nil {
-		logger.Debug().Err(err).Msg("Unable to serve the response")
+	if capturer.discarding {
+		t.reject(ctx, rw, kindResponse)
 	}
 }
 
