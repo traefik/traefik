@@ -73,7 +73,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 	h3.Server = &http3.Server{
 		Addr:           config.GetAddress(),
 		Port:           config.HTTP3.AdvertisedPort,
-		Handler:        handler,
+		Handler:        withCanceledContext(handler),
 		TLSConfig:      &tls.Config{GetConfigForClient: h3.getTLSConfigForClient},
 		MaxHeaderBytes: config.HTTP.MaxHeaderBytes,
 		IdleTimeout:    time.Duration(config.Transport.RespondingTimeouts.IdleTimeout),
@@ -122,6 +122,21 @@ func withReadTimeout(ctx context.Context, next http.Handler, timeout time.Durati
 			}
 		}
 		next.ServeHTTP(rw, req)
+	})
+}
+
+// withCanceledContext makes the request context cause context.Canceled when the client goes away.
+// quic-go cancels it with its own error instead (e.g. a *quic.ApplicationError when the connection is closed),
+// which the proxy transport returns as is, and a client abort is then reported as a 502 instead of a 499.
+func withCanceledContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx, cancel := context.WithCancel(context.WithoutCancel(req.Context()))
+		defer cancel()
+
+		stop := context.AfterFunc(req.Context(), cancel)
+		defer stop()
+
+		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 
