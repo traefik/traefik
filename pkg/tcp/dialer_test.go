@@ -119,6 +119,81 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
+func TestBuildProxyProtocol(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc             string
+		serversTransport string
+		transport        *dynamic.ProxyProtocol
+		legacy           *dynamic.ProxyProtocol
+		expected         *dynamic.ProxyProtocol
+		expectedError    string
+	}{
+		{desc: "disabled"},
+		{
+			desc:      "default transport",
+			transport: &dynamic.ProxyProtocol{Version: 2},
+			expected:  &dynamic.ProxyProtocol{Version: 2},
+		},
+		{
+			desc:     "legacy service",
+			legacy:   &dynamic.ProxyProtocol{Version: 1},
+			expected: &dynamic.ProxyProtocol{Version: 1},
+		},
+		{
+			desc:      "default transport overrides legacy service",
+			transport: &dynamic.ProxyProtocol{Version: 2},
+			legacy:    &dynamic.ProxyProtocol{Version: 1},
+			expected:  &dynamic.ProxyProtocol{Version: 2},
+		},
+		{
+			desc:             "explicit transport disables legacy service",
+			serversTransport: "custom@file",
+			legacy:           &dynamic.ProxyProtocol{Version: 2},
+		},
+		{
+			desc:             "explicit default transport disables legacy service",
+			serversTransport: "default@internal",
+			legacy:           &dynamic.ProxyProtocol{Version: 2},
+		},
+		{
+			desc:             "explicit transport overrides legacy service",
+			serversTransport: "custom@file",
+			transport:        &dynamic.ProxyProtocol{Version: 1},
+			legacy:           &dynamic.ProxyProtocol{Version: 2},
+			expected:         &dynamic.ProxyProtocol{Version: 1},
+		},
+		{
+			desc:          "invalid version",
+			transport:     &dynamic.ProxyProtocol{Version: 3},
+			expectedError: "unknown proxyProtocol version: 3",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dialerManager := NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{
+				"default@internal": {ProxyProtocol: test.transport},
+				"custom@file":      {ProxyProtocol: test.transport},
+			})
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
+				ServersTransport: test.serversTransport,
+				ProxyProtocol:    test.legacy,
+			}, false)
+			if test.expectedError != "" {
+				require.EqualError(t, err, test.expectedError)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, dialer.(tcpDialer).proxyProtocol)
+		})
+	}
+}
+
 func TestConflictingConfig(t *testing.T) {
 	dialerManager := NewDialerManager(nil)
 
