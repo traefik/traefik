@@ -15,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
@@ -43,6 +44,7 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
+	gatewayClass  string
 	labelSelector string
 }
 
@@ -141,8 +143,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		opts.LabelSelector = "owner!=helm"
 	}
 
-	labelSelectorOptions := func(options *metav1.ListOptions) {
-		options.LabelSelector = c.labelSelector
+	gatewayClassOptions := func(options *metav1.ListOptions) {
+		switch {
+		case c.labelSelector != "":
+			options.LabelSelector = c.labelSelector
+		case c.gatewayClass != "":
+			options.FieldSelector = fields.OneTermEqualSelector("metadata.name", c.gatewayClass).String()
+		}
 	}
 
 	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
@@ -151,7 +158,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
-	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
+	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(gatewayClassOptions), gateinformers.WithTransform(k8s.StripManagedFields))
 	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
