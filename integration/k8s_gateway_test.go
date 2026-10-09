@@ -32,7 +32,7 @@ func (s *GatewayAPISuite) TestGatewayConfiguration() {
 	ctx := s.T().Context()
 
 	k3sContainer, err := k3s.Run(ctx, k3sImage,
-		k3s.WithManifest("./fixtures/k8s-gateway/00-experimental-v1.6.2.yml"),
+		k3s.WithManifest("./fixtures/k8s-gateway/00-experimental-v1.6.3.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/01-services.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/02-gateway.yml"),
 		k3s.WithManifest("./fixtures/k8s-gateway/03-tcproute.yml"),
