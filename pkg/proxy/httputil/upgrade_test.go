@@ -1,12 +1,18 @@
 package httputil
 
 import (
+	"bufio"
+	"crypto/tls"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -140,4 +146,131 @@ func TestH2CUpgradeNotForwarded(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
+}
+
+func TestUpgradedTLSConnClosedOnBackendClose(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		conn, brw, err := http.NewResponseController(rw).Hijack()
+		if !assert.NoError(t, err) {
+			return
+		}
+		defer conn.Close()
+
+		_, err = brw.WriteString("HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\nhello")
+		assert.NoError(t, err)
+		assert.NoError(t, brw.Flush())
+	}))
+	t.Cleanup(backend.Close)
+
+	proxy := newUpgradeProxyServer(t, backend.URL, true)
+
+	rawConn, err := net.Dial("tcp", proxy.Listener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = rawConn.Close() })
+
+	conn := tls.Client(rawConn, &tls.Config{InsecureSkipVerify: true})
+	require.NoError(t, conn.SetDeadline(time.Now().Add(2*time.Second)))
+
+	br := sendUpgradeRequest(t, conn)
+
+	data, err := io.ReadAll(br)
+	require.NoError(t, err)
+	assert.Equal(t, "hello", string(data))
+
+	// The TLS layer reports io.EOF as soon as it receives a close_notify alert,
+	// so the underlying TCP connection is read to check that it has been closed too.
+	_, err = rawConn.Read(make([]byte, 1))
+	assert.ErrorIs(t, err, io.EOF)
+}
+
+func TestUpgradedTCPConnHalfClosedOnBackendCloseWrite(t *testing.T) {
+	received := make(chan string, 1)
+
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		conn, brw, err := http.NewResponseController(rw).Hijack()
+		if !assert.NoError(t, err) {
+			return
+		}
+		defer conn.Close()
+
+		_, err = brw.WriteString("HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\nhello")
+		assert.NoError(t, err)
+		assert.NoError(t, brw.Flush())
+
+		tcpConn, ok := conn.(*net.TCPConn)
+		if !assert.True(t, ok) {
+			return
+		}
+		assert.NoError(t, tcpConn.CloseWrite())
+
+		data, err := io.ReadAll(brw)
+		assert.NoError(t, err)
+
+		received <- string(data)
+	}))
+	t.Cleanup(backend.Close)
+
+	proxy := newUpgradeProxyServer(t, backend.URL, false)
+
+	conn, err := net.Dial("tcp", proxy.Listener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	require.NoError(t, conn.SetDeadline(time.Now().Add(2*time.Second)))
+
+	br := sendUpgradeRequest(t, conn)
+
+	data, err := io.ReadAll(br)
+	require.NoError(t, err)
+	assert.Equal(t, "hello", string(data))
+
+	// The connection to the client is only half-closed, so it can still send data to the backend.
+	_, err = conn.Write([]byte("bye"))
+	require.NoError(t, err)
+
+	tcpConn, ok := conn.(*net.TCPConn)
+	require.True(t, ok)
+	require.NoError(t, tcpConn.CloseWrite())
+
+	select {
+	case data := <-received:
+		assert.Equal(t, "bye", data)
+	case <-time.After(2 * time.Second):
+		t.Fatal("backend did not receive the client data")
+	}
+}
+
+func newUpgradeProxyServer(t *testing.T, backendURL string, withTLS bool) *httptest.Server {
+	t.Helper()
+
+	transportManager := &transportManagerMock{
+		roundTrippers: map[string]http.RoundTripper{"fwd": http.DefaultTransport},
+	}
+
+	p, err := NewProxyBuilder(transportManager, nil).Build("fwd", testhelpers.MustParseURL(backendURL), true, false, 0)
+	require.NoError(t, err)
+
+	srv := httptest.NewUnstartedServer(p)
+	if withTLS {
+		srv.StartTLS()
+	} else {
+		srv.Start()
+	}
+	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+func sendUpgradeRequest(t *testing.T, conn net.Conn) *bufio.Reader {
+	t.Helper()
+
+	_, err := conn.Write([]byte("GET /ws HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n"))
+	require.NoError(t, err)
+
+	br := bufio.NewReader(conn)
+	res, err := http.ReadResponse(br, nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, res.StatusCode)
+
+	return br
 }
