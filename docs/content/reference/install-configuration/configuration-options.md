@@ -322,6 +322,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-providers-etcd-endpoints" href="#opt-providers-etcd-endpoints" title="#opt-providers-etcd-endpoints">providers.etcd.endpoints</a> | KV store endpoints. | 127.0.0.1:2379 |
 | <a id="opt-providers-etcd-password" href="#opt-providers-etcd-password" title="#opt-providers-etcd-password">providers.etcd.password</a> | Password for authentication. | |
 | <a id="opt-providers-etcd-rootkey" href="#opt-providers-etcd-rootkey" title="#opt-providers-etcd-rootkey">providers.etcd.rootkey</a> | Root key used for KV store. | traefik |
+| <a id="opt-providers-etcd-syncperiod" href="#opt-providers-etcd-syncperiod" title="#opt-providers-etcd-syncperiod">providers.etcd.syncperiod</a> | Interval at which the client updates its list of endpoints from the etcd cluster membership. A value of 0 disables this auto-sync. | 0s |
 | <a id="opt-providers-etcd-tls-ca" href="#opt-providers-etcd-tls-ca" title="#opt-providers-etcd-tls-ca">providers.etcd.tls.ca</a> | TLS CA | |
 | <a id="opt-providers-etcd-tls-cert" href="#opt-providers-etcd-tls-cert" title="#opt-providers-etcd-tls-cert">providers.etcd.tls.cert</a> | TLS cert | |
 | <a id="opt-providers-etcd-tls-insecureskipverify" href="#opt-providers-etcd-tls-insecureskipverify" title="#opt-providers-etcd-tls-insecureskipverify">providers.etcd.tls.insecureskipverify</a> | TLS insecure skip verify | false |
