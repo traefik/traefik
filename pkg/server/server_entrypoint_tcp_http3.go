@@ -136,9 +136,8 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.getter = rt.HTTP3TLSConfigMatcherFunc()
 }
 
-func (e *http3server) Shutdown(_ context.Context) error {
-	// TODO: use e.Server.CloseGracefully() when available.
-	return e.Server.Close()
+func (e *http3server) Shutdown(ctx context.Context) error {
+	return e.Server.Shutdown(ctx)
 }
 
 func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
