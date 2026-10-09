@@ -162,9 +162,9 @@ you can do so in two different ways:
 
 !!! info "The following providers support label selectors"
 
-    - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
-    - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelselector)
-    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
+    - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelSelector)
+    - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelSelector)
+    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelSelector)
 
 ## Providers Precedence
 
