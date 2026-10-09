@@ -149,7 +149,14 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, err
 	}
 
-	return h.Hijack()
+	conn, brw, err := h.Hijack()
+
+	// The status is then written on the hijacked connection, which the reverse proxy only does for a 101 Switching Protocols.
+	if err == nil && r.status == 0 {
+		r.status = http.StatusSwitchingProtocols
+	}
+
+	return conn, brw, err
 }
 
 // capture keeps at most dest.maxRecordBodySize bytes of the body for the record.

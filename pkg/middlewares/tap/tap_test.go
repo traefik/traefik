@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
@@ -698,6 +699,13 @@ func TestReadBody(t *testing.T) {
 			desc:              "empty body",
 			maxRecordBodySize: 10,
 			expectedRecorded:  "",
+		},
+		{
+			// The limit is not allocated up front, and one byte more than it does not overflow.
+			desc:              "largest limit",
+			body:              "ping",
+			maxRecordBodySize: math.MaxInt64,
+			expectedRecorded:  "ping",
 		},
 	}
 

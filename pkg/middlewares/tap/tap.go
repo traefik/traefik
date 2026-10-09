@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -344,23 +345,26 @@ func readBody(req *http.Request, maxRecordBodySize int64) ([]byte, bool, error) 
 	}
 
 	// One byte more than the limit tells a body at the limit from a truncated one.
-	buf := make([]byte, maxRecordBodySize+1)
-	n, err := io.ReadFull(req.Body, buf)
-	switch {
-	// The buffer is full, so the body is over the limit: the bytes read are put back in front of it.
-	case err == nil:
-		req.Body = replayBody(io.MultiReader(bytes.NewReader(buf[:n]), req.Body), req.Body)
-		return buf[:maxRecordBodySize], true, nil
-
-	// io.EOF happens with HTTP/3, where a bodyless request has a non-nil Body and no
-	// Content-Length, and with a chunked request sending no chunks.
-	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
-		req.Body = replayBody(bytes.NewReader(buf[:n]), req.Body)
-		return buf[:n], false, nil
-
-	default:
-		return nil, false, err
+	// The body is read rather than allocated up to the limit, which can be far larger than the body.
+	limit := maxRecordBodySize
+	if limit < math.MaxInt64 {
+		limit++
 	}
+
+	body, err := io.ReadAll(io.LimitReader(req.Body, limit))
+	if err != nil {
+		return nil, false, fmt.Errorf("reading request body: %w", err)
+	}
+
+	// The body is over the limit: the bytes read are put back in front of it.
+	if int64(len(body)) > maxRecordBodySize {
+		req.Body = replayBody(io.MultiReader(bytes.NewReader(body), req.Body), req.Body)
+		return body[:maxRecordBodySize], true, nil
+	}
+
+	req.Body = replayBody(bytes.NewReader(body), req.Body)
+
+	return body, false, nil
 }
 
 // replayBody returns a body reading from reader, while still closing the original body.

@@ -273,6 +273,41 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	assert.Equal(t, "pongping", recorder.Body.String())
 }
 
+func TestResponseCapturer_hijackRecordsSwitchingProtocols(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		hijackable     bool
+		expectedStatus int
+	}{
+		{
+			desc:           "hijacked",
+			hijackable:     true,
+			expectedStatus: http.StatusSwitchingProtocols,
+		},
+		{
+			// A failed hijack leaves the status to the error response that follows.
+			desc:           "hijack failed",
+			expectedStatus: http.StatusBadGateway,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			writer := &hijackableRecorder{ResponseRecorder: httptest.NewRecorder(), hijackable: test.hijackable}
+			capturer := newResponseCapturer(writer, &destination{maxRecordBodySize: -1}, false, nil)
+
+			_, _, err := capturer.Hijack()
+			if err != nil {
+				capturer.WriteHeader(http.StatusBadGateway)
+			}
+
+			assert.Equal(t, test.expectedStatus, capturer.record(time.Second).Status)
+		})
+	}
+}
+
 // TestResponseCapturer_interimResponses asserts that an informational status is not taken for the
 // status of the response, and is only forwarded when streaming.
 func TestResponseCapturer_interimResponses(t *testing.T) {
@@ -369,12 +404,19 @@ func TestResponseCapturer_streamedTrailers(t *testing.T) {
 	assert.Equal(t, "0", recorder.Result().Trailer.Get("Grpc-Status"))
 }
 
-// hijackableRecorder is a http.Hijacker always failing to hijack, which is enough to test what comes before.
+// hijackableRecorder is a http.Hijacker failing to hijack unless hijackable,
+// which is enough to test what comes before and after.
 type hijackableRecorder struct {
 	*httptest.ResponseRecorder
+
+	hijackable bool
 }
 
 func (h *hijackableRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h.hijackable {
+		return nil, nil, nil
+	}
+
 	return nil, nil, errors.New("cannot hijack")
 }
 
