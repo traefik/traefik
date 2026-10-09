@@ -36,7 +36,7 @@ import (
 // RouterRespondingTimeouts holds the timeouts for responding to client requests.
 type RouterRespondingTimeoutsApplyConfiguration struct {
 	// RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
-	// If zero, no timeout applies.
+	// If zero, no timeout applies, and the entrypoint read and write timeouts are lifted for the router.
 	RoundTrip *intstr.IntOrString `json:"roundTrip,omitempty"`
 }
 

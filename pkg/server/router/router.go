@@ -390,8 +390,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	// Appended below observability so that the 504 is observed, and above the user middlewares so that the
 	// deadline bounds them all, retry attempts included.
-	if router.RespondingTimeouts != nil && router.RespondingTimeouts.RoundTrip > 0 {
-		chain = chain.Append(respondingtimeout.WrapHandler(time.Duration(router.RespondingTimeouts.RoundTrip)))
+	if router.RespondingTimeouts != nil && router.RespondingTimeouts.RoundTrip != nil {
+		chain = chain.Append(respondingtimeout.WrapHandler(time.Duration(*router.RespondingTimeouts.RoundTrip)))
 	}
 
 	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)

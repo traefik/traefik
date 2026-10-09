@@ -391,6 +391,19 @@ func TestSlowBackendOverHTTP2(t *testing.T) {
 			expected: http.StatusOK,
 		},
 		{
+			desc:         "backend slower than the entrypoint writeTimeout gets 200 with a disabled timeout",
+			writeTimeout: 50 * time.Millisecond,
+			next: func(t *testing.T) http.Handler {
+				t.Helper()
+
+				return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					time.Sleep(200 * time.Millisecond)
+					rw.WriteHeader(http.StatusOK)
+				})
+			},
+			expected: http.StatusOK,
+		},
+		{
 			desc:         "backend slower than the timeout gets 504 despite a shorter entrypoint writeTimeout",
 			timeout:      200 * time.Millisecond,
 			writeTimeout: 50 * time.Millisecond,
@@ -418,6 +431,65 @@ func TestSlowBackendOverHTTP2(t *testing.T) {
 
 			require.Equal(t, "HTTP/2.0", res.Proto)
 			assert.Equal(t, test.expected, res.StatusCode)
+		})
+	}
+}
+
+// TestDisabledTimeoutLiftsEntryPointDeadlines guards the zero timeout over HTTP/1, where the entrypoint
+// readTimeout and writeTimeout are connection deadlines.
+func TestDisabledTimeoutLiftsEntryPointDeadlines(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		readTimeout  time.Duration
+		writeTimeout time.Duration
+	}{
+		{
+			desc:        "upload slower than the entrypoint readTimeout",
+			readTimeout: 50 * time.Millisecond,
+		},
+		{
+			desc:         "backend slower than the entrypoint writeTimeout",
+			writeTimeout: 50 * time.Millisecond,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ts := httptest.NewUnstartedServer(wrap(t, 0, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if _, err := io.Copy(io.Discard, req.Body); err != nil {
+					rw.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				time.Sleep(200 * time.Millisecond)
+				rw.WriteHeader(http.StatusOK)
+			})))
+			ts.Config.ReadTimeout = test.readTimeout
+			ts.Config.WriteTimeout = test.writeTimeout
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
+
+			_, err = fmt.Fprintf(conn, "POST / HTTP/1.1\r\nHost: %s\r\nContent-Length: 4\r\n\r\nab", ts.Listener.Addr())
+			require.NoError(t, err)
+
+			time.Sleep(200 * time.Millisecond)
+
+			_, err = fmt.Fprint(conn, "cd")
+			require.NoError(t, err)
+
+			res, err := http.ReadResponse(bufio.NewReader(conn), nil)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
 		})
 	}
 }

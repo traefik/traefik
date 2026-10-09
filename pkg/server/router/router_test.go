@@ -2228,30 +2228,38 @@ func (p slowProxyBuilder) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration
 
 func (p slowProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
 
+// TestRouterManager_RespondingTimeouts runs behind a server whose writeTimeout is shorter than the backend delay,
+// so that each case tells whether the router timeout replaces the entrypoint deadlines.
 func TestRouterManager_RespondingTimeouts(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		respondingTimeouts *dynamic.RouterRespondingTimeouts
 		expectedStatus     int
+		expectedErr        bool
 	}{
 		{
 			desc:               "roundTrip shorter than the backend delay yields a 504",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(10 * time.Millisecond)},
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(10 * time.Millisecond))},
 			expectedStatus:     http.StatusGatewayTimeout,
 		},
 		{
-			desc:               "roundTrip longer than the backend delay is not enforced",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(time.Hour)},
+			desc:               "roundTrip longer than the backend delay overrides the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(time.Hour))},
 			expectedStatus:     http.StatusOK,
 		},
 		{
-			desc:               "zero roundTrip disables the timeout",
+			desc:               "zero roundTrip lifts the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(0))},
+			expectedStatus:     http.StatusOK,
+		},
+		{
+			desc:               "unset roundTrip keeps the entrypoint writeTimeout",
 			respondingTimeouts: &dynamic.RouterRespondingTimeouts{},
-			expectedStatus:     http.StatusOK,
+			expectedErr:        true,
 		},
 		{
-			desc:           "no respondingTimeouts",
-			expectedStatus: http.StatusOK,
+			desc:        "no respondingTimeouts keeps the entrypoint writeTimeout",
+			expectedErr: true,
 		},
 	}
 
@@ -2285,7 +2293,7 @@ func TestRouterManager_RespondingTimeouts(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, slowProxyBuilder{delay: 50 * time.Millisecond})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, slowProxyBuilder{delay: 200 * time.Millisecond})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager(nil)
 
@@ -2296,13 +2304,28 @@ func TestRouterManager_RespondingTimeouts(t *testing.T) {
 
 			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
 
-			w := httptest.NewRecorder()
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
-
 			reqHost := requestdecorator.New(nil)
-			reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 
-			assert.Equal(t, test.expectedStatus, w.Code)
+			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				reqHost.ServeHTTP(rw, req, handlers["web"].ServeHTTP)
+			}))
+			ts.Config.WriteTimeout = 50 * time.Millisecond
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
+			require.NoError(t, err)
+			req.Host = "foo.bar"
+
+			res, err := ts.Client().Do(req)
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
 		})
 	}
 }
