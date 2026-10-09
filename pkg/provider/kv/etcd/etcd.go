@@ -20,9 +20,10 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	TLS      *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Username string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	TLS        *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Username   string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password   string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	SyncPeriod time.Duration    `description:"Interval at which the client updates its list of endpoints from the etcd cluster membership. A value of 0 disables this auto-sync." json:"syncPeriod,omitempty" toml:"syncPeriod,omitempty" yaml:"syncPeriod,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -37,6 +38,7 @@ func (p *Provider) Init() error {
 		ConnectionTimeout: 3 * time.Second,
 		Username:          p.Username,
 		Password:          p.Password,
+		SyncPeriod:        p.SyncPeriod,
 	}
 
 	if p.TLS != nil {
