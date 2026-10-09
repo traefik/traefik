@@ -68,7 +68,7 @@ func Test_parseRouterConfig(t *testing.T) {
 						TraceVerbosity: otypes.MinimalVerbosity,
 					},
 					RespondingTimeouts: &dynamic.RouterRespondingTimeouts{
-						RoundTrip: ptypes.Duration(10 * time.Second),
+						RoundTrip: new(ptypes.Duration(10 * time.Second)),
 					},
 				},
 			},

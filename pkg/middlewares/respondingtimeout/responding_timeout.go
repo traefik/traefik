@@ -37,6 +37,11 @@ func WrapHandler(timeout time.Duration) alice.Constructor {
 func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), name, typeName)
 
+	if h.timeout <= 0 {
+		h.serveWithoutTimeout(rw, req, logger)
+		return
+	}
+
 	deadline := time.Now().Add(h.timeout)
 
 	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
@@ -111,6 +116,32 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	defer cancel()
 
 	h.next.ServeHTTP(rewriter, req.WithContext(ctx))
+}
+
+// serveWithoutTimeout lifts the entrypoint read and write deadlines for this request.
+// net/http resets the connection deadlines for the next request, so they are not restored on return.
+func (h *handler) serveWithoutTimeout(rw http.ResponseWriter, req *http.Request, logger *zerolog.Logger) {
+	// Nested routers: a child router cannot extend its parent's budget.
+	if _, ok := req.Context().Deadline(); ok {
+		h.next.ServeHTTP(rw, req)
+		return
+	}
+
+	rc := http.NewResponseController(rw)
+
+	// Same guard as for the deadline: without a body, net/http reads in the background.
+	if req.ContentLength != 0 {
+		if err := rc.SetReadDeadline(time.Time{}); err != nil {
+			logger.Debug().Err(err).Msg("Unable to clear read deadline")
+		}
+	}
+
+	// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
+	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+		logger.Debug().Err(err).Msg("Unable to clear write deadline")
+	}
+
+	h.next.ServeHTTP(rw, req)
 }
 
 // entryPointWriteTimeout returns the writeTimeout of the entrypoint serving req, or zero.

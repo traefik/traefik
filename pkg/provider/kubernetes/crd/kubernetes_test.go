@@ -2392,7 +2392,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{
-								RoundTrip: ptypes.Duration(10 * time.Second),
+								RoundTrip: new(ptypes.Duration(10 * time.Second)),
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{

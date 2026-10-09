@@ -150,11 +150,11 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 
 			if routeRule.Timeouts.Request != nil {
 				// The CRD CEL validation guarantees a valid GEP-2257 duration string.
-				// A zero duration disables the timeout, leaving the field unset like an omitted timeouts.request.
+				// A zero duration disables the timeout, lifting the entrypoint read and write deadlines, as GEP-1742 requires.
 				if d, err := time.ParseDuration(string(*routeRule.Timeouts.Request)); err != nil {
 					log.Ctx(ctx).Debug().Err(err).Msg("Ignoring HTTPRoute timeouts.request: invalid duration")
-				} else if d > 0 {
-					respondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: ptypes.Duration(d)}
+				} else {
+					respondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(d))}
 				}
 			}
 		}

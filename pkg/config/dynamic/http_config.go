@@ -108,8 +108,8 @@ type Router struct {
 // RouterRespondingTimeouts holds the timeouts for responding to client requests on a router.
 type RouterRespondingTimeouts struct {
 	// RoundTrip is the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
-	// If zero, no timeout applies.
-	RoundTrip ptypes.Duration `json:"roundTrip,omitempty" toml:"roundTrip,omitempty" yaml:"roundTrip,omitempty" export:"true"`
+	// If zero, no timeout applies, and the entrypoint read and write timeouts are lifted for the router.
+	RoundTrip *ptypes.Duration `json:"roundTrip,omitempty" toml:"roundTrip,omitempty" yaml:"roundTrip,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
