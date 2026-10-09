@@ -45,6 +45,24 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
+    !!! info "Using Traefik CRDs with the Gateway API provider"
+
+        This RBAC does not grant access to the Traefik CRDs.
+        When the [Kubernetes CRD provider](./kubernetes-crd.md) is enabled too,
+        for example to use Traefik middlewares as `ExtensionRef` filters,
+        install the Traefik resource definitions and RBAC listed in its [requirements](./kubernetes-crd.md#requirements).
+
+        The two RBAC manifests bind their `ClusterRole` to different service accounts:
+        `traefik-controller` for Gateway API, and `traefik-ingress-controller` for the Traefik CRDs.
+        Both `ClusterRoles` must be bound to the service account that Traefik runs as, for example `traefik-controller`:
+
+        ```bash
+        # Grant the Traefik CRD permissions to the Gateway API service account.
+        kubectl create clusterrolebinding traefik-controller-crd \
+          --clusterrole=traefik-ingress-controller \
+          --serviceaccount=default:traefik-controller
+        ```
+
 ## Configuration Example
 
 You can enable the `kubernetesGateway` provider as detailed below:
