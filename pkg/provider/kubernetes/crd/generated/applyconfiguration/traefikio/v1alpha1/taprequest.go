@@ -51,18 +51,14 @@ type TapRequestApplyConfiguration struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	RejectOnRecordError *bool `json:"rejectOnRecordError,omitempty"`
-	// MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
-	// A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
-	// A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
-	// The record of a response streamed to the client carries at most maxBodySize bytes.
-	// Default is `-1`, which means no limit.
-	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 	// RecordBody defines whether the body is part of the records.
 	// Default is `false`.
 	RecordBody *bool `json:"recordBody,omitempty"`
 	// MaxRecordBodySize defines the maximum number of body bytes in a record.
 	// A larger body is cut in the record, which is flagged as truncated.
-	// Default is `-1`, which means no limit.
+	// The recorded body is held in memory, so it bounds the memory used for the body.
+	// It has no default, and must be set when recordBody is set.
+	// A negative value means no limit.
 	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty"`
 }
 
@@ -101,14 +97,6 @@ func (b *TapRequestApplyConfiguration) WithTimeout(value intstr.IntOrString) *Ta
 // If called multiple times, the RejectOnRecordError field is set to the value of the last call.
 func (b *TapRequestApplyConfiguration) WithRejectOnRecordError(value bool) *TapRequestApplyConfiguration {
 	b.RejectOnRecordError = &value
-	return b
-}
-
-// WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the MaxBodySize field is set to the value of the last call.
-func (b *TapRequestApplyConfiguration) WithMaxBodySize(value int64) *TapRequestApplyConfiguration {
-	b.MaxBodySize = &value
 	return b
 }
 

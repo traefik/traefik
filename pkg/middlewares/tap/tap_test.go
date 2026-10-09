@@ -48,6 +48,38 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			desc: "request body recorded without maxRecordBodySize",
+			config: dynamic.Tap{
+				Request: &dynamic.TapRequest{Service: "requests", RecordBody: true},
+			},
+			expectedErr: "request maxRecordBodySize must be defined when recordBody is set",
+		},
+		{
+			desc: "request body not recorded without maxRecordBodySize",
+			config: dynamic.Tap{
+				Request: &dynamic.TapRequest{Service: "requests", RejectOnRecordError: true},
+			},
+		},
+		{
+			desc: "response body recorded without maxRecordBodySize",
+			config: dynamic.Tap{
+				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RecordBody: true}},
+			},
+			expectedErr: "response maxRecordBodySize must be defined when recordBody is set",
+		},
+		{
+			desc: "response body not recorded without maxRecordBodySize",
+			config: dynamic.Tap{
+				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RejectOnRecordError: true}},
+			},
+		},
+		{
+			desc: "response body recorded with no limit on purpose",
+			config: dynamic.Tap{
+				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RecordBody: true, MaxRecordBodySize: new(int64(-1))}},
+			},
+		},
+		{
 			desc: "request and response",
 			config: dynamic.Tap{
 				Request:  requestRecordConfig(),
@@ -675,7 +707,7 @@ func TestReadBody(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "http://example.com/foo", strings.NewReader(test.body))
 
-			recorded, truncated, err := readBody(req, test.maxRecordBodySize, -1)
+			recorded, truncated, err := readBody(req, test.maxRecordBodySize)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expectedRecorded, string(recorded))
@@ -686,172 +718,6 @@ func TestReadBody(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, test.body, string(forwarded))
 			assert.NoError(t, req.Body.Close())
-		})
-	}
-}
-
-func TestReadBody_maxBodySize(t *testing.T) {
-	testCases := []struct {
-		desc              string
-		body              io.Reader
-		maxRecordBodySize int64
-		maxBodySize       int64
-		expectedErr       error
-		expectedUnread    bool
-		expectedRecorded  string
-		expectedTruncated bool
-	}{
-		{
-			desc:              "body at the limit",
-			body:              strings.NewReader("ping"),
-			maxRecordBodySize: -1,
-			maxBodySize:       4,
-			expectedRecorded:  "ping",
-		},
-		{
-			// A body announced too large is not read, so that no 100 Continue is sent.
-			desc:              "body announced over the limit",
-			body:              strings.NewReader("ping"),
-			maxRecordBodySize: -1,
-			maxBodySize:       3,
-			expectedErr:       errBodyTooLarge,
-			expectedUnread:    true,
-		},
-		{
-			// A reader of unknown length leaves the content length unset, as a chunked body does.
-			desc:              "body of unknown length over the limit",
-			body:              io.MultiReader(strings.NewReader("ping")),
-			maxRecordBodySize: -1,
-			maxBodySize:       3,
-			expectedErr:       errBodyTooLarge,
-		},
-		{
-			desc:              "no limit",
-			body:              strings.NewReader("ping"),
-			maxRecordBodySize: -1,
-			maxBodySize:       -1,
-			expectedRecorded:  "ping",
-		},
-		{
-			// The body is not held whole with a record limit, so there is nothing to bound.
-			desc:              "record limited",
-			body:              strings.NewReader("ping"),
-			maxRecordBodySize: 2,
-			maxBodySize:       3,
-			expectedRecorded:  "pi",
-			expectedTruncated: true,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			req := httptest.NewRequest(http.MethodPost, "http://example.com/foo", test.body)
-
-			recorded, truncated, err := readBody(req, test.maxRecordBodySize, test.maxBodySize)
-			if test.expectedErr != nil {
-				require.ErrorIs(t, err, test.expectedErr)
-
-				if test.expectedUnread {
-					unread, err := io.ReadAll(req.Body)
-					require.NoError(t, err)
-					assert.Equal(t, "ping", string(unread))
-				}
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expectedRecorded, string(recorded))
-			assert.Equal(t, test.expectedTruncated, truncated)
-
-			// The next handler must still read the body whole.
-			forwarded, err := io.ReadAll(req.Body)
-			require.NoError(t, err)
-			assert.Equal(t, "ping", string(forwarded))
-		})
-	}
-}
-
-// TestServeHTTP_requestBodyTooLarge asserts that a request body held whole and over maxBodySize
-// is rejected, without reaching the backend nor being recorded.
-func TestServeHTTP_requestBodyTooLarge(t *testing.T) {
-	s := &sink{}
-
-	requestConfig := requestRecordConfig()
-	requestConfig.RecordBody = true
-	requestConfig.MaxBodySize = new(int64(3))
-
-	var called bool
-	handler := newTap(t, dynamic.Tap{Request: requestConfig}, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		called = true
-	}), s)
-
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "http://example.com/foo", strings.NewReader("ping")))
-
-	assert.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
-	assert.False(t, called)
-	assert.Empty(t, s.recorded())
-}
-
-// TestServeHTTP_responseBodyTooLarge asserts that a withheld response over maxBodySize is replaced
-// by an error and not recorded, while a streamed response is not limited.
-func TestServeHTTP_responseBodyTooLarge(t *testing.T) {
-	testCases := []struct {
-		desc                string
-		rejectOnRecordError bool
-		expectedStatus      int
-		expectedBody        string
-		expectedHeader      string
-		expectedRecord      bool
-	}{
-		{
-			desc:           "streamed response",
-			expectedStatus: http.StatusCreated,
-			expectedBody:   "pong",
-			expectedHeader: "yes",
-			expectedRecord: true,
-		},
-		{
-			desc:                "withheld response",
-			rejectOnRecordError: true,
-			expectedStatus:      http.StatusInternalServerError,
-			expectedBody:        http.StatusText(http.StatusInternalServerError) + "\n",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			s := &sink{}
-
-			responseConfig := responseRecordConfig()
-			responseConfig.RejectOnRecordError = test.rejectOnRecordError
-			responseConfig.MaxBodySize = new(int64(3))
-
-			handler := newTap(t, dynamic.Tap{Response: responseConfig}, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
-				rw.Header().Set("X-Backend", "yes")
-				rw.WriteHeader(http.StatusCreated)
-
-				// The writes going over the limit are not refused, so that the next handler completes.
-				for _, chunk := range []string{"po", "ng"} {
-					n, err := rw.Write([]byte(chunk))
-					require.NoError(t, err)
-					assert.Equal(t, len(chunk), n)
-				}
-			}), s)
-
-			recorder := httptest.NewRecorder()
-			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://example.com/foo", http.NoBody))
-
-			assert.Equal(t, test.expectedStatus, recorder.Code)
-			assert.Equal(t, test.expectedBody, recorder.Body.String())
-			assert.Equal(t, test.expectedHeader, recorder.Header().Get("X-Backend"))
-			assert.Equal(t, test.expectedRecord, len(s.recorded()) == 1)
 		})
 	}
 }
@@ -1054,6 +920,7 @@ func requestRecordConfig() *dynamic.TapRequest {
 	config := &dynamic.TapRequest{}
 	config.SetDefaults()
 	config.Service = "requests"
+	config.MaxRecordBodySize = new(int64(-1))
 
 	return config
 }
@@ -1062,6 +929,7 @@ func responseRecordConfig() *dynamic.TapResponse {
 	config := &dynamic.TapResponse{}
 	config.SetDefaults()
 	config.Service = "responses"
+	config.MaxRecordBodySize = new(int64(-1))
 
 	return config
 }

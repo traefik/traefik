@@ -20,7 +20,6 @@ spec:
         name: whoami
         port: 80
       recordBody: false
-      maxBodySize: 2048
       requestHeaders:
         - X-Request-Id
       timeout: 30

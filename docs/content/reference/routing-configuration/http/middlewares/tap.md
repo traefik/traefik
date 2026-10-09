@@ -48,7 +48,6 @@ http:
           recordBody: true
           maxRecordBodySize: 4096
           rejectOnRecordError: true
-          maxBodySize: 1048576
           timeout: 5s
         response:
           service: audit-responses
@@ -58,7 +57,6 @@ http:
           requestHeaders:
             - X-Request-Id
           rejectOnRecordError: false
-          maxBodySize: 1048576
           timeout: 5s
 ```
 
@@ -71,7 +69,6 @@ http:
       recordBody = true
       maxRecordBodySize = 4096
       rejectOnRecordError = true
-      maxBodySize = 1048576
       timeout = "5s"
     [http.middlewares.test-tap.tap.response]
       service = "audit-responses"
@@ -80,7 +77,6 @@ http:
       maxRecordBodySize = 4096
       requestHeaders = ["X-Request-Id"]
       rejectOnRecordError = false
-      maxBodySize = 1048576
       timeout = "5s"
 ```
 
@@ -91,7 +87,6 @@ labels:
   - "traefik.http.middlewares.test-tap.tap.request.recordBody=true"
   - "traefik.http.middlewares.test-tap.tap.request.maxRecordBodySize=4096"
   - "traefik.http.middlewares.test-tap.tap.request.rejectOnRecordError=true"
-  - "traefik.http.middlewares.test-tap.tap.request.maxBodySize=1048576"
   - "traefik.http.middlewares.test-tap.tap.request.timeout=5s"
   - "traefik.http.middlewares.test-tap.tap.response.service=audit-responses"
   - "traefik.http.middlewares.test-tap.tap.response.path=/records/responses"
@@ -99,7 +94,6 @@ labels:
   - "traefik.http.middlewares.test-tap.tap.response.maxRecordBodySize=4096"
   - "traefik.http.middlewares.test-tap.tap.response.requestHeaders=X-Request-Id"
   - "traefik.http.middlewares.test-tap.tap.response.rejectOnRecordError=false"
-  - "traefik.http.middlewares.test-tap.tap.response.maxBodySize=1048576"
   - "traefik.http.middlewares.test-tap.tap.response.timeout=5s"
 ```
 
@@ -112,7 +106,6 @@ labels:
     "traefik.http.middlewares.test-tap.tap.request.recordBody=true",
     "traefik.http.middlewares.test-tap.tap.request.maxRecordBodySize=4096",
     "traefik.http.middlewares.test-tap.tap.request.rejectOnRecordError=true",
-    "traefik.http.middlewares.test-tap.tap.request.maxBodySize=1048576",
     "traefik.http.middlewares.test-tap.tap.request.timeout=5s",
     "traefik.http.middlewares.test-tap.tap.response.service=audit-responses",
     "traefik.http.middlewares.test-tap.tap.response.path=/records/responses",
@@ -120,7 +113,6 @@ labels:
     "traefik.http.middlewares.test-tap.tap.response.maxRecordBodySize=4096",
     "traefik.http.middlewares.test-tap.tap.response.requestHeaders=X-Request-Id",
     "traefik.http.middlewares.test-tap.tap.response.rejectOnRecordError=false",
-    "traefik.http.middlewares.test-tap.tap.response.maxBodySize=1048576",
     "traefik.http.middlewares.test-tap.tap.response.timeout=5s"
   ]
 }
@@ -141,7 +133,6 @@ spec:
       recordBody: true
       maxRecordBodySize: 4096
       rejectOnRecordError: true
-      maxBodySize: 1048576
       timeout: 5s
     response:
       service:
@@ -153,7 +144,6 @@ spec:
       requestHeaders:
         - X-Request-Id
       rejectOnRecordError: false
-      maxBodySize: 1048576
       timeout: 5s
 ```
 
@@ -173,9 +163,8 @@ At least one of `request` and `response` must be set.
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | Name of the service the records are sent to. | | Yes |
 | <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Path of the requests sending the records to the service. | / | No |
 | <a id="opt-recordBody" href="#opt-recordBody" title="#opt-recordBody">`recordBody`</a> | Whether the body is part of the records. | false | No |
-| <a id="opt-maxRecordBodySize" href="#opt-maxRecordBodySize" title="#opt-maxRecordBodySize">`maxRecordBodySize`</a> | Maximum number of body bytes in a record. More information [here](#body-sizes). | -1 | No |
+| <a id="opt-maxRecordBodySize" href="#opt-maxRecordBodySize" title="#opt-maxRecordBodySize">`maxRecordBodySize`</a> | Maximum number of body bytes in a record, and held in memory. More information [here](#maxrecordbodysize). | | With `recordBody` |
 | <a id="opt-rejectOnRecordError" href="#opt-rejectOnRecordError" title="#opt-rejectOnRecordError">`rejectOnRecordError`</a> | Rejects the request with a `500` when the record cannot be sent. More information [here](#rejectonrecorderror). | false | No |
-| <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Maximum memory in bytes used to hold the body. More information [here](#body-sizes). | -1 | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### response
@@ -185,10 +174,9 @@ At least one of `request` and `response` must be set.
 | <a id="opt-service-2" href="#opt-service-2" title="#opt-service-2">`service`</a> | Name of the service the records are sent to. | | Yes |
 | <a id="opt-path-2" href="#opt-path-2" title="#opt-path-2">`path`</a> | Path of the requests sending the records to the service. | / | No |
 | <a id="opt-recordBody-2" href="#opt-recordBody-2" title="#opt-recordBody-2">`recordBody`</a> | Whether the body is part of the records. | false | No |
-| <a id="opt-maxRecordBodySize-2" href="#opt-maxRecordBodySize-2" title="#opt-maxRecordBodySize-2">`maxRecordBodySize`</a> | Maximum number of body bytes in a record. More information [here](#body-sizes). | -1 | No |
+| <a id="opt-maxRecordBodySize-2" href="#opt-maxRecordBodySize-2" title="#opt-maxRecordBodySize-2">`maxRecordBodySize`</a> | Maximum number of body bytes in a record, and held in memory. More information [here](#maxrecordbodysize). | | With `recordBody` |
 | <a id="opt-requestHeaders" href="#opt-requestHeaders" title="#opt-requestHeaders">`requestHeaders`</a> | Request headers described in the records, along with the request line. More information [here](#requestheaders). | | No |
 | <a id="opt-rejectOnRecordError-2" href="#opt-rejectOnRecordError-2" title="#opt-rejectOnRecordError-2">`rejectOnRecordError`</a> | Rejects the request with a `500` when the record cannot be sent. More information [here](#rejectonrecorderror). | false | No |
-| <a id="opt-maxBodySize-2" href="#opt-maxBodySize-2" title="#opt-maxBodySize-2">`maxBodySize`</a> | Maximum memory in bytes used to hold the body. More information [here](#body-sizes). | -1 | No |
 | <a id="opt-timeout-2" href="#opt-timeout-2" title="#opt-timeout-2">`timeout`</a> | Maximum duration allowed to send a record. A value of `0` means no limit. | 10s | No |
 
 ### rejectOnRecordError
@@ -206,8 +194,7 @@ The `request` and `response` settings are independent.
 
 On `response`, `true` also means:
 
-- The response is held in memory until its record is accepted, up to `maxBodySize`.
-  A larger response is replaced by a `500 Internal Server Error`, see [Body Sizes](#body-sizes).
+- The response is held whole in memory until its record is accepted.
   WebSocket upgrades are served as usual, and their record is sent as with `false`.
 - Informational responses, such as `103 Early Hints`, are dropped.
 
@@ -227,20 +214,17 @@ It is typically used to carry a correlation identifier set by a middleware stand
 Headers absent from the request are absent from the record.
 The option does not exist on the `request` records, which already describe the whole request.
 
-### Body Sizes
+### maxRecordBodySize
 
-- `maxRecordBodySize` limits the body in the record.
-  A larger body is cut in the record, which sets `bodyTruncated` to `true`.
-  The backend and the client always get the whole body.
-- `maxBodySize` limits the memory used to hold a body.
+`maxRecordBodySize` is the maximum number of body bytes in a record.
+A larger body is cut in the record, which sets `bodyTruncated` to `true`.
+The backend and the client still get the whole body.
 
-A value of `-1` means no limit.
-
-| Case | Held in memory | Over `maxBodySize` |
-|:-----|:---------------|:-------------------|
-| <a id="opt-request-with-recordBody" href="#opt-request-with-recordBody" title="#opt-request-with-recordBody">`request` with `recordBody`</a> | The first `maxRecordBodySize` bytes, or the whole body when `maxRecordBodySize` is `-1`. | With the whole body held: `413 Request Entity Too Large`, the request is neither forwarded nor recorded. |
-| <a id="opt-response-with-recordBody" href="#opt-response-with-recordBody" title="#opt-response-with-recordBody">`response` with `recordBody`</a> | A copy of the first `maxRecordBodySize` bytes, for the record. | The record is cut at `maxBodySize`. |
-| <a id="opt-response-with-rejectOnRecordError" href="#opt-response-with-rejectOnRecordError" title="#opt-response-with-rejectOnRecordError">`response` with `rejectOnRecordError`</a> | The whole response. | `500 Internal Server Error`, the response is not recorded. |
+It also bounds the memory used for the body:
+only the recorded bytes are held, and the rest of the body is streamed,
+except for a response with `rejectOnRecordError`, which is held whole.
+It has no default, as no limit fits every route, and must be set with `recordBody`.
+A value of `-1` means no limit, and holds the whole body in memory.
 
 ## Records
 

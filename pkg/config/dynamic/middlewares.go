@@ -15,10 +15,6 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
-	// TapDefaultMaxBodySize is the tap records MaxBodySize option default value.
-	TapDefaultMaxBodySize int64 = -1
-	// TapDefaultMaxRecordBodySize is the tap records MaxRecordBodySize option default value.
-	TapDefaultMaxRecordBodySize int64 = -1
 	// TapDefaultPath is the tap records Path option default value.
 	TapDefaultPath = "/"
 	// TapDefaultTimeout is the tap records Timeout option default value.
@@ -846,17 +842,13 @@ type TapRequest struct {
 	// This guarantees that no request is served without being recorded, at the cost of
 	// coupling the client latency and availability to the tap service.
 	RejectOnRecordError bool `json:"rejectOnRecordError,omitempty" toml:"rejectOnRecordError,omitempty" yaml:"rejectOnRecordError,omitempty" export:"true"`
-	// MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
-	// A request recorded with no MaxRecordBodySize is rejected with a Request Entity Too Large error when larger.
-	// A response with RejectOnRecordError is replaced by an Internal Server Error when larger.
-	// The record of a response streamed to the client carries at most MaxBodySize bytes.
-	// A negative value means no limit.
-	MaxBodySize *int64 `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
 
 	// RecordBody defines whether the body is part of the records.
 	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
 	// MaxRecordBodySize defines the maximum number of body bytes in a record.
 	// A larger body is cut in the record, which is flagged as truncated.
+	// The recorded body is held in memory, so it bounds the memory used for the body.
+	// It has no default, and must be set when RecordBody is set.
 	// A negative value means no limit.
 	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty" toml:"maxRecordBodySize,omitempty" yaml:"maxRecordBodySize,omitempty" export:"true"`
 }
@@ -864,8 +856,6 @@ type TapRequest struct {
 // SetDefaults sets the default values.
 func (t *TapRequest) SetDefaults() {
 	t.Path = TapDefaultPath
-	t.MaxBodySize = new(TapDefaultMaxBodySize)
-	t.MaxRecordBodySize = new(TapDefaultMaxRecordBodySize)
 	t.Timeout = ptypes.Duration(TapDefaultTimeout)
 }
 

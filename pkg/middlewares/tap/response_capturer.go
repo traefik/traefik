@@ -34,7 +34,6 @@ type responseCapturer struct {
 
 	status        int
 	bodyTruncated bool
-	bodyTooLarge  bool
 }
 
 func newResponseCapturer(rw http.ResponseWriter, dest *destination, shouldBuffer bool) *responseCapturer {
@@ -92,7 +91,7 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 	}
 
 	if r.buffering {
-		return r.bufferBody(p)
+		return r.buf.Write(p)
 	}
 
 	r.capture(p)
@@ -125,25 +124,18 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return h.Hijack()
 }
 
-// capture keeps the first bytes of the body for the record, up to the smallest of
-// dest.maxRecordBodySize and dest.maxBodySize, as the copy is held in memory.
-// The record is truncated past it, as the response is already on its way to the client.
+// capture keeps at most dest.maxRecordBodySize bytes of the body for the record.
 func (r *responseCapturer) capture(p []byte) {
 	if !r.dest.recordBody {
 		return
 	}
 
-	limit := r.dest.maxRecordBodySize
-	if maxBodySize := r.dest.maxBodySize; maxBodySize >= 0 && (limit < 0 || limit > maxBodySize) {
-		limit = maxBodySize
-	}
-
-	if limit < 0 {
+	if r.dest.maxRecordBodySize < 0 {
 		r.buf.Write(p)
 		return
 	}
 
-	remaining := limit - int64(r.buf.Len())
+	remaining := r.dest.maxRecordBodySize - int64(r.buf.Len())
 	if remaining <= 0 {
 		r.bodyTruncated = len(p) > 0
 		return
@@ -158,32 +150,11 @@ func (r *responseCapturer) capture(p []byte) {
 	r.buf.Write(p)
 }
 
-// bufferBody keeps the whole body, up to dest.maxBodySize. Past it, the body is discarded rather than
-// refused, as a write error would make the reverse proxy abort the connection, with no way to answer.
-func (r *responseCapturer) bufferBody(p []byte) (int, error) {
-	if r.bodyTooLarge {
-		return len(p), nil
-	}
-
-	if r.dest.maxBodySize >= 0 && int64(r.buf.Len()+len(p)) > r.dest.maxBodySize {
-		r.bodyTooLarge = true
-		r.buf = bytes.Buffer{}
-
-		return len(p), nil
-	}
-
-	return r.buf.Write(p)
-}
-
 // serve serves the buffered response.
 // It is a no-op for a streamed, or already served, response.
 func (r *responseCapturer) serve() error {
 	if !r.buffering {
 		return nil
-	}
-
-	if r.bodyTooLarge {
-		return errBodyTooLarge
 	}
 
 	// Hijack can serve the response before ServeHTTP does.

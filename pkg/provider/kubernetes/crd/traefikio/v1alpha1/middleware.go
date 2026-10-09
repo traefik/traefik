@@ -377,20 +377,15 @@ type TapRequest struct {
 	// When the record cannot be sent, the request is rejected with an Internal Server Error.
 	// Default is `false`.
 	RejectOnRecordError bool `json:"rejectOnRecordError,omitempty"`
-	// MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
-	// A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
-	// A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
-	// The record of a response streamed to the client carries at most maxBodySize bytes.
-	// Default is `-1`, which means no limit.
-	// +kubebuilder:validation:Minimum=-1
-	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 
 	// RecordBody defines whether the body is part of the records.
 	// Default is `false`.
 	RecordBody bool `json:"recordBody,omitempty"`
 	// MaxRecordBodySize defines the maximum number of body bytes in a record.
 	// A larger body is cut in the record, which is flagged as truncated.
-	// Default is `-1`, which means no limit.
+	// The recorded body is held in memory, so it bounds the memory used for the body.
+	// It has no default, and must be set when recordBody is set.
+	// A negative value means no limit.
 	// +kubebuilder:validation:Minimum=-1
 	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty"`
 }

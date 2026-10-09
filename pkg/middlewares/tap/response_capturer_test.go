@@ -16,7 +16,7 @@ import (
 
 func TestResponseCapturer_streamed(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, false)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, false)
 
 	capturer.Header().Set("X-Backend", "yes")
 	capturer.WriteHeader(http.StatusAccepted)
@@ -44,7 +44,7 @@ func TestResponseCapturer_streamed(t *testing.T) {
 
 func TestResponseCapturer_withheld(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 
 	capturer.Header().Set("X-Backend", "yes")
 	capturer.WriteHeader(http.StatusAccepted)
@@ -78,7 +78,7 @@ func TestResponseCapturer_withheldRecordsHeadersSetUpstream(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	recorder.Header().Set("X-Upstream", "yes")
 
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 	capturer.WriteHeader(http.StatusOK)
 
 	rec := capturer.record(time.Second)
@@ -90,7 +90,7 @@ func TestResponseCapturer_withheldRecordsHeadersSetUpstream(t *testing.T) {
 
 func TestResponseCapturer_withheldTruncatesRecordOnly(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: 2}, true)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: 2}, true)
 
 	_, err := capturer.Write([]byte("pong"))
 	require.NoError(t, err)
@@ -105,52 +105,27 @@ func TestResponseCapturer_withheldTruncatesRecordOnly(t *testing.T) {
 	assert.Equal(t, "pong", recorder.Body.String())
 }
 
-func TestResponseCapturer_streamedTruncatesRecordToMaxBodySize(t *testing.T) {
+func TestResponseCapturer_streamedTruncatesRecord(t *testing.T) {
 	testCases := []struct {
 		desc              string
-		maxBodySize       int64
 		maxRecordBodySize int64
 		expectedBody      string
 		expectedTruncated bool
 	}{
 		{
 			desc:              "no limit",
-			maxBodySize:       -1,
 			maxRecordBodySize: -1,
 			expectedBody:      "pong!",
 		},
 		{
-			desc:              "body at maxBodySize",
-			maxBodySize:       5,
-			maxRecordBodySize: -1,
+			desc:              "body at the limit",
+			maxRecordBodySize: 5,
 			expectedBody:      "pong!",
 		},
 		{
-			desc:              "body over maxBodySize",
-			maxBodySize:       3,
-			maxRecordBodySize: -1,
+			desc:              "body over the limit",
+			maxRecordBodySize: 3,
 			expectedBody:      "pon",
-			expectedTruncated: true,
-		},
-		{
-			desc:              "maxRecordBodySize under maxBodySize",
-			maxBodySize:       4,
-			maxRecordBodySize: 2,
-			expectedBody:      "po",
-			expectedTruncated: true,
-		},
-		{
-			desc:              "maxRecordBodySize over maxBodySize",
-			maxBodySize:       1,
-			maxRecordBodySize: 4,
-			expectedBody:      "p",
-			expectedTruncated: true,
-		},
-		{
-			desc:              "maxRecordBodySize with no maxBodySize",
-			maxBodySize:       -1,
-			maxRecordBodySize: 4,
-			expectedBody:      "pong",
 			expectedTruncated: true,
 		},
 	}
@@ -160,7 +135,7 @@ func TestResponseCapturer_streamedTruncatesRecordToMaxBodySize(t *testing.T) {
 			t.Parallel()
 
 			recorder := httptest.NewRecorder()
-			capturer := newResponseCapturer(recorder, &destination{maxBodySize: test.maxBodySize, recordBody: true, maxRecordBodySize: test.maxRecordBodySize}, false)
+			capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: test.maxRecordBodySize}, false)
 
 			for _, chunk := range []string{"po", "ng", "!"} {
 				_, err := capturer.Write([]byte(chunk))
@@ -177,31 +152,9 @@ func TestResponseCapturer_streamedTruncatesRecordToMaxBodySize(t *testing.T) {
 	}
 }
 
-func TestResponseCapturer_withheldBodyTooLarge(t *testing.T) {
-	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: 3, recordBody: true, maxRecordBodySize: -1}, true)
-
-	_, err := capturer.Write([]byte("po"))
-	require.NoError(t, err)
-	assert.False(t, capturer.bodyTooLarge)
-
-	for _, chunk := range []string{"ng", "!"} {
-		n, err := capturer.Write([]byte(chunk))
-		require.NoError(t, err)
-		assert.Equal(t, len(chunk), n)
-	}
-
-	assert.True(t, capturer.bodyTooLarge)
-	assert.Zero(t, capturer.buf.Cap())
-
-	// A truncated response is never served, Hijack included.
-	require.ErrorIs(t, capturer.serve(), errBodyTooLarge)
-	assert.Empty(t, recorder.Body.String())
-}
-
 func TestResponseCapturer_bodyDisabled(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: false, maxRecordBodySize: -1}, false)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: false, maxRecordBodySize: -1}, false)
 
 	_, err := capturer.Write([]byte("pong"))
 	require.NoError(t, err)
@@ -214,7 +167,7 @@ func TestResponseCapturer_bodyDisabled(t *testing.T) {
 
 func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 
 	_, err := capturer.Write([]byte("pong"))
 	require.NoError(t, err)
@@ -225,7 +178,7 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	assert.Empty(t, recorder.Body.String())
 
 	// The response is served as soon as the underlying writer can be hijacked.
-	capturer = newResponseCapturer(&hijackableRecorder{ResponseRecorder: recorder}, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer = newResponseCapturer(&hijackableRecorder{ResponseRecorder: recorder}, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 
 	_, err = capturer.Write([]byte("pong"))
 	require.NoError(t, err)
@@ -266,7 +219,7 @@ func TestResponseCapturer_interimResponses(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			writer := &statusSequence{}
-			capturer := newResponseCapturer(writer, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, test.shouldBuffer)
+			capturer := newResponseCapturer(writer, &destination{recordBody: true, maxRecordBodySize: -1}, test.shouldBuffer)
 
 			capturer.WriteHeader(http.StatusContinue)
 			assert.Equal(t, test.expectedInterim, writer.codes)
@@ -292,7 +245,7 @@ func TestResponseCapturer_interimResponses(t *testing.T) {
 // response are served with the final one, as RFC 8297 expects, unless removed.
 func TestResponseCapturer_bufferedInterimHeaders(t *testing.T) {
 	writer := &statusSequence{}
-	capturer := newResponseCapturer(writer, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer := newResponseCapturer(writer, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 
 	capturer.Header().Add("Link", "</app.css>; rel=preload")
 	capturer.Header().Set("X-Hint", "yes")
@@ -313,7 +266,7 @@ func TestResponseCapturer_bufferedServesRemovedUpstreamHeaders(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	recorder.Header().Set("X-Upstream", "yes")
 
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, true)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, true)
 	capturer.Header().Del("X-Upstream")
 	capturer.WriteHeader(http.StatusOK)
 
@@ -326,7 +279,7 @@ func TestResponseCapturer_bufferedServesRemovedUpstreamHeaders(t *testing.T) {
 // directly, where the trailers are set once the body is written.
 func TestResponseCapturer_streamedTrailers(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	capturer := newResponseCapturer(recorder, &destination{maxBodySize: -1, recordBody: true, maxRecordBodySize: -1}, false)
+	capturer := newResponseCapturer(recorder, &destination{recordBody: true, maxRecordBodySize: -1}, false)
 
 	_, err := capturer.Write([]byte("pong"))
 	require.NoError(t, err)

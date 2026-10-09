@@ -80,14 +80,6 @@ func (b *TapResponseApplyConfiguration) WithRejectOnRecordError(value bool) *Tap
 	return b
 }
 
-// WithMaxBodySize sets the MaxBodySize field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the MaxBodySize field is set to the value of the last call.
-func (b *TapResponseApplyConfiguration) WithMaxBodySize(value int64) *TapResponseApplyConfiguration {
-	b.TapRequestApplyConfiguration.MaxBodySize = &value
-	return b
-}
-
 // WithRecordBody sets the RecordBody field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the RecordBody field is set to the value of the last call.

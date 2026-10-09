@@ -2207,11 +2207,6 @@ func (in *TapRequest) DeepCopyInto(out *TapRequest) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
-	if in.MaxBodySize != nil {
-		in, out := &in.MaxBodySize, &out.MaxBodySize
-		*out = new(int64)
-		**out = **in
-	}
 	if in.MaxRecordBodySize != nil {
 		in, out := &in.MaxRecordBodySize, &out.MaxRecordBodySize
 		*out = new(int64)

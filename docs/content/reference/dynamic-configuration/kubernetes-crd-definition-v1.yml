@@ -2291,21 +2291,13 @@ spec:
                       Request defines where and how the request records are sent.
                       When omitted, requests are not recorded.
                     properties:
-                      maxBodySize:
-                        description: |-
-                          MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
-                          A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
-                          A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
-                          The record of a response streamed to the client carries at most maxBodySize bytes.
-                          Default is `-1`, which means no limit.
-                        format: int64
-                        minimum: -1
-                        type: integer
                       maxRecordBodySize:
                         description: |-
                           MaxRecordBodySize defines the maximum number of body bytes in a record.
                           A larger body is cut in the record, which is flagged as truncated.
-                          Default is `-1`, which means no limit.
+                          The recorded body is held in memory, so it bounds the memory used for the body.
+                          It has no default, and must be set when recordBody is set.
+                          A negative value means no limit.
                         format: int64
                         minimum: -1
                         type: integer
@@ -2596,21 +2588,13 @@ spec:
                       Response defines where and how the response records are sent.
                       When omitted, responses are not recorded.
                     properties:
-                      maxBodySize:
-                        description: |-
-                          MaxBodySize defines the maximum memory in bytes Traefik may use for a body.
-                          A request recorded with no maxRecordBodySize is rejected with a Request Entity Too Large error when larger.
-                          A response with rejectOnRecordError is replaced by an Internal Server Error when larger.
-                          The record of a response streamed to the client carries at most maxBodySize bytes.
-                          Default is `-1`, which means no limit.
-                        format: int64
-                        minimum: -1
-                        type: integer
                       maxRecordBodySize:
                         description: |-
                           MaxRecordBodySize defines the maximum number of body bytes in a record.
                           A larger body is cut in the record, which is flagged as truncated.
-                          Default is `-1`, which means no limit.
+                          The recorded body is held in memory, so it bounds the memory used for the body.
+                          It has no default, and must be set when recordBody is set.
+                          A negative value means no limit.
                         format: int64
                         minimum: -1
                         type: integer
