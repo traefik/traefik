@@ -1108,6 +1108,12 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		forwardAuth.MaxBodySize = auth.MaxBodySize
 	}
 
+	if auth.Timeout != nil {
+		if err := forwardAuth.Timeout.Set(auth.Timeout.String()); err != nil {
+			return nil, fmt.Errorf("parsing forward authentication timeout: %w", err)
+		}
+	}
+
 	if auth.TLS != nil {
 		forwardAuth.TLS = &dynamic.ClientTLS{
 			InsecureSkipVerify: auth.TLS.InsecureSkipVerify,

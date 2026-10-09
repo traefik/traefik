@@ -13,6 +13,8 @@ import (
 const (
 	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
 	ForwardAuthDefaultMaxBodySize int64 = -1
+	// ForwardAuthDefaultTimeout is the ForwardAuth.Timeout option default value.
+	ForwardAuthDefaultTimeout = ptypes.Duration(30 * time.Second)
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
 )
@@ -321,11 +323,16 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
+	// Timeout defines the maximum duration of the request to the authentication server, including connection time and reading the response body.
+	// Zero means no timeout.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 }
 
+// SetDefaults sets the default values on a ForwardAuth.
 func (f *ForwardAuth) SetDefaults() {
 	defaultMaxBodySize := ForwardAuthDefaultMaxBodySize
 	f.MaxBodySize = &defaultMaxBodySize
+	f.Timeout = ForwardAuthDefaultTimeout
 }
 
 // +k8s:deepcopy-gen=true
