@@ -83,12 +83,6 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			pr.Out.ProtoMajor = 1
 			pr.Out.ProtoMinor = 1
 
-			// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
-			// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
-			if pr.Out.Method == http.MethodConnect {
-				pr.Out.Close = true
-			}
-
 			// Do not pass client Host header unless optsetter PassHostHeader is set.
 			if passHostHeader != nil && !*passHostHeader {
 				pr.Out.Host = pr.Out.URL.Host
@@ -149,7 +143,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		},
 	}
 
-	return newConnectHandler(newH2CUpgradeHandler(proxy)), nil
+	return newH2CUpgradeHandler(proxy), nil
 }
 
 // isTLSError returns true if the error is a TLS error which is related to configuration.
