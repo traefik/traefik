@@ -18,12 +18,17 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestRouterManager_Get(t *testing.T) {
@@ -2208,3 +2213,177 @@ func (l labellingProxyBuilder) Build(_ string, target *url.URL, _, _ bool, _ tim
 }
 
 func (l labellingProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
+
+// slowProxyBuilder builds a handler answering 200 after a delay, or 500 if the request context expires first,
+// allowing tests to observe the router respondingTimeouts enforcement.
+type slowProxyBuilder struct {
+	delay time.Duration
+}
+
+func (p slowProxyBuilder) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		select {
+		case <-req.Context().Done():
+			rw.WriteHeader(http.StatusInternalServerError)
+		case <-time.After(p.delay):
+			rw.WriteHeader(http.StatusOK)
+		}
+	}), nil
+}
+
+func (p slowProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
+
+// TestRouterManager_RespondingTimeouts runs behind a server whose writeTimeout is shorter than the backend delay,
+// so that each case tells whether the router timeout replaces the entrypoint deadlines.
+func TestRouterManager_RespondingTimeouts(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		respondingTimeouts *dynamic.RouterRespondingTimeouts
+		expectedStatus     int
+		expectedErr        bool
+	}{
+		{
+			desc:               "roundTrip shorter than the backend delay yields a 504",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(10 * time.Millisecond))},
+			expectedStatus:     http.StatusGatewayTimeout,
+		},
+		{
+			desc:               "roundTrip longer than the backend delay overrides the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(time.Hour))},
+			expectedStatus:     http.StatusOK,
+		},
+		{
+			desc:               "zero roundTrip lifts the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(0))},
+			expectedStatus:     http.StatusOK,
+		},
+		{
+			desc:               "unset roundTrip keeps the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+			expectedErr:        true,
+		},
+		{
+			desc:        "no respondingTimeouts keeps the entrypoint writeTimeout",
+			expectedErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Services: map[string]*dynamic.Service{
+						"foo-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.0.0.1"},
+								},
+							},
+						},
+					},
+					Routers: map[string]*dynamic.Router{
+						"foo": {
+							EntryPoints:        []string{"web"},
+							Service:            "foo-service",
+							Rule:               "Host(`foo.bar`)",
+							RespondingTimeouts: test.respondingTimeouts,
+						},
+					},
+				},
+			})
+
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, slowProxyBuilder{delay: 200 * time.Millisecond})
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			tlsManager := traefiktls.NewManager(nil)
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, []string{})
+
+			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
+
+			reqHost := requestdecorator.New(nil)
+
+			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				reqHost.ServeHTTP(rw, req, handlers["web"].ServeHTTP)
+			}))
+			ts.Config.WriteTimeout = 50 * time.Millisecond
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
+			require.NoError(t, err)
+			req.Host = "foo.bar"
+
+			res, err := ts.Client().Do(req)
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+		})
+	}
+}
+
+type deadlineRecorder struct {
+	http.ResponseWriter
+
+	readDeadline  time.Time
+	writeDeadline time.Time
+}
+
+func (d *deadlineRecorder) SetReadDeadline(deadline time.Time) error {
+	d.readDeadline = deadline
+	return nil
+}
+
+func (d *deadlineRecorder) SetWriteDeadline(deadline time.Time) error {
+	d.writeDeadline = deadline
+	return nil
+}
+
+// TestRespondingTimeoutDeadlineReachesConnection ensures the router respondingTimeouts can arm the
+// connection deadlines through the whole writer chain sitting above its insertion point.
+// The chain is assembled with tracing enabled, the configuration that engages the observability
+// statusCodeRecorder: a wrapper dropping Unwrap would make http.ResponseController fail silently.
+func TestRespondingTimeoutDeadlineReachesConnection(t *testing.T) {
+	base := &deadlineRecorder{ResponseWriter: httptest.NewRecorder()}
+	deadline := time.Now().Add(time.Minute)
+
+	// The router handler position, where the respondingtimeout middleware arms the deadlines.
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rc := http.NewResponseController(rw)
+		assert.NoError(t, rc.SetReadDeadline(deadline))
+		assert.NoError(t, rc.SetWriteDeadline(deadline))
+	})
+
+	// recovery wraps the whole muxer, while capture and the tracing entry point come from the per-router
+	// observability chain: together they are exactly the writer chain above the respondingtimeout insertion point.
+	chain := alice.New(
+		func(next http.Handler) (http.Handler, error) { return recovery.New(t.Context(), next) },
+		capture.Wrap,
+		observability.EntryPointHandler(t.Context(), tracing.NewTracer(noop.Tracer{}, nil, nil, nil), "web"),
+	)
+
+	handler, err := chain.Then(next)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/", http.NoBody)
+	// Tracing must be enabled for the entry point handler to engage the statusCodeRecorder.
+	req = req.WithContext(observability.WithObservability(req.Context(), observability.Observability{TracingEnabled: true}))
+
+	handler.ServeHTTP(base, req)
+
+	assert.Equal(t, deadline, base.readDeadline)
+	assert.Equal(t, deadline, base.writeDeadline)
+}
