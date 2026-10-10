@@ -289,7 +289,15 @@ type ErrorPage struct {
 // More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
+	// It is mutually exclusive with the Service option.
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	// Service defines the name of a Traefik service to use as the authentication server.
+	// It is mutually exclusive with the Address and TLS options: the connection to the service is handled by its ServersTransport.
+	// Using a service routes the authentication request through Traefik's load balancer, enabling service discovery, health checks, and sticky sessions for the authentication server.
+	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Path defines the path of the authentication request when using the Service option.
+	// It can also contain a query string. It defaults to the root path.
+	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.

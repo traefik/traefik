@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: forwardauth-wrr
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami
+        port: 80
+        weight: 1
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth
+  namespace: default
+
+spec:
+  forwardAuth:
+    path: /verify
+    service:
+      name: forwardauth-wrr
+      kind: TraefikService

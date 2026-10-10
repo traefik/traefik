@@ -34,7 +34,15 @@ package v1alpha1
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/
 type ForwardAuthApplyConfiguration struct {
 	// Address defines the authentication server address.
+	// It is mutually exclusive with the Service option.
 	Address *string `json:"address,omitempty"`
+	// Service defines the reference to a Kubernetes Service that will serve as the authentication server.
+	// It is mutually exclusive with the Address and TLS options: the connection to the service is handled by its ServersTransport.
+	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/#service
+	Service *ServiceApplyConfiguration `json:"service,omitempty"`
+	// Path defines the path of the authentication request when using the Service option.
+	// It can also contain a query string. It defaults to the root path.
+	Path *string `json:"path,omitempty"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
 	//
 	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
@@ -79,6 +87,22 @@ func ForwardAuth() *ForwardAuthApplyConfiguration {
 // If called multiple times, the Address field is set to the value of the last call.
 func (b *ForwardAuthApplyConfiguration) WithAddress(value string) *ForwardAuthApplyConfiguration {
 	b.Address = &value
+	return b
+}
+
+// WithService sets the Service field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Service field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithService(value *ServiceApplyConfiguration) *ForwardAuthApplyConfiguration {
+	b.Service = value
+	return b
+}
+
+// WithPath sets the Path field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Path field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithPath(value string) *ForwardAuthApplyConfiguration {
+	b.Path = &value
 	return b
 }
 

@@ -55,7 +55,9 @@ spec:
 
 | Field                                                                                                                                          | Description                                                                                                                                                                                                                                                                 | Default | Required |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address.                                                                                                                                                                                                                                              | "" | Yes      |
+| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Authentication server address. <br />Mutually exclusive with the `service` option; one of the two is required.                                                                                                                                                                | "" | No[^1]      |
+| <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | Name of a Traefik service to use as the authentication server, instead of `address`. <br />Routing the authentication request through a service enables service discovery, load balancing, health checks and sticky sessions for the authentication server. <br />Mutually exclusive with the `address` and `tls` options. <br />In the Kubernetes CRD, this is a reference to a Kubernetes Service rather than a service name. <br />More information [here](#service).| "" | No[^1]       |
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Path (and optional query string) of the authentication request when using the `service` option. <br />Defaults to the root path.                                                                                                                                             | "" | No       |
 | <a id="opt-trustForwardHeader" href="#opt-trustForwardHeader" title="#opt-trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers.                                                                                                                                                                                                                                          <br/>The trustForwardHeader option is deprecated and will be removed in the next major version. <br/>More information [here](#trustforwardheader)| - | No      |
 | <a id="opt-authResponseHeaders" href="#opt-authResponseHeaders" title="#opt-authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.                                                                                                                                   | [] | No      |
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex).                                                     | "" | No      |
@@ -74,6 +76,97 @@ spec:
 | <a id="opt-tls-caSecret" href="#opt-tls-caSecret" title="#opt-tls-caSecret">`tls.caSecret`</a> | Defines the secret that contains the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. **This option is only available for the Kubernetes CRD**.                                                        | | No |
 | <a id="opt-tls-certSecret" href="#opt-tls-certSecret" title="#opt-tls-certSecret">`tls.certSecret`</a> | Defines the secret that contains both the private and public certificates used for the secure connection to the authentication server. **This option is only available for the Kubernetes CRD**.                                                                            |  | No |
 | <a id="opt-tls-insecureSkipVerify" href="#opt-tls-insecureSkipVerify" title="#opt-tls-insecureSkipVerify">`tls.insecureSkipVerify`</a> | During TLS connections, if this option is set to `true`, the authentication server will accept any certificate presented by the server regardless of the host names it covers.                                                                                              | false | No |
+
+[^1]: Exactly one of `address` or `service` must be set.
+
+### service
+
+When `service` is set, the authentication request is routed through the named Traefik service
+instead of being sent directly to an `address`. This makes the authentication server benefit from
+the same load balancing, service discovery, health checks and sticky sessions as any other service.
+
+The authentication request is sent to the `path` of the service (the root path by default).
+The connection to the authentication server, including its TLS configuration, is handled by the
+service and its `ServersTransport`; for this reason the `service` and `tls` options are mutually
+exclusive.
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        service: auth-service
+        path: "/verify"
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth-1:9000"
+          - url: "http://auth-2:9000"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    path: /verify
+    service:
+      name: auth-service
+      port: 9000
+```
+
+In the Kubernetes CRD, `service` is a reference to a Kubernetes Service (`name`, `namespace`,
+`port`, `kind`), following the same shape as the [`errors`](./errorpages.md) middleware, rather
+than the name of a service defined by another provider.
+
+!!! info "ServersTransport"
+
+    To customize how Traefik connects to the authentication service (for example, to configure TLS
+    to the backend), set a [`serversTransport`](../../kubernetes/crd/http/serverstransport.md) on
+    the middleware's `service`.
+
+!!! info "Relative Location headers"
+
+    With `address`, a relative `Location` header returned by the authentication server is resolved
+    against the authentication server URL when `preserveLocationHeader` is `false` (the default).
+    With `service` there is no such URL to resolve against, as the service backends are internal
+    addresses the client cannot reach, so a relative `Location` is forwarded to the client
+    unchanged and resolved by the client against the original request.
+
+    This only matters for an authentication server that redirects (for example to a login page)
+    instead of answering `2xx`/`401` directly. A relative redirect resolved against the original
+    request means the client's next request lands back on Traefik, under the same host — so, for
+    that redirect to actually resolve to something, a router must also expose the target path.
+    The `service` reused by `forwardAuth` can be reused by that router as well; it is an ordinary
+    service like any other, referenced from wherever it is needed:
+
+    ```yaml
+    http:
+      services:
+        auth-service:
+          loadBalancer:
+            servers:
+              - url: "http://auth-1:9000"
+              - url: "http://auth-2:9000"
+
+      middlewares:
+        test-auth:
+          forwardAuth:
+            service: auth-service
+            path: /verify
+
+      routers:
+        login-page:
+          rule: "Host(`app.example.com`) && PathPrefix(`/login`)"
+          service: auth-service
+    ```
+
+    An authentication server that only ever answers `2xx` or `401` — for example a bearer-token or
+    API-key check — never sends a `Location` header, so none of this applies.
 
 ### authResponseHeadersRegex
 
