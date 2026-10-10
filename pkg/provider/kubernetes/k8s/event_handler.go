@@ -1,6 +1,9 @@
 package k8s
 
 import (
+	"maps"
+
+	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -51,6 +54,9 @@ func objChanged(oldObj, newObj any) bool {
 	if _, ok := oldObj.(*discoveryv1.EndpointSlice); ok {
 		return endpointSliceChanged(oldObj.(*discoveryv1.EndpointSlice), newObj.(*discoveryv1.EndpointSlice))
 	}
+	if _, ok := oldObj.(*corev1.Node); ok {
+		return nodeChanged(oldObj.(*corev1.Node), newObj.(*corev1.Node))
+	}
 
 	return true
 }
@@ -86,6 +92,23 @@ func endpointSliceChanged(a, b *discoveryv1.EndpointSlice) bool {
 	}
 
 	return false
+}
+
+func nodeChanged(a, b *corev1.Node) bool {
+	return !maps.Equal(nodeAddressSet(a.Status.Addresses), nodeAddressSet(b.Status.Addresses))
+}
+
+func nodeAddressSet(addresses []corev1.NodeAddress) map[corev1.NodeAddress]struct{} {
+	result := make(map[corev1.NodeAddress]struct{})
+	for _, address := range addresses {
+		if address.Type != corev1.NodeInternalIP && address.Type != corev1.NodeExternalIP {
+			continue
+		}
+
+		result[address] = struct{}{}
+	}
+
+	return result
 }
 
 func endpointChanged(a, b discoveryv1.Endpoint) bool {
