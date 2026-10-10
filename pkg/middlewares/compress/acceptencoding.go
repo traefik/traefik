@@ -49,11 +49,20 @@ func (c *compress) getCompressionEncoding(acceptEncoding []string) string {
 	})
 
 	if acceptableEncodings[0].Type == wildcardName {
-		if c.defaultEncoding == "" {
-			return c.encodings[0]
+		forbiddenEncodings := parseForbiddenEncodings(acceptEncoding, c.supportedEncodings)
+		if c.defaultEncoding != "" {
+			if _, ok := forbiddenEncodings[c.defaultEncoding]; !ok {
+				return c.defaultEncoding
+			}
 		}
 
-		return c.defaultEncoding
+		for _, encoding := range c.encodings {
+			if _, ok := forbiddenEncodings[encoding]; !ok {
+				return encoding
+			}
+		}
+
+		return notAcceptable
 	}
 
 	return acceptableEncodings[0].Type
@@ -96,4 +105,30 @@ func parseAcceptableEncodings(acceptEncoding []string, supportedEncodings map[st
 	}
 
 	return encodings
+}
+
+func parseForbiddenEncodings(acceptEncoding []string, supportedEncodings map[string]int) map[string]struct{} {
+	forbiddenEncodings := make(map[string]struct{})
+
+	for _, line := range acceptEncoding {
+		for item := range strings.SplitSeq(strings.ReplaceAll(line, " ", ""), ",") {
+			parsed := strings.SplitN(item, ";", 2)
+			if len(parsed) == 0 || parsed[0] == wildcardName {
+				continue
+			}
+
+			if _, ok := supportedEncodings[parsed[0]]; !ok {
+				continue
+			}
+
+			if len(parsed) > 1 && strings.HasPrefix(parsed[1], "q=") {
+				w, err := strconv.ParseFloat(strings.TrimPrefix(parsed[1], "q="), 64)
+				if err == nil && w == 0 {
+					forbiddenEncodings[parsed[0]] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return forbiddenEncodings
 }
