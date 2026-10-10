@@ -324,6 +324,7 @@
         average = 42
         period = "42s"
         burst = 42
+        scope = "foobar"
         [http.middlewares.Middleware18.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
