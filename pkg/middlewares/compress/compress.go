@@ -33,7 +33,8 @@ type compress struct {
 	encodings       []string
 	defaultEncoding string
 	// supportedEncodings is a map of supported encodings and their priority.
-	supportedEncodings map[string]int
+	supportedEncodings        map[string]int
+	excludeRequestContentType bool
 
 	brotliHandler http.Handler
 	gzipHandler   http.Handler
@@ -86,14 +87,15 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	c := &compress{
-		next:               next,
-		name:               name,
-		excludes:           excludes,
-		includes:           includes,
-		minSize:            minSize,
-		encodings:          conf.Encodings,
-		defaultEncoding:    conf.DefaultEncoding,
-		supportedEncodings: buildSupportedEncodings(conf.Encodings),
+		next:                      next,
+		name:                      name,
+		excludes:                  excludes,
+		includes:                  includes,
+		minSize:                   minSize,
+		encodings:                 conf.Encodings,
+		defaultEncoding:           conf.DefaultEncoding,
+		supportedEncodings:        buildSupportedEncodings(conf.Encodings),
+		excludeRequestContentType: conf.ExcludeRequestContentType,
 	}
 
 	var err error
@@ -137,16 +139,16 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
-	if err != nil {
-		logger.Debug().Err(err).Msg("Unable to parse MIME type")
-	}
+	if c.excludeRequestContentType {
+		mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
+		if err != nil {
+			logger.Debug().Err(err).Msg("Unable to parse MIME type")
+		}
 
-	// Notably for text/event-stream requests the response should not be compressed.
-	// See https://github.com/traefik/traefik/issues/2576
-	if slices.Contains(c.excludes, mediaType) {
-		c.next.ServeHTTP(rw, req)
-		return
+		if slices.Contains(c.excludes, mediaType) {
+			c.next.ServeHTTP(rw, req)
+			return
+		}
 	}
 
 	acceptEncoding, ok := req.Header[acceptEncodingHeader]
