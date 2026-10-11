@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -52,6 +54,7 @@ func (s *HealthSequence[T]) IsEmpty() bool {
 type GRPCServer struct {
 	status HealthSequence[healthpb.HealthCheckResponse_ServingStatus]
 	done   func()
+	tls    bool
 }
 
 func newGRPCServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus) *GRPCServer {
@@ -60,6 +63,13 @@ func newGRPCServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus)
 			sequence: healthSequence,
 		},
 	}
+
+	return gRPCService
+}
+
+func newGRPCTLSServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus) *GRPCServer {
+	gRPCService := newGRPCServer(healthSequence...)
+	gRPCService.tls = true
 
 	return gRPCService
 }
@@ -103,7 +113,17 @@ func (s *GRPCServer) Start(t *testing.T, done func()) (*url.URL, time.Duration) 
 	assert.NoError(t, err)
 	t.Cleanup(func() { _ = listener.Close() })
 
-	server := grpc.NewServer()
+	var opts []grpc.ServerOption
+	scheme := "http"
+	if s.tls {
+		cert, err := tls.X509KeyPair(localhostCert, localhostKey)
+		assert.NoError(t, err)
+
+		opts = append(opts, grpc.Creds(credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})))
+		scheme = "https"
+	}
+
+	server := grpc.NewServer(opts...)
 	t.Cleanup(server.Stop)
 
 	s.done = done
@@ -116,7 +136,7 @@ func (s *GRPCServer) Start(t *testing.T, done func()) (*url.URL, time.Duration) 
 	}()
 
 	// Make test timeout dependent on number of expected requests, health check interval, and a safety margin.
-	return testhelpers.MustParseURL("http://" + listener.Addr().String()), time.Duration(len(s.status.sequence)*int(dynamic.DefaultHealthCheckInterval) + 500)
+	return testhelpers.MustParseURL(scheme + "://" + listener.Addr().String()), time.Duration(len(s.status.sequence)*int(dynamic.DefaultHealthCheckInterval) + 500)
 }
 
 type HTTPServer struct {

@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -66,7 +67,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
+			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
@@ -299,7 +300,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}
-	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil, "")
+	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil, nil, "")
 
 	err := healthChecker.checkHealthHTTP(ctx, testhelpers.MustParseURL(server.URL))
 	require.NoError(t, err)
@@ -312,6 +313,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		desc                  string
 		mode                  string
 		status                int
+		tlsConfig             *tls.Config
 		server                StartTestServer
 		expNumRemovedServers  int
 		expNumUpsertedServers int
@@ -403,6 +405,16 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			targetStatus:          runtime.StatusDown,
 		},
 		{
+			desc:                  "healthy grpc server over TLS staying healthy",
+			mode:                  "grpc",
+			tlsConfig:             &tls.Config{InsecureSkipVerify: true},
+			server:                newGRPCTLSServer(healthpb.HealthCheckResponse_SERVING),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
 			desc:                  "healthy grpc server toggling to sick and back to healthy",
 			mode:                  "grpc",
 			server:                newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING, healthpb.HealthCheckResponse_SERVING),
@@ -442,7 +454,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &runtime.ServiceInfo{}
-			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, test.tlsConfig, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
 			wg.Go(func() {
@@ -508,7 +520,7 @@ func TestDifferentIntervals(t *testing.T) {
 
 	gauge := &testhelpers.CollectingGauge{}
 	serviceInfo := &runtime.ServiceInfo{}
-	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, nil, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
 
 	wg := sync.WaitGroup{}
 	wg.Go(func() {
