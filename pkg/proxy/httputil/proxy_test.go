@@ -3,11 +3,13 @@ package httputil
 import (
 	"crypto/tls"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -188,5 +190,76 @@ func Test_isTLSConfigError(t *testing.T) {
 			actual := isTLSConfigError(test.err)
 			require.Equal(t, test.expected, actual)
 		})
+	}
+}
+
+// TestBidirectionalStreamEndedByBackend ensures that when a backend ends an HTTP/2 stream while
+// the client is still sending its request body, as gRPC does when a bidirectional streaming call
+// fails on the server side, the client receives the end of the response and its trailers.
+func TestBidirectionalStreamEndedByBackend(t *testing.T) {
+	h2cProtocols := new(http.Protocols)
+	h2cProtocols.SetUnencryptedHTTP2(true)
+
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, err := io.ReadFull(req.Body, make([]byte, 5))
+		require.NoError(t, err)
+
+		rw.Header().Set("Trailer", "Grpc-Status")
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("reply"))
+		rw.Header().Set("Grpc-Status", "13")
+	}))
+	backend.Config.Protocols = h2cProtocols
+	backend.Start()
+	t.Cleanup(backend.Close)
+
+	backendTransport := &http.Transport{Protocols: h2cProtocols}
+	transportManager := &transportManagerMock{
+		roundTrippers: map[string]http.RoundTripper{"default": backendTransport},
+	}
+
+	p, err := NewProxyBuilder(transportManager, nil).Build("default", testhelpers.MustParseURL(backend.URL), true, false, -1)
+	require.NoError(t, err)
+
+	proxy := httptest.NewUnstartedServer(p)
+	proxy.Config.Protocols = h2cProtocols
+	proxy.Start()
+	t.Cleanup(proxy.Close)
+
+	// The request body is left open for the whole call, so only the backend can end the stream.
+	bodyReader, bodyWriter := io.Pipe()
+	t.Cleanup(func() { _ = bodyWriter.Close() })
+
+	go func() { _, _ = bodyWriter.Write([]byte("hello")) }()
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, proxy.URL, bodyReader)
+	require.NoError(t, err)
+
+	type result struct {
+		body    []byte
+		trailer http.Header
+		err     error
+	}
+
+	resultCh := make(chan result, 1)
+	go func() {
+		res, err := (&http.Transport{Protocols: h2cProtocols}).RoundTrip(req)
+		if err != nil {
+			resultCh <- result{err: err}
+			return
+		}
+		defer res.Body.Close()
+
+		body, err := io.ReadAll(res.Body)
+		resultCh <- result{body: body, trailer: res.Trailer, err: err}
+	}()
+
+	select {
+	case res := <-resultCh:
+		require.NoError(t, res.err)
+		assert.Equal(t, "reply", string(res.body))
+		assert.Equal(t, "13", res.trailer.Get("Grpc-Status"))
+	case <-time.After(5 * time.Second):
+		t.Fatal("The end of the stream was not forwarded to the client")
 	}
 }
