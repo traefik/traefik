@@ -21,6 +21,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog-filters-retryattempts" href="#opt-accesslog-filters-retryattempts" title="#opt-accesslog-filters-retryattempts">accesslog.filters.retryattempts</a> | Keep access logs when at least one retry happened. | false |
 | <a id="opt-accesslog-filters-statuscodes" href="#opt-accesslog-filters-statuscodes" title="#opt-accesslog-filters-statuscodes">accesslog.filters.statuscodes</a> | Keep access logs with status codes in the specified range. | |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">accesslog.format</a> | Access log format: json, common, or genericCLF | common |
+| <a id="opt-accesslog-notimestamp" href="#opt-accesslog-notimestamp" title="#opt-accesslog-notimestamp">accesslog.notimestamp</a> | Disables the timestamp in access log output. | false |
 | <a id="opt-accesslog-otlp" href="#opt-accesslog-otlp" title="#opt-accesslog-otlp">accesslog.otlp</a> | Settings for OpenTelemetry. | false |
 | <a id="opt-accesslog-otlp-grpc" href="#opt-accesslog-otlp-grpc" title="#opt-accesslog-otlp-grpc">accesslog.otlp.grpc</a> | gRPC configuration for the OpenTelemetry collector. | false |
 | <a id="opt-accesslog-otlp-grpc-endpoint" href="#opt-accesslog-otlp-grpc-endpoint" title="#opt-accesslog-otlp-grpc-endpoint">accesslog.otlp.grpc.endpoint</a> | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |
@@ -178,6 +179,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-log-maxbackups" href="#opt-log-maxbackups" title="#opt-log-maxbackups">log.maxbackups</a> | Maximum number of old log files to retain. | 0 |
 | <a id="opt-log-maxsize" href="#opt-log-maxsize" title="#opt-log-maxsize">log.maxsize</a> | Maximum size in megabytes of the log file before it gets rotated. | 0 |
 | <a id="opt-log-nocolor" href="#opt-log-nocolor" title="#opt-log-nocolor">log.nocolor</a> | When using the 'common' format, disables the colorized output. | false |
+| <a id="opt-log-notimestamp" href="#opt-log-notimestamp" title="#opt-log-notimestamp">log.notimestamp</a> | Disables the timestamp in log output. | false |
 | <a id="opt-log-otlp" href="#opt-log-otlp" title="#opt-log-otlp">log.otlp</a> | Settings for OpenTelemetry. | false |
 | <a id="opt-log-otlp-grpc" href="#opt-log-otlp-grpc" title="#opt-log-otlp-grpc">log.otlp.grpc</a> | gRPC configuration for the OpenTelemetry collector. | false |
 | <a id="opt-log-otlp-grpc-endpoint" href="#opt-log-otlp-grpc-endpoint" title="#opt-log-otlp-grpc-endpoint">log.otlp.grpc.endpoint</a> | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |
