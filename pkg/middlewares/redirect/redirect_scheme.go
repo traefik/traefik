@@ -63,6 +63,10 @@ func (r *redirectScheme) clientRequestURL(req *http.Request) string {
 		host = req.Host
 	} else {
 		port = ":" + port
+		// SplitHostPort removes the brackets around an IPv6 literal, which the rebuilt URL needs.
+		if strings.Contains(host, ":") {
+			host = "[" + host + "]"
+		}
 	}
 	uri := req.RequestURI
 
