@@ -74,7 +74,7 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 	return c.DefaultCertificate.Certificate
 }
 
-// GetBestCertificate returns the best match certificate, and caches the response.
+// GetBestCertificate returns the best match certificate for regular TLS connections, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
 	return c.getBestCertificate(clientHello, matchDomain)
 }
@@ -125,6 +125,8 @@ func (c *CertificateStore) ResetCache() {
 	}
 }
 
+// getBestACMEChallengeCertificate returns the best match certificate for acme-tls/1 (TLS-ALPN-01) challenges,
+// falling back to reverse-address SNI matching for IP certificates, and caches the response.
 func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
 	return c.getBestCertificate(clientHello, matchDomainWithIPReverseAddress)
 }
@@ -298,6 +300,9 @@ func matchDomain(serverName, certDomains string) bool {
 	return false
 }
 
+// matchDomainWithIPReverseAddress extends matchDomain for TLS-ALPN-01 IP validation.
+// SNI cannot carry an IP, so RFC 8738 section 6 sends the reverse-address name (e.g. 1.0.0.127.in-addr.arpa),
+// while the challenge certificate is indexed by its IP SAN.
 func matchDomainWithIPReverseAddress(serverName, certDomains string) bool {
 	if matchDomain(serverName, certDomains) {
 		return true
