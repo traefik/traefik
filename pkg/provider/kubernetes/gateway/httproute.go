@@ -997,9 +997,7 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		// Without an appProtocol or a BackendTLSPolicy selecting the service,
-		// the backend is assumed to serve plain HTTP.
-		// Neither the Service port number nor its name imply TLS.
+		// Without an appProtocol the backend is assumed to serve plain HTTP.
 		return schemeHTTP, nil
 	}
 
