@@ -5,7 +5,7 @@ description: "Learn how to configure a Traefik Proxy Kubernetes Middleware to re
 
 `Middleware` is the CRD implementation of a [Traefik middleware](../../../http/middlewares/overview.md).
 
-Before creating `Middleware` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `Middleware` objects, you need to apply the [Traefik Kubernetes CRDs](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#requirements) to your Kubernetes cluster.
 
 This registers the `Middleware` kind and other Traefik-specific resources.
 
