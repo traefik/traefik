@@ -231,7 +231,9 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
 	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
+	// CONNECT requests are rejected inside the observability chain so that they are reported in the access logs,
+	// but before any router middleware, whether they match a router or not.
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(denyConnect(http.NotFoundHandler()))
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +273,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 		}
 
 		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
-		handler, err = observabilityChain.Then(handler)
+		handler, err = observabilityChain.Then(denyConnect(handler))
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()

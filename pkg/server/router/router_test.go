@@ -3,11 +3,14 @@ package router
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -18,8 +21,12 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -347,6 +354,91 @@ func TestRouterManager_Get(t *testing.T) {
 			for key, value := range test.expected.RequestHeaders {
 				assert.Equal(t, value, req.Header.Get(key))
 			}
+		})
+	}
+}
+
+func TestManager_BuildHandlers_DenyConnect(t *testing.T) {
+	testCases := []struct {
+		desc string
+		url  string
+	}{
+		{
+			desc: "matching a router",
+			url:  "http://foo.bar",
+		},
+		{
+			desc: "not matching any router",
+			url:  "http://bar.foo",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"foo-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
+							},
+						},
+					},
+				},
+			})
+
+			accessLogConfig := &otypes.AccessLog{
+				FilePath: filepath.Join(t.TempDir(), "access.log"),
+				Format:   "json",
+			}
+			accessLogger, err := accesslog.NewHandler(t.Context(), accessLogConfig)
+			require.NoError(t, err)
+
+			observabilityMgr := middleware.NewObservabilityMgr(static.Configuration{AccessLog: accessLogConfig}, nil, nil, accessLogger, nil, nil)
+
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			serviceManager := service.NewManager(rtConf.Services, observabilityMgr, nil, transportManager, proxyBuilderMock{})
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+			tlsManager := traefiktls.NewManager(nil)
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, observabilityMgr, tlsManager, parser, []string{})
+
+			handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
+			require.Contains(t, handlers, "web")
+
+			req := httptest.NewRequest(http.MethodConnect, test.url, nil)
+			rw := httptest.NewRecorder()
+
+			handlers["web"].ServeHTTP(rw, req)
+
+			require.NoError(t, accessLogger.Close())
+
+			assert.Equal(t, http.StatusNotImplemented, rw.Code)
+
+			accessLogs, err := os.ReadFile(accessLogConfig.FilePath)
+			require.NoError(t, err)
+
+			var entry map[string]any
+			require.NoError(t, json.Unmarshal(accessLogs, &entry))
+
+			assert.Equal(t, "web", entry[logs.EntryPointName])
+			assert.Equal(t, http.MethodConnect, entry[accesslog.RequestMethod])
+			assert.InDelta(t, http.StatusNotImplemented, entry[accesslog.DownstreamStatus], 0)
+			assert.NotContains(t, entry, accesslog.RouterName)
 		})
 	}
 }
