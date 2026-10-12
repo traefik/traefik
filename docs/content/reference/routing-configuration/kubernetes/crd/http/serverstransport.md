@@ -5,7 +5,7 @@ description: "The Kubernetes ServersTransport allows configuring the connection 
 
 A `ServersTransport` allows you to configure the connection between Traefik and the HTTP servers in Kubernetes.
 
-Before creating `ServersTransport` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `ServersTransport` objects, you need to apply the [Traefik Kubernetes CRDs](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#requirements) to your Kubernetes cluster.
 
 This registers the `ServersTransport` kind and other Traefik-specific resources.
 
