@@ -355,6 +355,8 @@ func TestRequestHeaderSanitization(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			var (
 				receivedValues []string
 				injectedValue  string
