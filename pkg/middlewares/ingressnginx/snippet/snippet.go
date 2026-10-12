@@ -483,12 +483,18 @@ func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, 
 	// upstream auth-url example. By design this provider asserts no identity the
 	// operator did not opt into: trusting unlisted client headers downstream is a
 	// backend misconfiguration, not a spoofing flaw here.
-	for _, headerName := range s.authResponseHeaders {
+	for i, headerName := range s.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
 		if len(forwardResponse.Header[headerKey]) > 0 {
 			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
 		}
+
+		// ingress-nginx sets one variable per auth-response-headers entry, in order:
+		// $authHeader0, $authHeader1, and so on.
+		// Snippets use them to read the values from the auth response.
+		// Custom variables are stored with the leading $.
+		ctx.vars[fmt.Sprintf("$authHeader%d", i)] = strings.Join(forwardResponse.Header.Values(headerKey), ",")
 	}
 
 	tracer.CaptureResponse(forwardSpan, forwardResponse.Header, forwardResponse.StatusCode, trace.SpanKindClient)
