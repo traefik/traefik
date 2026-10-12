@@ -448,6 +448,52 @@ func Test_denyOpaque(t *testing.T) {
 	}
 }
 
+func Test_denyConnect(t *testing.T) {
+	tests := []struct {
+		name       string
+		method     string
+		protoMajor int
+		wantStatus int
+	}{
+		{
+			name:       "Rejects HTTP/1 CONNECT",
+			method:     http.MethodConnect,
+			protoMajor: 1,
+			wantStatus: http.StatusNotImplemented,
+		},
+		{
+			name:       "Rejects HTTP/2 CONNECT",
+			method:     http.MethodConnect,
+			protoMajor: 2,
+			wantStatus: http.StatusNotImplemented,
+		},
+		{
+			name:       "Allows GET",
+			method:     http.MethodGet,
+			protoMajor: 1,
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := denyConnect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(test.method, "http://example.com", nil)
+			req.ProtoMajor = test.protoMajor
+			res := httptest.NewRecorder()
+
+			handler.ServeHTTP(res, req)
+
+			assert.Equal(t, test.wantStatus, res.Code)
+		})
+	}
+}
+
 func Test_denyFragment(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1018,10 +1064,10 @@ func TestRequestTargetForms(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:               "authority-form",
-			requestLine:        "CONNECT front.example:443 HTTP/1.1",
-			expectedStatus:     http.StatusOK,
-			expectedRequestURI: "/",
+			// The authority-form is only used by CONNECT requests, which are rejected by the entrypoint handler.
+			desc:           "authority-form",
+			requestLine:    "CONNECT front.example:443 HTTP/1.1",
+			expectedStatus: http.StatusNotImplemented,
 		},
 	}
 
@@ -1574,11 +1620,6 @@ func TestHTTP2RequestTLS(t *testing.T) {
 			desc:   "http scheme",
 			method: http.MethodGet,
 			url:    "http://" + ln.Addr().String(),
-		},
-		{
-			desc:   "CONNECT method",
-			method: http.MethodConnect,
-			url:    "https://" + ln.Addr().String(),
 		},
 	}
 

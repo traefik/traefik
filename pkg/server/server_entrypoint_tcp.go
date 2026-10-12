@@ -625,6 +625,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
+	handler = denyConnect(handler)
+
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
@@ -792,6 +794,21 @@ func denyFragment(h http.Handler) http.Handler {
 		if strings.Contains(req.URL.RawPath, "#") {
 			log.WithoutContext().Debugf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
 			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// denyConnect rejects the CONNECT requests, whatever the HTTP version.
+// CONNECT tunnels are not supported, and forwarding them without a dedicated handling is unsafe.
+func denyConnect(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodConnect {
+			log.WithoutContext().Debug("Rejecting CONNECT request: CONNECT tunnels are not supported")
+			rw.WriteHeader(http.StatusNotImplemented)
 
 			return
 		}
