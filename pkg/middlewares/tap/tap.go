@@ -143,7 +143,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Tap, serviceBuil
 			return nil, fmt.Errorf("building request destination: %w", err)
 		}
 
-		// The recorded body is held in memory, so it must be bounded on purpose, as no limit fits every route.
 		if config.Request.RecordBody && config.Request.MaxRecordBodySize == nil {
 			return nil, errors.New("request maxRecordBodySize must be defined when recordBody is set")
 		}
