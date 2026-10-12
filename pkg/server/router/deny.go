@@ -6,20 +6,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-// denyConnect rejects the CONNECT requests, whatever the HTTP version.
-// CONNECT tunnels are not supported, and forwarding them without a dedicated handling is unsafe.
-func denyConnect(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodConnect {
-			log.FromContext(req.Context()).Debug("Rejecting CONNECT request: CONNECT tunnels are not supported")
-			rw.WriteHeader(http.StatusNotImplemented)
-			return
-		}
-
-		h.ServeHTTP(rw, req)
-	})
-}
-
 // denyEncodedPathCharacters reject the request if the escaped path contains encoded characters in the given list.
 func denyEncodedPathCharacters(encodedCharacters map[string]struct{}, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
