@@ -112,7 +112,7 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 	}
 }
 
-func TestGetBestACMEChallengeCertificate(t *testing.T) {
+func TestGetBestCertificate_IPReverseAddress(t *testing.T) {
 	cert := &tls.Certificate{}
 
 	testCases := []struct {
@@ -152,10 +152,11 @@ func TestGetBestACMEChallengeCertificate(t *testing.T) {
 			regularStore.DynamicCerts.Set(certificates)
 			acmeStore := NewCertificateStore(nil)
 			acmeStore.DynamicCerts.Set(certificates)
+			acmeStore.matchIPReverseAddress = true
 			clientHello := &tls.ClientHelloInfo{ServerName: test.serverName}
 
 			assert.Nil(t, regularStore.GetBestCertificate(clientHello))
-			actual := acmeStore.getBestACMEChallengeCertificate(clientHello)
+			actual := acmeStore.GetBestCertificate(clientHello)
 			if test.expectedCertificate == nil {
 				assert.Nil(t, actual)
 				return

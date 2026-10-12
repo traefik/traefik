@@ -185,6 +185,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
 		if storeName == tlsalpn01.ACMETLS1Protocol {
+			st.matchIPReverseAddress = true
 			continue
 		}
 
@@ -253,7 +254,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 		if slices.Contains(clientHello.SupportedProtos, tlsalpn01.ACMETLS1Protocol) {
-			certificate := acmeTLSStore.getBestACMEChallengeCertificate(clientHello)
+			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
 				log.Debug().Msgf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
 				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized name" error.

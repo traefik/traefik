@@ -254,6 +254,7 @@ func TestManager_GetCertificateForReverseAddressSNI(t *testing.T) {
 				acmeStore.DynamicCerts.Set(map[string]*CertificateData{
 					address.ip: {Certificate: acmeCert},
 				})
+				acmeStore.matchIPReverseAddress = true
 
 				tlsManager := NewManager(nil)
 				tlsOption := DefaultTLSOptions

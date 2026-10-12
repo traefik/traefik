@@ -29,6 +29,11 @@ type CertificateStore struct {
 	CertCache          *cache.Cache
 
 	ocspStapler *ocspStapler
+
+	// matchIPReverseAddress must not change after creation because cache hits bypass matching.
+	// Only the acme-tls/1 store enables it: SNI cannot carry an IP, so TLS-ALPN-01 IP validation
+	// sends the reverse-address name (RFC 8738 section 6) while the challenge certificate is indexed by its IP SAN.
+	matchIPReverseAddress bool
 }
 
 // NewCertificateStore create a store for dynamic certificates.
@@ -74,9 +79,63 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 	return c.DefaultCertificate.Certificate
 }
 
-// GetBestCertificate returns the best match certificate for regular TLS connections, and caches the response.
+// GetBestCertificate returns the best match certificate, and caches the response.
 func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
-	return c.getBestCertificate(clientHello, matchDomain)
+	if c == nil {
+		return nil
+	}
+
+	serverName := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
+	if len(serverName) == 0 {
+		// If no ServerName is provided, Check for local IP address matches
+		host, _, err := net.SplitHostPort(clientHello.Conn.LocalAddr().String())
+		if err != nil {
+			log.Debug().Err(err).Msg("Could not split host/port")
+		}
+		serverName = strings.TrimSpace(host)
+	}
+
+	if cert, ok := c.CertCache.Get(serverName); ok {
+		certificateData := cert.(*CertificateData)
+		if c.ocspStapler != nil && certificateData.Hash != "" {
+			if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
+				// We are updating the OCSPStaple of the certificate without any synchronization
+				// as this should not cause any issue.
+				certificateData.Certificate.OCSPStaple = staple
+			}
+		}
+
+		return certificateData.Certificate
+	}
+
+	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
+		certs := c.DynamicCerts.Get().(map[string]*CertificateData)
+		// sorted cert sans identifiers
+		sorted := slices.SortedFunc(maps.Keys(certs), func(certKey string, certKey2 string) int {
+			// reverse sort.
+			return strings.Compare(certKey2, certKey)
+		})
+
+		for _, certDomains := range sorted {
+			if matchDomain(serverName, certDomains) || c.matchIPReverseAddress && matchIPReverseAddress(serverName, certDomains) {
+				// cache best match
+				certificateData := certs[certDomains]
+				c.CertCache.SetDefault(serverName, certificateData)
+
+				if c.ocspStapler != nil && certificateData.Hash != "" {
+					if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
+						// We are updating the OCSPStaple of the certificate without any synchronization
+						// as this should not cause any issue.
+						certificateData.Certificate.OCSPStaple = staple
+					}
+				}
+
+				return certificateData.Certificate
+			}
+		}
+	}
+
+	return nil
 }
 
 // GetCertificate returns the first certificate matching all the given domains.
@@ -123,73 +182,6 @@ func (c *CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
-}
-
-// getBestACMEChallengeCertificate returns the best match certificate for acme-tls/1 (TLS-ALPN-01) challenges,
-// falling back to reverse-address SNI matching for IP certificates, and caches the response.
-func (c *CertificateStore) getBestACMEChallengeCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
-	return c.getBestCertificate(clientHello, matchDomainWithIPReverseAddress)
-}
-
-// The matchDomainFunc must remain the same for the lifetime of the store's cache because
-// cache hits bypass matching. The manager uses separate stores for regular TLS
-// and ACME challenges to keep their matching policies and cached results isolated.
-func (c *CertificateStore) getBestCertificate(clientHello *tls.ClientHelloInfo, matchDomainFunc func(string, string) bool) *tls.Certificate {
-	if c == nil {
-		return nil
-	}
-
-	serverName := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
-	if len(serverName) == 0 {
-		// If no ServerName is provided, Check for local IP address matches
-		host, _, err := net.SplitHostPort(clientHello.Conn.LocalAddr().String())
-		if err != nil {
-			log.Debug().Err(err).Msg("Could not split host/port")
-		}
-		serverName = strings.TrimSpace(host)
-	}
-
-	if cert, ok := c.CertCache.Get(serverName); ok {
-		certificateData := cert.(*CertificateData)
-		if c.ocspStapler != nil && certificateData.Hash != "" {
-			if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
-				// We are updating the OCSPStaple of the certificate without any synchronization
-				// as this should not cause any issue.
-				certificateData.Certificate.OCSPStaple = staple
-			}
-		}
-
-		return certificateData.Certificate
-	}
-
-	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		certs := c.DynamicCerts.Get().(map[string]*CertificateData)
-		// sorted cert sans identifiers
-		sorted := slices.SortedFunc(maps.Keys(certs), func(certKey string, certKey2 string) int {
-			// reverse sort.
-			return strings.Compare(certKey2, certKey)
-		})
-
-		for _, certDomains := range sorted {
-			if matchDomainFunc(serverName, certDomains) {
-				// cache best match
-				certificateData := certs[certDomains]
-				c.CertCache.SetDefault(serverName, certificateData)
-
-				if c.ocspStapler != nil && certificateData.Hash != "" {
-					if staple, ok := c.ocspStapler.GetStaple(certificateData.Hash); ok {
-						// We are updating the OCSPStaple of the certificate without any synchronization
-						// as this should not cause any issue.
-						certificateData.Certificate.OCSPStaple = staple
-					}
-				}
-
-				return certificateData.Certificate
-			}
-		}
-	}
-
-	return nil
 }
 
 func (c *CertificateStore) getDefaultCertificateDomains() []string {
@@ -300,32 +292,17 @@ func matchDomain(serverName, certDomains string) bool {
 	return false
 }
 
-// matchDomainWithIPReverseAddress extends matchDomain for TLS-ALPN-01 IP validation.
-// SNI cannot carry an IP, so RFC 8738 section 6 sends the reverse-address name (e.g. 1.0.0.127.in-addr.arpa),
-// while the challenge certificate is indexed by its IP SAN.
-func matchDomainWithIPReverseAddress(serverName, certDomains string) bool {
-	if matchDomain(serverName, certDomains) {
-		return true
-	}
-
+func matchIPReverseAddress(serverName, certDomains string) bool {
 	for certDomain := range strings.SplitSeq(certDomains, ",") {
-		if matchIPReverseAddress(serverName, certDomain) {
+		if net.ParseIP(certDomain) == nil {
+			continue
+		}
+
+		reverseAddr, err := dns.ReverseAddr(certDomain)
+		if err == nil && strings.TrimSuffix(serverName, ".") == strings.TrimSuffix(strings.ToLower(reverseAddr), ".") {
 			return true
 		}
 	}
 
 	return false
-}
-
-func matchIPReverseAddress(serverName, certDomain string) bool {
-	if net.ParseIP(certDomain) == nil {
-		return false
-	}
-
-	reverseAddr, err := dns.ReverseAddr(certDomain)
-	if err != nil {
-		return false
-	}
-
-	return strings.TrimSuffix(serverName, ".") == strings.TrimSuffix(strings.ToLower(reverseAddr), ".")
 }
