@@ -335,90 +335,75 @@ func TestUpgradeTunnelSurvivesDeadline(t *testing.T) {
 	assert.Equal(t, "after-deadline", string(echoed))
 }
 
-func TestHungUpgradeHandshakeGets504(t *testing.T) {
-	t.Parallel()
+// TestSlowBackend also runs over HTTP/2, where a write deadline is a timer that resets the stream when it fires,
+// even before anything is written.
+func TestSlowBackend(t *testing.T) {
+	hung := func(t *testing.T) http.Handler {
+		t.Helper()
 
-	// The deadline bounds the handshake: a backend that never switches protocol must not leave the
-	// client hanging, and pre-101 the gateway has not responded yet, so a timeout can still be reported.
-	ts := httptest.NewServer(wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
-	t.Cleanup(ts.Close)
+		return reverseProxy(hungBackend(t))
+	}
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
-	require.NoError(t, err)
-	req.Header.Set("Connection", "Upgrade")
-	req.Header.Set("Upgrade", "spdy/3.1")
+	slow := func(t *testing.T) http.Handler {
+		t.Helper()
 
-	res, err := ts.Client().Do(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			time.Sleep(200 * time.Millisecond)
+			rw.WriteHeader(http.StatusOK)
+		})
+	}
 
-	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
-}
-
-func TestSlowBackendGets504(t *testing.T) {
-	t.Parallel()
-
-	ts := httptest.NewServer(wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
-	t.Cleanup(ts.Close)
-
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
-	require.NoError(t, err)
-
-	res, err := ts.Client().Do(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
-
-	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
-}
-
-// TestSlowBackendOverHTTP2 guards the write deadline handling over HTTP/2, where a write deadline is a timer
-// that resets the stream when it fires, even before anything is written.
-func TestSlowBackendOverHTTP2(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		timeout      time.Duration
 		writeTimeout time.Duration
+		http2        bool
+		upgrade      bool
 		next         func(t *testing.T) http.Handler
 		expected     int
 	}{
 		{
 			desc:     "backend slower than the timeout gets 504",
 			timeout:  50 * time.Millisecond,
-			next:     func(t *testing.T) http.Handler { t.Helper(); return reverseProxy(hungBackend(t)) },
+			next:     hung,
 			expected: http.StatusGatewayTimeout,
 		},
 		{
-			desc:         "backend slower than the entrypoint writeTimeout but within the timeout gets 200",
+			// The deadline bounds the handshake: pre-101 the gateway has not responded yet, so a timeout can still be reported.
+			desc:     "hung upgrade handshake gets 504",
+			timeout:  50 * time.Millisecond,
+			upgrade:  true,
+			next:     hung,
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc:     "backend slower than the timeout gets 504 over HTTP/2",
+			timeout:  50 * time.Millisecond,
+			http2:    true,
+			next:     hung,
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc:         "backend slower than the entrypoint writeTimeout but within the timeout gets 200 over HTTP/2",
 			timeout:      time.Second,
 			writeTimeout: 50 * time.Millisecond,
-			next: func(t *testing.T) http.Handler {
-				t.Helper()
-
-				return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-					time.Sleep(200 * time.Millisecond)
-					rw.WriteHeader(http.StatusOK)
-				})
-			},
-			expected: http.StatusOK,
+			http2:        true,
+			next:         slow,
+			expected:     http.StatusOK,
 		},
 		{
-			desc:         "backend slower than the entrypoint writeTimeout gets 200 with a disabled timeout",
+			desc:         "backend slower than the entrypoint writeTimeout gets 200 with a disabled timeout over HTTP/2",
 			writeTimeout: 50 * time.Millisecond,
-			next: func(t *testing.T) http.Handler {
-				t.Helper()
-
-				return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-					time.Sleep(200 * time.Millisecond)
-					rw.WriteHeader(http.StatusOK)
-				})
-			},
-			expected: http.StatusOK,
+			http2:        true,
+			next:         slow,
+			expected:     http.StatusOK,
 		},
 		{
-			desc:         "backend slower than the timeout gets 504 despite a shorter entrypoint writeTimeout",
+			desc:         "backend slower than the timeout gets 504 despite a shorter entrypoint writeTimeout over HTTP/2",
 			timeout:      200 * time.Millisecond,
 			writeTimeout: 50 * time.Millisecond,
-			next:         func(t *testing.T) http.Handler { t.Helper(); return reverseProxy(hungBackend(t)) },
+			http2:        true,
+			next:         hung,
 			expected:     http.StatusGatewayTimeout,
 		},
 	}
@@ -428,19 +413,29 @@ func TestSlowBackendOverHTTP2(t *testing.T) {
 			t.Parallel()
 
 			ts := httptest.NewUnstartedServer(wrap(t, test.timeout, test.next(t)))
-			ts.EnableHTTP2 = true
+			ts.EnableHTTP2 = test.http2
 			ts.Config.WriteTimeout = test.writeTimeout
-			ts.StartTLS()
+			if test.http2 {
+				ts.StartTLS()
+			} else {
+				ts.Start()
+			}
 			t.Cleanup(ts.Close)
 
 			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
 			require.NoError(t, err)
+			if test.upgrade {
+				req.Header.Set("Connection", "Upgrade")
+				req.Header.Set("Upgrade", "spdy/3.1")
+			}
 
 			res, err := ts.Client().Do(req)
 			require.NoError(t, err)
 			t.Cleanup(func() { _ = res.Body.Close() })
 
-			require.Equal(t, "HTTP/2.0", res.Proto)
+			if test.http2 {
+				require.Equal(t, "HTTP/2.0", res.Proto)
+			}
 			assert.Equal(t, test.expected, res.StatusCode)
 		})
 	}
@@ -508,140 +503,42 @@ func TestDisabledTimeoutLiftsEntryPointDeadlines(t *testing.T) {
 	}
 }
 
-// TestExpiryDoesNotCancelNextKeepAliveRequest guards the read deadline arming: a timed-out request must not
-// leave the next request on the same keep-alive connection with an already-canceled context.
-// The timed-out router sits below capture, as in production: capture wraps req.Body, so body presence must be
-// read from ContentLength rather than an http.NoBody check, or the read deadline is armed on a body-less request.
-func TestExpiryDoesNotCancelNextKeepAliveRequest(t *testing.T) {
-	t.Parallel()
-
-	timeoutHandler := wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t)))
-	captured, err := capture.Wrap(timeoutHandler)
-	require.NoError(t, err)
-
-	mux := http.NewServeMux()
-	mux.Handle("/timeout", captured)
-	// No timeout on this router, and a backend that answers.
-	mux.Handle("/plain", reverseProxy(healthyBackend(t)))
-
-	ts := httptest.NewServer(mux)
-	t.Cleanup(ts.Close)
-
-	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-
-	require.NoError(t, conn.SetDeadline(time.Now().Add(10*time.Second)))
-	br := bufio.NewReader(conn)
-
-	_, err = fmt.Fprintf(conn, "GET /timeout HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	res, err := http.ReadResponse(br, nil)
-	require.NoError(t, err)
-	_, err = io.Copy(io.Discard, res.Body)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
-
-	_, err = fmt.Fprintf(conn, "GET /plain HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	res, err = http.ReadResponse(br, nil)
-	require.NoError(t, err)
-	body, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "backend", string(body))
-}
-
-// TestWriteDeadlineNotLeakedToNextKeepAliveRequest asserts that a write deadline armed for one request never
-// disturbs the next request on the same keep-alive connection.
-func TestWriteDeadlineNotLeakedToNextKeepAliveRequest(t *testing.T) {
-	t.Parallel()
-
-	timeout := 100 * time.Millisecond
-
-	mux := http.NewServeMux()
-	// This router has a timeout, but the response comes well within it.
-	mux.Handle("/fast", wrap(t, timeout, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		_, _ = rw.Write([]byte("fast"))
-	})))
-	mux.HandleFunc("/plain", func(rw http.ResponseWriter, req *http.Request) {
-		_, _ = rw.Write([]byte("plain"))
-	})
-
-	ts := httptest.NewServer(mux)
-	t.Cleanup(ts.Close)
-
-	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-
-	br := bufio.NewReader(conn)
-
-	_, err = fmt.Fprintf(conn, "GET /fast HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	res, err := http.ReadResponse(br, nil)
-	require.NoError(t, err)
-	_, err = io.ReadAll(res.Body)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, res.StatusCode)
-
-	// Wait past the first request's deadline before reusing the connection: any deadline left on it is now expired.
-	time.Sleep(2 * timeout)
-
-	_, err = fmt.Fprintf(conn, "GET /plain HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	res, err = http.ReadResponse(br, nil)
-	require.NoError(t, err)
-	body, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "plain", string(body))
-}
-
-func TestSlowClientBounded(t *testing.T) {
-	timeout := 100 * time.Millisecond
-
-	// Without a writeTimeout, the status depends on whether the proxy sees the read timeout or the canceled
-	// request context first, so only the cases sharing the deadline check it.
+// TestNextKeepAliveRequest guards that the deadlines armed for one request never disturb the next request on the
+// same keep-alive connection, served by a router without timeouts.
+func TestNextKeepAliveRequest(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		wrap     func(t *testing.T, next http.Handler) http.Handler
-		expected int
+		desc          string
+		first         func(t *testing.T) http.Handler
+		expectedFirst int
+		wait          time.Duration
 	}{
 		{
-			// Only a deadline comparison can normalize the outcome, since the connection deadline may cancel the
-			// request context before the deadline context does.
-			desc: "readTimeout sharing the writeTimeout deadline gets 504",
-			wrap: func(t *testing.T, next http.Handler) http.Handler {
+			// The timed-out router sits below capture, as in production: capture wraps req.Body, so body presence
+			// must be read from ContentLength rather than an http.NoBody check, or the read deadline is armed on a
+			// body-less request, and its expiry cancels the context of the next request.
+			desc: "after a timed-out request",
+			first: func(t *testing.T) http.Handler {
 				t.Helper()
 
-				return wrap(t, timeout, next)
+				captured, err := capture.Wrap(wrap(t, 50*time.Millisecond, reverseProxy(hungBackend(t))))
+				require.NoError(t, err)
+
+				return captured
 			},
-			expected: http.StatusGatewayTimeout,
+			expectedFirst: http.StatusGatewayTimeout,
 		},
 		{
-			desc: "readTimeout alone",
-			wrap: func(t *testing.T, next http.Handler) http.Handler {
+			// Waiting past the first request's deadline makes any deadline left on the connection already expired.
+			desc: "after a request answered within the timeout",
+			first: func(t *testing.T) http.Handler {
 				t.Helper()
 
-				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, next)
+				return wrap(t, 100*time.Millisecond, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					_, _ = rw.Write([]byte("fast"))
+				}))
 			},
-		},
-		{
-			desc: "child router readTimeout cannot extend its parent one",
-			wrap: func(t *testing.T, next http.Handler) http.Handler {
-				t.Helper()
-
-				child := wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Hour))}, next)
-
-				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, child)
-			},
+			expectedFirst: http.StatusOK,
+			wait:          200 * time.Millisecond,
 		},
 	}
 
@@ -649,8 +546,112 @@ func TestSlowClientBounded(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			// The backend is healthy: only the read deadline can bound a client that stalls mid-upload.
-			ts := httptest.NewServer(test.wrap(t, reverseProxy(healthyBackend(t))))
+			mux := http.NewServeMux()
+			mux.Handle("/first", test.first(t))
+			mux.Handle("/plain", reverseProxy(healthyBackend(t)))
+
+			ts := httptest.NewServer(mux)
+			t.Cleanup(ts.Close)
+
+			conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			require.NoError(t, conn.SetDeadline(time.Now().Add(10*time.Second)))
+			br := bufio.NewReader(conn)
+
+			_, err = fmt.Fprintf(conn, "GET /first HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
+			require.NoError(t, err)
+
+			res, err := http.ReadResponse(br, nil)
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, res.Body)
+			require.NoError(t, err)
+			require.Equal(t, test.expectedFirst, res.StatusCode)
+
+			time.Sleep(test.wait)
+
+			_, err = fmt.Fprintf(conn, "GET /plain HTTP/1.1\r\nHost: %s\r\n\r\n", ts.Listener.Addr())
+			require.NoError(t, err)
+
+			res, err = http.ReadResponse(br, nil)
+			require.NoError(t, err)
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, "backend", string(body))
+		})
+	}
+}
+
+func TestSlowClientBounded(t *testing.T) {
+	timeout := 100 * time.Millisecond
+
+	// The backend is healthy: only the read deadline can bound a client that stalls mid-upload.
+	proxy := func(t *testing.T) http.Handler {
+		t.Helper()
+
+		return reverseProxy(healthyBackend(t))
+	}
+
+	// Without a writeTimeout, the status depends on whether the proxy sees the read timeout or the canceled
+	// request context first, so those cases do not check it.
+	testCases := []struct {
+		desc     string
+		handler  func(t *testing.T) http.Handler
+		expected int
+	}{
+		{
+			// Only a deadline comparison can normalize the outcome, since the connection deadline may cancel the
+			// request context before the deadline context does.
+			desc: "readTimeout sharing the writeTimeout deadline gets 504",
+			handler: func(t *testing.T) http.Handler {
+				t.Helper()
+
+				return wrap(t, timeout, proxy(t))
+			},
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc: "readTimeout alone",
+			handler: func(t *testing.T) http.Handler {
+				t.Helper()
+
+				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, proxy(t))
+			},
+		},
+		{
+			desc: "child router readTimeout cannot extend its parent one",
+			handler: func(t *testing.T) http.Handler {
+				t.Helper()
+
+				child := wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Hour))}, proxy(t))
+
+				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, child)
+			},
+		},
+		{
+			// The handler answers without reading the body, as an authentication or a rate limit middleware would.
+			// The server drains the unread body before flushing the response (net/http chunkWriter.writeHeader),
+			// after the handler and its defers have run, so only a read deadline left armed on return bounds it.
+			desc: "handler answering without reading the body",
+			handler: func(t *testing.T) http.Handler {
+				t.Helper()
+
+				return wrap(t, timeout, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(http.StatusUnauthorized)
+				}))
+			},
+			expected: http.StatusUnauthorized,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ts := httptest.NewServer(test.handler(t))
 			t.Cleanup(ts.Close)
 
 			conn, err := net.Dial("tcp", ts.Listener.Addr().String())
@@ -704,37 +705,6 @@ func TestReadTimeoutDoesNotBoundBackend(t *testing.T) {
 	t.Cleanup(func() { _ = res.Body.Close() })
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-// TestEarlyResponseDoesNotWaitForStalledUpload guards the read deadline being left armed on return: the
-// server drains the unread request body before flushing the response (net/http chunkWriter.writeHeader),
-// after the handler and its defers have run, so only a deadline still armed on the connection bounds it.
-func TestEarlyResponseDoesNotWaitForStalledUpload(t *testing.T) {
-	t.Parallel()
-
-	timeout := 100 * time.Millisecond
-
-	// The handler answers without reading the body, as an authentication or a rate limit middleware would.
-	ts := httptest.NewServer(wrap(t, timeout, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusUnauthorized)
-	})))
-	t.Cleanup(ts.Close)
-
-	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-
-	_, err = fmt.Fprintf(conn, "POST / HTTP/1.1\r\nHost: %s\r\nContent-Length: 1000\r\n\r\npartial", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
-
-	start := time.Now()
-	res, err := http.ReadResponse(bufio.NewReader(conn), nil)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-	assert.Less(t, time.Since(start), 10*timeout)
 }
 
 // TestFlushKeepsEntryPointWriteTimeout guards the deferred restore. A handler writing a small response leaves
