@@ -194,6 +194,11 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				tests.HTTPRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
 				tests.GatewayInfrastructureMetadata.ShortName,
+				// The frontend validation tests program contradictory client certificate validations for the same
+				// hostname and port on Gateways expected to have their own address, which a single instance cannot serve.
+				tests.GatewayFrontendClientCertificateValidation.ShortName,
+				tests.GatewayFrontendClientCertificateValidationInsecureFallback.ShortName,
+				tests.GatewayFrontendInvalidDefaultClientCertificateValidation.ShortName,
 			},
 		},
 	})

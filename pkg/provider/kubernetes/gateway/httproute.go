@@ -24,7 +24,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, statusReport *statusReport) {
+func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, parentRouters *listenerRouters, statusReport *statusReport) {
 	logger := log.Ctx(ctx).With().
 		Str("http_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -91,8 +91,12 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 			}
 
 			if accepted && listener.Attached {
+				parentRefs := parentRouters.routerNames(listener, hostnames)
+
 				for _, rc := range routerConfs {
 					router := rc.Conf.HTTP.Routers[rc.Name]
+					router.ParentRefs = parentRefs
+
 					if servedBy, alreadyServed := servedRules.register(rc.Name, router.ParentRefs, router.Rule); alreadyServed {
 						logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q under the same parent routers", rc.Name, servedBy, router.Rule)
 						continue
@@ -145,7 +149,6 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				RuleSyntax: "default",
 				Rule:       rule,
 				Priority:   priority + len(route.Spec.Rules) - ri,
-				ParentRefs: listener.RouterNames,
 			}
 
 			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
