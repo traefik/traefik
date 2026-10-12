@@ -64,7 +64,9 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	switch {
-	case h.writeTimeout == nil:
+	// Upgrade requests (WebSocket, ...) are left to the entrypoint writeTimeout:
+	// the proxy closes the tunnel when the request context is done, which a router deadline would do.
+	case h.writeTimeout == nil || isUpgradeRequest(req):
 		h.next.ServeHTTP(rw, req)
 	case *h.writeTimeout <= 0:
 		h.serveWithoutWriteTimeout(rw, req, rc, logger)
@@ -120,11 +122,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, writeTimeout: writeTimeout, logger: logger}
 
 	defer func() {
-		// net/http clears the deadlines of a hijacked connection, which no longer belongs to the server.
-		if rewriter.hijacked {
-			return
-		}
-
 		// The response is flushed after the handler returns, possibly past the deadline:
 		// restore the entrypoint writeTimeout, or no deadline, so that it still reaches the client.
 		var writeDeadline time.Time
@@ -136,24 +133,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 			logger.Debug().Err(err).Msg("Unable to restore write deadline")
 		}
 	}()
-
-	if isUpgradeRequest(req) {
-		// The deadline only bounds the handshake. A context deadline cannot be disarmed and would close the tunnel,
-		// so a timer cancels the context instead, and is stopped when the connection is hijacked.
-		// The DeadlineExceeded cause makes the proxy, tracing, and metrics report it as a timeout.
-		ctx, cancel := context.WithCancelCause(req.Context())
-		defer cancel(nil)
-
-		timer := time.AfterFunc(time.Until(deadline), func() { cancel(context.DeadlineExceeded) })
-		defer timer.Stop()
-
-		// Disarmed at the protocol switch, not on return: the proxy keeps serving the tunnel until it closes.
-		rewriter.onHijack = func() { timer.Stop() }
-
-		h.next.ServeHTTP(rewriter, req.WithContext(ctx))
-
-		return
-	}
 
 	// Cancels the backend request at the deadline, which the proxy reports as a 504.
 	ctx, cancel := context.WithDeadline(req.Context(), deadline)
@@ -208,11 +187,6 @@ type statusRewriter struct {
 
 	// armOnce guards against the reverse proxy flushing from another goroutine.
 	armOnce sync.Once
-
-	// onHijack is set for upgrade requests: it disarms the handshake timer.
-	onHijack func()
-	// hijacked reports whether the connection has been handed over.
-	hijacked bool
 }
 
 func (s *statusRewriter) WriteHeader(code int) {
@@ -234,25 +208,14 @@ func (s *statusRewriter) Write(b []byte) (int, error) {
 	return s.ResponseWriter.Write(b)
 }
 
-// Hijack stops the handshake timer before the connection is handed over.
+// Hijack is exposed for the handlers asserting http.Hijacker directly, which do not go through Unwrap.
 func (s *statusRewriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if s.onHijack != nil {
-		s.onHijack()
-	}
-
 	hijacker, ok := s.ResponseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("not a hijacker: %T", s.ResponseWriter)
 	}
 
-	conn, brw, err := hijacker.Hijack()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	s.hijacked = true
-
-	return conn, brw, nil
+	return hijacker.Hijack()
 }
 
 func (s *statusRewriter) Flush() {
@@ -273,10 +236,6 @@ func (s *statusRewriter) Unwrap() http.ResponseWriter {
 // the response gets the entrypoint writeTimeout instead, or no deadline.
 func (s *statusRewriter) armWriteDeadline() {
 	s.armOnce.Do(func() {
-		if s.hijacked {
-			return
-		}
-
 		writeDeadline := s.deadline
 		if !time.Now().Before(s.deadline) {
 			writeDeadline = time.Time{}

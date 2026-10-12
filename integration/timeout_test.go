@@ -148,9 +148,8 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-// TestRouterRespondingTimeoutsWebSocket covers the upgrade path of the router writeTimeout: an established
-// WebSocket tunnel is never severed at the deadline (the handshake timer is disarmed at the protocol switch),
-// while a hung upgrade handshake still yields a 504 (pre-101 the gateway has not responded).
+// TestRouterRespondingTimeoutsWebSocket covers the upgrade requests, which the router writeTimeout leaves alone:
+// an established WebSocket tunnel is never severed at the deadline.
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	upgrader := gorillawebsocket.Upgrader{}
 
@@ -174,26 +173,14 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	}))
 	s.T().Cleanup(echo.Close)
 
-	// A backend that never answers the handshake: it holds the request until the proxy tears the leg down.
-	hang := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		<-r.Context().Done()
-	}))
-	s.T().Cleanup(hang.Close)
-
-	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_websocket.toml", struct {
-		WebsocketServer string
-		HangServer      string
-	}{
-		WebsocketServer: echo.URL,
-		HangServer:      hang.URL,
-	})
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_websocket.toml", struct{ WebsocketServer string }{echo.URL})
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/ws`)", "Path(`/ws-hang`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/ws`)"))
 	require.NoError(s.T(), err)
 
-	// An established tunnel survives well past the 1s writeTimeout: the timer is disarmed at the protocol switch.
+	// An established tunnel survives well past the 1s writeTimeout.
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
 	require.NoError(s.T(), err)
 	s.T().Cleanup(func() { _ = conn.Close() })
@@ -205,12 +192,6 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	_, msg, err := conn.ReadMessage()
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "after-deadline", string(msg))
-
-	// A hung upgrade handshake yields a 504 once the writeTimeout elapses: pre-101 the gateway has not responded.
-	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws-hang", nil)
-	require.Error(s.T(), err)
-	require.NotNil(s.T(), resp)
-	assert.Equal(s.T(), http.StatusGatewayTimeout, resp.StatusCode)
 }
 
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {

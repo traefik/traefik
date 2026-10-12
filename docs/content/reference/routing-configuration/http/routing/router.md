@@ -148,7 +148,7 @@ An unset timeout leaves the entry point one in force.
 
     The entry point `readTimeout` (default `60s`) caps how long a client may take to send its request, which limits slow-client attacks such as Slowloris. A router `readTimeout` longer than the entry point one lifts that cap for the matched requests: a slow client on that route can then hold a connection open for the whole `readTimeout` duration. Because connection limits are enforced per entry point, that cost is borne by everything served by the entry point, not by the router alone. A `readTimeout` of `0` lifts that cap entirely. Set a long or zero `readTimeout` only on routes that need it.
 
-**Protocol upgrades (WebSocket, `kubectl exec`, ...).** For upgrade requests (any `Connection: Upgrade` protocol), the `writeTimeout` deadline bounds the **handshake only** and is disarmed at the protocol switch: an established tunnel is never torn down by this timeout, while a backend that never answers the handshake still yields a `504`.
+**Protocol upgrades (WebSocket, `kubectl exec`, ...).** The router `writeTimeout` does not apply to upgrade requests (any `Connection: Upgrade` protocol): an established tunnel is never torn down by this timeout, and the entry point `writeTimeout` still applies to the handshake.
 
 **Streaming responses (SSE, gRPC streaming, ...).** Response-streaming routes are not detectable at request time, so the `writeTimeout` applies to them as well: omit it (or set it to `0`) on such routers.
 
