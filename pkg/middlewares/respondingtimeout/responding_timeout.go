@@ -1,4 +1,4 @@
-// Package respondingtimeout enforces a whole-transaction deadline (client -> proxy -> backend -> proxy -> client) on a router.
+// Package respondingtimeout enforces the read and write timeouts of a router, counted from the router receiving the request.
 package respondingtimeout
 
 import (
@@ -12,6 +12,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"golang.org/x/net/http/httpguts"
@@ -22,35 +23,69 @@ const (
 	typeName = "RespondingTimeout"
 )
 
+// readDeadlineKey carries the read deadline set by a parent router: unlike the write one, it has no context deadline.
+type readDeadlineKey struct{}
+
 type handler struct {
-	next    http.Handler
-	timeout time.Duration
+	next http.Handler
+	// readTimeout and writeTimeout are nil when unset: the entrypoint ones then apply.
+	readTimeout  *time.Duration
+	writeTimeout *time.Duration
 }
 
-// WrapHandler wraps a router handler to enforce the given whole-transaction timeout, as an alice.Constructor.
-func WrapHandler(timeout time.Duration) alice.Constructor {
+// WrapHandler wraps a router handler to enforce the given responding timeouts, as an alice.Constructor.
+func WrapHandler(config dynamic.RouterRespondingTimeouts) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		return &handler{next: next, timeout: timeout}, nil
+		h := &handler{next: next}
+
+		if config.ReadTimeout != nil {
+			h.readTimeout = new(time.Duration(*config.ReadTimeout))
+		}
+
+		if config.WriteTimeout != nil {
+			h.writeTimeout = new(time.Duration(*config.WriteTimeout))
+		}
+
+		return h, nil
 	}
 }
 
 func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), name, typeName)
 
-	if h.timeout <= 0 {
-		h.serveWithoutTimeout(rw, req, logger)
-		return
-	}
-
-	deadline := time.Now().Add(h.timeout)
-
-	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
-	if d, ok := req.Context().Deadline(); ok && d.Before(deadline) {
-		deadline = d
-	}
+	// Both timeouts count from this instant: equal timeouts share a single deadline.
+	start := time.Now()
 
 	// These connection deadlines replace, for this request, the ones armed from the entrypoint respondingTimeouts.
 	rc := http.NewResponseController(rw)
+
+	if h.readTimeout != nil {
+		req = h.armReadDeadline(req, rc, start, logger)
+	}
+
+	switch {
+	case h.writeTimeout == nil:
+		h.next.ServeHTTP(rw, req)
+	case *h.writeTimeout <= 0:
+		h.serveWithoutWriteTimeout(rw, req, rc, logger)
+	default:
+		h.serveWithWriteTimeout(rw, req, rc, start.Add(*h.writeTimeout), logger)
+	}
+}
+
+// armReadDeadline sets the read deadline, or lifts the entrypoint one for a zero readTimeout,
+// and records it in the returned request for nested routers.
+func (h *handler) armReadDeadline(req *http.Request, rc *http.ResponseController, start time.Time, logger *zerolog.Logger) *http.Request {
+	var deadline time.Time
+	if *h.readTimeout > 0 {
+		deadline = start.Add(*h.readTimeout)
+	}
+
+	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
+	if parent, ok := req.Context().Value(readDeadlineKey{}).(time.Time); ok && !parent.IsZero() &&
+		(deadline.IsZero() || parent.Before(deadline)) {
+		deadline = parent
+	}
 
 	// Only set when there is a body: without one, net/http reads in the background to detect a client
 	// disconnection, and a deadline expiring there cancels the connection context, breaking the next keep-alive requests.
@@ -60,6 +95,15 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err := rc.SetReadDeadline(deadline); err != nil {
 			logger.Debug().Err(err).Msg("Unable to set read deadline")
 		}
+	}
+
+	return req.WithContext(context.WithValue(req.Context(), readDeadlineKey{}, deadline))
+}
+
+func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time, logger *zerolog.Logger) {
+	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
+	if d, ok := req.Context().Deadline(); ok && d.Before(deadline) {
+		deadline = d
 	}
 
 	writeTimeout := entryPointWriteTimeout(req)
@@ -118,22 +162,13 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	h.next.ServeHTTP(rewriter, req.WithContext(ctx))
 }
 
-// serveWithoutTimeout lifts the entrypoint read and write deadlines for this request.
-// net/http resets the connection deadlines for the next request, so they are not restored on return.
-func (h *handler) serveWithoutTimeout(rw http.ResponseWriter, req *http.Request, logger *zerolog.Logger) {
+// serveWithoutWriteTimeout lifts the entrypoint write deadline for this request.
+// net/http resets the connection deadlines for the next request, so it is not restored on return.
+func (h *handler) serveWithoutWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, logger *zerolog.Logger) {
 	// Nested routers: a child router cannot extend its parent's budget.
 	if _, ok := req.Context().Deadline(); ok {
 		h.next.ServeHTTP(rw, req)
 		return
-	}
-
-	rc := http.NewResponseController(rw)
-
-	// Same guard as for the deadline: without a body, net/http reads in the background.
-	if req.ContentLength != 0 {
-		if err := rc.SetReadDeadline(time.Time{}); err != nil {
-			logger.Debug().Err(err).Msg("Unable to clear read deadline")
-		}
 	}
 
 	// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
@@ -183,8 +218,8 @@ type statusRewriter struct {
 func (s *statusRewriter) WriteHeader(code int) {
 	s.armWriteDeadline()
 
-	// Past the deadline, a 5xx means the request ran out of time. 499 as well: the read deadline expires along with
-	// the context one, and when it wins, net/http cancels the request context, which the proxy reports as a client disconnection.
+	// Past the deadline, a 5xx means the request ran out of time. 499 as well: when the read deadline expires along with
+	// the context one, and wins, net/http cancels the request context, which the proxy reports as a client disconnection.
 	if (code >= http.StatusInternalServerError || code == httputil.StatusClientClosedRequest) &&
 		!time.Now().Before(s.deadline) {
 		code = http.StatusGatewayTimeout

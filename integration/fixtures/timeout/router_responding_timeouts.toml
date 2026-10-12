@@ -24,9 +24,9 @@
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    rule = "Path(`/roundTrip`)"
+    rule = "Path(`/writeTimeout`)"
     [http.routers.router1.respondingTimeouts]
-      roundTrip = "1s"
+      writeTimeout = "1s"
 
 [http.services]
   [http.services.service1]

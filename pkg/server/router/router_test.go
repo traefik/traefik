@@ -2293,23 +2293,23 @@ func TestRouterManager_RespondingTimeouts(t *testing.T) {
 		expectedErr        bool
 	}{
 		{
-			desc:               "roundTrip shorter than the backend delay yields a 504",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(10 * time.Millisecond))},
+			desc:               "writeTimeout shorter than the backend delay yields a 504",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{WriteTimeout: new(ptypes.Duration(10 * time.Millisecond))},
 			expectedStatus:     http.StatusGatewayTimeout,
 		},
 		{
-			desc:               "roundTrip longer than the backend delay overrides the entrypoint writeTimeout",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(time.Hour))},
+			desc:               "writeTimeout longer than the backend delay overrides the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{WriteTimeout: new(ptypes.Duration(time.Hour))},
 			expectedStatus:     http.StatusOK,
 		},
 		{
-			desc:               "zero roundTrip lifts the entrypoint writeTimeout",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(0))},
+			desc:               "zero writeTimeout lifts the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{WriteTimeout: new(ptypes.Duration(0))},
 			expectedStatus:     http.StatusOK,
 		},
 		{
-			desc:               "unset roundTrip keeps the entrypoint writeTimeout",
-			respondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+			desc:               "unset writeTimeout keeps the entrypoint writeTimeout",
+			respondingTimeouts: &dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Hour))},
 			expectedErr:        true,
 		},
 		{

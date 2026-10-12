@@ -62,9 +62,13 @@ type Route struct {
 
 // RouterRespondingTimeouts holds the timeouts for responding to client requests.
 type RouterRespondingTimeouts struct {
-	// RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
-	// If zero, no timeout applies, and the entrypoint read and write timeouts are lifted for the router.
-	RoundTrip *intstr.IntOrString `json:"roundTrip,omitempty"`
+	// ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
+	// from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // RouterObservabilityConfig holds the observability configuration for a router.

@@ -26,14 +26,14 @@
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    rule = "Path(`/roundTrip`)"
+    rule = "Path(`/writeTimeout`)"
     [http.routers.router1.respondingTimeouts]
-      roundTrip = "3s"
+      writeTimeout = "3s"
 
-  # No roundTrip: the entrypoint writeTimeout is the only bound on the response.
+  # No router writeTimeout: the entrypoint writeTimeout is the only bound on the response.
   [http.routers.router2]
     service = "service1"
-    rule = "Path(`/noRoundTrip`)"
+    rule = "Path(`/noWriteTimeout`)"
 
 [http.services]
   [http.services.service1]

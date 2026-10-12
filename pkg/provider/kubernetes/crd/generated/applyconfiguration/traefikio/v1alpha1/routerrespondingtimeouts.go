@@ -35,9 +35,13 @@ import (
 //
 // RouterRespondingTimeouts holds the timeouts for responding to client requests.
 type RouterRespondingTimeoutsApplyConfiguration struct {
-	// RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
-	// If zero, no timeout applies, and the entrypoint read and write timeouts are lifted for the router.
-	RoundTrip *intstr.IntOrString `json:"roundTrip,omitempty"`
+	// ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
+	// from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // RouterRespondingTimeoutsApplyConfiguration constructs a declarative configuration of the RouterRespondingTimeouts type for use with
@@ -46,10 +50,18 @@ func RouterRespondingTimeouts() *RouterRespondingTimeoutsApplyConfiguration {
 	return &RouterRespondingTimeoutsApplyConfiguration{}
 }
 
-// WithRoundTrip sets the RoundTrip field in the declarative configuration to the given value
+// WithReadTimeout sets the ReadTimeout field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the RoundTrip field is set to the value of the last call.
-func (b *RouterRespondingTimeoutsApplyConfiguration) WithRoundTrip(value intstr.IntOrString) *RouterRespondingTimeoutsApplyConfiguration {
-	b.RoundTrip = &value
+// If called multiple times, the ReadTimeout field is set to the value of the last call.
+func (b *RouterRespondingTimeoutsApplyConfiguration) WithReadTimeout(value intstr.IntOrString) *RouterRespondingTimeoutsApplyConfiguration {
+	b.ReadTimeout = &value
+	return b
+}
+
+// WithWriteTimeout sets the WriteTimeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the WriteTimeout field is set to the value of the last call.
+func (b *RouterRespondingTimeoutsApplyConfiguration) WithWriteTimeout(value intstr.IntOrString) *RouterRespondingTimeoutsApplyConfiguration {
+	b.WriteTimeout = &value
 	return b
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
@@ -23,10 +24,20 @@ import (
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 )
 
+// wrap sets both timeouts to the same value, as an HTTPRoute request timeout does.
 func wrap(t *testing.T, timeout time.Duration, next http.Handler) http.Handler {
 	t.Helper()
 
-	handler, err := respondingtimeout.WrapHandler(timeout)(next)
+	return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{
+		ReadTimeout:  new(ptypes.Duration(timeout)),
+		WriteTimeout: new(ptypes.Duration(timeout)),
+	}, next)
+}
+
+func wrapTimeouts(t *testing.T, timeouts dynamic.RouterRespondingTimeouts, next http.Handler) http.Handler {
+	t.Helper()
+
+	handler, err := respondingtimeout.WrapHandler(timeouts)(next)
 	require.NoError(t, err)
 
 	return handler
@@ -435,20 +446,23 @@ func TestSlowBackendOverHTTP2(t *testing.T) {
 	}
 }
 
-// TestDisabledTimeoutLiftsEntryPointDeadlines guards the zero timeout over HTTP/1, where the entrypoint
+// TestDisabledTimeoutLiftsEntryPointDeadlines guards the zero timeouts over HTTP/1, where the entrypoint
 // readTimeout and writeTimeout are connection deadlines.
 func TestDisabledTimeoutLiftsEntryPointDeadlines(t *testing.T) {
 	testCases := []struct {
 		desc         string
+		timeouts     dynamic.RouterRespondingTimeouts
 		readTimeout  time.Duration
 		writeTimeout time.Duration
 	}{
 		{
-			desc:        "upload slower than the entrypoint readTimeout",
+			desc:        "zero readTimeout and upload slower than the entrypoint readTimeout",
+			timeouts:    dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(0))},
 			readTimeout: 50 * time.Millisecond,
 		},
 		{
-			desc:         "backend slower than the entrypoint writeTimeout",
+			desc:         "zero writeTimeout and backend slower than the entrypoint writeTimeout",
+			timeouts:     dynamic.RouterRespondingTimeouts{WriteTimeout: new(ptypes.Duration(0))},
 			writeTimeout: 50 * time.Millisecond,
 		},
 	}
@@ -457,7 +471,7 @@ func TestDisabledTimeoutLiftsEntryPointDeadlines(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ts := httptest.NewUnstartedServer(wrap(t, 0, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			ts := httptest.NewUnstartedServer(wrapTimeouts(t, test.timeouts, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				if _, err := io.Copy(io.Discard, req.Body); err != nil {
 					rw.WriteHeader(http.StatusBadRequest)
 					return
@@ -591,32 +605,105 @@ func TestWriteDeadlineNotLeakedToNextKeepAliveRequest(t *testing.T) {
 }
 
 func TestSlowClientBounded(t *testing.T) {
-	t.Parallel()
-
 	timeout := 100 * time.Millisecond
 
-	// The backend is healthy: only the read deadline can bound a client that stalls mid-upload, and only a
-	// deadline comparison can normalize the outcome, since the connection deadline may cancel the request
-	// context before the deadline context does.
-	ts := httptest.NewServer(wrap(t, timeout, reverseProxy(healthyBackend(t))))
+	// Without a writeTimeout, the status depends on whether the proxy sees the read timeout or the canceled
+	// request context first, so only the cases sharing the deadline check it.
+	testCases := []struct {
+		desc     string
+		wrap     func(t *testing.T, next http.Handler) http.Handler
+		expected int
+	}{
+		{
+			// Only a deadline comparison can normalize the outcome, since the connection deadline may cancel the
+			// request context before the deadline context does.
+			desc: "readTimeout sharing the writeTimeout deadline gets 504",
+			wrap: func(t *testing.T, next http.Handler) http.Handler {
+				t.Helper()
+
+				return wrap(t, timeout, next)
+			},
+			expected: http.StatusGatewayTimeout,
+		},
+		{
+			desc: "readTimeout alone",
+			wrap: func(t *testing.T, next http.Handler) http.Handler {
+				t.Helper()
+
+				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, next)
+			},
+		},
+		{
+			desc: "child router readTimeout cannot extend its parent one",
+			wrap: func(t *testing.T, next http.Handler) http.Handler {
+				t.Helper()
+
+				child := wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Hour))}, next)
+
+				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, child)
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// The backend is healthy: only the read deadline can bound a client that stalls mid-upload.
+			ts := httptest.NewServer(test.wrap(t, reverseProxy(healthyBackend(t))))
+			t.Cleanup(ts.Close)
+
+			conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			// Announce a large body and stall after a few bytes.
+			_, err = fmt.Fprintf(conn, "POST / HTTP/1.1\r\nHost: %s\r\nContent-Length: 1000\r\n\r\npartial", ts.Listener.Addr())
+			require.NoError(t, err)
+
+			require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
+
+			start := time.Now()
+			res, err := http.ReadResponse(bufio.NewReader(conn), nil)
+			require.NoError(t, err)
+
+			if test.expected != 0 {
+				assert.Equal(t, test.expected, res.StatusCode)
+			}
+			assert.Less(t, time.Since(start), 10*timeout)
+		})
+	}
+}
+
+// TestReadTimeoutDoesNotBoundBackend guards that the read deadline only bounds the body: net/http clears it once
+// the body is read, before reading in the background to detect a client disconnection.
+func TestReadTimeoutDoesNotBoundBackend(t *testing.T) {
+	t.Parallel()
+
+	ts := httptest.NewServer(wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(50 * time.Millisecond))},
+		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if _, err := io.Copy(io.Discard, req.Body); err != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			select {
+			case <-req.Context().Done():
+				rw.WriteHeader(httputil.StatusClientClosedRequest)
+			case <-time.After(200 * time.Millisecond):
+				rw.WriteHeader(http.StatusOK)
+			}
+		})))
 	t.Cleanup(ts.Close)
 
-	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-
-	// Announce a large body and stall after a few bytes: only the read deadline can bound this.
-	_, err = fmt.Fprintf(conn, "POST / HTTP/1.1\r\nHost: %s\r\nContent-Length: 1000\r\n\r\npartial", ts.Listener.Addr())
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, ts.URL, strings.NewReader("body"))
 	require.NoError(t, err)
 
-	require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
-
-	start := time.Now()
-	res, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	res, err := ts.Client().Do(req)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
 
-	assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
-	assert.Less(t, time.Since(start), 10*timeout)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 // TestEarlyResponseDoesNotWaitForStalledUpload guards the read deadline being left armed on return: the
@@ -671,7 +758,7 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			// A roundTrip far beyond the entrypoint write timeout: the deadline the flush runs under tells
+			// A timeout far beyond the entrypoint write timeout: the deadline the flush runs under tells
 			// unambiguously which of the two the middleware left on the connection.
 			ts := httptest.NewUnstartedServer(wrap(t, time.Hour, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				_, _ = rw.Write([]byte("ok"))
@@ -708,7 +795,7 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 
 			assert.False(t, deadline.IsZero())
 			// The flush runs right after the handler, so the recorded deadline is start+writeTimeout within the
-			// flush latency; a tolerance well under the 1h roundTrip proves it is the writeTimeout, not the roundTrip.
+			// flush latency; a tolerance well under the 1h timeout proves it is the entrypoint writeTimeout, not the router one.
 			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, 2*time.Second)
 		})
 	}

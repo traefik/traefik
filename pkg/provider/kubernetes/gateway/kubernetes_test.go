@@ -1231,7 +1231,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Rule:               `Host("foo.com") && Path("/bar")`,
 							Priority:           100010,
 							RuleSyntax:         "default",
-							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(10 * time.Second))},
+							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(10 * time.Second)), WriteTimeout: new(ptypes.Duration(10 * time.Second))},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-6bebfd4e0e692b59df74": {
 							ParentRefs:         []string{"listener-web-http-5b3226d4ebd42b7200f1"},
@@ -1239,7 +1239,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Rule:               `Host("foo.com") && Path("/baz")`,
 							Priority:           100009,
 							RuleSyntax:         "default",
-							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{RoundTrip: new(ptypes.Duration(0))},
+							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(0)), WriteTimeout: new(ptypes.Duration(0))},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-c465583028340322911a": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},

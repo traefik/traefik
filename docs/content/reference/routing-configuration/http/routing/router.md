@@ -33,7 +33,8 @@ http:
         accessLogs: true
         tracing: true
       respondingTimeouts:
-        roundTrip: "30s"
+        readTimeout: "30s"
+        writeTimeout: "30s"
       parentRefs:
         - "parent-router-1"
         - "parent-router-2"
@@ -64,7 +65,8 @@ http:
       tracing = true
 
     [http.routers.my-router.respondingTimeouts]
-      roundTrip = "30s"
+      readTimeout = "30s"
+      writeTimeout = "30s"
 ```
 
 ```yaml tab="Labels"
@@ -81,7 +83,8 @@ labels:
   - "traefik.http.routers.my-router.observability.metrics=true"
   - "traefik.http.routers.my-router.observability.accessLogs=true"
   - "traefik.http.routers.my-router.observability.tracing=true"
-  - "traefik.http.routers.my-router.respondingtimeouts.roundtrip=30s"
+  - "traefik.http.routers.my-router.respondingtimeouts.readtimeout=30s"
+  - "traefik.http.routers.my-router.respondingtimeouts.writetimeout=30s"
 ```
 
 ```json tab="Tags"
@@ -99,7 +102,8 @@ labels:
     "traefik.http.routers.my-router.observability.metrics=true",
     "traefik.http.routers.my-router.observability.accessLogs=true",
     "traefik.http.routers.my-router.observability.tracing=true",
-    "traefik.http.routers.my-router.respondingtimeouts.roundtrip=30s",
+    "traefik.http.routers.my-router.respondingtimeouts.readtimeout=30s",
+    "traefik.http.routers.my-router.respondingtimeouts.writetimeout=30s",
   ]
 }
 ```
@@ -118,32 +122,37 @@ labels:
 | <a id="opt-tls-domains" href="#opt-tls-domains" title="#opt-tls-domains">`tls.domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. When using ACME certificate resolvers, domains are automatically extracted from router rules, making this option optional.                                                                                       |                             | No       |
 | <a id="opt-observability" href="#opt-observability" title="#opt-observability">`observability`</a> | Observability configuration for the router. Allows fine-grained control over access logs, metrics, and tracing per router. See [Observability](./observability.md) for details.                                                                                                                                      | Inherited from entry points | No       |
 | <a id="opt-observability-traceVerbosity" href="#opt-observability-traceVerbosity" title="#opt-observability-traceVerbosity">`observability.traceVerbosity`</a> | Defines the verbosity level of tracing for this router. Accepted values are `minimal` and `detailed`.                                                                                                                                                                                                               | `minimal`                   | No       |
-| <a id="opt-respondingTimeouts-roundTrip" href="#opt-respondingTimeouts-roundTrip" title="#opt-respondingTimeouts-roundTrip">`respondingTimeouts.roundTrip`</a> | The maximum duration for the whole client transaction (client → proxy → backend → proxy → client) on this router. On expiry before the response has started, the client receives a `504 Gateway Timeout`; afterwards, the connection is closed. `0` means no timeout, and lifts the entry point `readTimeout` and `writeTimeout` for the router. When unset, only the entry point timeouts apply. See [Responding Timeouts](#responding-timeouts) for details. | Entry point timeouts        | No       |
+| <a id="opt-respondingTimeouts-readTimeout" href="#opt-respondingTimeouts-readTimeout" title="#opt-respondingTimeouts-readTimeout">`respondingTimeouts.readTimeout`</a> | The maximum duration for reading the request body, from when the router receives the request. `0` means no timeout, and lifts the entry point `readTimeout` for the router. When unset, the entry point `readTimeout` applies. See [Responding Timeouts](#responding-timeouts) for details. | Entry point `readTimeout`   | No       |
+| <a id="opt-respondingTimeouts-writeTimeout" href="#opt-respondingTimeouts-writeTimeout" title="#opt-respondingTimeouts-writeTimeout">`respondingTimeouts.writeTimeout`</a> | The maximum duration before timing out writes of the response, from when the router receives the request. It includes the wait for the backend: on expiry before the response has started, the client receives a `504 Gateway Timeout`; afterwards, the connection is closed. `0` means no timeout, and lifts the entry point `writeTimeout` for the router. When unset, the entry point `writeTimeout` applies. See [Responding Timeouts](#responding-timeouts) for details. | Entry point `writeTimeout`  | No       |
 | <a id="opt-parentRefs" href="#opt-parentRefs" title="#opt-parentRefs">`parentRefs`</a> | References to parent router names for multi-layer routing. When specified, this router becomes a child router that processes requests after parent routers have applied their middlewares. See [Multi-Layer Routing](../routing/multi-layer-routing.md) for details.                                        |                             | No       |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The name of the service that will handle the matched requests. Services can be load balancer services, weighted round robin, mirroring, or failover services. See [Service](../load-balancing/service.md) for details.                                                                                               |                             | Yes      |
 
 ## Responding Timeouts
 
-The `respondingTimeouts.roundTrip` option bounds the **whole transaction** on a router: the timer starts when the router receives the request (right after the request headers are parsed), and covers the request body upload, the backend processing (including all retry attempts), and the response delivery.
-It bounds slow clients too: a slow upload or a slow response read is interrupted at the deadline.
+The router `respondingTimeouts` mirror the `readTimeout` and `writeTimeout` of the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout), for the requests matched by the router.
+Both count from when the router receives the request, right after the request headers are parsed. A router only exists once the headers are read, so the time spent reading them stays bounded by the entry point timeouts only.
 
-Unlike the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) (which carries `readTimeout`/`writeTimeout`/`idleTimeout`), the router-level `respondingTimeouts` exposes only `roundTrip`.
+- `readTimeout` bounds the request body upload. Unlike the entry point one, it does not cover the request headers.
+- `writeTimeout` bounds the backend processing (including all retry attempts) and the response delivery.
+  When it expires **before** the response has started, the client receives a `504 Gateway Timeout`, where the entry point `writeTimeout` would close the connection.
+  When it expires **after** the response has started (streaming), the transaction is torn down and the connection is closed.
 
-When the deadline expires **before** the response has started, the client receives a `504 Gateway Timeout`.
-When it expires **after** the response has started (streaming), the transaction is torn down and the connection is closed.
+Both timeouts count from the same instant, so setting them to the same value bounds the whole transaction (client → proxy → backend → proxy → client) with a single deadline.
+This is how the Kubernetes Gateway API HTTPRoute `timeouts.request` is mapped.
 
-**Interaction with entry point timeouts.** For requests matched by the router, `roundTrip` **replaces** the connection deadlines armed from the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) (`readTimeout`/`writeTimeout`), in both directions: a `roundTrip` longer than the entry point timeouts extends the window for requests matched by that router, while a shorter one tightens it.
-A `roundTrip` of `0` lifts the entry point `readTimeout` and `writeTimeout` for requests matched by the router, without setting any timeout of its own.
+**Interaction with entry point timeouts.** For requests matched by the router, each router timeout **replaces** the matching entry point one, in both directions: a longer timeout extends the window for requests matched by that router, while a shorter one tightens it.
+A timeout of `0` lifts the matching entry point timeout for requests matched by the router, without setting any timeout of its own.
+An unset timeout leaves the entry point one in force.
 
-!!! warning "A long `roundTrip` relaxes the entry point's slow-client protection"
+!!! warning "A long `readTimeout` relaxes the entry point's slow-client protection"
 
-    The entry point `readTimeout` (default `60s`) caps how long a client may take to send its request, which limits slow-client attacks such as Slowloris. A `roundTrip` longer than `readTimeout` lifts that cap for the matched requests: a slow client on that route can then hold a connection open for the whole `roundTrip` duration. Because connection limits are enforced per entry point, that cost is borne by everything served by the entry point, not by the router alone. A `roundTrip` of `0` lifts that cap entirely. Set a long or zero `roundTrip` only on routes that need it.
+    The entry point `readTimeout` (default `60s`) caps how long a client may take to send its request, which limits slow-client attacks such as Slowloris. A router `readTimeout` longer than the entry point one lifts that cap for the matched requests: a slow client on that route can then hold a connection open for the whole `readTimeout` duration. Because connection limits are enforced per entry point, that cost is borne by everything served by the entry point, not by the router alone. A `readTimeout` of `0` lifts that cap entirely. Set a long or zero `readTimeout` only on routes that need it.
 
-**Protocol upgrades (WebSocket, `kubectl exec`, ...).** For upgrade requests (any `Connection: Upgrade` protocol), the deadline bounds the **handshake only** and is disarmed at the protocol switch: an established tunnel is never torn down by this timeout, while a backend that never answers the handshake still yields a `504`.
+**Protocol upgrades (WebSocket, `kubectl exec`, ...).** For upgrade requests (any `Connection: Upgrade` protocol), the `writeTimeout` deadline bounds the **handshake only** and is disarmed at the protocol switch: an established tunnel is never torn down by this timeout, while a backend that never answers the handshake still yields a `504`.
 
-**Streaming responses (SSE, gRPC streaming, ...).** Response-streaming routes are not detectable at request time, so the timeout applies to them as well: omit the option (or set it to `0`) on such routers.
+**Streaming responses (SSE, gRPC streaming, ...).** Response-streaming routes are not detectable at request time, so the `writeTimeout` applies to them as well: omit it (or set it to `0`) on such routers.
 
-**Multi-layer routing.** When a parent router and a child router both define `respondingTimeouts`, the most restrictive deadline wins: a child router cannot extend the budget set by its parent.
+**Multi-layer routing.** When a parent router and a child router both define `respondingTimeouts`, the most restrictive deadline wins, for each timeout: a child router cannot extend the budget set by its parent.
 
 !!! warning "Experimental `fast` proxy"
 
