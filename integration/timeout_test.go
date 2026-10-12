@@ -66,7 +66,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/roundTrip`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/writeTimeout`)"))
 	require.NoError(s.T(), err)
 
 	// Check that timeout service is available.
@@ -78,8 +78,8 @@ func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
 	// so the "no leaked deadline" assertion actually exercises connection reuse.
 	client := &http.Client{Transport: &http.Transport{MaxIdleConns: 1, MaxIdleConnsPerHost: 1}}
 
-	// A backend answering after the router roundTrip timeout yields a 504.
-	response, err := client.Get("http://127.0.0.1:8000/roundTrip?sleep=2000")
+	// A backend answering after the router writeTimeout yields a 504.
+	response, err := client.Get("http://127.0.0.1:8000/writeTimeout?sleep=2000")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
 
@@ -88,14 +88,14 @@ func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
 	require.NoError(s.T(), err)
 	require.NoError(s.T(), response.Body.Close())
 
-	// A backend answering below the router roundTrip timeout is not affected,
+	// A backend answering below the router writeTimeout is not affected,
 	// even on the same keep-alive connection (no leaked connection deadline).
-	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=100")
+	response, err = client.Get("http://127.0.0.1:8000/writeTimeout?sleep=100")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-// TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout covers a router roundTrip on an entrypoint that
+// TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout covers a router writeTimeout on an entrypoint that
 // has its own writeTimeout: the router deadline supersedes it for the request, and the entrypoint one is
 // restored before the response is flushed, which happens after the router handler has returned.
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout() {
@@ -104,7 +104,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/roundTrip`)", "Path(`/noRoundTrip`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/writeTimeout`)", "Path(`/noWriteTimeout`)"))
 	require.NoError(s.T(), err)
 
 	// Check that timeout service is available.
@@ -116,13 +116,13 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 	// so the write-deadline restore is exercised across a real connection reuse.
 	client := &http.Client{Transport: &http.Transport{MaxIdleConns: 1, MaxIdleConnsPerHost: 1}}
 
-	// The entrypoint writeTimeout is in force: without a router roundTrip, a backend answering after it
+	// The entrypoint writeTimeout is in force: without a router writeTimeout, a backend answering after it
 	// leaves the response unwritable and the connection is closed with no response at all.
-	_, err = client.Get("http://127.0.0.1:8000/noRoundTrip?sleep=2000")
+	_, err = client.Get("http://127.0.0.1:8000/noWriteTimeout?sleep=2000")
 	require.Error(s.T(), err)
 
-	// The router roundTrip supersedes it: the very same backend now answers.
-	response, err := client.Get("http://127.0.0.1:8000/roundTrip?sleep=2000")
+	// The router writeTimeout supersedes it: the very same backend now answers.
+	response, err := client.Get("http://127.0.0.1:8000/writeTimeout?sleep=2000")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 
@@ -131,9 +131,9 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 	require.NoError(s.T(), err)
 	require.NoError(s.T(), response.Body.Close())
 
-	// Past the roundTrip the 504 still reaches the client: the response is flushed once the router handler
+	// Past the writeTimeout the 504 still reaches the client: the response is flushed once the router handler
 	// has returned, under a write deadline restored from the entrypoint writeTimeout rather than an expired one.
-	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=4000")
+	response, err = client.Get("http://127.0.0.1:8000/writeTimeout?sleep=4000")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
 
@@ -143,12 +143,12 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 
 	// The next request on the same keep-alive connection is unaffected: the server re-arms the entrypoint
 	// write deadline per request.
-	response, err = client.Get("http://127.0.0.1:8000/roundTrip?sleep=100")
+	response, err = client.Get("http://127.0.0.1:8000/writeTimeout?sleep=100")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-// TestRouterRespondingTimeoutsWebSocket covers the upgrade path of the router roundTrip: an established
+// TestRouterRespondingTimeoutsWebSocket covers the upgrade path of the router writeTimeout: an established
 // WebSocket tunnel is never severed at the deadline (the handshake timer is disarmed at the protocol switch),
 // while a hung upgrade handshake still yields a 504 (pre-101 the gateway has not responded).
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
@@ -193,7 +193,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/ws`)", "Path(`/ws-hang`)"))
 	require.NoError(s.T(), err)
 
-	// An established tunnel survives well past the 1s roundTrip: the timer is disarmed at the protocol switch.
+	// An established tunnel survives well past the 1s writeTimeout: the timer is disarmed at the protocol switch.
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
 	require.NoError(s.T(), err)
 	s.T().Cleanup(func() { _ = conn.Close() })
@@ -206,7 +206,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "after-deadline", string(msg))
 
-	// A hung upgrade handshake yields a 504 once the roundTrip elapses: pre-101 the gateway has not responded.
+	// A hung upgrade handshake yields a 504 once the writeTimeout elapses: pre-101 the gateway has not responded.
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws-hang", nil)
 	require.Error(s.T(), err)
 	require.NotNil(s.T(), resp)
@@ -219,22 +219,22 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/roundTrip`)"))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/writeTimeout`)"))
 	require.NoError(s.T(), err)
 
 	transport := &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: "snitest.com"}}
 	defer func() { _ = transport.Close() }()
 
 	// Wait for the HTTP/3 entry point to be ready with a below-timeout request.
-	fastReq, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/roundTrip?sleep=100", nil)
+	fastReq, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/writeTimeout?sleep=100", nil)
 	require.NoError(s.T(), err)
 	fastReq.Host = "snitest.com"
 	require.NoError(s.T(), try.RequestWithTransport(fastReq, 60*time.Second, transport, try.StatusCodeIs(http.StatusOK)))
 
 	client := &http.Client{Transport: transport}
 
-	// A backend answering after the router roundTrip timeout yields a 504 over HTTP/3.
-	slowReq, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/roundTrip?sleep=2000", nil)
+	// A backend answering after the router writeTimeout yields a 504 over HTTP/3.
+	slowReq, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/writeTimeout?sleep=2000", nil)
 	require.NoError(s.T(), err)
 	slowReq.Host = "snitest.com"
 
@@ -248,7 +248,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {
 
 	// A subsequent below-timeout request on the same HTTP/3 connection is unaffected,
 	// as the deadline is per-stream and cannot leak to another stream.
-	fastReq2, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/roundTrip?sleep=100", nil)
+	fastReq2, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/writeTimeout?sleep=100", nil)
 	require.NoError(s.T(), err)
 	fastReq2.Host = "snitest.com"
 

@@ -31,7 +31,8 @@ http:
         tracing: true
         traceVerbosity: foobar
       respondingTimeouts:
-        roundTrip: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
     Router1:
       entryPoints:
         - foobar
@@ -61,7 +62,8 @@ http:
         tracing: true
         traceVerbosity: foobar
       respondingTimeouts:
-        roundTrip: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
   services:
     Service01:
       failover:

@@ -13,7 +13,8 @@ spec:
     kind: Rule
     priority: 12
     respondingTimeouts:
-      roundTrip: 10s
+      readTimeout: 5s
+      writeTimeout: 10s
     services:
     - name: whoami
       port: 80

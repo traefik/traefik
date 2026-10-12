@@ -143,13 +143,22 @@ spec:
                       description: RespondingTimeouts defines the timeouts for responding
                         to client requests.
                       properties:
-                        roundTrip:
+                        readTimeout:
                           anyOf:
                           - type: integer
                           - type: string
                           description: |-
-                            RoundTrip defines the maximum duration for the whole client transaction (client -> proxy -> backend -> proxy -> client).
-                            If zero, no timeout applies, and the entrypoint read and write timeouts are lifted for the router.
+                            ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
+                            If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+                          x-kubernetes-int-or-string: true
+                        writeTimeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: |-
+                            WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
+                            from when the router receives the request.
+                            If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
                           x-kubernetes-int-or-string: true
                       type: object
                     services:

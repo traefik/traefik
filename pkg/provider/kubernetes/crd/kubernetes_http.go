@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -168,14 +169,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				r.Observability.TraceVerbosity = route.Observability.TraceVerbosity
 			}
 
-			if route.RespondingTimeouts != nil && route.RespondingTimeouts.RoundTrip != nil {
-				var roundTrip ptypes.Duration
-				if err := roundTrip.Set(route.RespondingTimeouts.RoundTrip.String()); err != nil {
-					// An invalid duration only disables the timeout: the route stays routable.
-					logger.Error().Err(err).Msg("Error while reading RoundTrip")
-				} else {
-					r.RespondingTimeouts = &dynamic.RouterRespondingTimeouts{RoundTrip: &roundTrip}
-				}
+			if route.RespondingTimeouts != nil {
+				r.RespondingTimeouts = buildRouterRespondingTimeouts(logger, route.RespondingTimeouts)
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -217,6 +212,36 @@ func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dyna
 		Namespace: ingressRoute.Namespace,
 		Name:      ingressRoute.Name,
 	}
+}
+
+// buildRouterRespondingTimeouts returns the router responding timeouts, or nil when none is set.
+// An invalid duration only leaves its timeout unset: the route stays routable.
+func buildRouterRespondingTimeouts(logger zerolog.Logger, timeouts *traefikv1alpha1.RouterRespondingTimeouts) *dynamic.RouterRespondingTimeouts {
+	var result dynamic.RouterRespondingTimeouts
+
+	if timeouts.ReadTimeout != nil {
+		var readTimeout ptypes.Duration
+		if err := readTimeout.Set(timeouts.ReadTimeout.String()); err != nil {
+			logger.Error().Err(err).Msg("Error while reading ReadTimeout")
+		} else {
+			result.ReadTimeout = &readTimeout
+		}
+	}
+
+	if timeouts.WriteTimeout != nil {
+		var writeTimeout ptypes.Duration
+		if err := writeTimeout.Set(timeouts.WriteTimeout.String()); err != nil {
+			logger.Error().Err(err).Msg("Error while reading WriteTimeout")
+		} else {
+			result.WriteTimeout = &writeTimeout
+		}
+	}
+
+	if result.ReadTimeout == nil && result.WriteTimeout == nil {
+		return nil
+	}
+
+	return &result
 }
 
 func makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewares []traefikv1alpha1.MiddlewareRef, crossProviderNamespaces []string, allowCrossNamespace bool, nb nameBuilder) ([]string, error) {
