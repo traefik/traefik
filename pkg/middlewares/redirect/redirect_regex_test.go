@@ -17,6 +17,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		config         dynamic.RedirectRegex
 		method         string
 		url            string
+		host           string
 		headers        map[string]string
 		secured        bool
 		expectedURL    string
@@ -141,7 +142,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		{
 			desc: "www-redirect without port",
 			config: dynamic.RedirectRegex{
-				Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 				Replacement: "$1://example.com$2/$3",
 				Permanent:   true,
 			},
@@ -152,7 +153,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		{
 			desc: "www-redirect with port",
 			config: dynamic.RedirectRegex{
-				Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 				Replacement: "$1://example.com$2/$3",
 				Permanent:   true,
 			},
@@ -163,7 +164,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		{
 			desc: "www-redirect without port, root path",
 			config: dynamic.RedirectRegex{
-				Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 				Replacement: "$1://example.com$2/$3",
 				Permanent:   true,
 			},
@@ -174,13 +175,50 @@ func TestRedirectRegexHandler(t *testing.T) {
 		{
 			desc: "www-redirect HTTPS without port",
 			config: dynamic.RedirectRegex{
-				Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
 				Replacement: "$1://example.com$2/$3",
 				Permanent:   true,
 			},
 			secured:        true,
 			url:            "https://www.example.com/path",
 			expectedURL:    "https://example.com/path",
+			expectedStatus: http.StatusMovedPermanently,
+		},
+		{
+			// A malformed port in the Host header must still be redirected, and must not leak into the Location.
+			desc: "www-redirect with an empty port",
+			config: dynamic.RedirectRegex{
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
+				Replacement: "$1://example.com$2/$3",
+				Permanent:   true,
+			},
+			url:            "/path",
+			host:           "www.example.com:",
+			expectedURL:    "http://example.com/path",
+			expectedStatus: http.StatusMovedPermanently,
+		},
+		{
+			desc: "www-redirect with a non-numeric port",
+			config: dynamic.RedirectRegex{
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
+				Replacement: "$1://example.com$2/$3",
+				Permanent:   true,
+			},
+			url:            "/path",
+			host:           "www.example.com:x",
+			expectedURL:    "http://example.com/path",
+			expectedStatus: http.StatusMovedPermanently,
+		},
+		{
+			desc: "www-redirect with a port followed by a delimiter",
+			config: dynamic.RedirectRegex{
+				Regex:       `^(https?)://(?:\[[^/\]]*\]|[^/:]+)(:[0-9]+)?[^/]*/(.*?)/?$`,
+				Replacement: "$1://example.com$2/$3",
+				Permanent:   true,
+			},
+			url:            "/path",
+			host:           "www.example.com:8080;x",
+			expectedURL:    "http://example.com:8080/path",
 			expectedStatus: http.StatusMovedPermanently,
 		},
 		{
@@ -219,6 +257,9 @@ func TestRedirectRegexHandler(t *testing.T) {
 				}
 
 				req := httptest.NewRequest(method, test.url, nil)
+				if test.host != "" {
+					req.Host = test.host
+				}
 				if test.secured {
 					req.TLS = &tls.ConnectionState{}
 				}

@@ -184,7 +184,7 @@ func (m *Muxer) HasRoutes() bool {
 	return len(m.routes) > 0
 }
 
-// ParseHostSNI extracts the HostSNIs declared in a rule.
+// ParseHostSNI extracts the positive HostSNI matchers values (not negated) declared in a rule.
 // This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
 	var matchers []string
@@ -210,7 +210,7 @@ func ParseHostSNI(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
+	return buildTree().ParsePositiveMatchers([]string{"HostSNI"}), nil
 }
 
 // routes implements sort.Interface.

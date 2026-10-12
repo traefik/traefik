@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react'
 import { FaencyProvider } from '@traefik-labs/faency'
 import { HelmetProvider } from 'react-helmet-async'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { SWRConfig } from 'swr'
 import { afterEach } from 'vitest'
 

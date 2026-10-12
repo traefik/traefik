@@ -315,6 +315,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	// If the entry point exists without an address, which happens when only its options are configured,
+	// this ensures the address defaults to :8080.
+	if ep, ok := c.EntryPoints[DefaultInternalEntryPointName]; ok && ep.Address == "" {
+		ep.Address = ":8080"
+	}
+
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
 	}
@@ -407,19 +413,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -546,6 +544,50 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+const protocolTCP = "tcp"
+
+// HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
+// and therefore can serve HTTP requests.
+func (c *Configuration) HasTCPEntryPoint() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == protocolTCP {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDeniedEncodedCharacters reports whether an entryPoint serving HTTP requests
+// disallows at least one encoded character in the request path.
+// UDP entryPoints are left out because they never parse a request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != protocolTCP {
+			continue
+		}
+
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Configuration) hasUserDefinedEntrypoint() bool {

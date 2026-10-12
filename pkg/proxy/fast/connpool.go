@@ -2,12 +2,14 @@ package fast
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -322,6 +324,12 @@ type connPool struct {
 	bufferPool            pool[[]byte]
 	limitedReaderPool     pool[*io.LimitedReader]
 	doneCh                chan struct{}
+
+	// dedicated pools are bound to a single frontend connection to isolate a connection-bound
+	// NTLM/Negotiate authentication (see stickyConnPools). They run no background janitor so they can be
+	// garbage collected with that frontend connection, hence their idle connections self-expire through a
+	// read deadline instead.
+	dedicated bool
 }
 
 // newConnPool creates a new connPool.
@@ -368,6 +376,10 @@ func (c *connPool) AcquireConn() (*conn, error) {
 		}
 
 		if !co.isStale() {
+			// Clear the idle read deadline set on release so the connection can serve without expiring.
+			if c.dedicated {
+				_ = co.SetReadDeadline(time.Time{})
+			}
 			return co, nil
 		}
 
@@ -391,6 +403,21 @@ func (c *connPool) ReleaseConn(co *conn) {
 
 	co.idleAt = time.Now()
 	c.releaseConn(co)
+}
+
+// clone returns a dedicated pool sharing this pool's dialer and timeouts but isolated from it, used to pin a
+// connection-bound NTLM/Negotiate authentication to a single frontend connection so the authenticated backend
+// connection never returns to the shared pool.
+// Unlike the shared pool it runs no background janitor: it is bound to the lifetime of a frontend connection and
+// must be garbage collectable once that connection is gone, so its idle connections self-expire (see releaseConn).
+func (c *connPool) clone() *connPool {
+	return &connPool{
+		dialer:                c.dialer,
+		idleConns:             make(chan *conn, cap(c.idleConns)),
+		idleConnTimeout:       c.idleConnTimeout,
+		responseHeaderTimeout: c.responseHeaderTimeout,
+		dedicated:             true,
+	}
 }
 
 // cleanIdleConns is a routine cleaning the expired connections at a regular basis.
@@ -435,6 +462,13 @@ func (c *connPool) acquireConn() (*conn, error) {
 }
 
 func (c *connPool) releaseConn(co *conn) {
+	// A dedicated pool has no background janitor, so its idle connections must expire on their own: the read
+	// deadline makes the connection's readLoop return (and close it) once the idle timeout elapses without reuse,
+	// keeping the pool garbage collectable together with its frontend connection.
+	if c.dedicated && c.idleConnTimeout > 0 {
+		_ = co.SetReadDeadline(time.Now().Add(c.idleConnTimeout))
+	}
+
 	select {
 	case c.idleConns <- co:
 
@@ -470,6 +504,64 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 	go newConn.readLoop()
 
 	c.releaseConn(newConn)
+}
+
+type connPoolsKeyType string
+
+var connPoolsKey connPoolsKeyType = "connPools"
+
+// AddConnPoolsOnContext adds an empty holder in the frontend connection context to store the dedicated connection
+// pools isolating connection-bound NTLM/Negotiate authentications, mirroring service.AddTransportOnContext for the
+// FastProxy connection pools.
+func AddConnPoolsOnContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, connPoolsKey, &stickyConnPools{})
+}
+
+// stickyConnPools holds the dedicated connection pools bound to a single frontend connection, keyed by the shared
+// pool that owns them, so a frontend connection carrying an NTLM/Negotiate credential to a backend gets its own
+// pool for that backend and never shares the authenticated connection with another frontend connection.
+// It is lazily allocated, as most frontend connections never reach an NTLM or Negotiate backend.
+type stickyConnPools struct {
+	mu    sync.Mutex
+	pools map[*connPool]*connPool
+}
+
+func (s *stickyConnPools) get(owner *connPool) *connPool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.pools[owner]
+}
+
+// stick returns the dedicated pool for the given owner on this frontend connection, creating it on the first call
+// and returning the existing one afterwards, so concurrent requests (HTTP/2 streams) share the same dedicated pool.
+func (s *stickyConnPools) stick(owner *connPool) *connPool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if pool, ok := s.pools[owner]; ok {
+		return pool
+	}
+
+	pool := owner.clone()
+
+	if s.pools == nil {
+		s.pools = make(map[*connPool]*connPool)
+	}
+	s.pools[owner] = pool
+
+	return pool
+}
+
+// containsNTLMorNegotiate reports whether any of the given Authorization header values carries an NTLM or Kerberos
+// (Negotiate) credential.
+func containsNTLMorNegotiate(h []string) bool {
+	return slices.ContainsFunc(h, func(s string) bool {
+		// RFC 9110 section 11.1 defines the auth-scheme as case-insensitive,
+		// hence a credential is matched on its scheme token whatever its case.
+		scheme, _, _ := strings.Cut(s, " ")
+		return strings.EqualFold(scheme, "NTLM") || strings.EqualFold(scheme, "Negotiate")
+	})
 }
 
 // isBodyAllowedForStatus reports whether a given response status code permits a body.

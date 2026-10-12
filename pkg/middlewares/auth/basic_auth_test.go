@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -223,12 +224,12 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
-	hashCount := 0
+	var hashCount atomic.Int64
 	ba := authMiddleware.(*basicAuth)
 	ba.checkSecret = func(password, secret string) bool {
-		hashCount++
+		hashCount.Add(1)
 		// delay to ensure the second request arrives
-		time.Sleep(time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		return true
 	}
 
@@ -251,7 +252,59 @@ func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	}
 
 	wg.Wait()
-	assert.Equal(t, 1, hashCount)
+	assert.Equal(t, int64(1), hashCount.Load())
+}
+
+func TestBasicAuthConcurrentNoUserEnumeration(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	auth := dynamic.BasicAuth{
+		Users: []string{"test:$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e"},
+	}
+
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+	require.NoError(t, err)
+
+	var hashCount atomic.Int64
+	proceed := make(chan struct{})
+
+	// Hold the computations in flight, to give the other request the opportunity to join the singleflight call.
+	ba := authMiddleware.(*basicAuth)
+	ba.checkSecret = func(password, secret string) bool {
+		hashCount.Add(1)
+		<-proceed
+
+		return false
+	}
+
+	ts := httptest.NewServer(authMiddleware)
+	t.Cleanup(ts.Close)
+
+	// The release must also run on an early exit, or the handlers held in flight would deadlock ts.Close.
+	release := sync.OnceFunc(func() { close(proceed) })
+	t.Cleanup(release)
+
+	var wg sync.WaitGroup
+
+	for _, user := range []string{"unknown1", "unknown2"} {
+		wg.Go(func() {
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			req.SetBasicAuth(user, "test")
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+		})
+	}
+
+	// A deduplicated request never reaches checkSecret, leaving the condition unsatisfied.
+	assert.Eventually(t, func() bool { return hashCount.Load() == 2 }, 5*time.Second, 10*time.Millisecond)
+
+	release()
+	wg.Wait()
 }
 
 // TestBasicAuthConcurrentNoKeyCollision ensures an unconfigured user cannot inherit
@@ -315,6 +368,75 @@ func TestBasicAuthConcurrentNoKeyCollision(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	assert.NotEqual(t, "admin", forwardedUser)
+}
+
+// Test_singleflightKey pins the two properties the key must hold: identical credentials collapse to
+// one call, and distinct pairs never collide. The colon cases cover boundaries no client can submit,
+// since http.Request.BasicAuth cuts on the first colon.
+func Test_singleflightKey(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc          string
+		user          string
+		password      string
+		otherUser     string
+		otherPassword string
+		equal         bool
+	}{
+		{
+			desc:          "identical credentials share a call",
+			user:          "viewer",
+			password:      "test",
+			otherUser:     "viewer",
+			otherPassword: "test",
+			equal:         true,
+		},
+		{
+			desc:          "colon moved across the user boundary",
+			user:          "viewer",
+			password:      "admin:test",
+			otherUser:     "viewer:admin",
+			otherPassword: "test",
+		},
+		{
+			desc:          "user boundary shifted into the password",
+			user:          "ab",
+			password:      "cd",
+			otherUser:     "a",
+			otherPassword: "bcd",
+		},
+		{
+			desc:          "empty user and empty password swapped",
+			user:          "",
+			password:      "viewer",
+			otherUser:     "viewer",
+			otherPassword: "",
+		},
+		{
+			desc:          "password embedding the stored hash (GHSA-6765-c87h-8mrf)",
+			user:          "admin",
+			password:      "test$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e",
+			otherUser:     "viewer",
+			otherPassword: "test",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			key := singleflightKey(test.user, test.password)
+			otherKey := singleflightKey(test.otherUser, test.otherPassword)
+
+			if test.equal {
+				assert.Equal(t, key, otherKey)
+				return
+			}
+
+			assert.NotEqual(t, key, otherKey)
+		})
+	}
 }
 
 func TestBasicAuthUsersFromFile(t *testing.T) {

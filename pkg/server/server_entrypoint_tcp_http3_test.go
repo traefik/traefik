@@ -7,6 +7,8 @@ import (
 	"crypto/x509"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -16,8 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -311,6 +315,139 @@ func TestHTTP3ReadTimeout(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("server handler never observed the body read being cut off")
 	}
+}
+
+func TestHTTP3StickyBackendTransport(t *testing.T) {
+	const backendConnHeader = "X-Backend-Conn"
+
+	// RemoteAddr identifies the backend connection, so the test can observe Traefik sticking a client
+	// carrying an NTLM credential to a dedicated connection.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set(backendConnHeader, req.RemoteAddr)
+	}))
+	t.Cleanup(backend.Close)
+
+	backendURL, err := url.Parse(backend.URL)
+	require.NoError(t, err)
+
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	roundTripper, err := transportManager.GetRoundTripper("default@internal")
+	require.NoError(t, err)
+
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("example.com", &tls.Config{Certificates: []tls.Certificate{tlsCert}}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Reverse proxy the received request to the backend, keeping its Authorization header so the
+		// round tripper sticks the connection as it would for a real NTLM/Kerberos backend.
+		req.URL.Scheme = backendURL.Scheme
+		req.URL.Host = backendURL.Host
+		req.RequestURI = ""
+
+		resp, err := roundTripper.RoundTrip(req)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		rw.Header().Set(backendConnHeader, resp.Header.Get(backendConnHeader))
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	http3Addr := entryPoint.http3Server.http3conn.LocalAddr().String()
+
+	// Each transport holds its own QUIC connection to the entrypoint.
+	newClient := func() *http3.Transport {
+		transport := &http3.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:    certPool,
+				ServerName: "example.com",
+			},
+			Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+				return quic.DialAddr(ctx, http3Addr, tlsCfg, cfg)
+			},
+		}
+		t.Cleanup(func() { _ = transport.Close() })
+
+		return transport
+	}
+
+	backendConnFor := func(transport *http3.Transport, withCredential bool) string {
+		t.Helper()
+
+		req, err := http.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
+		require.NoError(t, err)
+
+		// A request carrying an NTLM/Negotiate credential is what makes the round tripper stick the connection.
+		if withCredential {
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUA==")
+		}
+
+		resp, err := transport.RoundTrip(req)
+		require.NoError(t, err)
+
+		t.Cleanup(func() { _ = resp.Body.Close() })
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		return resp.Header.Get(backendConnHeader)
+	}
+
+	firstClient, secondClient, thirdClient := newClient(), newClient(), newClient()
+
+	firstConn := backendConnFor(firstClient, false)
+	firstStickyConn := backendConnFor(firstClient, true)
+	firstReusedConn := backendConnFor(firstClient, false)
+	secondConn := backendConnFor(secondClient, false)
+	secondStickyConn := backendConnFor(secondClient, true)
+	thirdStickyConn := backendConnFor(thirdClient, true)
+
+	// The credential-carrying call moves the client onto a connection dedicated to it.
+	assert.NotEqual(t, firstConn, firstStickyConn)
+	// That dedicated connection is then reused even by a later credential-less call, which is what a
+	// connection-bound authentication relies on.
+	assert.Equal(t, firstStickyConn, firstReusedConn)
+	// A client must never be served by the connection another one is stuck to.
+	assert.NotEqual(t, firstStickyConn, secondConn)
+	// Authenticated clients each get their own dedicated connection, never shared with one another.
+	assert.NotEqual(t, firstStickyConn, secondStickyConn)
+	assert.NotEqual(t, firstStickyConn, thirdStickyConn)
+	assert.NotEqual(t, secondStickyConn, thirdStickyConn)
 }
 
 func TestNewHTTP3ServerTimeouts(t *testing.T) {

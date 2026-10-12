@@ -1,0 +1,35 @@
+---
+apiVersion: gateway.traefik.io/v1alpha1
+kind: TraefikProxy
+metadata:
+  name: conformance
+spec:
+  deployment:
+    replicas: 1
+    # The tag is fixed, and not latest, so that the provisioned pods keep the
+    # image side loaded into the node: a latest tag defaults imagePullPolicy to
+    # Always, which pulls the released Traefik over the one built from the
+    # working tree.
+    image: traefik/traefik:conformance
+  service:
+    type: LoadBalancer
+  logs:
+    level: DEBUG
+  providers:
+    # The data plane reports a route as accepted before the configuration
+    # reload serving it, while the suite sends traffic as soon as the route is
+    # accepted: the default 2s throttle leaves the previous test routes served
+    # in the meantime.
+    throttleDuration: 0s
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: traefik
+spec:
+  controllerName: traefik.io/gateway-controller
+  parametersRef:
+    group: gateway.traefik.io
+    kind: TraefikProxy
+    name: conformance

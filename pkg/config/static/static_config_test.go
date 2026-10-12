@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -37,6 +38,157 @@ func TestHasEntrypoint(t *testing.T) {
 			}
 
 			test.assert(t, cfg.hasUserDefinedEntrypoint())
+		})
+	}
+}
+
+func TestHasTCPEntryPoint(t *testing.T) {
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint",
+			want: true,
+		},
+		{
+			desc: "entryPoint without an explicit protocol",
+			entryPoints: map[string]*EntryPoint{
+				"web": {Address: ":80"},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP-only entryPoint",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+			},
+			want: false,
+		},
+		{
+			desc: "UDP and TCP entryPoints",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+				"web": {Address: ":80/tcp"},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			assert.Equal(t, test.want, cfg.HasTCPEntryPoint())
+		})
+	}
+}
+
+func TestHasDeniedEncodedCharacters(t *testing.T) {
+	allowAll := &EncodedCharacters{}
+	allowAll.SetDefaults()
+
+	denySlash := &EncodedCharacters{}
+	denySlash.SetDefaults()
+	denySlash.AllowEncodedSlash = false
+
+	denyHash := &EncodedCharacters{}
+	denyHash.SetDefaults()
+	denyHash.AllowEncodedHash = false
+
+	tests := []struct {
+		desc        string
+		api         *API
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint without encoded characters configuration",
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "one TCP entryPoint among others disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+				"websecure": {
+					Address: ":443/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "insecure API adds an internal TCP entryPoint without encoded characters configuration",
+			api:  &API{Insecure: true},
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				API:         test.api,
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			if test.api != nil && test.api.Insecure {
+				assert.Contains(t, cfg.EntryPoints, DefaultInternalEntryPointName)
+			}
+			assert.Equal(t, test.want, cfg.HasDeniedEncodedCharacters())
 		})
 	}
 }
@@ -198,7 +350,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -261,7 +413,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
@@ -321,6 +473,102 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					"admin":     {Address: ":8081"},
 					"traefik":   {Address: ":8080"},
 					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, missing, created with defaults",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						Transport: &EntryPointsTransport{
+							LifeCycle: &LifeCycle{
+								GraceTimeOut: 10000000000,
+							},
+							RespondingTimeouts: &RespondingTimeouts{
+								ReadTimeout: 60000000000,
+								IdleTimeout: 180000000000,
+							},
+						},
+						ForwardedHeaders: &ForwardedHeaders{},
+						HTTP: HTTPConfig{
+							SanitizePath:   new(true),
+							MaxHeaderBytes: 1048576,
+						},
+						HTTP2: &HTTP2Config{
+							MaxConcurrentStreams:      250,
+							MaxDecoderHeaderTableSize: 4096,
+							MaxEncoderHeaderTableSize: 4096,
+						},
+						UDP: &UDPConfig{
+							Timeout: 3000000000,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no address, default address set and options kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						HTTP:    HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, address set, address kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no internal service enabled, default address set",
+			conf: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8080"},
 				},
 			},
 		},

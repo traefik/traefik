@@ -1,6 +1,8 @@
 package nomad
 
 import (
+	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -3471,4 +3473,36 @@ func extractNamespacesFromProvider(providers []*Provider) []string {
 		res[i] = p.namespace
 	}
 	return res
+}
+
+func Test_buildConfigItemKeyCollision(t *testing.T) {
+	p := new(Provider)
+	p.SetDefaults()
+	p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+	require.NoError(t, p.Init())
+
+	// Normalize("n1"+"-"+"web"+"-"+"a-b") and Normalize("n1"+"-"+"web-a"+"-"+"b") are both "n1-web-a-b".
+	items := []item{
+		{
+			ID:        "a-b",
+			Node:      "n1",
+			Name:      "web",
+			Address:   "127.0.0.1",
+			Port:      80,
+			ExtraConf: configuration{Enable: true},
+		},
+		{
+			ID:        "b",
+			Node:      "n1",
+			Name:      "web-a",
+			Address:   "127.0.0.2",
+			Port:      80,
+			ExtraConf: configuration{Enable: true},
+		},
+	}
+
+	conf := p.buildConfig(t.Context(), items)
+
+	assert.Equal(t, []string{"web", "web-a"}, slices.Sorted(maps.Keys(conf.HTTP.Routers)))
+	assert.Equal(t, []string{"web", "web-a"}, slices.Sorted(maps.Keys(conf.HTTP.Services)))
 }

@@ -110,16 +110,20 @@ func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// GetTruncatedCertificateName truncates the certificate name.
+// GetTruncatedCertificateName returns an identifier for the certificate, to be used in logs and error messages.
 func (c *Certificate) GetTruncatedCertificateName() string {
 	certName := c.CertFile.String()
-
-	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
-	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
-		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
+	if c.CertFile.IsPath() {
+		return certName
 	}
 
-	return certName
+	// The content is of unknown nature: providers inline the CertFile before it reaches the TLS manager, a missing
+	// path is indistinguishable from inlined content, and the content may be a bundle carrying the private key.
+	// Both ends are excerpted, 16 characters being what it takes to read a PEM block type, and never more than half
+	// of the content, to keep a short one from being printed in full.
+	edge := min(len(certName)/4, 16)
+
+	return certName[:edge] + "[...]" + certName[len(certName)-edge:]
 }
 
 // FileOrContent hold a file path or content.

@@ -558,6 +558,20 @@ func TestParseDomains(t *testing.T) {
 			description: "Host rule with no domain",
 			expression:  "Host() && Path(`/test`)",
 		},
+		{
+			description: "Negated Host rule",
+			expression:  "!Host(`foo.bar`)",
+		},
+		{
+			description: "Host rule and negated Host rule",
+			expression:  "Host(`foo.bar`) && !Host(`bar.buz`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Negated group of Host rules",
+			expression:  "Host(`foo.bar`) && !(Host(`bar.buz`) || Host(`buz.bar`))",
+			domain:      []string{"foo.bar"},
+		},
 	}
 
 	for _, test := range testCases {
