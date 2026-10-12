@@ -323,36 +323,8 @@ func TestOpaqueRequestURL(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 }
 
-func TestSanitizeRequestHeaderValue(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		value    string
-		expected string
-	}{
-		{
-			desc:     "carriage return and line feed",
-			value:    "benign\r\nX-Injected: admin",
-			expected: "benign  X-Injected: admin",
-		},
-		{
-			desc:     "carriage return",
-			value:    "before\rafter",
-			expected: "before after",
-		},
-		{
-			desc:     "line feed",
-			value:    "before\nafter",
-			expected: "before after",
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			assert.Equal(t, test.expected, sanitizeRequestHeaderValue(test.value))
-		})
-	}
-}
-
+// TestRequestHeaderSanitization checks that CR and LF in request header values do not reach the upstream.
+// fasthttp replaces them with a space since v1.73.0 (see https://github.com/traefik/traefik/issues/13624).
 func TestRequestHeaderSanitization(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -383,8 +355,10 @@ func TestRequestHeaderSanitization(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var receivedValues []string
-			var injectedValue string
+			var (
+				receivedValues []string
+				injectedValue  string
+			)
 			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				receivedValues = req.Header.Values("X-Tenant-Note")
 				injectedValue = req.Header.Get("X-Injected")
@@ -392,6 +366,7 @@ func TestRequestHeaderSanitization(t *testing.T) {
 			t.Cleanup(server.Close)
 
 			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
 			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, true)
 			require.NoError(t, err)
 

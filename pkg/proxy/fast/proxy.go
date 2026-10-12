@@ -37,12 +37,6 @@ var hopHeaders = []string{
 	"Http2-Settings", // canonicalized version of "HTTP2-Settings", connection-specific as per RFC 7540 section 3.2.1
 }
 
-var requestHeaderValueReplacer = strings.NewReplacer("\r", " ", "\n", " ")
-
-func sanitizeRequestHeaderValue(value string) string {
-	return requestHeaderValueReplacer.Replace(value)
-}
-
 type pool[T any] struct {
 	pool sync.Pool
 }
@@ -154,7 +148,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for k, v := range req.Header {
 		for _, s := range v {
-			outReq.Header.Add(k, sanitizeRequestHeaderValue(s))
+			outReq.Header.Add(k, s)
 		}
 	}
 
