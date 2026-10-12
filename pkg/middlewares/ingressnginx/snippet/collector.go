@@ -166,6 +166,13 @@ func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
 		return createProxySetHeaderCollectable(d)
 	case "proxy_method":
 		return createProxyMethodCollectable(d)
+	case "grpc_connect_timeout", "grpc_read_timeout", "grpc_send_timeout":
+		// The ingress-nginx provider reads these directives
+		// and sets them as the forwarding timeouts of the ServersTransport.
+		// There is nothing left to do for each request.
+		return func(http.ResponseWriter, *http.Request, *actionContext, *PhaseCollector) (bool, error) {
+			return false, nil
+		}, nil
 
 	// Header filter phase - collect
 	case "add_header":

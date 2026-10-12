@@ -32,6 +32,9 @@ var directiveContexts = map[string][]string{
 	"expires":                  {contextServer, contextLocation, contextIfInLocation},
 	"proxy_method":             {contextServer, contextLocation},
 	"auth_request_set":         {contextServer, contextLocation},
+	"grpc_connect_timeout":     {contextServer, contextLocation},
+	"grpc_read_timeout":        {contextServer, contextLocation},
+	"grpc_send_timeout":        {contextServer, contextLocation},
 }
 
 // isAllowedInContext checks if the directive is allowed in the context of its parent directive.
