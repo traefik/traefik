@@ -187,7 +187,6 @@ func TestStatusNormalization(t *testing.T) {
 		status     int
 		waitExpiry bool
 		expected   int
-		upgradeReq bool
 	}{
 		{
 			desc:       "5xx after expiry is normalized to 504",
@@ -233,13 +232,6 @@ func TestStatusNormalization(t *testing.T) {
 			waitExpiry: true,
 			expected:   http.StatusOK,
 		},
-		{
-			desc:       "499 after upgrade handshake expiry is normalized to 504",
-			status:     httputil.StatusClientClosedRequest,
-			waitExpiry: true,
-			expected:   http.StatusGatewayTimeout,
-			upgradeReq: true,
-		},
 	}
 
 	for _, test := range testCases {
@@ -263,10 +255,6 @@ func TestStatusNormalization(t *testing.T) {
 			})
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost/", http.NoBody)
-			if test.upgradeReq {
-				req.Header.Set("Connection", "Upgrade")
-				req.Header.Set("Upgrade", "spdy/3.1")
-			}
 
 			rec := httptest.NewRecorder()
 			wrap(t, timeout, next).ServeHTTP(rec, req)
@@ -322,7 +310,7 @@ func TestUpgradeTunnelSurvivesDeadline(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusSwitchingProtocols, res.StatusCode)
 
-	// The handshake succeeded, so the deadline is disarmed: well past it, the tunnel must still relay both ways.
+	// Upgrade requests get no router deadline: well past the timeout, the tunnel must still relay both ways.
 	time.Sleep(3 * timeout)
 
 	_, err = conn.Write([]byte("after-deadline"))
@@ -358,21 +346,12 @@ func TestSlowBackend(t *testing.T) {
 		timeout      time.Duration
 		writeTimeout time.Duration
 		http2        bool
-		upgrade      bool
 		next         func(t *testing.T) http.Handler
 		expected     int
 	}{
 		{
 			desc:     "backend slower than the timeout gets 504",
 			timeout:  50 * time.Millisecond,
-			next:     hung,
-			expected: http.StatusGatewayTimeout,
-		},
-		{
-			// The deadline bounds the handshake: pre-101 the gateway has not responded yet, so a timeout can still be reported.
-			desc:     "hung upgrade handshake gets 504",
-			timeout:  50 * time.Millisecond,
-			upgrade:  true,
 			next:     hung,
 			expected: http.StatusGatewayTimeout,
 		},
@@ -424,10 +403,6 @@ func TestSlowBackend(t *testing.T) {
 
 			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, ts.URL, http.NoBody)
 			require.NoError(t, err)
-			if test.upgrade {
-				req.Header.Set("Connection", "Upgrade")
-				req.Header.Set("Upgrade", "spdy/3.1")
-			}
 
 			res, err := ts.Client().Do(req)
 			require.NoError(t, err)
@@ -769,73 +744,6 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, 2*time.Second)
 		})
 	}
-}
-
-// TestWriteDeadlineNotRearmedAfterHijack guards the hijack check in the deferred restore: net/http applies a
-// deadline set through the ResponseWriter straight to the connection, without checking whether it still owns
-// it, so restoring one would bound a tunnel the handler has already taken over.
-func TestWriteDeadlineNotRearmedAfterHijack(t *testing.T) {
-	t.Parallel()
-
-	writeTimeout := 100 * time.Millisecond
-
-	// The handler hands the connection over and returns without serving the tunnel, as a plugin would; the
-	// deferred restore then runs while the connection is still live.
-	hijacked := make(chan net.Conn, 1)
-	ts := httptest.NewUnstartedServer(wrap(t, time.Hour, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		conn, brw, err := http.NewResponseController(rw).Hijack()
-		if !assert.NoError(t, err) {
-			return
-		}
-
-		_, err = brw.WriteString("HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: spdy/3.1\r\n\r\n")
-		if !assert.NoError(t, err) {
-			return
-		}
-		if !assert.NoError(t, brw.Flush()) {
-			return
-		}
-
-		hijacked <- conn
-	})))
-	ts.Config.WriteTimeout = writeTimeout
-
-	ts.Start()
-	t.Cleanup(ts.Close)
-
-	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = conn.Close() })
-
-	require.NoError(t, conn.SetDeadline(time.Now().Add(5*time.Second)))
-
-	_, err = fmt.Fprintf(conn, "GET / HTTP/1.1\r\nHost: %s\r\nConnection: Upgrade\r\nUpgrade: spdy/3.1\r\n\r\n", ts.Listener.Addr())
-	require.NoError(t, err)
-
-	br := bufio.NewReader(conn)
-	res, err := http.ReadResponse(br, nil)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSwitchingProtocols, res.StatusCode)
-
-	var serverConn net.Conn
-	select {
-	case serverConn = <-hijacked:
-	case <-time.After(5 * time.Second):
-		require.FailNow(t, "the connection was never hijacked")
-	}
-	t.Cleanup(func() { _ = serverConn.Close() })
-
-	// Well past the entrypoint write timeout: the tunnel must still carry a write.
-	time.Sleep(3 * writeTimeout)
-
-	_, err = serverConn.Write([]byte("after-timeout"))
-	require.NoError(t, err)
-
-	relayed := make([]byte, len("after-timeout"))
-	_, err = io.ReadFull(br, relayed)
-	require.NoError(t, err)
-
-	assert.Equal(t, "after-timeout", string(relayed))
 }
 
 func TestFlushPropagatesThroughCompress(t *testing.T) {
