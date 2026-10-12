@@ -1,6 +1,8 @@
 package httputil
 
 import (
+	"bufio"
+	"net"
 	"net/http"
 
 	"golang.org/x/net/http/httpguts"
@@ -34,4 +36,53 @@ func (h *h2cUpgradeHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	delete(req.Header, "Http2-Settings")
 
 	h.next.ServeHTTP(rw, req)
+}
+
+// tlsUpgradeHandler closes the client connection of an upgraded TLS request as soon as the backend closes its side.
+// Since go1.25, once the backend side of an upgraded connection reaches EOF, httputil.ReverseProxy calls CloseWrite on the
+// client connection when available, and waits for the client to close its side (https://go.dev/issue/35892).
+// For a TLS connection, CloseWrite only sends a close_notify alert and leaves the TCP connection open,
+// and as most clients (e.g. WebSocket clients) do not close their side in response,
+// the connection stays half-open until the client writes again (https://github.com/traefik/traefik/issues/13999).
+// Hiding CloseWrite restores the go1.24 behavior for TLS connections only,
+// so the TCP half-close behavior of non-TLS connections is kept.
+type tlsUpgradeHandler struct {
+	next http.Handler
+}
+
+// newTLSUpgradeHandler wraps next with the TLS upgraded connection closing behavior.
+func newTLSUpgradeHandler(next http.Handler) http.Handler {
+	return &tlsUpgradeHandler{next: next}
+}
+
+func (h *tlsUpgradeHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if req.TLS == nil || !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
+		h.next.ServeHTTP(rw, req)
+		return
+	}
+
+	h.next.ServeHTTP(&tlsUpgradeResponseWriter{ResponseWriter: rw}, req)
+}
+
+// tlsUpgradeResponseWriter hides the CloseWrite method of the hijacked connection.
+type tlsUpgradeResponseWriter struct {
+	http.ResponseWriter
+}
+
+func (w *tlsUpgradeResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	conn, brw, err := http.NewResponseController(w.ResponseWriter).Hijack()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return noCloseWriteConn{Conn: conn}, brw, nil
+}
+
+func (w *tlsUpgradeResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+// noCloseWriteConn is a net.Conn which does not expose the CloseWrite method of the wrapped connection.
+type noCloseWriteConn struct {
+	net.Conn
 }
