@@ -1,11 +1,15 @@
 package router
 
 import (
+	"encoding/json"
 	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/containous/alice"
@@ -13,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
@@ -456,6 +461,73 @@ func TestAccessLog(t *testing.T) {
 			handler.ServeHTTP(w, req)
 		})
 	}
+}
+
+func TestManager_BuildHandlers_DenyConnect(t *testing.T) {
+	var backendCalled atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		backendCalled.Store(true)
+	}))
+	t.Cleanup(server.Close)
+
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "PathPrefix(`/`)",
+				},
+			},
+			Services: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: server.URL}},
+					},
+				},
+			},
+		},
+	})
+
+	accessLogPath := filepath.Join(t.TempDir(), "access.log")
+	accessLogger, err := accesslog.NewHandler(&types.AccessLog{
+		FilePath: accessLogPath,
+		Format:   types.JSONFormat,
+	})
+	require.NoError(t, err)
+
+	roundTripperManager := service.NewRoundTripperManager()
+	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
+	chainBuilder := middleware.NewChainBuilder(nil, accessLogger, nil)
+	tlsManager := tls.NewManager()
+
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+
+	handlers := routerManager.BuildHandlers(t.Context(), []string{"web"}, false)
+	require.Contains(t, handlers, "web")
+
+	req := httptest.NewRequest(http.MethodConnect, "http://foo.bar", nil)
+	rw := httptest.NewRecorder()
+
+	handlers["web"].ServeHTTP(rw, req)
+
+	require.NoError(t, accessLogger.Close())
+
+	assert.Equal(t, http.StatusNotImplemented, rw.Code)
+	assert.False(t, backendCalled.Load())
+
+	logs, err := os.ReadFile(accessLogPath)
+	require.NoError(t, err)
+
+	var entry map[string]any
+	require.NoError(t, json.Unmarshal(logs, &entry))
+
+	assert.Equal(t, "web", entry[log.EntryPointName])
+	assert.Equal(t, http.MethodConnect, entry[accesslog.RequestMethod])
+	assert.InDelta(t, http.StatusNotImplemented, entry[accesslog.DownstreamStatus], 0)
+	assert.NotContains(t, entry, accesslog.RouterName)
 }
 
 func TestRuntimeConfiguration(t *testing.T) {

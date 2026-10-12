@@ -78,6 +78,10 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			continue
 		}
 
+		// The rejection happens after the access log fields of the entry point are initialized,
+		// so that the rejected requests are reported in the access logs with their entry point.
+		handler = denyConnect(handler)
+
 		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
 			return accesslog.NewFieldHandler(next, log.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 		}).Then(handler)
