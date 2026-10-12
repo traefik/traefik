@@ -117,7 +117,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		})
 
 		for _, certDomains := range sorted {
-			if matchDomain(serverName, certDomains) || c.matchIPReverseAddress && matchIPReverseAddress(serverName, certDomains) {
+			if matchDomain(serverName, certDomains) || (c.matchIPReverseAddress && matchIPReverseAddress(serverName, certDomains)) {
 				// cache best match
 				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
