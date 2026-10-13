@@ -81,12 +81,14 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 
 			constructor, err := b.buildConstructor(constructorContext, middlewareName)
 			if err != nil {
+				err = b.configs[middlewareName].RedactURNRefs(err)
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			handler, err := constructor(next)
 			if err != nil {
+				err = b.configs[middlewareName].RedactURNRefs(err)
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
@@ -99,9 +101,14 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
-	config := b.configs[middlewareName]
-	if config == nil || config.Middleware == nil {
+	info := b.configs[middlewareName]
+	if info == nil || info.Middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
+	config, err := info.Middleware.ResolveURNRefs()
+	if err != nil {
+		return nil, fmt.Errorf("resolving middleware %q configuration: %w", middlewareName, err)
 	}
 
 	var middleware alice.Constructor

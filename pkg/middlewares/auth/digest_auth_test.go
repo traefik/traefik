@@ -23,7 +23,7 @@ func TestDigestAuthError(t *testing.T) {
 		Users: []string{"test"},
 	}
 	_, err := NewDigest(t.Context(), next, auth, "authName")
-	assert.Error(t, err)
+	assert.EqualError(t, err, "error parsing DigestUser: expected user:realm:hash format")
 }
 
 func TestDigestAuthFail(t *testing.T) {

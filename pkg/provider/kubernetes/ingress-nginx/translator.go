@@ -498,13 +498,13 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 
 	if loc.BasicAuth != nil {
 		name := routerKey + "-basic-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth, URNRefs: loc.AuthURNRefs}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.DigestAuth != nil {
 		name := routerKey + "-digest-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth, URNRefs: loc.AuthURNRefs}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
