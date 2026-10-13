@@ -335,6 +335,7 @@ The `HTTPRoute` rules support the [`timeouts`](https://gateway-api.sigs.k8s.io/a
   On expiry before the response has started, the client receives a `504 Gateway Timeout`.
   Setting it to `0s` disables the timeout, and lifts the entry point `readTimeout` and `writeTimeout` for the route.
   It sets both the router [`respondingTimeouts.readTimeout` and `respondingTimeouts.writeTimeout`](../http/routing/router.md#responding-timeouts) to its value. They count from the same instant, so they form a single deadline for the whole transaction: the timer starts at request reception (so it also bounds a slow request-body upload, unlike Envoy-based implementations), it does not apply to upgrade requests (WebSocket, ...), and it applies to streaming responses (SSE, gRPC streaming) which cannot be detected at request time. Omit it (or set `0s`) on such routes.
+  The entry point [`middlewares`](../../install-configuration/entrypoints.md#opt-http-middlewares) run before the route is reached: when one of them reads the request body (such as Buffering, or Tap with `recordBody`), that read is bounded by the entry point `readTimeout`, and `timeouts.request` cannot extend it.
 - `timeouts.backendRequest` is **not supported yet**: it is ignored (with a debug log), and the route remains `Accepted`.
 
 !!! warning "A long `timeouts.request` relaxes the entry point's slow-client protection"

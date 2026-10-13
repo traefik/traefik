@@ -152,7 +152,8 @@ An unset timeout leaves the entry point one in force.
 
 **Streaming responses (SSE, gRPC streaming, ...).** Response-streaming routes are not detectable at request time, so the `writeTimeout` applies to them as well: omit it (or set it to `0`) on such routers.
 
-**Multi-layer routing.** When a parent router and a child router both define `respondingTimeouts`, the most restrictive deadline wins, for each timeout: a child router cannot extend the budget set by its parent.
+**Multi-layer routing.** Child routers can define `respondingTimeouts`, but only one router per branch of the tree can: a router whose parent (or any router above it) already defines `respondingTimeouts` is disabled with an error.
+The middlewares of the parent routers, and the entry point [`middlewares`](../../../install-configuration/entrypoints.md#opt-http-middlewares), run before the child router is reached: when one of them reads the request body (such as Buffering, or Tap with `recordBody`), that read is bounded by the entry point `readTimeout`, and the child router `readTimeout` cannot extend it.
 
 !!! warning "Experimental `fast` proxy"
 

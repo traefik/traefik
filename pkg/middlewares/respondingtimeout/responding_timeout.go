@@ -4,7 +4,9 @@ package respondingtimeout
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -22,9 +24,6 @@ const (
 	name     = "traefik-internal-responding-timeout"
 	typeName = "RespondingTimeout"
 )
-
-// readDeadlineKey carries the read deadline set by a parent router: unlike the write one, it has no context deadline.
-type readDeadlineKey struct{}
 
 type handler struct {
 	next http.Handler
@@ -60,7 +59,11 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rc := http.NewResponseController(rw)
 
 	if h.readTimeout != nil {
-		req = h.armReadDeadline(req, rc, start, logger)
+		if body := h.armReadDeadline(req, rc, start, logger); body != nil {
+			defer body.release()
+
+			req.Body = body
+		}
 	}
 
 	switch {
@@ -75,39 +78,34 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// armReadDeadline sets the read deadline, or lifts the entrypoint one for a zero readTimeout,
-// and records it in the returned request for nested routers.
-func (h *handler) armReadDeadline(req *http.Request, rc *http.ResponseController, start time.Time, logger *zerolog.Logger) *http.Request {
+// armReadDeadline sets the read deadline, or lifts the entrypoint one for a zero readTimeout.
+// It returns the body to serve when it has to clear the deadline at the end of the body.
+func (h *handler) armReadDeadline(req *http.Request, rc *http.ResponseController, start time.Time, logger *zerolog.Logger) *deadlineBody {
+	// Only set when there is a body: without one, net/http reads in the background to detect a client
+	// disconnection, and a deadline expiring there cancels the connection context, breaking the next keep-alive requests.
+	// ContentLength is checked rather than req.Body, which upstream middlewares may wrap.
+	// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
+	if req.ContentLength == 0 {
+		return nil
+	}
+
 	var deadline time.Time
 	if *h.readTimeout > 0 {
 		deadline = start.Add(*h.readTimeout)
 	}
 
-	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
-	if parent, ok := req.Context().Value(readDeadlineKey{}).(time.Time); ok && !parent.IsZero() &&
-		(deadline.IsZero() || parent.Before(deadline)) {
-		deadline = parent
+	if err := rc.SetReadDeadline(deadline); err != nil {
+		logger.Debug().Err(err).Msg("Unable to set read deadline")
 	}
 
-	// Only set when there is a body: without one, net/http reads in the background to detect a client
-	// disconnection, and a deadline expiring there cancels the connection context, breaking the next keep-alive requests.
-	// ContentLength is checked rather than req.Body, which upstream middlewares may wrap.
-	// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
-	if req.ContentLength != 0 {
-		if err := rc.SetReadDeadline(deadline); err != nil {
-			logger.Debug().Err(err).Msg("Unable to set read deadline")
-		}
+	if deadline.IsZero() {
+		return nil
 	}
 
-	return req.WithContext(context.WithValue(req.Context(), readDeadlineKey{}, deadline))
+	return &deadlineBody{ReadCloser: req.Body, responseController: rc, logger: logger}
 }
 
 func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time, logger *zerolog.Logger) {
-	// Nested routers: the most restrictive deadline wins; a child router cannot extend its parent's budget.
-	if d, ok := req.Context().Deadline(); ok && d.Before(deadline) {
-		deadline = d
-	}
-
 	writeTimeout := entryPointWriteTimeout(req)
 
 	// Over HTTP/2, the entrypoint writeTimeout is a timer started with the stream, which resets it even before
@@ -144,12 +142,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 // serveWithoutWriteTimeout lifts the entrypoint write deadline for this request.
 // net/http resets the connection deadlines for the next request, so it is not restored on return.
 func (h *handler) serveWithoutWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, logger *zerolog.Logger) {
-	// Nested routers: a child router cannot extend its parent's budget.
-	if _, ok := req.Context().Deadline(); ok {
-		h.next.ServeHTTP(rw, req)
-		return
-	}
-
 	// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
 	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
 		logger.Debug().Err(err).Msg("Unable to clear write deadline")
@@ -167,6 +159,54 @@ func entryPointWriteTimeout(req *http.Request) time.Duration {
 	}
 
 	return srv.WriteTimeout
+}
+
+// deadlineBody clears the read deadline once the request body has been read to the end.
+// net/http then reads the connection in the background to detect a client disconnection, and a read deadline
+// expiring there cancels the request context. net/http clears it when starting that read, but the body may have been
+// read before the router, by a parent router middleware buffering it, in which case the deadline was set afterwards.
+type deadlineBody struct {
+	io.ReadCloser
+
+	responseController *http.ResponseController
+	logger             *zerolog.Logger
+
+	mu sync.Mutex
+	// released is set once the handler has returned: the connection may already serve the next request,
+	// while the proxy still reads the body.
+	released bool
+	cleared  bool
+}
+
+func (b *deadlineBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	if errors.Is(err, io.EOF) {
+		b.clearReadDeadline()
+	}
+
+	return n, err
+}
+
+func (b *deadlineBody) clearReadDeadline() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.released || b.cleared {
+		return
+	}
+
+	b.cleared = true
+
+	if err := b.responseController.SetReadDeadline(time.Time{}); err != nil {
+		b.logger.Debug().Err(err).Msg("Unable to clear read deadline")
+	}
+}
+
+func (b *deadlineBody) release() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.released = true
 }
 
 // isUpgradeRequest reports whether the request asks for a protocol switch (WebSocket, SPDY, ...),
