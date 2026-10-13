@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -57,8 +56,6 @@ func WrapHandler(config dynamic.RouterRespondingTimeouts) alice.Constructor {
 }
 
 func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), name, typeName)
-
 	// Both timeouts count from this instant: equal timeouts share a single deadline.
 	start := time.Now()
 
@@ -68,16 +65,12 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if h.readTimeout != nil && req.ContentLength != 0 {
 		switch {
 		case *h.readTimeout <= 0:
-			if err := rc.SetReadDeadline(time.Time{}); err != nil {
-				logger.Error().Err(err).Msg("Unable to clear read deadline")
-			}
+			_ = rc.SetReadDeadline(time.Time{})
 		default:
 			// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
-			if err := rc.SetReadDeadline(start.Add(*h.readTimeout)); err != nil {
-				logger.Error().Err(err).Msg("Unable to set read deadline")
-			}
+			_ = rc.SetReadDeadline(start.Add(*h.readTimeout))
 
-			body := &deadlineBody{ReadCloser: req.Body, responseController: rc, logger: logger}
+			body := &deadlineBody{ReadCloser: req.Body, responseController: rc}
 			defer body.release()
 
 			req.Body = body
@@ -92,44 +85,36 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	case *h.writeTimeout <= 0:
 		// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
 		// net/http resets the connection deadlines for the next request, so it is not restored on return.
-		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
-			logger.Error().Err(err).Msg("Unable to clear write deadline")
-		}
-
+		_ = rc.SetWriteDeadline(time.Time{})
 		h.next.ServeHTTP(rw, req)
 	default:
-		h.serveWithWriteTimeout(rw, req, rc, start.Add(*h.writeTimeout), logger)
+		h.serveWithWriteTimeout(rw, req, rc, start.Add(*h.writeTimeout))
 	}
 }
 
-func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time, logger *zerolog.Logger) {
+func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time) {
 	// Until the first write, the context deadline bounds the wait for the backend, and the write deadline is cleared:
 	// it is set on the first write (see armWriteDeadline). Over HTTP/2, this also stops the entrypoint writeTimeout
 	// stream timer, which resets the stream when it fires, even before anything is written.
-	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
-		logger.Error().Err(err).Msg("Unable to clear write deadline")
-	}
+	_ = rc.SetWriteDeadline(time.Time{})
 
-	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, logger: logger}
+	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline}
 
 	defer func() {
 		// net/http only writes a buffered response after the handler returns: past the deadline,
 		// it is written here instead, so that the grace period bounds it.
 		if time.Now().After(deadline) {
-			if err := rc.SetWriteDeadline(time.Now().Add(timeoutResponseGrace)); err != nil {
-				logger.Error().Err(err).Msg("Unable to set write deadline")
-			}
+			_ = rc.SetWriteDeadline(time.Now().Add(timeoutResponseGrace))
 
 			if err := rc.Flush(); err != nil {
+				logger := middlewares.GetLogger(req.Context(), name, typeName)
 				logger.Error().Err(err).Msg("Unable to flush response")
 			}
 		}
 
 		// net/http only resets the write deadline for the next keep-alive request when the entrypoint has a writeTimeout:
 		// left set, it would cut the responses to the next requests.
-		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
-			logger.Error().Err(err).Msg("Unable to clear write deadline")
-		}
+		_ = rc.SetWriteDeadline(time.Time{})
 	}()
 
 	// Cancels the backend request at the deadline, which the proxy reports as a 504.
@@ -147,7 +132,6 @@ type deadlineBody struct {
 	io.ReadCloser
 
 	responseController *http.ResponseController
-	logger             *zerolog.Logger
 
 	mu sync.Mutex
 	// released is set once the handler has returned: the httputil proxy transport may still read the body from
@@ -179,9 +163,7 @@ func (b *deadlineBody) clearReadDeadline() {
 
 	b.cleared = true
 
-	if err := b.responseController.SetReadDeadline(time.Time{}); err != nil {
-		b.logger.Error().Err(err).Msg("Unable to clear read deadline")
-	}
+	b.responseController.SetReadDeadline(time.Time{})
 }
 
 func (b *deadlineBody) release() {
@@ -204,7 +186,6 @@ type statusRewriter struct {
 
 	responseController *http.ResponseController
 	deadline           time.Time
-	logger             *zerolog.Logger
 
 	// armOnce guards against the reverse proxy flushing from another goroutine.
 	armOnce sync.Once
@@ -259,8 +240,6 @@ func (s *statusRewriter) armWriteDeadline() {
 			return
 		}
 
-		if err := s.responseController.SetWriteDeadline(s.deadline); err != nil {
-			s.logger.Error().Err(err).Msg("Unable to arm write deadline")
-		}
+		_ = s.responseController.SetWriteDeadline(s.deadline)
 	})
 }
