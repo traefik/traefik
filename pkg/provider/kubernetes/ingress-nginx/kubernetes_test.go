@@ -13182,10 +13182,6 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			// Regression test for a cross-namespace check bypass: the TLS option name does not include
-			// the referring Ingress namespace, so once an Ingress has legitimately built the option for
-			// its own secret, a later Ingress from another namespace referencing the same secret
-			// used to hit the cache and skip the cross-namespace check.
 			desc: "Auth TLS secret cross-namespace reference is rejected even when the TLS option is cached",
 			paths: []string{
 				"secrets-tls-option-cross-namespace.yml",
