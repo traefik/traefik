@@ -25,6 +25,9 @@ const (
 	typeName = "RespondingTimeout"
 )
 
+// timeoutResponseGrace bounds writing a response once the write deadline has passed, which is the 504 in practice.
+const timeoutResponseGrace = 5 * time.Second
+
 type handler struct {
 	next http.Handler
 	// readTimeout and writeTimeout are nil when unset: the entrypoint ones then apply.
@@ -90,7 +93,7 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
 		// net/http resets the connection deadlines for the next request, so it is not restored on return.
 		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
-			logger.Debug().Err(err).Msg("Unable to clear write deadline")
+			logger.Error().Err(err).Msg("Unable to clear write deadline")
 		}
 
 		h.next.ServeHTTP(rw, req)
@@ -100,29 +103,32 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time, logger *zerolog.Logger) {
-	writeTimeout := entryPointWriteTimeout(req)
-
-	// Over HTTP/2, the entrypoint writeTimeout is a timer started with the stream, which resets it even before
-	// anything is written. Moving it past the deadline keeps it from cutting a slow backend short or preventing the 504.
-	// The actual write deadline is set on the first write (see armWriteDeadline).
-	if writeTimeout > 0 {
-		if err := rc.SetWriteDeadline(deadline.Add(writeTimeout)); err != nil {
-			logger.Debug().Err(err).Msg("Unable to extend write deadline")
-		}
+	// Until the first write, the context deadline bounds the wait for the backend, and the write deadline is cleared:
+	// it is set on the first write (see armWriteDeadline). Over HTTP/2, this also stops the entrypoint writeTimeout
+	// stream timer, which resets the stream when it fires, even before anything is written.
+	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+		logger.Error().Err(err).Msg("Unable to clear write deadline")
 	}
 
-	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, entrypointWriteTimeout: writeTimeout, logger: logger}
+	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, logger: logger}
 
 	defer func() {
-		// The response is flushed after the handler returns, possibly past the deadline:
-		// restore the entrypoint writeTimeout, or no deadline, so that it still reaches the client.
-		var writeDeadline time.Time
-		if writeTimeout > 0 {
-			writeDeadline = time.Now().Add(writeTimeout)
+		// net/http only writes a buffered response after the handler returns: past the deadline,
+		// it is written here instead, so that the grace period bounds it.
+		if time.Now().After(deadline) {
+			if err := rc.SetWriteDeadline(time.Now().Add(timeoutResponseGrace)); err != nil {
+				logger.Error().Err(err).Msg("Unable to set write deadline")
+			}
+
+			if err := rc.Flush(); err != nil {
+				logger.Error().Err(err).Msg("Unable to flush response")
+			}
 		}
 
-		if err := rc.SetWriteDeadline(writeDeadline); err != nil {
-			logger.Debug().Err(err).Msg("Unable to restore write deadline")
+		// net/http only resets the write deadline for the next keep-alive request when the entrypoint has a writeTimeout:
+		// left set, it would cut the responses to the next requests.
+		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+			logger.Error().Err(err).Msg("Unable to clear write deadline")
 		}
 	}()
 
@@ -131,17 +137,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 	defer cancel()
 
 	h.next.ServeHTTP(rewriter, req.WithContext(ctx))
-}
-
-// entryPointWriteTimeout returns the writeTimeout of the entrypoint serving req, or zero.
-// It is read from the request because a router handler is shared by all the entrypoints of the router.
-func entryPointWriteTimeout(req *http.Request) time.Duration {
-	srv, ok := req.Context().Value(http.ServerContextKey).(*http.Server)
-	if !ok {
-		return 0
-	}
-
-	return srv.WriteTimeout
 }
 
 // deadlineBody clears the read deadline once the request body has been read to the end.
@@ -207,10 +202,9 @@ func isUpgradeRequest(req *http.Request) bool {
 type statusRewriter struct {
 	http.ResponseWriter
 
-	responseController     *http.ResponseController
-	deadline               time.Time
-	entrypointWriteTimeout time.Duration
-	logger                 *zerolog.Logger
+	responseController *http.ResponseController
+	deadline           time.Time
+	logger             *zerolog.Logger
 
 	// armOnce guards against the reverse proxy flushing from another goroutine.
 	armOnce sync.Once
@@ -221,8 +215,7 @@ func (s *statusRewriter) WriteHeader(code int) {
 
 	// Past the deadline, a 5xx means the request ran out of time. 499 as well: when the read deadline expires along with
 	// the context one, and wins, net/http cancels the request context, which the proxy reports as a client disconnection.
-	if (code >= http.StatusInternalServerError || code == httputil.StatusClientClosedRequest) &&
-		!time.Now().Before(s.deadline) {
+	if time.Now().After(s.deadline) && (code >= http.StatusInternalServerError || code == httputil.StatusClientClosedRequest) {
 		code = http.StatusGatewayTimeout
 	}
 
@@ -257,21 +250,16 @@ func (s *statusRewriter) Unwrap() http.ResponseWriter {
 	return s.ResponseWriter
 }
 
-// armWriteDeadline sets the write deadline once, on the first write.
-// Before the deadline, the response must be sent by the deadline.
-// Past it (the 504 case), a deadline in the past would fail the write, and reset the stream at once over HTTP/2:
-// the response gets the entrypoint writeTimeout instead, or no deadline.
+// armWriteDeadline sets the write deadline once, on the first write: the response must be sent by the deadline.
+// Past it (the 504 case), the deadline cleared before serving is kept, and the grace period is applied on return:
+// a deadline in the past would fail the write, and reset the stream at once over HTTP/2.
 func (s *statusRewriter) armWriteDeadline() {
 	s.armOnce.Do(func() {
-		writeDeadline := s.deadline
 		if time.Now().After(s.deadline) {
-			writeDeadline = time.Time{}
-			if s.entrypointWriteTimeout > 0 {
-				writeDeadline = time.Now().Add(s.entrypointWriteTimeout)
-			}
+			return
 		}
 
-		if err := s.responseController.SetWriteDeadline(writeDeadline); err != nil {
+		if err := s.responseController.SetWriteDeadline(s.deadline); err != nil {
 			s.logger.Error().Err(err).Msg("Unable to arm write deadline")
 		}
 	})
