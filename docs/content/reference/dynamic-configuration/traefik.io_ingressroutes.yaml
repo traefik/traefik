@@ -150,6 +150,7 @@ spec:
                           description: |-
                             ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
                             If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                           x-kubernetes-int-or-string: true
                         writeTimeout:
                           anyOf:
@@ -159,8 +160,13 @@ spec:
                             WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
                             from when the router receives the request.
                             If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                           x-kubernetes-int-or-string: true
                       type: object
+                      x-kubernetes-validations:
+                      - message: RespondingTimeouts must define at least one of ReadTimeout
+                          or WriteTimeout.
+                        rule: has(self.readTimeout) || has(self.writeTimeout)
                     services:
                       description: |-
                         Services defines the list of Service.
