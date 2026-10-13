@@ -648,7 +648,37 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 	}
 
+	applyServerClientAuth(ctx, mc.Servers)
+
 	return mc
+}
+
+// applyServerClientAuth applies the client-auth TLS option (auth-tls-secret) of the first location declaring one for a host to every location of that host.
+// ingress-nginx enforces client certificate authentication for the whole server block, configured by the first Ingress declaring it for the host.
+// It also keeps every router serving the host on the same TLS option.
+func applyServerClientAuth(ctx context.Context, servers map[string]*server) {
+	for _, srv := range servers {
+		idx := slices.IndexFunc(srv.Locations, func(loc *location) bool { return loc.TLSOption != nil })
+		if idx < 0 {
+			continue
+		}
+
+		owner := srv.Locations[idx]
+		ignoredIngresses := make(map[string]struct{})
+		for _, loc := range srv.Locations {
+			ingressKey := loc.Namespace + "/" + loc.IngressName
+			if _, ignored := ignoredIngresses[ingressKey]; !ignored && loc.TLSOption != nil && loc.TLSOptionName != owner.TLSOptionName {
+				ignoredIngresses[ingressKey] = struct{}{}
+				log.Ctx(ctx).Warn().
+					Str("ingress", loc.IngressName).
+					Str("namespace", loc.Namespace).
+					Msgf("Host %q is already configured for client certificate authentication by Ingress %s/%s, ignoring auth-tls annotations", srv.Hostname, owner.Namespace, owner.IngressName)
+			}
+
+			loc.TLSOptionName = owner.TLSOptionName
+			loc.TLSOption = owner.TLSOption
+		}
+	}
 }
 
 // ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
