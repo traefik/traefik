@@ -182,6 +182,50 @@ func (c *flushDeadlineConn) Write(b []byte) (int, error) {
 	return c.Conn.Write(b)
 }
 
+func TestWrapHandler(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		timeouts    dynamic.RouterRespondingTimeouts
+		expectedErr bool
+	}{
+		{
+			desc:     "readTimeout shorter than writeTimeout",
+			timeouts: dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Second)), WriteTimeout: new(ptypes.Duration(2 * time.Second))},
+		},
+		{
+			desc:     "readTimeout equal to writeTimeout",
+			timeouts: dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Second)), WriteTimeout: new(ptypes.Duration(time.Second))},
+		},
+		{
+			desc:        "readTimeout longer than writeTimeout",
+			timeouts:    dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(2 * time.Second)), WriteTimeout: new(ptypes.Duration(time.Second))},
+			expectedErr: true,
+		},
+		{
+			desc:     "readTimeout with a zero writeTimeout",
+			timeouts: dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Second)), WriteTimeout: new(ptypes.Duration(0))},
+		},
+		{
+			desc:     "readTimeout alone",
+			timeouts: dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Second))},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := respondingtimeout.WrapHandler(test.timeouts)(http.NotFoundHandler())
+			if test.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestStatusNormalization(t *testing.T) {
 	testCases := []struct {
 		desc       string

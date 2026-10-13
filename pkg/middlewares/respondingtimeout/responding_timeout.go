@@ -41,6 +41,12 @@ func WrapHandler(config dynamic.RouterRespondingTimeouts) alice.Constructor {
 			return next, nil
 		}
 
+		// Both count from the same instant, and the request ends at the writeTimeout: a longer readTimeout has no effect.
+		// A zero writeTimeout means no timeout, and an unset one is the entrypoint one, unknown here.
+		if config.ReadTimeout != nil && config.WriteTimeout != nil && *config.WriteTimeout > 0 && *config.ReadTimeout > *config.WriteTimeout {
+			return nil, fmt.Errorf("readTimeout (%s) must not be longer than writeTimeout (%s)", *config.ReadTimeout, *config.WriteTimeout)
+		}
+
 		h := &handler{next: next}
 
 		if config.ReadTimeout != nil {
@@ -98,8 +104,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 	// stream timer, which resets the stream when it fires, even before anything is written.
 	_ = rc.SetWriteDeadline(time.Time{})
 
-	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline}
-
 	defer func() {
 		// net/http only writes a buffered response after the handler returns: past the deadline,
 		// it is written here instead, so that the grace period bounds it.
@@ -116,6 +120,8 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 		// left set, it would cut the responses to the next requests.
 		_ = rc.SetWriteDeadline(time.Time{})
 	}()
+
+	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline}
 
 	// Cancels the backend request at the deadline, which the proxy reports as a 504.
 	ctx, cancel := context.WithDeadline(req.Context(), deadline)
@@ -163,7 +169,7 @@ func (b *deadlineBody) clearReadDeadline() {
 
 	b.cleared = true
 
-	b.responseController.SetReadDeadline(time.Time{})
+	_ = b.responseController.SetReadDeadline(time.Time{})
 }
 
 func (b *deadlineBody) release() {
