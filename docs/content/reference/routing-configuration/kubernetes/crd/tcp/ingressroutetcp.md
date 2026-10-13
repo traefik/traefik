@@ -5,7 +5,7 @@ description: "An IngressRouteTCP is a Traefik CRD is in charge of connecting inc
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../../../tcp/routing/rules-and-priority.md).
 
-Before creating `IngressRouteTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `IngressRouteTCP` objects, you need to apply the [Traefik Kubernetes CRDs](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#requirements) to your Kubernetes cluster.
 
 This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 

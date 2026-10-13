@@ -61,7 +61,7 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 		ErrorHandler:  ErrorHandler,
 	}
 
-	return newConnectHandler(newH2CUpgradeHandler(proxy))
+	return newH2CUpgradeHandler(proxy)
 }
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
@@ -134,12 +134,6 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
 		pr.Out.ProtoMinor = 1
-
-		// Adding the "Connection: close" header to the request ensures that we are not reusing the connection for
-		// subsequent requests in case the backend does not support CONNECT and returns a 2xx response.
-		if pr.Out.Method == http.MethodConnect {
-			pr.Out.Close = true
-		}
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
