@@ -34,6 +34,7 @@ import (
 // with apply.
 //
 // RouterRespondingTimeouts holds the timeouts for responding to client requests.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#responding-timeouts
 type RouterRespondingTimeoutsApplyConfiguration struct {
 	// ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
 	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
