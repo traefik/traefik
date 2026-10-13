@@ -1,4 +1,4 @@
-
+   
 <p align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/traefik.logo-dark.png">
@@ -150,7 +150,7 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Credits
 
-Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
+Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!
 
 The gopher's logo of Traefik is licensed under the Creative Commons 3.0 Attributions license.
 
