@@ -35,6 +35,10 @@ type handler struct {
 // WrapHandler wraps a router handler to enforce the given responding timeouts, as an alice.Constructor.
 func WrapHandler(config dynamic.RouterRespondingTimeouts) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
+		if config.ReadTimeout == nil && config.WriteTimeout == nil {
+			return next, nil
+		}
+
 		h := &handler{next: next}
 
 		if config.ReadTimeout != nil {
@@ -58,8 +62,19 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// These connection deadlines replace, for this request, the ones armed from the entrypoint respondingTimeouts.
 	rc := http.NewResponseController(rw)
 
-	if h.readTimeout != nil {
-		if body := h.armReadDeadline(req, rc, start, logger); body != nil {
+	if h.readTimeout != nil && req.ContentLength != 0 {
+		switch {
+		case *h.readTimeout <= 0:
+			if err := rc.SetReadDeadline(time.Time{}); err != nil {
+				logger.Error().Err(err).Msg("Unable to clear read deadline")
+			}
+		default:
+			// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
+			if err := rc.SetReadDeadline(start.Add(*h.readTimeout)); err != nil {
+				logger.Error().Err(err).Msg("Unable to set read deadline")
+			}
+
+			body := &deadlineBody{ReadCloser: req.Body, responseController: rc, logger: logger}
 			defer body.release()
 
 			req.Body = body
@@ -72,37 +87,16 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	case h.writeTimeout == nil || isUpgradeRequest(req):
 		h.next.ServeHTTP(rw, req)
 	case *h.writeTimeout <= 0:
-		h.serveWithoutWriteTimeout(rw, req, rc, logger)
+		// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
+		// net/http resets the connection deadlines for the next request, so it is not restored on return.
+		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+			logger.Debug().Err(err).Msg("Unable to clear write deadline")
+		}
+
+		h.next.ServeHTTP(rw, req)
 	default:
 		h.serveWithWriteTimeout(rw, req, rc, start.Add(*h.writeTimeout), logger)
 	}
-}
-
-// armReadDeadline sets the read deadline, or lifts the entrypoint one for a zero readTimeout.
-// It returns the body to serve when it has to clear the deadline at the end of the body.
-func (h *handler) armReadDeadline(req *http.Request, rc *http.ResponseController, start time.Time, logger *zerolog.Logger) *deadlineBody {
-	// Only set when there is a body: without one, net/http reads in the background to detect a client
-	// disconnection, and a deadline expiring there cancels the connection context, breaking the next keep-alive requests.
-	// ContentLength is checked rather than req.Body, which upstream middlewares may wrap.
-	// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
-	if req.ContentLength == 0 {
-		return nil
-	}
-
-	var deadline time.Time
-	if *h.readTimeout > 0 {
-		deadline = start.Add(*h.readTimeout)
-	}
-
-	if err := rc.SetReadDeadline(deadline); err != nil {
-		logger.Debug().Err(err).Msg("Unable to set read deadline")
-	}
-
-	if deadline.IsZero() {
-		return nil
-	}
-
-	return &deadlineBody{ReadCloser: req.Body, responseController: rc, logger: logger}
 }
 
 func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, deadline time.Time, logger *zerolog.Logger) {
@@ -139,17 +133,6 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 	h.next.ServeHTTP(rewriter, req.WithContext(ctx))
 }
 
-// serveWithoutWriteTimeout lifts the entrypoint write deadline for this request.
-// net/http resets the connection deadlines for the next request, so it is not restored on return.
-func (h *handler) serveWithoutWriteTimeout(rw http.ResponseWriter, req *http.Request, rc *http.ResponseController, logger *zerolog.Logger) {
-	// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
-	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
-		logger.Debug().Err(err).Msg("Unable to clear write deadline")
-	}
-
-	h.next.ServeHTTP(rw, req)
-}
-
 // entryPointWriteTimeout returns the writeTimeout of the entrypoint serving req, or zero.
 // It is read from the request because a router handler is shared by all the entrypoints of the router.
 func entryPointWriteTimeout(req *http.Request) time.Duration {
@@ -172,14 +155,18 @@ type deadlineBody struct {
 	logger             *zerolog.Logger
 
 	mu sync.Mutex
-	// released is set once the handler has returned: the connection may already serve the next request,
-	// while the proxy still reads the body.
+	// released is set once the handler has returned: the httputil proxy transport may still read the body from
+	// another goroutine, while the ResponseWriter must not be used anymore (it panics over HTTP/2,
+	// and would clear the next request read deadline over HTTP/1).
 	released bool
 	cleared  bool
 }
 
 func (b *deadlineBody) Read(p []byte) (int, error) {
 	n, err := b.ReadCloser.Read(p)
+
+	// We want to clear the deadline as the net/http server would do,
+	// if the body we received was not from the Go server.
 	if errors.Is(err, io.EOF) {
 		b.clearReadDeadline()
 	}
@@ -198,7 +185,7 @@ func (b *deadlineBody) clearReadDeadline() {
 	b.cleared = true
 
 	if err := b.responseController.SetReadDeadline(time.Time{}); err != nil {
-		b.logger.Debug().Err(err).Msg("Unable to clear read deadline")
+		b.logger.Error().Err(err).Msg("Unable to clear read deadline")
 	}
 }
 
