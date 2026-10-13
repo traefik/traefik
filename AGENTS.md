@@ -89,6 +89,7 @@ Prefer modern standard-library packages (`slices`, `maps`, `cmp`, ...) over hand
 ## Documentation
 
 User-facing features need matching documentation updates under `docs/content/`. Integrate new pages into the existing structure rather than creating parallel sections. Preview locally with `make docs-serve`.
+Follow the [documentation style guide](./docs/content/contributing/documentation-style-guide.md) when writing or editing pages under `docs/content/`.
 
 ## Contributing etiquette
 
