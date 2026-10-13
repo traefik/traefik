@@ -84,15 +84,34 @@ binary-windows-amd64:
 crossbinary-default: generate generate-webui
 	$(CURDIR)/script/crossbinary-default.sh
 
+ASSIMILIS_VERSION ?= v2.1.3
+THIRD_PARTY_ENV_FILE ?= $(CURDIR)/script/.third-party.env
+# repo code for traefik v2.11
+AIKIDO_REPO_CODE ?= 1325139
+
 .PHONY: third-party
 #? third-party: Generate third party license files
 third-party:
-	$(CURDIR)/script/third-party.sh
+	@test -f "$(THIRD_PARTY_ENV_FILE)" || { \
+		echo "error: credentials file not found: $(THIRD_PARTY_ENV_FILE)" >&2; \
+		echo "It can be initiated by running: cp script/.third-party.env.example script/.third-party.env" >&2; \
+		exit 1; \
+	}
+	@set -a; . "$(THIRD_PARTY_ENV_FILE)"; set +a; \
+	go run github.com/traefik/assimilis/v2/cmd/assimilis@$(ASSIMILIS_VERSION) \
+		fetch --repo-code "$(AIKIDO_REPO_CODE)" \
+		--repo-name traefik
 
 .PHONY: validate-third-party
-#? validate-third-party: Validate that third-party attribution files were generated today
+#? validate-third-party: Validate that third-party attribution files were generated within MAX_AGE of the release commit
 validate-third-party:
-	$(CURDIR)/script/validate-third-party.sh
+	go run github.com/traefik/assimilis/v2/cmd/assimilis@$(ASSIMILIS_VERSION) validate
+
+.PHONY: refresh-third-party
+#? refresh-third-party: Refresh third-party attribution files (keeps custom license texts)
+refresh-third-party:
+	find third_party -mindepth 1 -type f ! -path 'third_party/licenses/custom/*' ! -path 'third_party/data/*' -delete
+	$(MAKE) third-party
 
 .PHONY: test
 #? test: Run the unit and integration tests
