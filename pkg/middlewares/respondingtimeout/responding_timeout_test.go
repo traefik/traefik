@@ -684,20 +684,26 @@ func TestReadTimeoutDoesNotBoundBackend(t *testing.T) {
 	}
 }
 
-// TestFlushKeepsEntryPointWriteTimeout guards the deferred restore. A handler writing a small response leaves
-// it entirely buffered, so the first write on the connection is the post-handler flush (net/http
-// finishRequest): the deadline it runs under is the one this middleware left behind.
-func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
+// TestFlushWriteDeadline guards the deadline left on the connection on return. A handler writing a small response
+// leaves it entirely buffered, so the first write on the connection is the flush after the handler: the deadline it
+// runs under is the one this middleware left behind.
+func TestFlushWriteDeadline(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		writeTimeout time.Duration
+		desc    string
+		timeout time.Duration
+		delay   time.Duration
+		// expectedGrace is false when no deadline is expected.
+		expectedGrace bool
 	}{
 		{
-			desc: "the entrypoint has no write timeout",
+			desc:    "response within the timeout",
+			timeout: time.Hour,
 		},
 		{
-			desc:         "the entrypoint has a write timeout",
-			writeTimeout: time.Second,
+			desc:          "response past the timeout",
+			timeout:       50 * time.Millisecond,
+			delay:         100 * time.Millisecond,
+			expectedGrace: true,
 		},
 	}
 
@@ -705,15 +711,13 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			// A timeout far beyond the entrypoint write timeout: the deadline the flush runs under tells
-			// unambiguously which of the two the middleware left on the connection.
-			ts := httptest.NewUnstartedServer(wrap(t, time.Hour, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			ts := httptest.NewUnstartedServer(wrap(t, test.timeout, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				time.Sleep(test.delay)
 				_, _ = rw.Write([]byte("ok"))
 			})))
 
 			deadlines := make(chan time.Time, 1)
 			ts.Listener = &flushDeadlineListener{Listener: ts.Listener, deadlines: deadlines}
-			ts.Config.WriteTimeout = test.writeTimeout
 
 			ts.Start()
 			t.Cleanup(ts.Close)
@@ -735,15 +739,13 @@ func TestFlushKeepsEntryPointWriteTimeout(t *testing.T) {
 				require.FailNow(t, "the response never reached the connection")
 			}
 
-			if test.writeTimeout == 0 {
+			if !test.expectedGrace {
 				assert.True(t, deadline.IsZero())
 				return
 			}
 
-			assert.False(t, deadline.IsZero())
-			// The flush runs right after the handler, so the recorded deadline is start+writeTimeout within the
-			// flush latency; a tolerance well under the 1h timeout proves it is the entrypoint writeTimeout, not the router one.
-			assert.WithinDuration(t, start.Add(test.writeTimeout), deadline, 2*time.Second)
+			// The 5s grace period, counted from the flush right after the handler.
+			assert.WithinDuration(t, start.Add(test.delay+5*time.Second), deadline, time.Second)
 		})
 	}
 }

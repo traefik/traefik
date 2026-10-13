@@ -62,8 +62,7 @@ func (s *TimeoutSuite) TestForwardingTimeouts() {
 }
 
 // TestRouterRespondingTimeoutsWriteTimeout covers a router writeTimeout on an entrypoint that
-// has its own writeTimeout: the router deadline supersedes it for the request, and the entrypoint one is
-// restored before the response is flushed, which happens after the router handler has returned.
+// has its own writeTimeout: the router deadline supersedes it for the request.
 func (s *TimeoutSuite) TestRouterRespondingTimeoutsWriteTimeout() {
 	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
 	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_write_timeout.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
@@ -97,8 +96,8 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWriteTimeout() {
 	require.NoError(s.T(), err)
 	require.NoError(s.T(), response.Body.Close())
 
-	// Past the writeTimeout the 504 still reaches the client: the response is flushed once the router handler
-	// has returned, under a write deadline restored from the entrypoint writeTimeout rather than an expired one.
+	// Past the writeTimeout the 504 still reaches the client: it is written under a grace period
+	// rather than the expired deadline.
 	response, err = client.Get("http://127.0.0.1:8000/writeTimeout?sleep=4000")
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
