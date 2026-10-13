@@ -1255,6 +1255,55 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 				"B": {"non-root router cannot have Entrypoints configuration"},
 			},
 		},
+		{
+			desc: "Non-root router with RespondingTimeouts config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs:         []string{"A"},
+					Service:            "B-service",
+					RespondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+		},
+		{
+			// A->B->C
+			desc: "Router with RespondingTimeouts config under an ancestor with one",
+			routers: map[string]*dynamic.Router{
+				"A": {
+					RespondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+				},
+				"B": {
+					ParentRefs: []string{"A"},
+				},
+				"C": {
+					ParentRefs:         []string{"B"},
+					Service:            "C-service",
+					RespondingTimeouts: &dynamic.RouterRespondingTimeouts{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+				"C": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": {"C"},
+				"C": nil,
+			},
+			expectedErrors: map[string][]string{
+				"C": {"router cannot have RespondingTimeouts configuration when a parent router has one"},
+			},
+		},
 
 		{
 			desc: "Router with non-existing parent",

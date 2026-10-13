@@ -2,6 +2,7 @@ package respondingtimeout_test
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"net"
@@ -262,27 +263,6 @@ func TestStatusNormalization(t *testing.T) {
 			assert.Equal(t, test.expected, rec.Code)
 		})
 	}
-}
-
-func TestNestedDeadlineClamp(t *testing.T) {
-	t.Parallel()
-
-	var deadline time.Time
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		var ok bool
-		deadline, ok = req.Context().Deadline()
-		assert.True(t, ok)
-
-		rw.WriteHeader(http.StatusOK)
-	})
-
-	// A child router cannot extend the budget set by its parent.
-	handler := wrap(t, 30*time.Millisecond, wrap(t, time.Hour, next))
-
-	start := time.Now()
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://localhost/", http.NoBody))
-
-	assert.WithinDuration(t, start.Add(30*time.Millisecond), deadline, 10*time.Millisecond)
 }
 
 // TestUpgradeTunnelSurvivesDeadline relays the tunnel through the real proxy, the only way to cover both legs:
@@ -597,16 +577,6 @@ func TestSlowClientBounded(t *testing.T) {
 			},
 		},
 		{
-			desc: "child router readTimeout cannot extend its parent one",
-			handler: func(t *testing.T) http.Handler {
-				t.Helper()
-
-				child := wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(time.Hour))}, proxy(t))
-
-				return wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(timeout))}, child)
-			},
-		},
-		{
 			// The handler answers without reading the body, as an authentication or a rate limit middleware would.
 			// The server drains the unread body before flushing the response (net/http chunkWriter.writeHeader),
 			// after the handler and its defers have run, so only a read deadline left armed on return bounds it.
@@ -651,35 +621,67 @@ func TestSlowClientBounded(t *testing.T) {
 	}
 }
 
-// TestReadTimeoutDoesNotBoundBackend guards that the read deadline only bounds the body: net/http clears it once
-// the body is read, before reading in the background to detect a client disconnection.
+// TestReadTimeoutDoesNotBoundBackend guards that the read deadline only bounds the body: once it is read,
+// net/http reads in the background to detect a client disconnection, and a deadline expiring there cancels the request.
 func TestReadTimeoutDoesNotBoundBackend(t *testing.T) {
-	t.Parallel()
+	testCases := []struct {
+		desc    string
+		preRead bool
+	}{
+		{
+			desc: "body read by the handler",
+		},
+		{
+			// As a parent router middleware buffering the body would: the background read is already running
+			// when the read deadline is set.
+			desc:    "body read before the router",
+			preRead: true,
+		},
+	}
 
-	ts := httptest.NewServer(wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(50 * time.Millisecond))},
-		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if _, err := io.Copy(io.Discard, req.Body); err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-			select {
-			case <-req.Context().Done():
-				rw.WriteHeader(httputil.StatusClientClosedRequest)
-			case <-time.After(200 * time.Millisecond):
-				rw.WriteHeader(http.StatusOK)
-			}
-		})))
-	t.Cleanup(ts.Close)
+			handler := wrapTimeouts(t, dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(50 * time.Millisecond))},
+				http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					if _, err := io.Copy(io.Discard, req.Body); err != nil {
+						rw.WriteHeader(http.StatusBadRequest)
+						return
+					}
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, ts.URL, strings.NewReader("body"))
-	require.NoError(t, err)
+					select {
+					case <-req.Context().Done():
+						rw.WriteHeader(httputil.StatusClientClosedRequest)
+					case <-time.After(200 * time.Millisecond):
+						rw.WriteHeader(http.StatusOK)
+					}
+				}))
 
-	res, err := ts.Client().Do(req)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = res.Body.Close() })
+			ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if test.preRead {
+					body, err := io.ReadAll(req.Body)
+					if !assert.NoError(t, err) {
+						return
+					}
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+					req.Body = io.NopCloser(bytes.NewReader(body))
+				}
+
+				handler.ServeHTTP(rw, req)
+			}))
+			t.Cleanup(ts.Close)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, ts.URL, strings.NewReader("body"))
+			require.NoError(t, err)
+
+			res, err := ts.Client().Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		})
+	}
 }
 
 // TestFlushKeepsEntryPointWriteTimeout guards the deferred restore. A handler writing a small response leaves
