@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -60,45 +61,10 @@ func (s *TimeoutSuite) TestForwardingTimeouts() {
 	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
 }
 
-func (s *TimeoutSuite) TestRouterRespondingTimeouts() {
-	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
-	file := s.adaptFile("fixtures/timeout/router_responding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
-
-	s.traefikCmd(withConfigFile(file))
-
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/writeTimeout`)"))
-	require.NoError(s.T(), err)
-
-	// Check that timeout service is available.
-	statusURL := fmt.Sprintf("http://%s/statusTest?status=200",
-		net.JoinHostPort(timeoutEndpointIP, "9000"))
-	require.NoError(s.T(), try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)))
-
-	// A single idle connection per host forces the requests below to reuse the same keep-alive connection,
-	// so the "no leaked deadline" assertion actually exercises connection reuse.
-	client := &http.Client{Transport: &http.Transport{MaxIdleConns: 1, MaxIdleConnsPerHost: 1}}
-
-	// A backend answering after the router writeTimeout yields a 504.
-	response, err := client.Get("http://127.0.0.1:8000/writeTimeout?sleep=2000")
-	require.NoError(s.T(), err)
-	assert.Equal(s.T(), http.StatusGatewayTimeout, response.StatusCode)
-
-	// Drain the response to allow the keep-alive connection reuse.
-	_, err = io.Copy(io.Discard, response.Body)
-	require.NoError(s.T(), err)
-	require.NoError(s.T(), response.Body.Close())
-
-	// A backend answering below the router writeTimeout is not affected,
-	// even on the same keep-alive connection (no leaked connection deadline).
-	response, err = client.Get("http://127.0.0.1:8000/writeTimeout?sleep=100")
-	require.NoError(s.T(), err)
-	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
-}
-
-// TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout covers a router writeTimeout on an entrypoint that
+// TestRouterRespondingTimeoutsWriteTimeout covers a router writeTimeout on an entrypoint that
 // has its own writeTimeout: the router deadline supersedes it for the request, and the entrypoint one is
 // restored before the response is flushed, which happens after the router handler has returned.
-func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeout() {
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsWriteTimeout() {
 	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
 	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_write_timeout.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
 
@@ -148,9 +114,69 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsSupersedeEntryPointWriteTimeo
 	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 }
 
-// TestRouterRespondingTimeoutsWebSocket covers the upgrade requests, which the router writeTimeout leaves alone:
+// TestRouterRespondingTimeoutsReadTimeout covers a router readTimeout on an entrypoint that has its own
+// readTimeout: the router one supersedes it for the request body, in both directions.
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsReadTimeout() {
+	// The backend answers once it has read the whole body, so that only the upload is timed.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if _, err := io.Copy(io.Discard, req.Body); err != nil {
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}))
+	s.T().Cleanup(backend.Close)
+
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_read_timeout.toml", struct{ BackendURL string }{backend.URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Path(`/readTimeout`)", "Path(`/noReadTimeout`)"))
+	require.NoError(s.T(), err)
+
+	// uploadSlowly sends the first half of the body, then the second half after the pause, unless it is negative.
+	uploadSlowly := func(path string, pause time.Duration) (*http.Response, error) {
+		conn, err := net.Dial("tcp", "127.0.0.1:8000")
+		require.NoError(s.T(), err)
+		s.T().Cleanup(func() { _ = conn.Close() })
+
+		require.NoError(s.T(), conn.SetDeadline(time.Now().Add(10*time.Second)))
+
+		_, err = fmt.Fprintf(conn, "POST %s HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 4\r\n\r\nab", path)
+		require.NoError(s.T(), err)
+
+		if pause >= 0 {
+			time.Sleep(pause)
+
+			// The server may already have given up on the request.
+			_, _ = fmt.Fprint(conn, "cd")
+		}
+
+		return http.ReadResponse(bufio.NewReader(conn), nil)
+	}
+
+	// The entrypoint readTimeout is in force: without a router readTimeout, an upload slower than it fails.
+	response, err := uploadSlowly("/noReadTimeout", 2*time.Second)
+	if err == nil {
+		assert.NotEqual(s.T(), http.StatusOK, response.StatusCode)
+	}
+
+	// The router readTimeout supersedes it: the very same upload now succeeds.
+	response, err = uploadSlowly("/readTimeout", 2*time.Second)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+	// An upload stalling for good is still bounded, by the router readTimeout.
+	start := time.Now()
+	response, err = uploadSlowly("/readTimeout", -1)
+	require.NoError(s.T(), err)
+	assert.NotEqual(s.T(), http.StatusOK, response.StatusCode)
+	assert.Less(s.T(), time.Since(start), 6*time.Second)
+}
+
+// TestRouterRespondingTimeoutsWriteTimeoutWebSocket covers the upgrade requests, which the router writeTimeout leaves alone:
 // an established WebSocket tunnel is never severed at the deadline.
-func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsWriteTimeoutWebSocket() {
 	upgrader := gorillawebsocket.Upgrader{}
 
 	// A healthy echo backend: it completes the handshake and relays messages both ways.
@@ -173,7 +199,7 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	}))
 	s.T().Cleanup(echo.Close)
 
-	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_websocket.toml", struct{ WebsocketServer string }{echo.URL})
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_write_timeout_websocket.toml", struct{ WebsocketServer string }{echo.URL})
 
 	s.traefikCmd(withConfigFile(file))
 
@@ -194,9 +220,9 @@ func (s *TimeoutSuite) TestRouterRespondingTimeoutsWebSocket() {
 	assert.Equal(s.T(), "after-deadline", string(msg))
 }
 
-func (s *TimeoutSuite) TestRouterRespondingTimeoutsHTTP3() {
+func (s *TimeoutSuite) TestRouterRespondingTimeoutsWriteTimeoutHTTP3() {
 	timeoutEndpointIP := s.getComposeServiceIP("timeoutEndpoint")
-	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_http3.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
+	file := s.adaptFile("fixtures/timeout/router_responding_timeouts_write_timeout_http3.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
 
 	s.traefikCmd(withConfigFile(file))
 

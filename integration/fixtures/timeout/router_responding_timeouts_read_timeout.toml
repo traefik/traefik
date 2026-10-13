@@ -9,6 +9,8 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
+    [entryPoints.web.transport.respondingTimeouts]
+      readTimeout = "1s"
 
 [accessLog]
   format = "json"
@@ -24,12 +26,17 @@
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    rule = "Path(`/writeTimeout`)"
+    rule = "Path(`/readTimeout`)"
     [http.routers.router1.respondingTimeouts]
-      writeTimeout = "1s"
+      readTimeout = "3s"
+
+  # No router readTimeout: the entrypoint readTimeout is the only bound on the request body.
+  [http.routers.router2]
+    service = "service1"
+    rule = "Path(`/noReadTimeout`)"
 
 [http.services]
   [http.services.service1]
     [http.services.service1.loadBalancer]
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.TimeoutEndpoint}}:9000"
+        url = "{{ .BackendURL }}"
