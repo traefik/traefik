@@ -111,7 +111,7 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 		}
 	}
 
-	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, writeTimeout: writeTimeout, logger: logger}
+	rewriter := &statusRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline, entrypointWriteTimeout: writeTimeout, logger: logger}
 
 	defer func() {
 		// The response is flushed after the handler returns, possibly past the deadline:
@@ -207,10 +207,10 @@ func isUpgradeRequest(req *http.Request) bool {
 type statusRewriter struct {
 	http.ResponseWriter
 
-	responseController *http.ResponseController
-	deadline           time.Time
-	writeTimeout       time.Duration
-	logger             *zerolog.Logger
+	responseController     *http.ResponseController
+	deadline               time.Time
+	entrypointWriteTimeout time.Duration
+	logger                 *zerolog.Logger
 
 	// armOnce guards against the reverse proxy flushing from another goroutine.
 	armOnce sync.Once
@@ -264,15 +264,15 @@ func (s *statusRewriter) Unwrap() http.ResponseWriter {
 func (s *statusRewriter) armWriteDeadline() {
 	s.armOnce.Do(func() {
 		writeDeadline := s.deadline
-		if !time.Now().Before(s.deadline) {
+		if time.Now().After(s.deadline) {
 			writeDeadline = time.Time{}
-			if s.writeTimeout > 0 {
-				writeDeadline = time.Now().Add(s.writeTimeout)
+			if s.entrypointWriteTimeout > 0 {
+				writeDeadline = time.Now().Add(s.entrypointWriteTimeout)
 			}
 		}
 
 		if err := s.responseController.SetWriteDeadline(writeDeadline); err != nil {
-			s.logger.Debug().Err(err).Msg("Unable to arm write deadline")
+			s.logger.Error().Err(err).Msg("Unable to arm write deadline")
 		}
 	})
 }
