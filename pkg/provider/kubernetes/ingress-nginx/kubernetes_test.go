@@ -13182,6 +13182,142 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			// Regression test for a cross-namespace check bypass: the TLS option name does not include
+			// the referring Ingress namespace, so once an Ingress has legitimately built the option for
+			// its own secret, a later Ingress from another namespace referencing the same secret
+			// used to hit the cache and skip the cross-namespace check.
+			desc: "Auth TLS secret cross-namespace reference is rejected even when the TLS option is cached",
+			paths: []string{
+				"secrets-tls-option-cross-namespace.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-cross-namespace.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "a",
+										Name:      "ingress-with-auth-tls-secret-cross-namespace-owner",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "a-1-ca-2-require-and-verify-client-cert",
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "a",
+										Name:      "ingress-with-auth-tls-secret-cross-namespace-owner",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "a",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"a-1-ca-2-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----OWNER-----END CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
 			// Regression test for a TLS option name collision: a secret name may contain dots, and
 			// normalizing the name turns my.secret into my-secret without changing its length, so
 			// the length suffixes alone cannot keep the two secrets apart. Two Ingresses referencing

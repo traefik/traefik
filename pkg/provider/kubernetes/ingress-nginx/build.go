@@ -371,11 +371,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
 			optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
 
+			// The cross-namespace check depends on the referring Ingress namespace, which the option name leaves out,
+			// so it must run for every Ingress and not only when the option is first built and cached.
+			if !p.AllowCrossNamespaceResources && secretNamespace != ing.Namespace {
+				logger.Error().Msgf("Cross-namespace auth-tls-secret not allowed: %s, skipping ingress", *ing.config.AuthTLSSecret)
+				continue
+			}
+
 			if cached, exists := tlsOptionCache[optName]; exists {
 				tlsOptionName = optName
 				tlsOption = cached
 			} else {
-				tlsOpt, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config)
+				tlsOpt, err := p.buildClientAuthTLSOption(ing.config)
 				if err != nil {
 					logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
 					// Skipping the ingress entirely matches ingress-nginx behavior:
@@ -928,7 +935,9 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 	return nil
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
+// buildClientAuthTLSOption must only depend on the auth-tls-secret and auth-tls-verify-client annotations,
+// as its result is cached and shared by every Ingress referencing the same secret with the same verification mode.
+func (p *Provider) buildClientAuthTLSOption(cfg IngressConfig) (*tls.Options, error) {
 	if cfg.AuthTLSSecret == nil {
 		return nil, errors.New("auth-tls-secret is nil")
 	}
@@ -939,10 +948,6 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 	}
 
 	secretNamespace, secretName := parts[0], parts[1]
-	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
-	}
-
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
 		return nil, fmt.Errorf("reading client certificate: %w", err)
