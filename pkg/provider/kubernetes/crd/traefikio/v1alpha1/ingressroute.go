@@ -61,7 +61,7 @@ type Route struct {
 }
 
 // RouterRespondingTimeouts holds the timeouts for responding to client requests.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#responding-timeouts
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#opt-respondingTimeouts
 // +kubebuilder:validation:XValidation:rule="has(self.readTimeout) || has(self.writeTimeout)",message="RespondingTimeouts must define at least one of ReadTimeout or WriteTimeout."
 type RouterRespondingTimeouts struct {
 	// ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
