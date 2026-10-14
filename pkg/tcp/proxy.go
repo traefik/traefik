@@ -95,7 +95,7 @@ func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	if p.dialer.TerminationDelay() >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.dialer.TerminationDelay()))
 		if err != nil {
-			log.Debug().Err(err).Msg("Error while setting TCP connection deadline")
+			log.Error().Err(err).Msg("Error while setting TCP connection deadline")
 		}
 	}
 }
