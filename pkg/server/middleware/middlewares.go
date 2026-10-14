@@ -41,6 +41,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tap"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
@@ -401,6 +402,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return stripprefixregex.New(ctx, next, *config.StripPrefixRegex, middlewareName)
+		}
+	}
+
+	// Tap
+	if config.Tap != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return tap.New(ctx, next, *config.Tap, b.serviceBuilder, middlewareName)
 		}
 	}
 

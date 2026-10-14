@@ -101,7 +101,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/mod v0.41.0
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 	golang.org/x/sync v0.23.0
 	golang.org/x/sys v0.48.0
 	golang.org/x/text v0.42.0
@@ -119,8 +119,8 @@ require (
 	knative.dev/pkg v0.0.0-20251216153728-9c8140b780d1
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.24.1
-	sigs.k8s.io/gateway-api v1.6.2
-	sigs.k8s.io/gateway-api/conformance v1.6.2
+	sigs.k8s.io/gateway-api v1.6.3
+	sigs.k8s.io/gateway-api/conformance v1.6.3
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0
 	sigs.k8s.io/yaml v1.6.0
 )
