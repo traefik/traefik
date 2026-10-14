@@ -122,62 +122,11 @@ labels:
 | <a id="opt-tls-domains" href="#opt-tls-domains" title="#opt-tls-domains">`tls.domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. When using ACME certificate resolvers, domains are automatically extracted from router rules, making this option optional.                                                                                       |                             | No       |
 | <a id="opt-observability" href="#opt-observability" title="#opt-observability">`observability`</a> | Observability configuration for the router. Allows fine-grained control over access logs, metrics, and tracing per router. See [Observability](./observability.md) for details.                                                                                                                                      | Inherited from entry points | No       |
 | <a id="opt-observability-traceVerbosity" href="#opt-observability-traceVerbosity" title="#opt-observability-traceVerbosity">`observability.traceVerbosity`</a> | Defines the verbosity level of tracing for this router. Accepted values are `minimal` and `detailed`.                                                                                                                                                                                                               | `minimal`                   | No       |
-| <a id="opt-respondingTimeouts-readTimeout" href="#opt-respondingTimeouts-readTimeout" title="#opt-respondingTimeouts-readTimeout">`respondingTimeouts.readTimeout`</a> | Maximum duration for reading the request body, counted from when the router receives the request. `0` means no timeout. See [Responding Timeouts](#responding-timeouts) for details. | Entry point `readTimeout`   | No       |
-| <a id="opt-respondingTimeouts-writeTimeout" href="#opt-respondingTimeouts-writeTimeout" title="#opt-respondingTimeouts-writeTimeout">`respondingTimeouts.writeTimeout`</a> | Maximum duration for handling the request and writing the response, counted from when the router receives the request. `0` means no timeout. See [Responding Timeouts](#responding-timeouts) for details. | Entry point `writeTimeout`  | No       |
+| <a id="opt-respondingTimeouts" href="#opt-respondingTimeouts" title="#opt-respondingTimeouts">`respondingTimeouts`</a> | Overrides the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) for the requests matched by the router. Both timeouts count from when the router receives the request, and each one replaces the entry point one, whether longer or shorter. An unset timeout leaves the entry point one in force. Only one router per branch of a [multi-layer routing](./multi-layer-routing.md) tree can define `respondingTimeouts`, otherwise the router is disabled with an error. |                             | No       |
+| <a id="opt-respondingTimeouts-readTimeout" href="#opt-respondingTimeouts-readTimeout" title="#opt-respondingTimeouts-readTimeout">`respondingTimeouts.readTimeout`</a> | Maximum duration for reading the request body. `0` means no timeout. It must not be longer than `writeTimeout`, otherwise the router is disabled with an error. A value longer than the entry point [`readTimeout`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) weakens its protection against slow clients (Slowloris) for the whole entry point, so set it only on the routes that need it. | Entry point `readTimeout`   | No       |
+| <a id="opt-respondingTimeouts-writeTimeout" href="#opt-respondingTimeouts-writeTimeout" title="#opt-respondingTimeouts-writeTimeout">`respondingTimeouts.writeTimeout`</a> | Maximum duration for handling the request: the router middlewares, the backend processing (including retries), and the response write. `0` means no timeout. If it expires before the response has started, the client receives a `504 Gateway Timeout`; afterwards, the connection is closed. It does not apply to protocol upgrades (WebSocket, ...), but applies to streaming responses (SSE, gRPC streaming, ...): leave it unset or set it to `0` on such routers. | Entry point `writeTimeout`  | No       |
 | <a id="opt-parentRefs" href="#opt-parentRefs" title="#opt-parentRefs">`parentRefs`</a> | References to parent router names for multi-layer routing. When specified, this router becomes a child router that processes requests after parent routers have applied their middlewares. See [Multi-Layer Routing](../routing/multi-layer-routing.md) for details.                                        |                             | No       |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The name of the service that will handle the matched requests. Services can be load balancer services, weighted round robin, mirroring, or failover services. See [Service](../load-balancing/service.md) for details.                                                                                               |                             | Yes      |
-
-## Responding Timeouts
-
-The router `respondingTimeouts` override the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) `readTimeout` and `writeTimeout` for the requests matched by the router.
-They give a route its own time budget without changing the rest of the entry point, for example a longer `readTimeout` on an upload endpoint, or a shorter `writeTimeout` on an API that must answer fast.
-
-```yaml tab="Structured (YAML)"
-http:
-  routers:
-    upload:
-      rule: "Host(`example.com`) && PathPrefix(`/upload`)"
-      service: upload
-      respondingTimeouts:
-        readTimeout: "5m"
-        writeTimeout: "10m"
-```
-
-```toml tab="Structured (TOML)"
-[http.routers.upload]
-  rule = "Host(`example.com`) && PathPrefix(`/upload`)"
-  service = "upload"
-
-  [http.routers.upload.respondingTimeouts]
-    readTimeout = "5m"
-    writeTimeout = "10m"
-```
-
-Both timeouts start when the router receives the request.
-
-- `readTimeout` bounds reading the request body.
-- `writeTimeout` bounds everything the router does with the request: its middlewares, the backend processing (including all retry attempts), and the response delivery.
-  If it expires before the response has started, the client receives a `504 Gateway Timeout` (where the entry point `writeTimeout` would close the connection).
-  If it expires after the response has started, the connection is closed.
-
-Since the `writeTimeout` also covers the time spent reading the body, a `readTimeout` longer than the `writeTimeout` would have no effect: such a router is disabled with an error.
-
-**Interaction with entry point timeouts.** For the requests matched by the router, each router timeout replaces the matching entry point one:
-
-- a longer value extends the window, a shorter one tightens it,
-- `0` removes the timeout entirely,
-- an unset timeout leaves the entry point one in force.
-
-!!! warning "A long `readTimeout` relaxes the entry point's slow-client protection"
-
-    The entry point `readTimeout` (default `60s`) caps how long a client may take to send its request, which limits slow-client attacks such as Slowloris. A router `readTimeout` longer than the entry point one lifts that cap for the matched requests: a slow client on that route can then hold a connection open for the whole `readTimeout` duration. Because connection limits are enforced per entry point, that cost is borne by everything served by the entry point, not by the router alone. A `readTimeout` of `0` lifts that cap entirely. Set a long or zero `readTimeout` only on routes that need it.
-
-**Protocol upgrades (WebSocket, ...).** The router `writeTimeout` does not apply to upgrade requests (`Connection: Upgrade`): an established connection is never closed by this timeout, and the entry point `writeTimeout` still applies.
-
-**Streaming responses (SSE, gRPC streaming, ...).** Streaming responses cannot be detected when the request is received, so the `writeTimeout` applies to them as well: leave it unset (or set it to `0`) on such routers.
-
-**Multi-layer routing.** Only one router per branch of the [router tree](./multi-layer-routing.md) can define `respondingTimeouts`: a router whose parent (or any router above it) already defines them is disabled with an error.
-The entry point [`middlewares`](../../../install-configuration/entrypoints.md#opt-http-middlewares) and the middlewares of the parent routers run before the child router is reached: when one of them reads the request body (such as Buffering, or Tap with `recordBody`), that read is bounded by the entry point `readTimeout`, not by the child router one.
 
 ## Router Naming
 
