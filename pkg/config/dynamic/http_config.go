@@ -106,7 +106,7 @@ type Router struct {
 // +k8s:deepcopy-gen=true
 
 // RouterRespondingTimeouts holds the timeouts for responding to client requests on a router.
-// They count from the router receiving the request, once its headers are read, and replace the entrypoint ones when set.
+// They count from the router receiving the request, and replace the entrypoint ones when set.
 type RouterRespondingTimeouts struct {
 	// ReadTimeout is the maximum duration for reading the request body.
 	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
