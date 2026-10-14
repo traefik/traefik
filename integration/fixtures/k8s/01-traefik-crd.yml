@@ -167,6 +167,13 @@ spec:
                       - message: RespondingTimeouts must define at least one of ReadTimeout
                           or WriteTimeout.
                         rule: has(self.readTimeout) || has(self.writeTimeout)
+                      - message: ReadTimeout must be lower than or equal to WriteTimeout
+                          when both are set and non-zero.
+                        rule: '!has(self.readTimeout) || !has(self.writeTimeout) ||
+                          [[self.readTimeout, self.writeTimeout].map(t, string(t).matches(''^[0-9]+$'')
+                          ? duration(string(t) + ''s'') : duration(string(t)))].all(d,
+                          d[0] == duration(''0s'') || d[1] == duration(''0s'') ||
+                          d[0] <= d[1])'
                     services:
                       description: |-
                         Services defines the list of Service.
@@ -434,6 +441,7 @@ spec:
                   required:
                   - match
                   type: object
+                maxItems: 100000
                 type: array
               tls:
                 description: |-
