@@ -359,33 +359,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 
 		// Resolve TLS option (auth-tls-secret).
-		var tlsOptionName string
-		var tlsOption *tls.Options
+		var (
+			tlsOptionName string
+			tlsOption     *tls.Options
+		)
 		if ing.config.AuthTLSSecret != nil {
-			// The option name must be a pure function of what determines the TLSOption's content, so that multiple Ingresses
-			// sharing one mTLS policy on the same host resolve to the same TLS option.
-			// The namespace and the secret name are suffixed by their own length so that the key unambiguously
-			// encodes the pair.
-			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
-			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
-			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
-			optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
-
-			if cached, exists := tlsOptionCache[optName]; exists {
-				tlsOptionName = optName
-				tlsOption = cached
-			} else {
-				tlsOpt, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config)
-				if err != nil {
-					logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
-					// Skipping the ingress entirely matches ingress-nginx behavior:
-					// when the configured client-auth secret cannot be resolved, no
-					// router/middleware/service should be exposed for the ingress.
-					continue
-				}
-				tlsOptionName = optName
-				tlsOption = tlsOpt
-				tlsOptionCache[optName] = tlsOption
+			tlsOptionName, tlsOption, err = p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionCache)
+			if err != nil {
+				logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+				// Skipping the ingress entirely matches ingress-nginx behavior:
+				// when the configured client-auth secret cannot be resolved, no
+				// router/middleware/service should be exposed for the ingress.
+				continue
 			}
 		}
 
@@ -928,37 +913,52 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 	return nil
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
+// buildClientAuthTLSOption resolves the TLS option name and content for the auth-tls-secret annotation.
+// The option name only depends on the secret and the client auth type, so that Ingresses sharing one mTLS policy
+// resolve to the same TLS option. The cross-namespace check depends on the Ingress namespace, which the name
+// leaves out. It must run before the cache lookup, so that a cached option does not bypass it.
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig, tlsOptionsCache map[string]*tls.Options) (string, *tls.Options, error) {
 	if cfg.AuthTLSSecret == nil {
-		return nil, errors.New("auth-tls-secret is nil")
+		return "", nil, errors.New("auth-tls-secret is nil")
 	}
 
-	parts := strings.SplitN(*cfg.AuthTLSSecret, "/", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return nil, errors.New("auth-tls-secret must be in namespace/name format")
+	secretNamespace, secretName, found := strings.Cut(*cfg.AuthTLSSecret, "/")
+	if !found || secretNamespace == "" || secretName == "" {
+		return "", nil, errors.New("auth-tls-secret must be in namespace/name format")
 	}
 
-	secretNamespace, secretName := parts[0], parts[1]
 	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+		return "", nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+	}
+
+	// The namespace and the secret name are suffixed by their own length so that the name unambiguously encodes the pair.
+	pascalCaseWordBoundaryRegexp := regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	clientAuthType := clientAuthTypeFromString(cfg.AuthTLSVerifyClient)
+	clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundaryRegexp.ReplaceAllString(clientAuthType, "$1-$2"))
+	optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
+
+	if opt, exists := tlsOptionsCache[optName]; exists {
+		return optName, opt, nil
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("reading client certificate: %w", err)
+		return "", nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.ca == nil {
-		return nil, errors.New("secret does not contain a CA certificate")
+		return "", nil, errors.New("secret does not contain a CA certificate")
 	}
 
 	opt := &tls.Options{}
 	opt.SetDefaults()
 	opt.ClientAuth = tls.ClientAuth{
 		CAFiles:        []types.FileOrContent{types.FileOrContent(blocks.ca)},
-		ClientAuthType: clientAuthTypeFromString(cfg.AuthTLSVerifyClient),
+		ClientAuthType: clientAuthType,
 	}
-	return opt, nil
+	tlsOptionsCache[optName] = opt
+
+	return optName, opt, nil
 }
 
 // applyDefaultBackendAuth pre-resolves the access-control annotations that are
