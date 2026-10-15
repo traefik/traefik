@@ -6,6 +6,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -167,14 +168,50 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 				data, err := json.MarshalIndent(object, "", "  ")
 				if err != nil {
 					logger.Error().Err(err).Send()
+					continue
 				}
 
-				if err := os.WriteFile(s.filename, data, 0o600); err != nil {
+				if err := writeFile(s.filename, data); err != nil {
 					logger.Error().Err(err).Send()
 				}
 			}
 		}
 	})
+}
+
+// writeFile replaces filename through a temporary file and a rename,
+// so that a failed or interrupted write never leaves a truncated file behind.
+func writeFile(filename string, data []byte) error {
+	// Replace the target of a symlink, not the symlink itself.
+	if target, err := filepath.EvalSymlinks(filename); err == nil {
+		filename = target
+	}
+
+	// CreateTemp creates the file with 0600 permissions.
+	tmp, err := os.CreateTemp(filepath.Dir(filename), filepath.Base(filename)+".*.tmp")
+	if err != nil {
+		return os.WriteFile(filename, data, 0o600)
+	}
+	defer func() { _ = os.Remove(tmp.Name()) }()
+
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tmp.Name(), filename); err != nil {
+		// A file bind-mounted into a container cannot be replaced, write it in place.
+		return os.WriteFile(filename, data, 0o600)
+	}
+
+	return nil
 }
 
 // unSafeCopyOfStoredData creates maps copy of storedData. Is not thread safe, you should use `s.lock`.
