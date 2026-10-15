@@ -95,6 +95,30 @@ type UDPServiceInfo struct {
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 }
 
+// UDPMiddlewareInfo holds information about a currently running UDP middleware.
+type UDPMiddlewareInfo struct {
+	*dynamic.UDPMiddleware
+
+	Err    []string `json:"error,omitempty"`
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"`
+}
+
+// AddError adds err to the middleware and optionally disables it.
+func (m *UDPMiddlewareInfo) AddError(err error, critical bool) {
+	if slices.Contains(m.Err, err.Error()) {
+		return
+	}
+	m.Err = append(m.Err, err.Error())
+	if critical {
+		m.Status = StatusDisabled
+		return
+	}
+	if m.Status != StatusDisabled {
+		m.Status = StatusWarning
+	}
+}
+
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, s is marked as disabled.
 func (s *UDPServiceInfo) AddError(err error, critical bool) {

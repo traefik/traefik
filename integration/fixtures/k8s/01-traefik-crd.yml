@@ -809,6 +809,25 @@ spec:
                 items:
                   description: RouteUDP holds the UDP route configuration.
                   properties:
+                    middlewares:
+                      description: Middlewares defines the list of references to MiddlewareUDP
+                        resources.
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            description: Name defines the name of the referenced Traefik
+                              resource.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Traefik resource.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
                     services:
                       description: Services defines the list of UDP services.
                       items:
@@ -909,6 +928,202 @@ spec:
           spec:
             description: MiddlewareSpec defines the desired state of a Middleware.
             properties:
+              accessGovernance:
+                description: AccessGovernance defines access event persistence and
+                  identity, authorization, and metering dimensions.
+                properties:
+                  capture:
+                    description: AccessGovernanceCapture controls optional request
+                      metadata capture.
+                    properties:
+                      bodyReadMode:
+                        type: string
+                      maxBodyBytes:
+                        format: int64
+                        type: integer
+                      storeQuery:
+                        type: boolean
+                      storeUserAgent:
+                        type: boolean
+                    type: object
+                  databases:
+                    additionalProperties:
+                      description: AccessGovernanceDatabase defines a MySQL destination.
+                      properties:
+                        connectionMaxAge:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        dsn:
+                          type: string
+                        dsnFile:
+                          type: string
+                        httpTable:
+                          type: string
+                        maxIdleConnections:
+                          type: integer
+                        maxOpenConnections:
+                          type: integer
+                        networkTable:
+                          type: string
+                      type: object
+                    type: object
+                  defaultDatabase:
+                    type: string
+                  dimensions:
+                    description: AccessGovernanceDimensions supplies future-facing
+                      authentication, authorization, and billing dimensions.
+                    properties:
+                      authnMethod:
+                        type: string
+                      billingAccount:
+                        type: string
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      meter:
+                        type: string
+                      policyID:
+                        type: string
+                      tenantID:
+                        type: string
+                    type: object
+                  identity:
+                    items:
+                      description: AccessGovernanceIdentitySource defines an ordered
+                        principal lookup source.
+                      properties:
+                        decode:
+                          type: string
+                        group:
+                          type: integer
+                        jsonPath:
+                          type: string
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                        regex:
+                          type: string
+                      type: object
+                    type: array
+                  queue:
+                    description: AccessGovernanceQueue controls bounded asynchronous
+                      database writes.
+                    properties:
+                      batchSize:
+                        type: integer
+                      capacity:
+                        type: integer
+                      enqueueWait:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      flushInterval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      workers:
+                        type: integer
+                    type: object
+                  routes:
+                    items:
+                      description: AccessGovernanceRoute sends matching events to
+                        a named database.
+                      properties:
+                        bodyJSONPaths:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        database:
+                          type: string
+                        entryPoints:
+                          items:
+                            type: string
+                          type: array
+                        headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        hosts:
+                          items:
+                            type: string
+                          type: array
+                        methods:
+                          items:
+                            type: string
+                          type: array
+                        name:
+                          type: string
+                        pathRegex:
+                          type: string
+                        protocols:
+                          items:
+                            type: string
+                          type: array
+                        routers:
+                          items:
+                            type: string
+                          type: array
+                        services:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  runtimeValues:
+                    additionalProperties:
+                      description: |-
+                        RuntimeValueSource declares one arbitrarily named value owned by this
+                        Middleware configuration. Exactly one source must be configured.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        file:
+                          type: string
+                        secretKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        value:
+                          type: string
+                      type: object
+                    type: object
+                  schema:
+                    description: AccessGovernanceSchema controls schema bootstrapping
+                      and table names.
+                    properties:
+                      autoCreate:
+                        type: boolean
+                    type: object
+                type: object
               addPrefix:
                 description: |-
                   AddPrefix holds the add prefix middleware configuration.
@@ -2939,6 +3154,202 @@ spec:
           spec:
             description: MiddlewareTCPSpec defines the desired state of a MiddlewareTCP.
             properties:
+              accessGovernance:
+                description: AccessGovernance defines the access authorization, authentication,
+                  audit, and metering configuration.
+                properties:
+                  capture:
+                    description: AccessGovernanceCapture controls optional request
+                      metadata capture.
+                    properties:
+                      bodyReadMode:
+                        type: string
+                      maxBodyBytes:
+                        format: int64
+                        type: integer
+                      storeQuery:
+                        type: boolean
+                      storeUserAgent:
+                        type: boolean
+                    type: object
+                  databases:
+                    additionalProperties:
+                      description: AccessGovernanceDatabase defines a MySQL destination.
+                      properties:
+                        connectionMaxAge:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        dsn:
+                          type: string
+                        dsnFile:
+                          type: string
+                        httpTable:
+                          type: string
+                        maxIdleConnections:
+                          type: integer
+                        maxOpenConnections:
+                          type: integer
+                        networkTable:
+                          type: string
+                      type: object
+                    type: object
+                  defaultDatabase:
+                    type: string
+                  dimensions:
+                    description: AccessGovernanceDimensions supplies future-facing
+                      authentication, authorization, and billing dimensions.
+                    properties:
+                      authnMethod:
+                        type: string
+                      billingAccount:
+                        type: string
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      meter:
+                        type: string
+                      policyID:
+                        type: string
+                      tenantID:
+                        type: string
+                    type: object
+                  identity:
+                    items:
+                      description: AccessGovernanceIdentitySource defines an ordered
+                        principal lookup source.
+                      properties:
+                        decode:
+                          type: string
+                        group:
+                          type: integer
+                        jsonPath:
+                          type: string
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                        regex:
+                          type: string
+                      type: object
+                    type: array
+                  queue:
+                    description: AccessGovernanceQueue controls bounded asynchronous
+                      database writes.
+                    properties:
+                      batchSize:
+                        type: integer
+                      capacity:
+                        type: integer
+                      enqueueWait:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      flushInterval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      workers:
+                        type: integer
+                    type: object
+                  routes:
+                    items:
+                      description: AccessGovernanceRoute sends matching events to
+                        a named database.
+                      properties:
+                        bodyJSONPaths:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        database:
+                          type: string
+                        entryPoints:
+                          items:
+                            type: string
+                          type: array
+                        headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        hosts:
+                          items:
+                            type: string
+                          type: array
+                        methods:
+                          items:
+                            type: string
+                          type: array
+                        name:
+                          type: string
+                        pathRegex:
+                          type: string
+                        protocols:
+                          items:
+                            type: string
+                          type: array
+                        routers:
+                          items:
+                            type: string
+                          type: array
+                        services:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  runtimeValues:
+                    additionalProperties:
+                      description: |-
+                        RuntimeValueSource declares one arbitrarily named value owned by this
+                        Middleware configuration. Exactly one source must be configured.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        file:
+                          type: string
+                        secretKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        value:
+                          type: string
+                      type: object
+                    type: object
+                  schema:
+                    description: AccessGovernanceSchema controls schema bootstrapping
+                      and table names.
+                    properties:
+                      autoCreate:
+                        type: boolean
+                    type: object
+                type: object
               inFlightConn:
                 description: InFlightConn defines the InFlightConn middleware configuration.
                 properties:
@@ -2977,6 +3388,252 @@ spec:
                     items:
                       type: string
                     type: array
+                type: object
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: middlewareudps.traefik.io
+spec:
+  group: traefik.io
+  names:
+    kind: MiddlewareUDP
+    listKind: MiddlewareUDPList
+    plural: middlewareudps
+    singular: middlewareudp
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          MiddlewareUDP is the CRD implementation of a Traefik UDP middleware.
+          More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/udp/middlewares/overview/
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MiddlewareUDPSpec defines the desired state of a MiddlewareUDP.
+            properties:
+              accessGovernance:
+                description: AccessGovernance defines the access authorization, authentication,
+                  audit, and metering configuration.
+                properties:
+                  capture:
+                    description: AccessGovernanceCapture controls optional request
+                      metadata capture.
+                    properties:
+                      bodyReadMode:
+                        type: string
+                      maxBodyBytes:
+                        format: int64
+                        type: integer
+                      storeQuery:
+                        type: boolean
+                      storeUserAgent:
+                        type: boolean
+                    type: object
+                  databases:
+                    additionalProperties:
+                      description: AccessGovernanceDatabase defines a MySQL destination.
+                      properties:
+                        connectionMaxAge:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        dsn:
+                          type: string
+                        dsnFile:
+                          type: string
+                        httpTable:
+                          type: string
+                        maxIdleConnections:
+                          type: integer
+                        maxOpenConnections:
+                          type: integer
+                        networkTable:
+                          type: string
+                      type: object
+                    type: object
+                  defaultDatabase:
+                    type: string
+                  dimensions:
+                    description: AccessGovernanceDimensions supplies future-facing
+                      authentication, authorization, and billing dimensions.
+                    properties:
+                      authnMethod:
+                        type: string
+                      billingAccount:
+                        type: string
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      meter:
+                        type: string
+                      policyID:
+                        type: string
+                      tenantID:
+                        type: string
+                    type: object
+                  identity:
+                    items:
+                      description: AccessGovernanceIdentitySource defines an ordered
+                        principal lookup source.
+                      properties:
+                        decode:
+                          type: string
+                        group:
+                          type: integer
+                        jsonPath:
+                          type: string
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                        regex:
+                          type: string
+                      type: object
+                    type: array
+                  queue:
+                    description: AccessGovernanceQueue controls bounded asynchronous
+                      database writes.
+                    properties:
+                      batchSize:
+                        type: integer
+                      capacity:
+                        type: integer
+                      enqueueWait:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      flushInterval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      workers:
+                        type: integer
+                    type: object
+                  routes:
+                    items:
+                      description: AccessGovernanceRoute sends matching events to
+                        a named database.
+                      properties:
+                        bodyJSONPaths:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        database:
+                          type: string
+                        entryPoints:
+                          items:
+                            type: string
+                          type: array
+                        headers:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        hosts:
+                          items:
+                            type: string
+                          type: array
+                        methods:
+                          items:
+                            type: string
+                          type: array
+                        name:
+                          type: string
+                        pathRegex:
+                          type: string
+                        protocols:
+                          items:
+                            type: string
+                          type: array
+                        routers:
+                          items:
+                            type: string
+                          type: array
+                        services:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  runtimeValues:
+                    additionalProperties:
+                      description: |-
+                        RuntimeValueSource declares one arbitrarily named value owned by this
+                        Middleware configuration. Exactly one source must be configured.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        file:
+                          type: string
+                        secretKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        value:
+                          type: string
+                      type: object
+                    type: object
+                  schema:
+                    description: AccessGovernanceSchema controls schema bootstrapping
+                      and table names.
+                    properties:
+                      autoCreate:
+                        type: boolean
+                    type: object
                 type: object
             type: object
         required:

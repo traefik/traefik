@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -224,6 +225,9 @@ type Conn struct {
 	timeout  time.Duration // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
+
+	bytesRead    atomic.Int64
+	bytesWritten atomic.Int64
 }
 
 // Read reads up to len(p) bytes into p from the connection.
@@ -233,6 +237,7 @@ func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case c.readCh <- p:
 		n := <-c.sizeCh
+		c.bytesRead.Add(int64(n))
 		c.muActivity.Lock()
 		c.lastActivity = time.Now()
 		c.muActivity.Unlock()
@@ -251,7 +256,24 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 	c.lastActivity = time.Now()
 	c.muActivity.Unlock()
 
-	return c.listener.pConn.WriteTo(p, c.rAddr)
+	n, err = c.listener.pConn.WriteTo(p, c.rAddr)
+	c.bytesWritten.Add(int64(n))
+	return n, err
+}
+
+// RemoteAddr returns the remote client address of the UDP session.
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.rAddr
+}
+
+// LocalAddr returns the local listener address of the UDP session.
+func (c *Conn) LocalAddr() net.Addr {
+	return c.listener.pConn.LocalAddr()
+}
+
+// Stats returns bytes read from and written to the client during the UDP session.
+func (c *Conn) Stats() (received, sent int64) {
+	return c.bytesRead.Load(), c.bytesWritten.Load()
 }
 
 // Close releases resources related to the Conn.

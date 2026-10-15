@@ -10,6 +10,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accessgovernance"
 	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
 	"github.com/traefik/traefik/v3/pkg/middlewares/buffering"
@@ -108,8 +109,18 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	var middleware alice.Constructor
 	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
+	// AccessGovernance
+	if config.AccessGovernance != nil {
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return accessgovernance.New(ctx, next, *config.AccessGovernance, middlewareName)
+		}
+	}
+
 	// AddPrefix
 	if config.AddPrefix != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return addprefix.New(ctx, next, *config.AddPrefix, middlewareName)
 		}

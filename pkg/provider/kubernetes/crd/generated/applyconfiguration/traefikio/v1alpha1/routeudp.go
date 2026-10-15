@@ -33,6 +33,8 @@ package v1alpha1
 type RouteUDPApplyConfiguration struct {
 	// Services defines the list of UDP services.
 	Services []ServiceUDPApplyConfiguration `json:"services,omitempty"`
+	// Middlewares defines the list of references to MiddlewareUDP resources.
+	Middlewares []ObjectReferenceApplyConfiguration `json:"middlewares,omitempty"`
 }
 
 // RouteUDPApplyConfiguration constructs a declarative configuration of the RouteUDP type for use with
@@ -50,6 +52,19 @@ func (b *RouteUDPApplyConfiguration) WithServices(values ...*ServiceUDPApplyConf
 			panic("nil value passed to WithServices")
 		}
 		b.Services = append(b.Services, *values[i])
+	}
+	return b
+}
+
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *RouteUDPApplyConfiguration) WithMiddlewares(values ...*ObjectReferenceApplyConfiguration) *RouteUDPApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.Middlewares = append(b.Middlewares, *values[i])
 	}
 	return b
 }

@@ -124,6 +124,12 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			for serviceName, service := range configuration.UDP.Services {
 				conf.UDP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
+			for middlewareName, middleware := range configuration.UDP.Middlewares {
+				if conf.UDP.Middlewares == nil {
+					conf.UDP.Middlewares = make(map[string]*dynamic.UDPMiddleware)
+				}
+				conf.UDP.Middlewares[provider.MakeQualifiedName(pvd, middlewareName)] = middleware
+			}
 		}
 
 		if configuration.TLS != nil {

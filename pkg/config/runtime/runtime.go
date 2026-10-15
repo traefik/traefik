@@ -32,6 +32,7 @@ type Configuration struct {
 	TCPMiddlewares map[string]*TCPMiddlewareInfo `json:"tcpMiddlewares,omitempty"`
 	TCPServices    map[string]*TCPServiceInfo    `json:"tcpServices,omitempty"`
 	UDPRouters     map[string]*UDPRouterInfo     `json:"udpRouters,omitempty"`
+	UDPMiddlewares map[string]*UDPMiddlewareInfo `json:"udpMiddlewares,omitempty"`
 	UDPServices    map[string]*UDPServiceInfo    `json:"udpServices,omitempty"`
 }
 
@@ -106,6 +107,13 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 			runtimeConfig.UDPServices = make(map[string]*UDPServiceInfo, len(conf.UDP.Services))
 			for k, v := range conf.UDP.Services {
 				runtimeConfig.UDPServices[k] = &UDPServiceInfo{UDPService: v, Status: StatusEnabled}
+			}
+		}
+
+		if len(conf.UDP.Middlewares) > 0 {
+			runtimeConfig.UDPMiddlewares = make(map[string]*UDPMiddlewareInfo, len(conf.UDP.Middlewares))
+			for k, v := range conf.UDP.Middlewares {
+				runtimeConfig.UDPMiddlewares[k] = &UDPMiddlewareInfo{UDPMiddleware: v, Status: StatusEnabled}
 			}
 		}
 	}
@@ -214,6 +222,14 @@ func (c *Configuration) PopulateUsedBy() {
 			continue
 		}
 
+		for _, midName := range routerInfo.UDPRouter.Middlewares {
+			fullMidName := getQualifiedName(providerName, midName)
+			if _, ok := c.UDPMiddlewares[fullMidName]; !ok {
+				continue
+			}
+			c.UDPMiddlewares[fullMidName].UsedBy = append(c.UDPMiddlewares[fullMidName].UsedBy, routerName)
+		}
+
 		serviceName := getQualifiedName(providerName, routerInfo.UDPRouter.Service)
 		if _, ok := c.UDPServices[serviceName]; !ok {
 			continue
@@ -228,6 +244,13 @@ func (c *Configuration) PopulateUsedBy() {
 		}
 
 		sort.Strings(c.UDPServices[k].UsedBy)
+	}
+
+	for name, middlewareInfo := range c.UDPMiddlewares {
+		if middlewareInfo.Status == "" {
+			middlewareInfo.Status = StatusEnabled
+		}
+		sort.Strings(c.UDPMiddlewares[name].UsedBy)
 	}
 }
 
