@@ -231,7 +231,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return grpcweb.New(ctx, next, *config.GrpcWeb, middlewareName), nil
+			return grpcweb.New(ctx, next, *config.GrpcWeb, middlewareName)
 		}
 	}
 

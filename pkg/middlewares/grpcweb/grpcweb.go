@@ -12,15 +12,17 @@ import (
 const typeName = "GRPCWeb"
 
 // New builds a new gRPC web request converter.
-func New(ctx context.Context, next http.Handler, config dynamic.GrpcWeb, name string) http.Handler {
+func New(ctx context.Context, next http.Handler, config dynamic.GrpcWeb, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
-	return grpcweb.WrapHandler(next, grpcweb.WithCorsForRegisteredEndpointsOnly(false), grpcweb.WithOriginFunc(func(origin string) bool {
-		for _, originCfg := range config.AllowOrigins {
-			if originCfg == "*" || originCfg == origin {
-				return true
+	return middlewares.WrapExternal(next, func(next http.Handler) (http.Handler, error) {
+		return grpcweb.WrapHandler(next, grpcweb.WithCorsForRegisteredEndpointsOnly(false), grpcweb.WithOriginFunc(func(origin string) bool {
+			for _, originCfg := range config.AllowOrigins {
+				if originCfg == "*" || originCfg == origin {
+					return true
+				}
 			}
-		}
-		return false
-	}))
+			return false
+		})), nil
+	})
 }

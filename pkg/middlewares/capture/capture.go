@@ -24,12 +24,9 @@
 package capture
 
 import (
-	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"net"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -182,16 +179,7 @@ func (crw *captureResponseWriter) WriteHeader(s int) {
 	crw.status = s
 }
 
-func (crw *captureResponseWriter) Flush() {
-	if f, ok := crw.rw.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := crw.rw.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (crw *captureResponseWriter) Unwrap() http.ResponseWriter {
+	return crw.rw
 }

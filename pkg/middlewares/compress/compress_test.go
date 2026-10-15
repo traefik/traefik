@@ -501,7 +501,7 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 		rw.Header().Add(contentEncodingHeader, gzipName)
 		rw.Header().Add(varyHeader, acceptEncodingHeader)
 		rw.WriteHeader(http.StatusUnauthorized)
-		rw.(http.Flusher).Flush()
+		assert.NoError(t, http.NewResponseController(rw).Flush())
 		_, err := rw.Write([]byte("short"))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -821,4 +821,75 @@ func generateBytes(length int) []byte {
 		value = append(value, 0x61+byte(i))
 	}
 	return value
+}
+
+// TestGzhttp_requiresWrapExternal documents why the gzip handler is built with middlewares.WrapExternal.
+// gzhttp asserts http.Flusher and http.Hijacker on the ResponseWriter it receives instead of using http.ResponseController,
+// so Flush and Hijack do not reach a ResponseWriter which only implements Unwrap, as Traefik's wrappers do.
+// If the "only implements Unwrap" cases fail after bumping klauspost/compress, gzhttp follows Unwrap
+// and WrapExternal can be removed from newGzipHandler.
+func TestGzhttp_requiresWrapExternal(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		unwrapOnly     bool
+		hijack         bool
+		expectFlushed  bool
+		expectHijacked bool
+	}{
+		{
+			desc:          "Flush with a ResponseWriter implementing Flush",
+			expectFlushed: true,
+		},
+		{
+			desc:       "Flush with a ResponseWriter which only implements Unwrap",
+			unwrapOnly: true,
+		},
+		{
+			desc:           "Hijack with a ResponseWriter implementing Hijack",
+			hijack:         true,
+			expectHijacked: true,
+		},
+		{
+			desc:       "Hijack with a ResponseWriter which only implements Unwrap",
+			unwrapOnly: true,
+			hijack:     true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			wrapper, err := gzhttp.NewWrapper(gzhttp.EnableZstd(false))
+			require.NoError(t, err)
+
+			handler := wrapper(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rc := http.NewResponseController(rw)
+
+				// The outcome is checked on the underlying recorder.
+				if test.hijack {
+					_, _, _ = rc.Hijack()
+					return
+				}
+
+				_, err := rw.Write([]byte("data"))
+				assert.NoError(t, err)
+				_ = rc.Flush()
+			}))
+
+			recorder := testhelpers.NewHijackableRecorder()
+			var rw http.ResponseWriter = recorder
+			if test.unwrapOnly {
+				rw = &testhelpers.UnwrapOnlyResponseWriter{ResponseWriter: recorder}
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set(acceptEncodingHeader, gzipName)
+
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectFlushed, recorder.Flushed)
+			assert.Equal(t, test.expectHijacked, recorder.Hijacked)
+		})
+	}
 }

@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -70,16 +70,21 @@ func (w *writeDetector) Write(p []byte) (int, error) {
 }
 
 type writeFlusher struct {
-	io.Writer
+	rw http.ResponseWriter
 }
 
 func (w *writeFlusher) Write(b []byte) (int, error) {
-	n, err := w.Writer.Write(b)
-	if f, ok := w.Writer.(http.Flusher); ok {
-		f.Flush()
+	n, err := w.rw.Write(b)
+	if err != nil {
+		return n, err
 	}
 
-	return n, err
+	// ErrNotSupported is ignored to keep flushing a no-op on writers that cannot flush.
+	if err := http.NewResponseController(w.rw).Flush(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+		return n, err
+	}
+
+	return n, nil
 }
 
 type timeoutError struct {

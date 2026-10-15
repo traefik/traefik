@@ -1,9 +1,6 @@
 package middlewares
 
 import (
-	"bufio"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -88,18 +85,7 @@ func (r *ResponseModifier) Write(b []byte) (int, error) {
 	return r.rw.Write(b)
 }
 
-// Hijack hijacks the connection.
-func (r *ResponseModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := r.rw.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
-}
-
-// Flush sends any buffered data to the client.
-func (r *ResponseModifier) Flush() {
-	if flusher, ok := r.rw.(http.Flusher); ok {
-		flusher.Flush()
-	}
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *ResponseModifier) Unwrap() http.ResponseWriter {
+	return r.rw
 }

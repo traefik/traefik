@@ -1603,12 +1603,7 @@ func doLoggingWithAbortedStream(t *testing.T, config *otypes.AccessLog) {
 }
 
 func streamBackend(rw http.ResponseWriter, r *http.Request) {
-	// Get the Flusher to flush the response to the client
-	flusher, ok := rw.(http.Flusher)
-	if !ok {
-		http.Error(rw, "Streaming unsupported!", http.StatusInternalServerError)
-		return
-	}
+	rc := http.NewResponseController(rw)
 
 	// Set the headers for streaming
 	rw.Header().Set("Content-Type", "text/plain")
@@ -1627,7 +1622,10 @@ func streamBackend(rw http.ResponseWriter, r *http.Request) {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			flusher.Flush()
+			if err := rc.Flush(); err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 }

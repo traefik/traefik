@@ -369,22 +369,21 @@ func (r *responseWriter) WriteHeader(code int) {
 }
 
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := r.responseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
+	conn, brw, err := http.NewResponseController(r.responseWriter).Hijack()
+	if errors.Is(err, http.ErrNotSupported) {
+		return nil, nil, fmt.Errorf("%T is not a http.Hijacker: %w", r.responseWriter, err)
 	}
 
 	// When the connection is Hijacked when using Websockets, we don't want to retry anymore,
 	// so we set the hijacked flag to true.
 	r.hijacked = true
 
-	return hijacker.Hijack()
+	return conn, brw, err
 }
 
-func (r *responseWriter) Flush() {
-	if flusher, ok := r.responseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseWriter) Unwrap() http.ResponseWriter {
+	return r.responseWriter
 }
 
 type peekedBody struct {
