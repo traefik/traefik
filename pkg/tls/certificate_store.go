@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -28,6 +29,11 @@ type CertificateStore struct {
 	CertCache          *cache.Cache
 
 	ocspStapler *ocspStapler
+
+	// matchIPReverseAddress must not change after creation because cache hits bypass matching.
+	// Only the acme-tls/1 store enables it: SNI cannot carry an IP, so TLS-ALPN-01 IP validation
+	// sends the reverse-address name (RFC 8738 section 6) while the challenge certificate is indexed by its IP SAN.
+	matchIPReverseAddress bool
 }
 
 // NewCertificateStore create a store for dynamic certificates.
@@ -111,7 +117,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		})
 
 		for _, certDomains := range sorted {
-			if matchDomain(serverName, certDomains) {
+			if matchDomain(serverName, certDomains) || (c.matchIPReverseAddress && matchIPReverseAddress(serverName, certDomains)) {
 				// cache best match
 				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
@@ -283,5 +289,20 @@ func matchDomain(serverName, certDomains string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func matchIPReverseAddress(serverName, certDomains string) bool {
+	for certDomain := range strings.SplitSeq(certDomains, ",") {
+		if net.ParseIP(certDomain) == nil {
+			continue
+		}
+
+		reverseAddr, err := dns.ReverseAddr(certDomain)
+		if err == nil && strings.TrimSuffix(serverName, ".") == strings.TrimSuffix(strings.ToLower(reverseAddr), ".") {
+			return true
+		}
+	}
+
 	return false
 }
