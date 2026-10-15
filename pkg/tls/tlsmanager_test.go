@@ -69,10 +69,8 @@ ZboOWVe3icTy64BT3OQhmg==
 
 func TestTLSInStore(t *testing.T) {
 	dynamicConfigs := []*CertAndStores{{
-		Certificate: Certificate{
-			CertFile: localhostCert,
-			KeyFile:  localhostKey,
-		},
+		CertFile: localhostCert,
+		KeyFile:  localhostKey,
 	}}
 
 	tlsManager := NewManager()
@@ -86,10 +84,8 @@ func TestTLSInStore(t *testing.T) {
 
 func TestTLSInvalidStore(t *testing.T) {
 	dynamicConfigs := []*CertAndStores{{
-		Certificate: Certificate{
-			CertFile: localhostCert,
-			KeyFile:  localhostKey,
-		},
+		CertFile: localhostCert,
+		KeyFile:  localhostKey,
 	}}
 
 	tlsManager := NewManager()
@@ -111,10 +107,8 @@ func TestTLSInvalidStore(t *testing.T) {
 
 func TestManager_Get(t *testing.T) {
 	dynamicConfigs := []*CertAndStores{{
-		Certificate: Certificate{
-			CertFile: localhostCert,
-			KeyFile:  localhostKey,
-		},
+		CertFile: localhostCert,
+		KeyFile:  localhostKey,
 	}}
 
 	tlsConfigs := map[string]Options{
