@@ -34,7 +34,8 @@ type ClientAuthApplyConfiguration struct {
 	// SecretNames defines the names of the referenced Kubernetes Secret storing certificate details.
 	SecretNames []string `json:"secretNames,omitempty"`
 	// ClientAuthType defines the client authentication type to apply.
-	ClientAuthType *string `json:"clientAuthType,omitempty"`
+	ClientAuthType *string                   `json:"clientAuthType,omitempty"`
+	Expiry         *ExpiryApplyConfiguration `json:"expiry,omitempty"`
 }
 
 // ClientAuthApplyConfiguration constructs a declarative configuration of the ClientAuth type for use with
@@ -58,5 +59,13 @@ func (b *ClientAuthApplyConfiguration) WithSecretNames(values ...string) *Client
 // If called multiple times, the ClientAuthType field is set to the value of the last call.
 func (b *ClientAuthApplyConfiguration) WithClientAuthType(value string) *ClientAuthApplyConfiguration {
 	b.ClientAuthType = &value
+	return b
+}
+
+// WithExpiry sets the Expiry field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Expiry field is set to the value of the last call.
+func (b *ClientAuthApplyConfiguration) WithExpiry(value *ExpiryApplyConfiguration) *ClientAuthApplyConfiguration {
+	b.Expiry = value
 	return b
 }

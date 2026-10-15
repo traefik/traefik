@@ -483,7 +483,25 @@
         "curvePreferences": [
           "foo"
         ],
-        "clientAuth": {},
+        "clientAuth": {
+          "caFiles": [ "xxxx" ],
+          "clientAuthType": "RequireAndVerifyClientCert",
+          "expiry": {
+            "crl": {
+              "mode": "NOOP",
+              "reloadInterval": "40ns",
+              "http": {
+                "errorBackoff": "40ns",
+                "expirationStrategy": "Open",
+                "maxCRLBytes": 1024,
+                "timeout": "40ns",
+                "whitelist": {
+                  "distributionPoints": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
+                }
+              }
+            }
+          }
+        },
         "sniStrict": true
       }
     },
