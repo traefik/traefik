@@ -576,6 +576,18 @@ func assertFloat64NotZero() func(t *testing.T, actual any) {
 	}
 }
 
+func assertTimeHasMillisecondPrecision() func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
+		t.Helper()
+
+		s, _ := actual.(string)
+		assert.Contains(t, s, ".")
+
+		_, err := time.Parse(jsonLogTimeFormat, s)
+		assert.NoError(t, err)
+	}
+}
+
 func TestLoggerJSON(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -619,7 +631,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
 			},
@@ -659,7 +671,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
 				TraceID:                   assertString("01000000000000000000000000000000"),
@@ -703,7 +715,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                   assertFloat64NotZero(),
 				Overhead:                   assertFloat64NotZero(),
 				RetryAttempts:              assertFloat64(float64(testRetryAttempts)),
-				"time":                     assertNotEmpty(),
+				"time":                     assertTimeHasMillisecondPrecision(),
 				"StartLocal":               assertNotEmpty(),
 				"StartUTC":                 assertNotEmpty(),
 				KubernetesIngressNamespace: assertString("test-namespace"),
@@ -751,7 +763,7 @@ func TestLoggerJSON(t *testing.T) {
 				TLSClientSubject:          assertString("CN=foobar"),
 				TLSVersion:                assertString("1.3"),
 				TLSCipher:                 assertString("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				StartLocal:                assertNotEmpty(),
 				StartUTC:                  assertNotEmpty(),
 			},
@@ -768,7 +780,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
 				RequestRefererHeader:      assertString(testReferer),
 				RequestUserAgentHeader:    assertString(testUserAgent),
@@ -789,7 +801,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value any){
 				"level": assertString("info"),
 				"msg":   assertString(""),
-				"time":  assertNotEmpty(),
+				"time":  assertTimeHasMillisecondPrecision(),
 			},
 		},
 		{
@@ -807,7 +819,7 @@ func TestLoggerJSON(t *testing.T) {
 			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"downstream_Content-Type": assertString("REDACTED"),
 				RequestRefererHeader:      assertString("REDACTED"),
 				RequestUserAgentHeader:    assertString("REDACTED"),
@@ -835,7 +847,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
-				"time":               assertNotEmpty(),
+				"time":               assertTimeHasMillisecondPrecision(),
 				RequestRefererHeader: assertString(testReferer),
 			},
 		},
@@ -861,7 +873,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
-				"time":               assertNotEmpty(),
+				"time":               assertTimeHasMillisecondPrecision(),
 				RequestRefererHeader: assertString(testReferer),
 			},
 		},
@@ -904,7 +916,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
 			},
@@ -948,7 +960,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				"time":                    assertNotEmpty(),
+				"time":                    assertTimeHasMillisecondPrecision(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
 			},
@@ -1011,7 +1023,7 @@ func TestLogger_AbortedRequest(t *testing.T) {
 		Duration:                       assertFloat64NotZero(),
 		Overhead:                       assertFloat64NotZero(),
 		RetryAttempts:                  assertFloat64(float64(0)),
-		"time":                         assertNotEmpty(),
+		"time":                         assertTimeHasMillisecondPrecision(),
 		StartLocal:                     assertNotEmpty(),
 		StartUTC:                       assertNotEmpty(),
 		"downstream_Content-Type":      assertString("text/plain"),
