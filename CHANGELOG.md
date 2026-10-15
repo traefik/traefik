@@ -1,3 +1,11 @@
+## [v2.11.59](https://github.com/traefik/traefik/tree/v2.11.59) (2026-10-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.58...v2.11.59)
+
+**Bug fixes:**
+- **[server]** Reject CONNECT requests regardless of HTTP version ([#14031](https://github.com/traefik/traefik/pull/14031) @juliens)
+- **[server]** Reject CONNECT method before reaching the muxer ([#14050](https://github.com/traefik/traefik/pull/14050) @juliens)
+- Bump golang.org/x/net to v0.60.0 ([#14048](https://github.com/traefik/traefik/pull/14048) @kevinpollet)
+
 ## [v2.11.58](https://github.com/traefik/traefik/tree/v2.11.58) (2026-10-05)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.57...v2.11.58)
 
