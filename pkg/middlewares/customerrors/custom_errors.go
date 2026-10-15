@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -46,6 +47,7 @@ type customErrors struct {
 	requestHeaders      []string
 	statusRewrites      []statusRewrite
 	forwardNginxHeaders http.Header
+	ifAcceptContains    string
 }
 
 type statusRewrite struct {
@@ -90,6 +92,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		requestHeaders:      config.ErrorRequestHeaders,
 		statusRewrites:      statusRewrites,
 		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
+		ifAcceptContains:    config.IfAcceptContains,
 	}, nil
 }
 
@@ -105,6 +108,13 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		observability.SetStatusErrorf(req.Context(), "No backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
+	}
+
+	if c.ifAcceptContains != "" {
+		if !containsHeader(req, "Accept", c.ifAcceptContains) {
+			c.next.ServeHTTP(rw, req)
+			return
+		}
 	}
 
 	catcher := newCodeCatcher(rw, c.httpCodeRanges)
@@ -208,6 +218,14 @@ func newRequest(baseURL string) (*http.Request, error) {
 
 	req.RequestURI = u.RequestURI()
 	return req, nil
+}
+
+func containsHeader(req *http.Request, name, value string) bool {
+	items := strings.Split(req.Header.Get(name), ",")
+
+	return slices.ContainsFunc(items, func(item string) bool {
+		return value == strings.ToLower(strings.TrimSpace(item))
+	})
 }
 
 // codeCatcher is a response writer that detects as soon as possible
