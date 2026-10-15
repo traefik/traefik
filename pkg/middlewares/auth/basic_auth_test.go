@@ -26,6 +26,15 @@ func TestNewBasicEmpty(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestNewBasicInvalidUser(t *testing.T) {
+	auth := dynamic.BasicAuth{
+		Users: []string{"not-a-user"},
+	}
+
+	_, err := NewBasic(t.Context(), nil, auth, "authName")
+	assert.EqualError(t, err, "error parsing BasicUser: expected user:hash format")
+}
+
 func TestNewBasicNotFoundSecretIsSet(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
