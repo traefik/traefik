@@ -40,6 +40,7 @@ type metricsMiddleware struct {
 	reqDurationHistogram metrics.ScalableHistogram
 	reqsBytesCounter     gokitmetrics.Counter
 	respsBytesCounter    gokitmetrics.Counter
+	inflightGauge        gokitmetrics.Gauge
 	baseLabels           []string
 	name                 string
 }
@@ -87,6 +88,7 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
 		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
+		inflightGauge:        registry.ServiceInflightRequestsGauge(),
 		baseLabels:           []string{"service", serviceName},
 		name:                 nameService,
 	}
@@ -136,10 +138,11 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	proto := getRequestProtocol(req)
+	method := getMethod(req)
 
 	var labels []string
 	labels = append(labels, m.baseLabels...)
-	labels = append(labels, "method", getMethod(req))
+	labels = append(labels, "method", method)
 	labels = append(labels, "protocol", proto)
 
 	// TLS metrics
@@ -168,6 +171,20 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	next := m.next
 	if capt.NeedsReset(rw) {
 		next = capt.Reset(m.next)
+	}
+
+	// Track in-flight requests per service. The label slice is built once
+	// and reused for both the increment and the deferred decrement so they
+	// always address the same series. For upgraded connections
+	// (WebSocket/SSE) the proxy's ServeHTTP blocks until the session
+	// closes, so the deferred decrement only fires at close — not at
+	// upgrade-completion.
+	if m.inflightGauge != nil {
+		inflightLabels := make([]string, 0, len(m.baseLabels)+4)
+		inflightLabels = append(inflightLabels, m.baseLabels...)
+		inflightLabels = append(inflightLabels, "method", method, "protocol", proto)
+		m.inflightGauge.With(inflightLabels...).Add(1)
+		defer m.inflightGauge.With(inflightLabels...).Add(-1)
 	}
 
 	start := time.Now()

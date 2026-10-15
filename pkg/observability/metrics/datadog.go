@@ -46,13 +46,14 @@ const (
 	ddRouterReqsBytesName    = "router.requests.bytes.total"
 	ddRouterRespsBytesName   = "router.responses.bytes.total"
 
-	ddServiceReqsName         = "service.request.total"
-	ddServiceReqsTLSName      = "service.request.tls.total"
-	ddServiceReqsDurationName = "service.request.duration"
-	ddServiceRetriesName      = "service.retries.total"
-	ddServiceServerUpName     = "service.server.up"
-	ddServiceReqsBytesName    = "service.requests.bytes.total"
-	ddServiceRespsBytesName   = "service.responses.bytes.total"
+	ddServiceReqsName             = "service.request.total"
+	ddServiceReqsTLSName          = "service.request.tls.total"
+	ddServiceReqsDurationName     = "service.request.duration"
+	ddServiceRetriesName          = "service.retries.total"
+	ddServiceServerUpName         = "service.server.up"
+	ddServiceInflightRequestsName = "service.inflight.requests"
+	ddServiceReqsBytesName        = "service.requests.bytes.total"
+	ddServiceRespsBytesName       = "service.responses.bytes.total"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -102,6 +103,7 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddServiceReqsDurationName, 1.0), time.Second)
 		registry.serviceRetriesCounter = datadogClient.NewCounter(ddServiceRetriesName, 1.0)
 		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
+		registry.serviceInflightRequestsGauge = datadogClient.NewGauge(ddServiceInflightRequestsName)
 		registry.serviceReqsBytesCounter = datadogClient.NewCounter(ddServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = datadogClient.NewCounter(ddServiceRespsBytesName, 1.0)
 	}
