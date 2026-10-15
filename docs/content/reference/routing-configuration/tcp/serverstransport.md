@@ -123,3 +123,13 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
 Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
 It can be configured by setting `proxyProtocol.version` on the serversTransport.
 The option specifies the version of the protocol to be used. Either 1 or 2.
+
+Omitting the `proxyProtocol` section disables PROXY Protocol on the transport.
+An empty `proxyProtocol: {}` section enables version 2.
+
+#### Default transport
+
+When a service does not specify a `serversTransport`, it uses `default@internal`.
+This transport is configured through the `tcpServersTransport` install configuration options and has PROXY Protocol disabled by default.
+To enable it, set `tcpServersTransport.proxyProtocol.version` to `1` or `2`, for example with `--tcpserverstransport.proxyprotocol.version=2`.
+Setting this install configuration option to `0`, or leaving its `proxyProtocol` section empty, keeps PROXY Protocol disabled on the default transport.
