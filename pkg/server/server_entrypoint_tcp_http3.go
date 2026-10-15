@@ -14,6 +14,7 @@ import (
 	"github.com/quic-go/quic-go/http3"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
@@ -101,9 +102,22 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if err := h3.Server.SetQUICHeaders(rw.Header()); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("Failed to set HTTP3 headers")
+
+			previousHandler.ServeHTTP(rw, req)
+			return
 		}
 
-		previousHandler.ServeHTTP(rw, req)
+		// Keep the advertised Alt-Svc value when additional values were appended after it,
+		// such as the ones copied from a proxied response, which advertise the alternatives of another server.
+		// A value replacing or removing it, as set by the headers middleware, is preserved.
+		altSvc := rw.Header().Get("Alt-Svc")
+		previousHandler.ServeHTTP(middlewares.NewResponseModifier(rw, req, func(resp *http.Response) error {
+			if values := resp.Header.Values("Alt-Svc"); len(values) > 1 && values[0] == altSvc {
+				resp.Header.Set("Alt-Svc", altSvc)
+			}
+
+			return nil
+		}), req)
 	})
 
 	return h3, nil
