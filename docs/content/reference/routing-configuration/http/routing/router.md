@@ -32,6 +32,9 @@ http:
         metrics: true
         accessLogs: true
         tracing: true
+      respondingTimeouts:
+        readTimeout: "30s"
+        writeTimeout: "30s"
       parentRefs:
         - "parent-router-1"
         - "parent-router-2"
@@ -60,6 +63,10 @@ http:
       metrics = true
       accessLogs = true
       tracing = true
+
+    [http.routers.my-router.respondingTimeouts]
+      readTimeout = "30s"
+      writeTimeout = "30s"
 ```
 
 ```yaml tab="Labels"
@@ -76,6 +83,8 @@ labels:
   - "traefik.http.routers.my-router.observability.metrics=true"
   - "traefik.http.routers.my-router.observability.accessLogs=true"
   - "traefik.http.routers.my-router.observability.tracing=true"
+  - "traefik.http.routers.my-router.respondingtimeouts.readtimeout=30s"
+  - "traefik.http.routers.my-router.respondingtimeouts.writetimeout=30s"
 ```
 
 ```json tab="Tags"
@@ -93,6 +102,8 @@ labels:
     "traefik.http.routers.my-router.observability.metrics=true",
     "traefik.http.routers.my-router.observability.accessLogs=true",
     "traefik.http.routers.my-router.observability.tracing=true",
+    "traefik.http.routers.my-router.respondingtimeouts.readtimeout=30s",
+    "traefik.http.routers.my-router.respondingtimeouts.writetimeout=30s",
   ]
 }
 ```
@@ -111,6 +122,9 @@ labels:
 | <a id="opt-tls-domains" href="#opt-tls-domains" title="#opt-tls-domains">`tls.domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. When using ACME certificate resolvers, domains are automatically extracted from router rules, making this option optional.                                                                                       |                             | No       |
 | <a id="opt-observability" href="#opt-observability" title="#opt-observability">`observability`</a> | Observability configuration for the router. Allows fine-grained control over access logs, metrics, and tracing per router. See [Observability](./observability.md) for details.                                                                                                                                      | Inherited from entry points | No       |
 | <a id="opt-observability-traceVerbosity" href="#opt-observability-traceVerbosity" title="#opt-observability-traceVerbosity">`observability.traceVerbosity`</a> | Defines the verbosity level of tracing for this router. Accepted values are `minimal` and `detailed`.                                                                                                                                                                                                               | `minimal`                   | No       |
+| <a id="opt-respondingTimeouts" href="#opt-respondingTimeouts" title="#opt-respondingTimeouts">`respondingTimeouts`</a> | Overrides the entry point [`respondingTimeouts`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) for the requests matched by the router. Both timeouts count from when the router receives the request, and each one replaces the entry point one, whether longer or shorter. An unset timeout leaves the entry point one in force. Only one router per branch of a [multi-layer routing](./multi-layer-routing.md) tree can define `respondingTimeouts`, otherwise the router is disabled with an error. |                             | No       |
+| <a id="opt-respondingTimeouts-readTimeout" href="#opt-respondingTimeouts-readTimeout" title="#opt-respondingTimeouts-readTimeout">`respondingTimeouts.readTimeout`</a> | Maximum duration for reading the request body. `0` means no timeout. It must not be longer than `writeTimeout`, otherwise the router is disabled with an error. A value longer than the entry point [`readTimeout`](../../../install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) weakens its protection against slow clients (Slowloris) for the whole entry point, so set it only on the routes that need it. | Entry point `readTimeout`   | No       |
+| <a id="opt-respondingTimeouts-writeTimeout" href="#opt-respondingTimeouts-writeTimeout" title="#opt-respondingTimeouts-writeTimeout">`respondingTimeouts.writeTimeout`</a> | Maximum duration for handling the request: the router middlewares, the backend processing (including retries), and the response write. `0` means no timeout. If it expires before the response has started, the client receives a `504 Gateway Timeout`; afterwards, the connection is closed. It does not apply to protocol upgrades (WebSocket, ...), but applies to streaming responses (SSE, gRPC streaming, ...): leave it unset or set it to `0` on such routers. | Entry point `writeTimeout`  | No       |
 | <a id="opt-parentRefs" href="#opt-parentRefs" title="#opt-parentRefs">`parentRefs`</a> | References to parent router names for multi-layer routing. When specified, this router becomes a child router that processes requests after parent routers have applied their middlewares. See [Multi-Layer Routing](../routing/multi-layer-routing.md) for details.                                        |                             | No       |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The name of the service that will handle the matched requests. Services can be load balancer services, weighted round robin, mirroring, or failover services. See [Service](../load-balancing/service.md) for details.                                                                                               |                             | Yes      |
 

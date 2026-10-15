@@ -195,3 +195,8 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 
 	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
 }
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (crw *captureResponseWriter) Unwrap() http.ResponseWriter {
+	return crw.rw
+}
