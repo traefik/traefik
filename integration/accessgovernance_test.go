@@ -69,8 +69,17 @@ func (s *AccessGovernanceSuite) TestHTTPAuditRoutingAndHotDSNReload() {
 	}
 	config.Databases["selected"] = dynamic.AccessGovernanceDatabase{DSN: s.dsn, HTTPTable: "audit_selected", NetworkTable: "audit_selected_network"}
 	config.Routes = []dynamic.AccessGovernanceRoute{{Name: "selected", Database: "selected", BodyJSONPaths: map[string]string{"$.destination": "^selected$"}}}
-	file := filepath.Join(s.T().TempDir(), "dsn")
-	require.NoError(s.T(), os.WriteFile(file, []byte(s.dsn), 0o600))
+	directory := s.T().TempDir()
+	file := filepath.Join(directory, "dsn")
+	require.NoError(s.T(), os.Symlink("..data/dsn", file))
+	rotate := func(version, material string) {
+		s.T().Helper()
+		require.NoError(s.T(), os.Mkdir(filepath.Join(directory, version), 0o700))
+		require.NoError(s.T(), os.WriteFile(filepath.Join(directory, version, "dsn"), []byte(material), 0o600))
+		require.NoError(s.T(), os.Symlink(version, filepath.Join(directory, "..next")))
+		require.NoError(s.T(), os.Rename(filepath.Join(directory, "..next"), filepath.Join(directory, "..data")))
+	}
+	rotate("one", s.dsn)
 	destination := config.Databases["default"]
 	destination.DSN, destination.DSNFile = "", file
 	config.Databases["default"] = destination
@@ -83,6 +92,7 @@ func (s *AccessGovernanceSuite) TestHTTPAuditRoutingAndHotDSNReload() {
 		{`{"actor":"ignored"}`, "bob", "audit_http", http.Header{"Cookie": {"account=bob"}}},
 		{`{"actor":"carol","destination":"selected"}`, "carol", "audit_selected", nil},
 		{`{"actor":9007199254740993}`, "9007199254740993", "audit_http", nil},
+		{`{"actor":"x'); DROP TABLE audit_http; --"}`, "x'); DROP TABLE audit_http; --", "audit_http", nil},
 	} {
 		assert.JSONEq(s.T(), tc.body, string(s.request("/events", tc.body, tc.headers)))
 		require.Eventually(s.T(), func() bool {
@@ -96,7 +106,7 @@ func (s *AccessGovernanceSuite) TestHTTPAuditRoutingAndHotDSNReload() {
 	dsn, err := mysql.ParseDSN(s.dsn)
 	require.NoError(s.T(), err)
 	dsn.DBName = "governance_rotated"
-	require.NoError(s.T(), os.WriteFile(file, []byte(dsn.FormatDSN()), 0o600))
+	rotate("two", dsn.FormatDSN())
 	// Only the credential file changes; the process and routing configuration stay intact.
 	require.Eventually(s.T(), func() bool {
 		var count int

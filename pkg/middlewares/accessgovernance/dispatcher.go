@@ -366,6 +366,10 @@ func (d *dispatcher) writeBatch(databaseName string, values []task) error {
 }
 
 func insertHTTP(ctx context.Context, db *sql.DB, table string, values []httpEvent) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return err
+	}
 	const columnCount = 38
 	placeholders := make([]string, len(values))
 	arguments := make([]any, 0, len(values)*columnCount)
@@ -388,17 +392,21 @@ func insertHTTP(ctx context.Context, db *sql.DB, table string, values []httpEven
 		)
 	}
 
-	query := "INSERT INTO `" + table + "` (" +
+	query := "INSERT INTO " + quotedTable + " (" +
 		"event_id,occurred_at,completed_at,event_type,protocol,entry_point,router_name,service_name,middleware_name," +
 		"tenant_id,principal_type,principal_id,authn_method,authn_result,policy_id,authz_result," +
 		"billing_account,meter,billable_units,client_ip,client_port,request_method,request_scheme,request_host,request_path,request_query," +
 		"status_code,duration_us,request_bytes,response_bytes,trace_id,span_id,request_id,user_agent,labels,metadata,usage_window_start,usage_window_end" +
 		") VALUES " + strings.Join(placeholders, ",")
-	_, err := db.ExecContext(ctx, query, arguments...)
+	_, err = db.ExecContext(ctx, query, arguments...)
 	return err
 }
 
 func insertNetwork(ctx context.Context, db *sql.DB, table string, values []networkEvent) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return err
+	}
 	const columnCount = 29
 	placeholders := make([]string, len(values))
 	arguments := make([]any, 0, len(values)*columnCount)
@@ -419,12 +427,12 @@ func insertNetwork(ctx context.Context, db *sql.DB, table string, values []netwo
 		)
 	}
 
-	query := "INSERT INTO `" + table + "` (" +
+	query := "INSERT INTO " + quotedTable + " (" +
 		"event_id,occurred_at,completed_at,event_type,protocol,entry_point,router_name,service_name,middleware_name," +
 		"tenant_id,principal_type,principal_id,authn_method,authn_result,policy_id,authz_result," +
 		"billing_account,meter,billable_units,client_addr,local_addr,duration_us,bytes_received,bytes_sent,outcome,labels,metadata,usage_window_start,usage_window_end" +
 		") VALUES " + strings.Join(placeholders, ",")
-	_, err := db.ExecContext(ctx, query, arguments...)
+	_, err = db.ExecContext(ctx, query, arguments...)
 	return err
 }
 
