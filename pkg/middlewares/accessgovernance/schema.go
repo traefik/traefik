@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/traefik/traefik/v3/pkg/middlewares/runtimeconfig"
 )
 
 const (
@@ -133,6 +135,10 @@ func ensureSchema(ctx context.Context, db *sql.DB, httpTable, networkTable strin
 }
 
 func ensureTable(ctx context.Context, db *sql.DB, table string, columns map[string]string, indexes map[string][]string) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return err
+	}
 	var definitions []string
 	definitions = append(definitions, "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT")
 	for _, name := range sortedKeys(columns) {
@@ -146,7 +152,7 @@ func ensureTable(ctx context.Context, db *sql.DB, table string, columns map[stri
 		}
 		definitions = append(definitions, kind+" `"+name+"` ("+quotedColumns(indexes[name])+")")
 	}
-	query := "CREATE TABLE IF NOT EXISTS `" + table + "` (" + strings.Join(definitions, ",") + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+	query := "CREATE TABLE IF NOT EXISTS " + quotedTable + " (" + strings.Join(definitions, ",") + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 	if _, err := db.ExecContext(ctx, query); err != nil {
 		return err
 	}
@@ -159,7 +165,7 @@ func ensureTable(ctx context.Context, db *sql.DB, table string, columns map[stri
 		if _, ok := existingColumns[name]; ok {
 			continue
 		}
-		if _, err := db.ExecContext(ctx, "ALTER TABLE `"+table+"` ADD COLUMN `"+name+"` "+columns[name]); err != nil {
+		if _, err := db.ExecContext(ctx, "ALTER TABLE "+quotedTable+" ADD COLUMN `"+name+"` "+columns[name]); err != nil {
 			return fmt.Errorf("adding column %s: %w", name, err)
 		}
 	}
@@ -176,7 +182,7 @@ func ensureTable(ctx context.Context, db *sql.DB, table string, columns map[stri
 		if strings.HasPrefix(name, "uq_") {
 			kind = "UNIQUE INDEX"
 		}
-		if _, err := db.ExecContext(ctx, "ALTER TABLE `"+table+"` ADD "+kind+" `"+name+"` ("+quotedColumns(indexes[name])+")"); err != nil {
+		if _, err := db.ExecContext(ctx, "ALTER TABLE "+quotedTable+" ADD "+kind+" `"+name+"` ("+quotedColumns(indexes[name])+")"); err != nil {
 			return fmt.Errorf("adding index %s: %w", name, err)
 		}
 	}
@@ -202,7 +208,11 @@ func readColumns(ctx context.Context, db *sql.DB, table string) (map[string]stru
 }
 
 func readIndexes(ctx context.Context, db *sql.DB, table string) (map[string]struct{}, error) {
-	rows, err := db.QueryContext(ctx, "SHOW INDEX FROM `"+table+"`")
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.QueryContext(ctx, "SHOW INDEX FROM "+quotedTable)
 	if err != nil {
 		return nil, err
 	}

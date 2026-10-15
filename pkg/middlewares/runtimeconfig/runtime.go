@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -96,19 +95,23 @@ func ExactReferenceFile(value string, values map[string]dynamic.RuntimeValue) st
 
 func load(values map[string]dynamic.RuntimeValue) (map[string]string, error) {
 	loaded := make(map[string]string, len(values))
+	files := make(map[string]string)
 	for alias, source := range values {
 		if !aliasPattern.MatchString(alias) {
 			return nil, fmt.Errorf("runtime value name %q is invalid", alias)
 		}
 		if strings.TrimSpace(source.File) != "" {
-			data, err := os.ReadFile(source.File)
-			if err != nil {
-				return nil, fmt.Errorf("reading runtime value %q file: %w", alias, err)
-			}
-			loaded[alias] = strings.TrimSpace(string(data))
-			continue
+			files[alias] = source.File
+		} else {
+			loaded[alias] = source.Value
 		}
-		loaded[alias] = source.Value
+	}
+	material, err := ReadFiles(files)
+	if err != nil {
+		return nil, err
+	}
+	for alias, value := range material {
+		loaded[alias] = strings.TrimSpace(string(value))
 	}
 	return loaded, nil
 }

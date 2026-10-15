@@ -183,3 +183,23 @@ entryPoints:
       middlewares:
         - governance@file
 ```
+
+## Runtime File and SQL Safety
+
+Runtime values and credential files are operator-controlled configuration, never
+paths selected from an incoming request. Each file must be a regular file no
+larger than 1 MiB. Relative symlinks within the configured file's parent directory
+are supported, including Kubernetes projected Secret keys. Absolute symlinks,
+links outside that directory, directories, devices, sockets, and named pipes are
+rejected. Mount the required files into a dedicated directory with restrictive
+permissions; this boundary does not restrict which directory an operator can
+configure or isolate files in the same mount.
+
+Projected Secret reads pin the `..data` revision while reading related files.
+Subsequent reads observe atomic Secret updates without restarting Traefik.
+A rejected rotation keeps the last successfully activated MySQL pool or
+credential set; initial activation without valid material fails.
+
+SQL table names must match `^[A-Za-z][A-Za-z0-9_]{0,63}$`.
+The SQL execution paths validate and quote identifiers separately from values.
+Request-derived values use SQL parameters and never become table names.
