@@ -56,6 +56,10 @@ func (c *FakeTraefikV1alpha1) MiddlewareTCPs(namespace string) v1alpha1.Middlewa
 	return newFakeMiddlewareTCPs(c, namespace)
 }
 
+func (c *FakeTraefikV1alpha1) MiddlewareUDPs(namespace string) v1alpha1.MiddlewareUDPInterface {
+	return newFakeMiddlewareUDPs(c, namespace)
+}
+
 func (c *FakeTraefikV1alpha1) ServersTransports(namespace string) v1alpha1.ServersTransportInterface {
 	return newFakeServersTransports(c, namespace)
 }

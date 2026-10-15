@@ -1,12 +1,14 @@
 package udp
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/server/service/udp"
+	traefikudp "github.com/traefik/traefik/v3/pkg/udp"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {
@@ -136,4 +138,47 @@ func TestRuntimeConfiguration(t *testing.T) {
 			assert.Equal(t, test.expectedError, allErrors)
 		})
 	}
+}
+
+func TestDefaultMiddlewares(t *testing.T) {
+	conf := &runtime.Configuration{
+		UDPServices: map[string]*runtime.UDPServiceInfo{
+			"service": {
+				UDPService: &dynamic.UDPService{
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{{Address: "127.0.0.1:8080"}},
+					},
+				},
+			},
+		},
+		UDPRouters: map[string]*runtime.UDPRouterInfo{
+			"router": {
+				UDPRouter: &dynamic.UDPRouter{
+					EntryPoints: []string{"dns"},
+					Middlewares: []string{"router-governance@file"},
+					Service:     "service",
+				},
+			},
+		},
+	}
+	builder := &recordingMiddlewareBuilder{}
+	manager := NewManager(conf, udp.NewManager(conf), builder)
+	manager.SetDefaultMiddlewares(map[string][]string{
+		"dns": {"entrypoint-governance@file"},
+	})
+
+	handlers := manager.BuildHandlers(t.Context(), []string{"dns"})
+
+	assert.Contains(t, handlers, "dns")
+	assert.Equal(t, []string{"entrypoint-governance@file", "router-governance@file"}, builder.middlewares)
+}
+
+type recordingMiddlewareBuilder struct {
+	middlewares []string
+}
+
+func (b *recordingMiddlewareBuilder) BuildChain(_ context.Context, middlewares []string) *traefikudp.Chain {
+	b.middlewares = append([]string(nil), middlewares...)
+	chain := traefikudp.NewChain()
+	return &chain
 }

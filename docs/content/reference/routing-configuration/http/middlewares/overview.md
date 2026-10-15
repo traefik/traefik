@@ -27,6 +27,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 | Middleware                                                                                                                               | Purpose                                           | Area                        |
 |------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------------------|
+| <a id="opt-AccessGovernance" href="#opt-AccessGovernance" title="#opt-AccessGovernance">[AccessGovernance](accessgovernance.md)</a> | Records authorization, audit, and metering events | Governance, Observability   |
 | <a id="opt-AddPrefix" href="#opt-AddPrefix" title="#opt-AddPrefix">[AddPrefix](addprefix.md)</a> | Adds a Path Prefix                                | Path Modifier               |
 | <a id="opt-BasicAuth" href="#opt-BasicAuth" title="#opt-BasicAuth">[BasicAuth](basicauth.md)</a> | Adds Basic Authentication                         | Security, Authentication    |
 | <a id="opt-Buffering" href="#opt-Buffering" title="#opt-Buffering">[Buffering](buffering.md)</a> | Buffers the request/response                      | Request Lifecycle           |

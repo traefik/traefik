@@ -336,6 +336,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, service)
 		}
 
+		accessGovernance, err := createAccessGovernanceMiddlewareWithRuntime(client, middleware.Namespace, middleware.Spec.AccessGovernance)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading access governance middleware")
+			continue
+		}
+
 		addToConfig(log.Ctx(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -363,17 +369,24 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Tap:               tap,
+			AccessGovernance:  accessGovernance,
 			Plugin:            plugin,
 		})
 	}
 
 	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
 		id := p.nameBuilder.makeID(middlewareTCP.Namespace, middlewareTCP.Name)
+		accessGovernance, err := createAccessGovernanceMiddlewareWithRuntime(client, middlewareTCP.Namespace, middlewareTCP.Spec.AccessGovernance)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Str(logs.MiddlewareName, id).Msg("Error while reading TCP access governance middleware")
+			continue
+		}
 
 		addToConfig(log.Ctx(ctx), "TCP middleware", id, conf.TCP.Middlewares, &dynamic.TCPMiddleware{
-			InFlightConn: middlewareTCP.Spec.InFlightConn,
-			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
-			IPAllowList:  middlewareTCP.Spec.IPAllowList,
+			InFlightConn:     middlewareTCP.Spec.InFlightConn,
+			IPWhiteList:      middlewareTCP.Spec.IPWhiteList,
+			IPAllowList:      middlewareTCP.Spec.IPAllowList,
+			AccessGovernance: accessGovernance,
 		})
 	}
 
@@ -949,6 +962,154 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 	}
 
 	return string(secretValue), nil
+}
+
+func createAccessGovernanceMiddlewareWithRuntime(k8sClient Client, namespace string, source *traefikv1alpha1.AccessGovernance) (*dynamic.AccessGovernance, error) {
+	if source == nil {
+		return nil, nil
+	}
+
+	runtimeValues, err := createRuntimeValues(k8sClient, namespace, source.RuntimeValues)
+	if err != nil {
+		return nil, fmt.Errorf("runtimeValues: %w", err)
+	}
+	result := &dynamic.AccessGovernance{
+		RuntimeValues:   runtimeValues,
+		Databases:       make(map[string]dynamic.AccessGovernanceDatabase, len(source.Databases)),
+		DefaultDatabase: source.DefaultDatabase,
+		Routes:          source.Routes,
+		Identity:        source.Identity,
+		Queue: dynamic.AccessGovernanceQueue{
+			Capacity:  source.Queue.Capacity,
+			Workers:   source.Queue.Workers,
+			BatchSize: source.Queue.BatchSize,
+		},
+		Capture:    source.Capture,
+		Dimensions: source.Dimensions,
+		Schema:     source.Schema,
+	}
+
+	for name, database := range source.Databases {
+		converted := dynamic.AccessGovernanceDatabase{
+			DSN:                database.DSN,
+			DSNFile:            database.DSNFile,
+			HTTPTable:          database.HTTPTable,
+			NetworkTable:       database.NetworkTable,
+			MaxOpenConnections: database.MaxOpenConnections,
+			MaxIdleConnections: database.MaxIdleConnections,
+		}
+		if database.ConnectionMaxAge != nil {
+			if err := converted.ConnectionMaxAge.Set(database.ConnectionMaxAge.String()); err != nil {
+				return nil, fmt.Errorf("database %q connectionMaxAge: %w", name, err)
+			}
+		}
+		result.Databases[name] = converted
+	}
+
+	if source.Queue.FlushInterval != nil {
+		if err := result.Queue.FlushInterval.Set(source.Queue.FlushInterval.String()); err != nil {
+			return nil, fmt.Errorf("queue flushInterval: %w", err)
+		}
+	}
+	if source.Queue.EnqueueWait != nil {
+		if err := result.Queue.EnqueueWait.Set(source.Queue.EnqueueWait.String()); err != nil {
+			return nil, fmt.Errorf("queue enqueueWait: %w", err)
+		}
+	}
+
+	return result, nil
+}
+
+func createRuntimeValues(k8sClient Client, namespace string, sources map[string]traefikv1alpha1.RuntimeValueSource) (map[string]dynamic.RuntimeValue, error) {
+	if len(sources) == 0 {
+		return nil, nil
+	}
+
+	result := make(map[string]dynamic.RuntimeValue, len(sources))
+	for alias, source := range sources {
+		configured := 0
+		if source.Value != "" {
+			configured++
+		}
+		if source.File != "" {
+			configured++
+		}
+		if source.SecretKeyRef != nil {
+			configured++
+		}
+		if source.ConfigMapKeyRef != nil {
+			configured++
+		}
+		if configured != 1 {
+			return nil, fmt.Errorf("%q must define exactly one of value, file, secretKeyRef, or configMapKeyRef", alias)
+		}
+
+		value := dynamic.RuntimeValue{}
+		switch {
+		case source.Value != "":
+			value.Source = "literal:" + alias
+			value.Value = source.Value
+			value.Revision = "literal"
+
+		case source.File != "":
+			value.Source = "file:" + source.File
+			value.File = source.File
+
+		case source.SecretKeyRef != nil:
+			if k8sClient == nil {
+				return nil, fmt.Errorf("%q secretKeyRef is only available through the Kubernetes provider", alias)
+			}
+			reference := source.SecretKeyRef
+			if reference.Name == "" || reference.Key == "" {
+				return nil, fmt.Errorf("%q secretKeyRef requires name and key", alias)
+			}
+			secret, exists, err := k8sClient.GetSecret(namespace, reference.Name)
+			if err != nil {
+				return nil, fmt.Errorf("reading secret %s/%s: %w", namespace, reference.Name, err)
+			}
+			if !exists {
+				return nil, fmt.Errorf("secret %s/%s was not found", namespace, reference.Name)
+			}
+			material, exists := secret.Data[reference.Key]
+			if !exists {
+				return nil, fmt.Errorf("key %q was not found in secret %s/%s", reference.Key, namespace, reference.Name)
+			}
+			value.Source = fmt.Sprintf("secret:%s/%s:%s", namespace, reference.Name, reference.Key)
+			value.Value = string(material)
+			value.Revision = secret.ResourceVersion
+
+		case source.ConfigMapKeyRef != nil:
+			if k8sClient == nil {
+				return nil, fmt.Errorf("%q configMapKeyRef is only available through the Kubernetes provider", alias)
+			}
+			reference := source.ConfigMapKeyRef
+			if reference.Name == "" || reference.Key == "" {
+				return nil, fmt.Errorf("%q configMapKeyRef requires name and key", alias)
+			}
+			configMap, exists, err := k8sClient.GetConfigMap(namespace, reference.Name)
+			if err != nil {
+				return nil, fmt.Errorf("reading configmap %s/%s: %w", namespace, reference.Name, err)
+			}
+			if !exists {
+				return nil, fmt.Errorf("configmap %s/%s was not found", namespace, reference.Name)
+			}
+			material, exists := configMap.Data[reference.Key]
+			if !exists {
+				if binary, found := configMap.BinaryData[reference.Key]; found {
+					material = string(binary)
+					exists = true
+				}
+			}
+			if !exists {
+				return nil, fmt.Errorf("key %q was not found in configmap %s/%s", reference.Key, namespace, reference.Name)
+			}
+			value.Source = fmt.Sprintf("configmap:%s/%s:%s", namespace, reference.Name, reference.Key)
+			value.Value = material
+			value.Revision = configMap.ResourceVersion
+		}
+		result[alias] = value
+	}
+	return result, nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {

@@ -47,6 +47,8 @@ type MiddlewareTCPSpecApplyConfiguration struct {
 	// This middleware accepts/refuses connections based on the client IP.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/middlewares/ipallowlist/
 	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
+	// AccessGovernance defines the access authorization, authentication, audit, and metering configuration.
+	AccessGovernance *AccessGovernanceApplyConfiguration `json:"accessGovernance,omitempty"`
 }
 
 // MiddlewareTCPSpecApplyConfiguration constructs a declarative configuration of the MiddlewareTCPSpec type for use with
@@ -76,5 +78,13 @@ func (b *MiddlewareTCPSpecApplyConfiguration) WithIPWhiteList(value dynamic.TCPI
 // If called multiple times, the IPAllowList field is set to the value of the last call.
 func (b *MiddlewareTCPSpecApplyConfiguration) WithIPAllowList(value dynamic.TCPIPAllowList) *MiddlewareTCPSpecApplyConfiguration {
 	b.IPAllowList = &value
+	return b
+}
+
+// WithAccessGovernance sets the AccessGovernance field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AccessGovernance field is set to the value of the last call.
+func (b *MiddlewareTCPSpecApplyConfiguration) WithAccessGovernance(value *AccessGovernanceApplyConfiguration) *MiddlewareTCPSpecApplyConfiguration {
+	b.AccessGovernance = value
 	return b
 }
