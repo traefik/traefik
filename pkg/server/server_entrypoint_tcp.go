@@ -36,6 +36,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/time/rate"
 )
 
 type key string
@@ -439,26 +440,63 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 // connections.
 type tcpKeepAliveListener struct {
 	*net.TCPListener
+
+	logger *zerolog.Logger
+	// dropped counts the connections closed since the last warning.
+	dropped atomic.Int64
+	// warnings limits the warnings about closed connections to one a minute.
+	warnings rate.Sometimes
 }
 
-func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
-	tc, err := ln.AcceptTCP()
-	if err != nil {
-		return nil, err
+func newTCPKeepAliveListener(ctx context.Context, listener *net.TCPListener) *tcpKeepAliveListener {
+	return &tcpKeepAliveListener{
+		TCPListener: listener,
+		logger:      log.Ctx(ctx),
+		warnings:    rate.Sometimes{First: 1, Interval: time.Minute},
 	}
+}
 
+func (ln *tcpKeepAliveListener) Accept() (net.Conn, error) {
+	for {
+		tc, err := ln.AcceptTCP()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := setTCPKeepAlive(tc); err != nil {
+			// The peer may already have reset the connection: some systems (illumos, also in LX zones)
+			// then refuse socket options with EINVAL. Returning the error would stop the entry point for
+			// good, so only this connection is dropped.
+			_ = tc.Close()
+			ln.dropped.Add(1)
+			ln.logger.Debug().Err(err).Msg("Closed an accepted connection whose TCP keep-alive could not be set")
+			// A warning (rate-limited, as scanners trigger this) keeps a failure on every connection,
+			// which would leave the entry point serving nothing, visible without debug logs.
+			ln.warnings.Do(func() {
+				ln.logger.Warn().Err(err).Int64("connections", ln.dropped.Swap(0)).
+					Msg("Closed accepted connections whose TCP keep-alive could not be set")
+			})
+			continue
+		}
+
+		return tc, nil
+	}
+}
+
+// setTCPKeepAlive enables TCP keep-alive on an accepted connection (a variable for tests).
+var setTCPKeepAlive = func(tc *net.TCPConn) error {
 	if err := tc.SetKeepAlive(true); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
 		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
-			return nil, err
+			return err
 		}
 	}
 
-	return tc, nil
+	return nil
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
@@ -536,7 +574,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 		}
 	}
 
-	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
+	listener = newTCPKeepAliveListener(ctx, listener.(*net.TCPListener))
 
 	if config.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(ctx, config, listener)
