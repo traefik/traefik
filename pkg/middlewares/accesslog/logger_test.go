@@ -1603,8 +1603,6 @@ func doLoggingWithAbortedStream(t *testing.T, config *otypes.AccessLog) {
 }
 
 func streamBackend(rw http.ResponseWriter, r *http.Request) {
-	rc := http.NewResponseController(rw)
-
 	// Set the headers for streaming
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.Header().Set("Transfer-Encoding", "chunked")
@@ -1622,6 +1620,7 @@ func streamBackend(rw http.ResponseWriter, r *http.Request) {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			rc := http.NewResponseController(rw)
 			if err := rc.Flush(); err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
