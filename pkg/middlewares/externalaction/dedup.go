@@ -293,6 +293,10 @@ func getMySQLDeduplicator(ctx context.Context, config dynamic.ExternalActionDedu
 }
 
 func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, lease time.Duration) (string, bool, error) {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return "", false, err
+	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
 		return "", false, err
@@ -315,12 +319,12 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 
 	var state string
 	var leaseExpired, expired bool
-	query := "SELECT `state`,`lease_until`<=UTC_TIMESTAMP(6),`expires_at`<=UTC_TIMESTAMP(6) FROM `" + m.table + "` WHERE `key_hash`=? FOR UPDATE"
+	query := "SELECT `state`,`lease_until`<=UTC_TIMESTAMP(6),`expires_at`<=UTC_TIMESTAMP(6) FROM " + quotedTable + " WHERE `key_hash`=? FOR UPDATE"
 	err = transaction.QueryRowContext(ctx, query, hash[:]).Scan(&state, &leaseExpired, &expired)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		_, err = transaction.ExecContext(ctx,
-			"INSERT INTO `"+m.table+"` (`key_hash`,`rule_name`,`state`,`claim_id`,`lease_until`,`expires_at`) VALUES (?,?,'claimed',?,DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND))",
+			"INSERT INTO "+quotedTable+" (`key_hash`,`rule_name`,`state`,`claim_id`,`lease_until`,`expires_at`) VALUES (?,?,'claimed',?,DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND))",
 			hash[:], rule, claimID, durationMicroseconds(lease), durationMicroseconds(ttl))
 		if err != nil {
 			var mysqlError *mysqlDriver.MySQLError
@@ -337,7 +341,7 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 		return "", false, nil
 	default:
 		_, err = transaction.ExecContext(ctx,
-			"UPDATE `"+m.table+"` SET `rule_name`=?,`state`='claimed',`claim_id`=?,`lease_until`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=?",
+			"UPDATE "+quotedTable+" SET `rule_name`=?,`state`='claimed',`claim_id`=?,`lease_until`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=?",
 			rule, claimID, durationMicroseconds(lease), durationMicroseconds(ttl), hash[:])
 		if err != nil {
 			return "", false, err
@@ -350,6 +354,10 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 }
 
 func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, ttl time.Duration) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return err
+	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
 		return err
@@ -357,7 +365,7 @@ func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, t
 	defer release()
 	hash := sha256.Sum256([]byte(key))
 	result, err := db.ExecContext(ctx,
-		"UPDATE `"+m.table+"` SET `state`='completed',`lease_until`=UTC_TIMESTAMP(6),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
+		"UPDATE "+quotedTable+" SET `state`='completed',`lease_until`=UTC_TIMESTAMP(6),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
 		durationMicroseconds(ttl), hash[:], claimID)
 	if err != nil {
 		return err
@@ -373,6 +381,10 @@ func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, t
 }
 
 func (m *mysqlDeduplicator) Release(ctx context.Context, key, claimID string) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return err
+	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
 		return err
@@ -380,13 +392,17 @@ func (m *mysqlDeduplicator) Release(ctx context.Context, key, claimID string) er
 	defer release()
 	hash := sha256.Sum256([]byte(key))
 	_, err = db.ExecContext(ctx,
-		"DELETE FROM `"+m.table+"` WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
+		"DELETE FROM "+quotedTable+" WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
 		hash[:], claimID)
 	return err
 }
 
 func ensureDeduplicationSchema(ctx context.Context, db *sql.DB, table string) error {
-	query := "CREATE TABLE IF NOT EXISTS `" + table + "` (" +
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return err
+	}
+	query := "CREATE TABLE IF NOT EXISTS " + quotedTable + " (" +
 		"`key_hash` BINARY(32) NOT NULL," +
 		"`rule_name` VARCHAR(255) NOT NULL," +
 		"`state` VARCHAR(16) NOT NULL," +
@@ -398,11 +414,15 @@ func ensureDeduplicationSchema(ctx context.Context, db *sql.DB, table string) er
 		"PRIMARY KEY (`key_hash`)," +
 		"KEY `idx_expires_at` (`expires_at`)" +
 		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-	_, err := db.ExecContext(ctx, query)
+	_, err = db.ExecContext(ctx, query)
 	return err
 }
 
 func (m *mysqlDeduplicator) cleanupExpired(ctx context.Context, db *sql.DB) {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return
+	}
 	now := time.Now().Unix()
 	last := m.cleanup.Load()
 	if last != 0 && now-last < int64(time.Minute/time.Second) {
@@ -411,7 +431,7 @@ func (m *mysqlDeduplicator) cleanupExpired(ctx context.Context, db *sql.DB) {
 	if !m.cleanup.CompareAndSwap(last, now) {
 		return
 	}
-	_, _ = db.ExecContext(ctx, "DELETE FROM `"+m.table+"` WHERE `expires_at`<=UTC_TIMESTAMP(6) LIMIT 1000")
+	_, _ = db.ExecContext(ctx, "DELETE FROM "+quotedTable+" WHERE `expires_at`<=UTC_TIMESTAMP(6) LIMIT 1000")
 }
 
 func (m *mysqlDeduplicator) close() {}

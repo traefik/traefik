@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -115,6 +116,43 @@ func TestCredentialSetReloadsRotatableValuesAndRejectsIdentityChange(t *testing.
 	assert.Equal(t, "caller-a-2", third.Get("staffname"))
 	assert.Equal(t, "project-a", third.Get("projectname"))
 	assert.Equal(t, "1001", third.Get("projectid"))
+}
+
+func TestCredentialFilesKeepLastGoodMaterialAfterUnsafeRotation(t *testing.T) {
+	directory := t.TempDir()
+	rotate := func(version, token string) {
+		t.Helper()
+		require.NoError(t, os.Mkdir(filepath.Join(directory, version), 0o700))
+		require.NoError(t, os.WriteFile(filepath.Join(directory, version, "token"), []byte(token), 0o600))
+		require.NoError(t, os.WriteFile(filepath.Join(directory, version, "project"), []byte("project-a"), 0o600))
+		require.NoError(t, os.Symlink(version, filepath.Join(directory, "..next")))
+		require.NoError(t, os.Rename(filepath.Join(directory, "..next"), filepath.Join(directory, "..data")))
+	}
+	for _, name := range []string{"token", "project"} {
+		require.NoError(t, os.Symlink(filepath.Join("..data", name), filepath.Join(directory, name)))
+	}
+	rotate("one", "first-token")
+	auth := &compiledAuth{
+		kind: "bearer", tokenFile: filepath.Join(directory, "token"),
+		parameterFiles:      map[string]string{"project": filepath.Join(directory, "project")},
+		immutableParameters: []string{"project"}, reloadInterval: time.Nanosecond,
+	}
+	_, bound, identity, warning, err := auth.bind(&actionData{})
+	require.NoError(t, err)
+	require.NoError(t, warning)
+	assert.Equal(t, "first-token", bound.token)
+	rotate("invalid", strings.Repeat("x", (1<<20)+1))
+	_, bound, nextIdentity, warning, err := auth.bind(&actionData{})
+	require.NoError(t, err)
+	require.Error(t, warning)
+	assert.Equal(t, "first-token", bound.token)
+	assert.Equal(t, identity, nextIdentity)
+	rotate("two", "second-token")
+	_, bound, nextIdentity, warning, err = auth.bind(&actionData{})
+	require.NoError(t, err)
+	require.NoError(t, warning)
+	assert.Equal(t, "second-token", bound.token)
+	assert.Equal(t, identity, nextIdentity)
 }
 
 func TestLifecycleBindingPinsCredentialSetAndRejectsReassignment(t *testing.T) {
