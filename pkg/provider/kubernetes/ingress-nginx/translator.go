@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -200,6 +201,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			rule := buildRule(srv.Hostname, loc)
+			exclusions := buildExactPathExclusions(srv, loc, mc.Backends)
+			routerRule, priority := excludeExactPaths(rule, exclusions)
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -210,7 +213,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			rt := &dynamic.Router{
 				EntryPoints:   p.NonTLSEntryPoints,
-				Rule:          rule,
+				Rule:          routerRule,
+				Priority:      priority,
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
@@ -234,7 +238,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.SSLPassthrough {
 				rtTLS = &dynamic.Router{
 					EntryPoints: p.TLSEntryPoints,
-					Rule:        rule,
+					Rule:        routerRule,
+					Priority:    priority,
 					RuleSyntax:  "default",
 					Service:     routerSvcName,
 					TLS: &dynamic.RouterTLSConfig{
@@ -257,10 +262,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+				canaryRule, canaryPriority := excludeExactPaths(appendCanaryRule(rule, loc.Canary), exclusions)
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
+					Rule:          canaryRule,
+					Priority:      canaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
@@ -272,7 +279,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryKeyTLS := canaryKey + "-tls"
 					canaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendCanaryRule(rule, loc.Canary),
+						Rule:          canaryRule,
+						Priority:      canaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       canarySvcName,
 						TLS:           rtTLS.TLS,
@@ -284,10 +292,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+				nonCanaryRule, nonCanaryPriority := excludeExactPaths(appendNonCanaryRule(rule, loc.Canary), exclusions)
 				nonCanaryKey := routerKey + "-non-canary"
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
+					Rule:          nonCanaryRule,
+					Priority:      nonCanaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
@@ -299,7 +309,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					nonCanaryKeyTLS := nonCanaryKey + "-tls"
 					nonCanaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendNonCanaryRule(rule, loc.Canary),
+						Rule:          nonCanaryRule,
+						Priority:      nonCanaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       primarySvcName,
 						TLS:           rtTLS.TLS,
@@ -313,6 +324,56 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	return conf
+}
+
+// buildExactPathExclusions prevents a literal Prefix location from shadowing an
+// Exact location on the same server, regardless of their rule lengths.
+func buildExactPathExclusions(srv *server, loc *location, backends map[string]*backend) []string {
+	if loc.UseRegex || ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact {
+		return nil
+	}
+
+	rule := buildRule(srv.Hostname, loc)
+	priority := httpmuxer.GetRulePriority(rule)
+	if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+		priority = max(priority, httpmuxer.GetRulePriority(appendCanaryRule(rule, loc.Canary)))
+	}
+	if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+		priority = max(priority, httpmuxer.GetRulePriority(appendNonCanaryRule(rule, loc.Canary)))
+	}
+
+	prefix := strings.TrimSuffix(loc.Path, "/")
+	var exclusions []string
+	for _, other := range srv.Locations {
+		if other.UseRegex || ptr.Deref(other.PathType, netv1.PathTypePrefix) != netv1.PathTypeExact {
+			continue
+		}
+		if prefix != "" && other.Path != prefix && !strings.HasPrefix(other.Path, prefix+"/") {
+			continue
+		}
+
+		if _, ok := backends[other.BackendName]; !ok {
+			continue
+		}
+
+		exactRule := buildRule(srv.Hostname, other)
+		if priority < httpmuxer.GetRulePriority(exactRule) {
+			continue
+		}
+
+		// Include the host rule because the two locations can have different server aliases.
+		exclusions = append(exclusions, "("+exactRule+")")
+	}
+	return exclusions
+}
+
+func excludeExactPaths(rule string, exclusions []string) (string, int) {
+	if len(exclusions) == 0 {
+		return rule, 0
+	}
+
+	// Exclusions must not change ordering against other paths, hosts, or providers.
+	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || ")), httpmuxer.GetRulePriority(rule)
 }
 
 func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
@@ -634,7 +695,6 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
 		Service:       unavailableServiceName,
@@ -655,7 +715,6 @@ func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, o
 	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          loc.AppRootExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{routerKey + "-app-root"},
 		Service:       unavailableServiceName,
