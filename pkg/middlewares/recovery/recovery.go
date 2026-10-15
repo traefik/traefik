@@ -46,11 +46,13 @@ func recoverFunc(rw recoveryResponseWriter, req *http.Request) {
 			return
 		}
 
-		logger.Error().Msgf("Recovered from panic in HTTP handler [%s - %s]: %+v", req.RemoteAddr, req.URL, err)
+		// Log the panic message and its stack trace in a single event so the
+		// trace cannot be lost between two writes; it matters on shutdown, when a
+		// panic may race process exit and the second write would otherwise vanish.
 		const size = 64 << 10
 		buf := make([]byte, size)
 		buf = buf[:runtime.Stack(buf, false)]
-		logger.Error().Msgf("Stack: %s", buf)
+		logger.Error().Msgf("Recovered from panic in HTTP handler [%s - %s]: %+v\nStack:\n%s", req.RemoteAddr, req.URL, err, buf)
 	}
 }
 
