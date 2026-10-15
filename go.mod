@@ -26,6 +26,7 @@ require (
 	github.com/go-acme/lego/v5 v5.5.2
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-github/v90 v90.0.0
 	github.com/gorilla/mux v1.8.1
@@ -130,6 +131,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AdamSLevy/jsonrpc2/v14 v14.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1 // indirect
