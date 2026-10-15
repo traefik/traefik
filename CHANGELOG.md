@@ -1,3 +1,35 @@
+## [v3.7.15](https://github.com/traefik/traefik/tree/v3.7.15) (2026-10-15)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.14...v3.7.15)
+
+**Bug fixes:**
+- **[server]** Reject CONNECT requests regardless of HTTP version ([#14031](https://github.com/traefik/traefik/pull/14031) @juliens)
+- **[server]** Reject CONNECT method before reaching the muxer ([#14050](https://github.com/traefik/traefik/pull/14050) @juliens)
+- **[k8s/crd]** Allow observability metadata on child routers ([#14018](https://github.com/traefik/traefik/pull/14018) @bunnysayzz)
+- **[k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.6.3 ([#14017](https://github.com/traefik/traefik/pull/14017) @rtribotte)
+- **[k8s/gatewayapi]** Default HTTPRoute backend scheme to HTTP when no appProtocol ([#13935](https://github.com/traefik/traefik/pull/13935) @Tyagiquamar)
+- **[k8s/ingress-nginx]** Apply auth-tls client authentication to the whole host ([#14057](https://github.com/traefik/traefik/pull/14057) @juliens)
+- **[k8s/ingress-nginx]** Fix cross-namespace check on shared auth-tls-secret TLS options ([#14066](https://github.com/traefik/traefik/pull/14066) @juliens)
+- **[fastproxy]** Add a non-regression test for CR/LF in FastProxy request headers ([#13642](https://github.com/traefik/traefik/pull/13642) @mturac)
+- **[fastproxy]** Fix concurrent buffer reads on upgraded connections ([#14023](https://github.com/traefik/traefik/pull/14023) @juliens)
+- Bump golang.org/x/net to v0.60.0 ([#14048](https://github.com/traefik/traefik/pull/14048) @kevinpollet)
+
+**Documentation:**
+- **[security]** Fix typo in the Request Path page ([#14036](https://github.com/traefik/traefik/pull/14036) @SethFalco)
+- **[k8s/crd]** Fix broken Kubernetes CRD definitions links in CRD reference pages ([#14047](https://github.com/traefik/traefik/pull/14047) @SatvikMishra08)
+- **[k8s]** Document the safeNaming impact on cross-provider references ([#13768](https://github.com/traefik/traefik/pull/13768) @lazerg)
+- **[k8s/gatewayapi]** Fix broken links in the Gateway API routing page ([#14072](https://github.com/traefik/traefik/pull/14072) @Neffi42)
+- Fix broken anchor links to Restrict the Scope of Service Discovery ([#14056](https://github.com/traefik/traefik/pull/14056) @SatvikMishra08)
+- Add the documentation style guide to the Contributing section ([#14061](https://github.com/traefik/traefik/pull/14061) @rachana5)
+- Remove redundant period in README ([#14068](https://github.com/traefik/traefik/pull/14068) @mxmrnn)
+
+## [v2.11.59](https://github.com/traefik/traefik/tree/v2.11.59) (2026-10-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.58...v2.11.59)
+
+**Bug fixes:**
+- **[server]** Reject CONNECT requests regardless of HTTP version ([#14031](https://github.com/traefik/traefik/pull/14031) @juliens)
+- **[server]** Reject CONNECT method before reaching the muxer ([#14050](https://github.com/traefik/traefik/pull/14050) @juliens)
+- Bump golang.org/x/net to v0.60.0 ([#14048](https://github.com/traefik/traefik/pull/14048) @kevinpollet)
+
 ## [v3.7.14](https://github.com/traefik/traefik/tree/v3.7.14) (2026-10-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.13...v3.7.14)
 
