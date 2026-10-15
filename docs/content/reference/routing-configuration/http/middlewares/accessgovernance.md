@@ -203,3 +203,8 @@ credential set; initial activation without valid material fails.
 SQL table names must match `^[A-Za-z][A-Za-z0-9_]{0,63}$`.
 The SQL execution paths validate and quote identifiers separately from values.
 Request-derived values use SQL parameters and never become table names.
+
+MySQL connections enforce server-side parameter binding and disable multi-statement
+execution and unrestricted local-file uploads. DSN options `interpolateParams`,
+`multiStatements`, and `allowAllFiles` are forced to `false`, including after Secret
+rotation. Other connection, TLS, and pool settings continue to apply.

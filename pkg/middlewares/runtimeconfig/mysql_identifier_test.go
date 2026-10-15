@@ -22,3 +22,37 @@ func TestQuoteMySQLIdentifier(t *testing.T) {
 		})
 	}
 }
+
+func FuzzQuoteMySQLIdentifier(f *testing.F) {
+	for _, value := range []string{
+		"events", "Events_12", "", "_events", "9events", "db.events",
+		"events`;DROP TABLE users;--", "events/*comment*/", "events\n",
+		"events\x00", "évents", strings.Repeat("a", 64), strings.Repeat("a", 65),
+	} {
+		f.Add(value)
+	}
+	f.Fuzz(func(t *testing.T, value string) {
+		valid := len(value) > 0 && len(value) <= 64
+		for index := range len(value) {
+			char := value[index]
+			letter := char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z'
+			if index == 0 {
+				valid = valid && letter
+			} else {
+				valid = valid && (letter || char >= '0' && char <= '9' || char == '_')
+			}
+		}
+		quoted, err := QuoteMySQLIdentifier(value)
+		if !valid {
+			require.Error(t, err)
+			require.Empty(t, quoted)
+			return
+		}
+		require.NoError(t, err)
+		require.Len(t, quoted, len(value)+2)
+		require.Equal(t, value, quoted[1:len(quoted)-1])
+		require.Equal(t, 2, strings.Count(quoted, "`"))
+		require.Equal(t, byte('`'), quoted[0])
+		require.Equal(t, byte('`'), quoted[len(quoted)-1])
+	})
+}

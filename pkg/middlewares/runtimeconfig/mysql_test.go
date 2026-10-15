@@ -1,11 +1,13 @@
 package runtimeconfig
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -38,4 +40,46 @@ func TestMySQLRejectedFileRotationKeepsActivePool(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, pool.db, db)
 	release()
+}
+
+func TestMySQLManagerSurvivesOneOwnerAndStopsAfterLastOwner(t *testing.T) {
+	first, cancelFirst := context.WithCancel(t.Context())
+	defer cancelFirst()
+	second, cancelSecond := context.WithCancel(t.Context())
+	defer cancelSecond()
+	key := StableKey(t.Name(), t.TempDir())
+	settings := MySQLSettings{DSN: "tester:example@tcp(127.0.0.1:1)/test?timeout=1ms"}
+	manager, err := GetMySQLManager(first, key, settings, nil)
+	require.NoError(t, err)
+	same, err := GetMySQLManager(second, key, settings, nil)
+	require.NoError(t, err)
+	require.Same(t, manager, same)
+	cancelFirst()
+	require.Eventually(t, func() bool {
+		mysqlRegistry.Lock()
+		defer mysqlRegistry.Unlock()
+		entry := mysqlRegistry.values[key]
+		return entry != nil && entry.refs == 1 && entry.timer == nil
+	}, time.Second, time.Millisecond)
+	select {
+	case <-manager.done:
+		t.Fatal("another middleware still owns the manager")
+	default:
+	}
+	cancelSecond()
+	require.Eventually(t, func() bool {
+		mysqlRegistry.Lock()
+		defer mysqlRegistry.Unlock()
+		entry := mysqlRegistry.values[key]
+		if entry == nil || entry.refs != 0 || entry.timer == nil {
+			return false
+		}
+		entry.timer.Reset(0)
+		return true
+	}, time.Second, time.Millisecond)
+	select {
+	case <-manager.done:
+	case <-time.After(time.Second):
+		t.Fatal("manager did not stop after its retention elapsed")
+	}
 }
