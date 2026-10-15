@@ -317,7 +317,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
+			service, err := p.loadService(ctxIngress, client, ingress.Namespace, *ingress.Spec.DefaultBackend)
 			if err != nil {
 				logger.Error().
 					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
@@ -393,7 +393,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 
 				if _, exists := conf.HTTP.Services[serviceName]; !exists {
-					service, err := p.loadService(client, ingress.Namespace, pa.Backend)
+					service, err := p.loadService(ctxIngress, client, ingress.Namespace, pa.Backend)
 					if err != nil {
 						logger.Error().
 							Str("serviceName", pa.Backend.Service.Name).
@@ -579,7 +579,7 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
 }
 
-func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
+func (p *Provider) loadService(ctx context.Context, client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
@@ -711,6 +711,12 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	}
 
 	if nativeLB {
+		if svc.LoadBalancer.Sticky != nil {
+			log.Ctx(ctx).Warn().
+				Str("serviceName", backend.Service.Name).
+				Msg("Sticky sessions have no effect when nativeLB is enabled, as all traffic is sent to the Kubernetes Service ClusterIP")
+		}
+
 		address, err := getNativeServiceAddress(*service, portSpec)
 		if err != nil {
 			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)

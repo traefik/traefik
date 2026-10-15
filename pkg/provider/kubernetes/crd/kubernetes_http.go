@@ -530,6 +530,13 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 		if svc.Sticky.Cookie.Path != nil {
 			lb.Sticky.Cookie.Path = svc.Sticky.Cookie.Path
 		}
+
+		if c.useNativeLB(svc) {
+			log.Ctx(ctx).Warn().
+				Str("service", svc.Name).
+				Str("namespace", svc.Namespace).
+				Msg("Sticky sessions have no effect when nativeLB is enabled, as all traffic is sent to the Kubernetes Service ClusterIP")
+		}
 	}
 
 	lb.ServersTransport, err = c.makeServersTransportKey(svc.Namespace, svc.ServersTransport)
@@ -583,6 +590,15 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 	return c.nameBuilder.makeID(parentNamespace, serversTransportName), nil
 }
 
+// useNativeLB reports whether the load-balancer of svc targets the Kubernetes Service ClusterIP.
+func (c configBuilder) useNativeLB(svc traefikv1alpha1.LoadBalancerSpec) bool {
+	if svc.NativeLB != nil {
+		return *svc.NativeLB
+	}
+
+	return c.nativeLBByDefault
+}
+
 func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
 	service, exists, err := c.client.GetService(svc.Namespace, svc.Name)
 	if err != nil {
@@ -616,11 +632,7 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
 	}
 
-	nativeLB := c.nativeLBByDefault
-	if svc.NativeLB != nil {
-		nativeLB = *svc.NativeLB
-	}
-	if nativeLB {
+	if c.useNativeLB(svc) {
 		address, err := getNativeServiceAddress(*service, *svcPort)
 		if err != nil {
 			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
