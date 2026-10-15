@@ -3,6 +3,7 @@ package healthcheck
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -21,6 +22,7 @@ import (
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
@@ -61,7 +63,8 @@ type ServiceHealthChecker struct {
 
 	metrics metricsHealthCheck
 
-	client *http.Client
+	client    *http.Client
+	tlsConfig *tls.Config
 
 	healthyTargets   chan target
 	unhealthyTargets chan target
@@ -69,7 +72,7 @@ type ServiceHealthChecker struct {
 	serviceName string
 }
 
-func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL, serviceName string) *ServiceHealthChecker {
+func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, tlsConfig *tls.Config, targets map[string]*url.URL, serviceName string) *ServiceHealthChecker {
 	logger := log.Ctx(ctx)
 
 	interval := time.Duration(config.Interval)
@@ -127,6 +130,7 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		unhealthyTargets:  unhealthyTargets,
 		serviceName:       serviceName,
 		client:            client,
+		tlsConfig:         tlsConfig,
 		metrics:           metrics,
 	}
 }
@@ -302,11 +306,17 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 
 	serverAddr := net.JoinHostPort(serverURL.Hostname(), port)
 
-	var opts []grpc.DialOption
-	switch shc.config.Scheme {
-	case "http", "h2c", "":
-		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	scheme := shc.config.Scheme
+	if scheme == "" {
+		scheme = serverURL.Scheme
 	}
+
+	transportCredentials := insecure.NewCredentials()
+	if scheme == "https" {
+		transportCredentials = credentials.NewTLS(shc.tlsConfig)
+	}
+
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(transportCredentials)}
 
 	conn, err := grpc.DialContext(ctx, serverAddr, opts...)
 	if err != nil {

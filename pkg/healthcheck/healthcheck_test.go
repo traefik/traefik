@@ -2,6 +2,8 @@ package healthcheck
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -66,7 +68,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
+			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
@@ -299,7 +301,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}
-	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil, "")
+	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil, nil, "")
 
 	err := healthChecker.checkHealthHTTP(ctx, testhelpers.MustParseURL(server.URL))
 	require.NoError(t, err)
@@ -312,6 +314,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		desc                  string
 		mode                  string
 		status                int
+		tlsConfig             *tls.Config
 		server                StartTestServer
 		expNumRemovedServers  int
 		expNumUpsertedServers int
@@ -403,6 +406,16 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			targetStatus:          runtime.StatusDown,
 		},
 		{
+			desc:                  "healthy grpc server over TLS staying healthy",
+			mode:                  "grpc",
+			tlsConfig:             &tls.Config{InsecureSkipVerify: true},
+			server:                newGRPCTLSServer(healthpb.HealthCheckResponse_SERVING),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
 			desc:                  "healthy grpc server toggling to sick and back to healthy",
 			mode:                  "grpc",
 			server:                newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING, healthpb.HealthCheckResponse_SERVING),
@@ -442,7 +455,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &runtime.ServiceInfo{}
-			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, test.tlsConfig, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
 			wg.Go(func() {
@@ -480,6 +493,58 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 	}
 }
 
+func TestServiceHealthChecker_checkHealthGRPC_TLS(t *testing.T) {
+	roots := x509.NewCertPool()
+	require.True(t, roots.AppendCertsFromPEM(localhostCert))
+
+	testCases := []struct {
+		desc      string
+		tlsConfig *tls.Config
+		expErr    string
+	}{
+		{
+			desc:      "trusted certificate",
+			tlsConfig: &tls.Config{RootCAs: roots, ServerName: "example.com"},
+		},
+		{
+			desc:      "untrusted certificate",
+			tlsConfig: &tls.Config{ServerName: "example.com"},
+			expErr:    "certificate signed by unknown authority",
+		},
+		{
+			desc:      "server name mismatch",
+			tlsConfig: &tls.Config{RootCAs: roots, ServerName: "foo.example.com"},
+			expErr:    "certificate is valid for example.com, not foo.example.com",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			targetURL, _ := newGRPCTLSServer(healthpb.HealthCheckResponse_SERVING).Start(t, func() {})
+
+			config := &dynamic.ServerHealthCheck{
+				Mode:    "grpc",
+				Timeout: ptypes.Duration(5 * time.Second),
+			}
+			hc := NewServiceHealthChecker(t.Context(), nil, config, nil, nil, http.DefaultTransport, test.tlsConfig, nil, "")
+
+			// A failed handshake must be reported right away, not once the timeout expires.
+			start := time.Now()
+			err := hc.executeHealthCheck(t.Context(), config, targetURL)
+			assert.Less(t, time.Since(start), time.Duration(config.Timeout))
+
+			if test.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+
+			require.ErrorContains(t, err, test.expErr)
+		})
+	}
+}
+
 func TestDifferentIntervals(t *testing.T) {
 	// The context is passed to the health check and
 	// canonically canceled by the test server once all expected requests have been received.
@@ -508,7 +573,7 @@ func TestDifferentIntervals(t *testing.T) {
 
 	gauge := &testhelpers.CollectingGauge{}
 	serviceInfo := &runtime.ServiceInfo{}
-	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, nil, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
 
 	wg := sync.WaitGroup{}
 	wg.Go(func() {
