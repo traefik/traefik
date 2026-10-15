@@ -115,3 +115,18 @@ TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
 # Run the test "MyTest" in the MyTest suite
 TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog\$\$" make test-integration
 ```
+
+### Ingress NGINX e2e tests
+
+The `test-ingress-nginx-e2e` target runs the [ingress-nginx e2e annotation tests](https://github.com/kubernetes/ingress-nginx/tree/main/test/e2e/annotations)
+against the Kubernetes Ingress NGINX provider.
+The upstream tests are vendored in `integration/ingress-nginx-e2e`, where the framework deploys Traefik instead of the ingress-nginx controller.
+See `integration/ingress-nginx-e2e/README.md` for details.
+
+```bash
+# Run every annotation test
+make test-ingress-nginx-e2e
+
+# Run the tests matching a ginkgo focus regex
+FOCUS="cors" make test-ingress-nginx-e2e
+```
