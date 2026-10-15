@@ -1377,11 +1377,13 @@ func createBufferingMiddleware(buffering *traefikv1alpha1.Buffering) *dynamic.Bu
 	}
 
 	return &dynamic.Buffering{
-		MemRequestBodyBytes:  buffering.MemRequestBodyBytes,
-		MaxRequestBodyBytes:  buffering.MaxRequestBodyBytes,
-		MemResponseBodyBytes: buffering.MemResponseBodyBytes,
-		MaxResponseBodyBytes: buffering.MaxResponseBodyBytes,
-		RetryExpression:      buffering.RetryExpression,
+		MemRequestBodyBytes:   buffering.MemRequestBodyBytes,
+		MaxRequestBodyBytes:   buffering.MaxRequestBodyBytes,
+		MemResponseBodyBytes:  buffering.MemResponseBodyBytes,
+		MaxResponseBodyBytes:  buffering.MaxResponseBodyBytes,
+		RetryExpression:       buffering.RetryExpression,
+		DisableRequestBuffer:  buffering.DisableRequestBuffer,
+		DisableResponseBuffer: buffering.DisableResponseBuffer,
 	}
 }
 
