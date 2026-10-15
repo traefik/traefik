@@ -333,6 +333,7 @@ nav:
               - '<span class="nav-link-with-icon">OIDC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/oidc.md'
               - '<span class="nav-link-with-icon">OPA <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/opa.md'
               - 'PassTLSClientCert': 'reference/routing-configuration/http/middlewares/passtlsclientcert.md'
+              - 'QueryParameters': 'reference/routing-configuration/http/middlewares/queryparameters.md'
               - 'RateLimit': 'reference/routing-configuration/http/middlewares/ratelimit.md'
               - 'RedirectRegex': 'reference/routing-configuration/http/middlewares/redirectregex.md'
               - 'RedirectScheme': 'reference/routing-configuration/http/middlewares/redirectscheme.md'
