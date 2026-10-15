@@ -13,6 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -60,6 +61,12 @@ func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareN
 }
 
 func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	return middlewares.WrapExternal(next, func(next http.Handler) (http.Handler, error) {
+		return b.newPluginHandler(ctx, next, cfg, middlewareName)
+	})
+}
+
+func (b yaegiMiddlewareBuilder) newPluginHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := b.fnNew.Call(args)
 

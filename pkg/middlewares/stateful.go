@@ -6,6 +6,6 @@ import "net/http"
 // implemented by a stateful middleware (ie: recorders).
 type Stateful interface {
 	http.ResponseWriter
-	http.Hijacker
-	http.Flusher
+
+	Unwrap() http.ResponseWriter
 }

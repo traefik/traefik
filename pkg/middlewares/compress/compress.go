@@ -206,7 +206,9 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 		return nil, fmt.Errorf("new gzip wrapper: %w", err)
 	}
 
-	return wrapper(c.next), nil
+	return middlewares.WrapExternal(c.next, func(next http.Handler) (http.Handler, error) {
+		return wrapper(next), nil
+	})
 }
 
 func (c *compress) newBrotliHandler(middlewareName string) (http.Handler, error) {
