@@ -63,6 +63,8 @@ type MiddlewareSpecApplyConfiguration struct {
 	ContentType       *dynamic.ContentType              `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb                  `json:"grpcWeb,omitempty"`
 	Tap               *TapApplyConfiguration            `json:"tap,omitempty"`
+	// ExternalAction defines declarative external HTTP or executable actions.
+	ExternalAction *ExternalActionApplyConfiguration `json:"externalAction,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]v1.JSON `json:"plugin,omitempty"`
@@ -279,6 +281,14 @@ func (b *MiddlewareSpecApplyConfiguration) WithGrpcWeb(value dynamic.GrpcWeb) *M
 // If called multiple times, the Tap field is set to the value of the last call.
 func (b *MiddlewareSpecApplyConfiguration) WithTap(value *TapApplyConfiguration) *MiddlewareSpecApplyConfiguration {
 	b.Tap = value
+	return b
+}
+
+// WithExternalAction sets the ExternalAction field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ExternalAction field is set to the value of the last call.
+func (b *MiddlewareSpecApplyConfiguration) WithExternalAction(value *ExternalActionApplyConfiguration) *MiddlewareSpecApplyConfiguration {
+	b.ExternalAction = value
 	return b
 }
 

@@ -53,6 +53,8 @@ type MiddlewareSpec struct {
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	Tap               *Tap                       `json:"tap,omitempty"`
+	// ExternalAction defines declarative external HTTP or executable actions.
+	ExternalAction *ExternalAction `json:"externalAction,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
