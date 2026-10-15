@@ -7394,6 +7394,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Address:     "test.com",
 								MaxBodySize: new(int64(-1)),
 								HeaderField: "X-Header-Field",
+								Timeout:     ptypes.Duration(10 * time.Second),
 								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",

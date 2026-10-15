@@ -211,6 +211,7 @@
         maxResponseBodySize = 42
         preserveLocationHeader = true
         preserveRequestMethod = true
+        timeout = "42s"
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"

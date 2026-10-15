@@ -92,6 +92,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware08/forwardAuth/preserveLocationHeader":                   "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/preserveRequestMethod":                    "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/maxResponseBodySize":                      "42",
+		"traefik/http/middlewares/Middleware08/forwardAuth/timeout":                                  "1s",
 		"traefik/http/middlewares/Middleware15/redirectScheme/scheme":                                "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/port":                                  "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/permanent":                             "true",
@@ -455,6 +456,7 @@ func Test_buildConfiguration(t *testing.T) {
 						MaxBodySize:            new(int64(42)),
 						PreserveLocationHeader: true,
 						PreserveRequestMethod:  true,
+						Timeout:                ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware06": {
