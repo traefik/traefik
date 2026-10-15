@@ -1,6 +1,7 @@
 package crd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -34,6 +36,137 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestLoadAccessGovernanceMiddlewares(t *testing.T) {
+	accessGovernance := &dynamic.AccessGovernance{
+		DefaultDatabase: "default",
+		Databases: map[string]dynamic.AccessGovernanceDatabase{
+			"default": {
+				DSNFile:          "/run/secrets/mysql-dsn",
+				HTTPTable:        "http_events",
+				NetworkTable:     "network_events",
+				ConnectionMaxAge: ptypes.Duration(30 * time.Minute),
+			},
+		},
+		Queue: dynamic.AccessGovernanceQueue{
+			FlushInterval: ptypes.Duration(time.Second),
+		},
+	}
+	connectionMaxAge := intstr.FromString("30m")
+	flushInterval := intstr.FromString("1s")
+	accessGovernanceCRD := &traefikv1alpha1.AccessGovernance{
+		DefaultDatabase: accessGovernance.DefaultDatabase,
+		Databases: map[string]traefikv1alpha1.AccessGovernanceDatabase{
+			"default": {
+				DSNFile:          "/run/secrets/mysql-dsn",
+				HTTPTable:        "http_events",
+				NetworkTable:     "network_events",
+				ConnectionMaxAge: &connectionMaxAge,
+			},
+		},
+		Queue: traefikv1alpha1.AccessGovernanceQueue{FlushInterval: &flushInterval},
+	}
+
+	crdClient := traefikcrdfake.NewClientset(
+		&traefikv1alpha1.Middleware{
+			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Spec: traefikv1alpha1.MiddlewareSpec{
+				AccessGovernance: accessGovernanceCRD,
+			},
+		},
+		&traefikv1alpha1.MiddlewareTCP{
+			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Spec: traefikv1alpha1.MiddlewareTCPSpec{
+				AccessGovernance: accessGovernanceCRD,
+			},
+		},
+		&traefikv1alpha1.MiddlewareUDP{
+			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Spec: traefikv1alpha1.MiddlewareUDPSpec{
+				AccessGovernance: accessGovernanceCRD,
+			},
+		},
+	)
+	client := newClientImpl(kubefake.NewClientset(), crdClient)
+
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	conf := (&Provider{}).loadConfigurationFromCRD(t.Context(), client)
+
+	require.Contains(t, conf.HTTP.Middlewares, "default-governance")
+	assert.Equal(t, accessGovernance, conf.HTTP.Middlewares["default-governance"].AccessGovernance)
+
+	require.Contains(t, conf.TCP.Middlewares, "default-governance")
+	assert.Equal(t, accessGovernance, conf.TCP.Middlewares["default-governance"].AccessGovernance)
+
+	require.Contains(t, conf.UDP.Middlewares, "default-governance")
+	assert.Equal(t, accessGovernance, conf.UDP.Middlewares["default-governance"].AccessGovernance)
+
+	middlewares, err := (&Provider{}).makeMiddlewareUDPKeys(t.Context(), "default", []traefikv1alpha1.ObjectReference{{Name: "governance"}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"default-governance"}, middlewares)
+
+	safeProvider := &Provider{nameBuilder: nameBuilder{safe: true}}
+	safeConf := safeProvider.loadConfigurationFromCRD(t.Context(), client)
+	require.Contains(t, safeConf.HTTP.Middlewares, "default_governance")
+	require.Contains(t, safeConf.TCP.Middlewares, "default_governance")
+	require.Contains(t, safeConf.UDP.Middlewares, "default_governance")
+	safeMiddlewares, err := safeProvider.makeMiddlewareUDPKeys(t.Context(), "default", []traefikv1alpha1.ObjectReference{{Name: "governance"}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"default_governance"}, safeMiddlewares)
+
+	_, err = safeProvider.makeMiddlewareUDPKeys(t.Context(), "default", []traefikv1alpha1.ObjectReference{{Name: "governance", Namespace: "other"}})
+	require.Error(t, err)
+}
+
+func TestRuntimeSecretMaterialIsPrivateInDynamicConfiguration(t *testing.T) {
+	const material = "must-not-appear-in-dynamic-api"
+	crdClient := traefikcrdfake.NewClientset(&traefikv1alpha1.Middleware{
+		ObjectMeta: metav1.ObjectMeta{Name: "runtime", Namespace: "default"},
+		Spec: traefikv1alpha1.MiddlewareSpec{
+			AccessGovernance: &traefikv1alpha1.AccessGovernance{
+				RuntimeValues: map[string]traefikv1alpha1.RuntimeValueSource{
+					"arbitraryAlias": {
+						SecretKeyRef: &traefikv1alpha1.RuntimeObjectKeySelector{
+							Name: "arbitrary-secret",
+							Key:  "arbitrary-key",
+						},
+					},
+				},
+				Databases: map[string]traefikv1alpha1.AccessGovernanceDatabase{
+					"default": {DSN: "runtime://arbitraryAlias"},
+				},
+				DefaultDatabase: "default",
+			},
+		},
+	})
+	kubeClient := kubefake.NewClientset(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "arbitrary-secret", Namespace: "default", ResourceVersion: "42"},
+		Data:       map[string][]byte{"arbitrary-key": []byte(material)},
+	})
+	client := newClientImpl(kubeClient, crdClient)
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	conf := (&Provider{}).loadConfigurationFromCRD(t.Context(), client)
+	action := conf.HTTP.Middlewares["default-runtime"].AccessGovernance
+	require.NotNil(t, action)
+	value := action.RuntimeValues["arbitraryAlias"]
+	require.Equal(t, material, value.Value)
+	require.Equal(t, "secret:default/arbitrary-secret:arbitrary-key", value.Source)
+	require.Equal(t, "42", value.Revision)
+
+	encoded, err := json.Marshal(action)
+	require.NoError(t, err)
+	require.NotContains(t, string(encoded), material)
+	require.Contains(t, string(encoded), "runtime://arbitraryAlias")
 }
 
 func TestLoadIngressRouteTCPs(t *testing.T) {

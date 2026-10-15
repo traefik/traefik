@@ -2,12 +2,14 @@ package tcpmiddleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accessgovernance"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipwhitelist"
@@ -90,8 +92,18 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	var middleware tcp.Constructor
 
+	// AccessGovernance
+	if config.AccessGovernance != nil {
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return accessgovernance.NewTCP(ctx, next, *config.AccessGovernance, middlewareName)
+		}
+	}
+
 	// InFlightConn
 	if config.InFlightConn != nil {
+		if middleware != nil {
+			return nil, errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
+		}
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return inflightconn.New(ctx, next, *config.InFlightConn, middlewareName)
 		}
@@ -101,6 +113,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	if config.IPWhiteList != nil {
 		log.Warn().Msg("IPWhiteList is deprecated, please use IPAllowList instead.")
 
+		if middleware != nil {
+			return nil, errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
+		}
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
 		}
@@ -108,6 +123,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	// IPAllowList
 	if config.IPAllowList != nil {
+		if middleware != nil {
+			return nil, errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
+		}
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}

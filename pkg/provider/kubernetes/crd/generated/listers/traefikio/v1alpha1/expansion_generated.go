@@ -66,6 +66,14 @@ type MiddlewareTCPListerExpansion interface{}
 // MiddlewareTCPNamespaceLister.
 type MiddlewareTCPNamespaceListerExpansion interface{}
 
+// MiddlewareUDPListerExpansion allows custom methods to be added to
+// MiddlewareUDPLister.
+type MiddlewareUDPListerExpansion interface{}
+
+// MiddlewareUDPNamespaceListerExpansion allows custom methods to be added to
+// MiddlewareUDPNamespaceLister.
+type MiddlewareUDPNamespaceListerExpansion interface{}
+
 // ServersTransportListerExpansion allows custom methods to be added to
 // ServersTransportLister.
 type ServersTransportListerExpansion interface{}
