@@ -1,6 +1,7 @@
 package externalaction
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -41,15 +43,19 @@ func TestSecurityMySQLConstructorsRejectUnsafeTables(t *testing.T) {
 
 func TestSQLBoundariesRejectUnsafeTable(t *testing.T) {
 	table := "events`;DROP TABLE users;--"
-	binding := &mysqlLifecycleBindingStore{table: table}
+	_, err := compileMySQLBindingQueries(table)
+	require.Error(t, err)
+	binding := &mysqlLifecycleBindingStore{}
 	require.Error(t, binding.Bind(t.Context(), "key", "set", [32]byte{}, 0))
-	_, _, err := binding.Resolve(t.Context(), "key")
+	_, _, err = binding.Resolve(t.Context(), "key")
 	require.Error(t, err)
 	binding.cleanupExpired(t.Context(), nil)
 	require.Zero(t, binding.cleanup.Load())
 	require.Error(t, ensureBindingSchema(t.Context(), nil, table))
 
-	dedup := &mysqlDeduplicator{table: table}
+	_, err = compileMySQLDedupQueries(table)
+	require.Error(t, err)
+	dedup := &mysqlDeduplicator{}
 	_, _, err = dedup.Claim(t.Context(), "rule", "key", 0, 0)
 	require.Error(t, err)
 	require.Error(t, dedup.Complete(t.Context(), "key", "claim", 0))
@@ -87,4 +93,51 @@ func TestTransportReadsProjectedTLSFiles(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, response.Body.Close())
 	require.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestTransportVerificationRequiresExplicitOptOut(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
+	defer server.Close()
+	ca := filepath.Join(t.TempDir(), "ca.pem")
+	require.NoError(t, os.WriteFile(ca, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.TLS.Certificates[0].Certificate[0]}), 0o600))
+	for _, test := range []struct {
+		name   string
+		config *dynamic.ExternalActionTLS
+		valid  bool
+	}{
+		{name: "default rejects untrusted"},
+		{name: "empty configuration rejects untrusted", config: &dynamic.ExternalActionTLS{}},
+		{name: "trusted CA", config: &dynamic.ExternalActionTLS{CAFile: ca}, valid: true},
+		{name: "wrong server identity", config: &dynamic.ExternalActionTLS{CAFile: ca, ServerName: "wrong.example"}},
+		{name: "explicit operator opt out", config: &dynamic.ExternalActionTLS{InsecureSkipVerify: true}, valid: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			transport, err := buildTransport(test.config)
+			require.NoError(t, err)
+			defer transport.CloseIdleConnections()
+			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+			defer cancel()
+			request, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, nil)
+			require.NoError(t, err)
+			response, err := transport.RoundTrip(request)
+			if !test.valid {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NoError(t, response.Body.Close())
+		})
+	}
+}
+
+func TestExecutableCommandRemainsOperatorSelected(t *testing.T) {
+	for _, command := range []string{"sh", "{{ .Body.command }}", "/bin/echo\x00", "/bin/echo\n"} {
+		_, err := newExecTarget(dynamic.ExternalActionRule{Exec: &dynamic.ExternalActionExec{Command: command}})
+		require.Error(t, err)
+	}
+	target, err := newExecTarget(dynamic.ExternalActionRule{Exec: &dynamic.ExternalActionExec{Command: os.Args[0]}})
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	require.ErrorIs(t, target.Run(ctx, &actionData{}), context.Canceled)
 }

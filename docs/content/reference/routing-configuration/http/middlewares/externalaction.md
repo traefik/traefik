@@ -426,3 +426,18 @@ credential set; initial activation without valid material fails.
 SQL table names must match `^[A-Za-z][A-Za-z0-9_]{0,63}$`.
 The SQL execution paths validate and quote identifiers separately from values.
 Request-derived values use SQL parameters and never become table names.
+
+MySQL connections enforce server-side parameter binding and disable multi-statement
+execution and unrestricted local-file uploads. DSN options `interpolateParams`,
+`multiStatements`, and `allowAllFiles` are forced to `false`, including after Secret
+rotation. Other connection, TLS, and pool settings continue to apply.
+
+Binding and deduplication statements are prepared on the acquired connection
+or transaction and closed before releasing its pool lease. In-flight operations
+can finish on the previous pool while new operations use the rotated pool.
+TLS certificate verification is enabled by default; `insecureSkipVerify` is an
+explicit operator opt-out and should remain disabled in production. Executables
+are selected by an administrator-supplied absolute path. Templates supply literal
+arguments, environment values, and stdin without invoking a shell. Use stdin for
+untrusted payloads, or an adapter's end-of-options separator when passing them
+as arguments; the adapter must validate any resulting application commands.
