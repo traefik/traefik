@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -350,7 +349,7 @@ func normalizeMySQLSettings(settings MySQLSettings) MySQLSettings {
 func mysqlMaterial(settings MySQLSettings) (string, string, error) {
 	dsn := settings.DSN
 	if settings.DSNFile != "" {
-		material, err := os.ReadFile(settings.DSNFile)
+		material, err := ReadFile(settings.DSNFile)
 		if err != nil {
 			return "", "", fmt.Errorf("reading mysql dsnFile: %w", err)
 		}

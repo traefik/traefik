@@ -27,6 +27,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/runtimeconfig"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -849,32 +850,13 @@ func (a *compiledAuth) loadMaterial() (authMaterial, error) {
 }
 
 func readCredentialFiles(files map[string]string) (map[string]string, error) {
-	directories := make(map[string]string)
-	for _, path := range files {
-		directory := filepath.Dir(path)
-		if _, ok := directories[directory]; ok {
-			continue
-		}
-		link, err := os.Readlink(filepath.Join(directory, "..data"))
-		if err == nil {
-			if !filepath.IsAbs(link) {
-				link = filepath.Join(directory, link)
-			}
-			directories[directory] = link
-		}
+	raw, err := runtimeconfig.ReadFiles(files)
+	if err != nil {
+		return nil, err
 	}
-
-	result := make(map[string]string, len(files))
-	for name, path := range files {
-		readPath := path
-		if directory := directories[filepath.Dir(path)]; directory != "" {
-			readPath = filepath.Join(directory, filepath.Base(path))
-		}
-		raw, err := os.ReadFile(readPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading credential file %q: %w", path, err)
-		}
-		result[name] = strings.TrimSpace(string(raw))
+	result := make(map[string]string, len(raw))
+	for name, value := range raw {
+		result[name] = strings.TrimSpace(string(value))
 	}
 	return result, nil
 }
@@ -973,7 +955,7 @@ func buildTransport(config *dynamic.ExternalActionTLS) (*http.Transport, error) 
 		InsecureSkipVerify: config.InsecureSkipVerify,
 	}
 	if config.CAFile != "" {
-		value, err := os.ReadFile(config.CAFile)
+		value, err := runtimeconfig.ReadFile(config.CAFile)
 		if err != nil {
 			return nil, fmt.Errorf("reading CA file: %w", err)
 		}
@@ -990,7 +972,11 @@ func buildTransport(config *dynamic.ExternalActionTLS) (*http.Transport, error) 
 		if config.CertFile == "" || config.KeyFile == "" {
 			return nil, errors.New("both certFile and keyFile are required for mTLS")
 		}
-		certificate, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
+		material, err := runtimeconfig.ReadFiles(map[string]string{"cert": config.CertFile, "key": config.KeyFile})
+		if err != nil {
+			return nil, err
+		}
+		certificate, err := tls.X509KeyPair(material["cert"], material["key"])
 		if err != nil {
 			return nil, err
 		}

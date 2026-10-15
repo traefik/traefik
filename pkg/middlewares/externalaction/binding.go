@@ -534,6 +534,10 @@ func newMySQLLifecycleBindingStore(ctx context.Context, config dynamic.ExternalA
 }
 
 func (m *mysqlLifecycleBindingStore) Bind(ctx context.Context, key, credentialSet string, identity [32]byte, ttl time.Duration) error {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return err
+	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
 		return err
@@ -550,14 +554,14 @@ func (m *mysqlLifecycleBindingStore) Bind(ctx context.Context, key, credentialSe
 
 	identityKey := credentialIdentityHash(credentialSet)
 	_, err = transaction.ExecContext(ctx,
-		"INSERT INTO `"+m.table+"` (`key_hash`,`binding_kind`,`binding_key`,`credential_set`,`identity_hash`,`expires_at`) VALUES (?,'credential',?,?,?,NULL) ON DUPLICATE KEY UPDATE `updated_at`=`updated_at`",
+		"INSERT INTO "+quotedTable+" (`key_hash`,`binding_kind`,`binding_key`,`credential_set`,`identity_hash`,`expires_at`) VALUES (?,'credential',?,?,?,NULL) ON DUPLICATE KEY UPDATE `updated_at`=`updated_at`",
 		identityKey[:], credentialSet, credentialSet, identity[:])
 	if err != nil {
 		return err
 	}
 	var knownIdentity []byte
 	err = transaction.QueryRowContext(ctx,
-		"SELECT `identity_hash` FROM `"+m.table+"` WHERE `key_hash`=? FOR UPDATE",
+		"SELECT `identity_hash` FROM "+quotedTable+" WHERE `key_hash`=? FOR UPDATE",
 		identityKey[:]).Scan(&knownIdentity)
 	if err != nil {
 		return err
@@ -571,12 +575,12 @@ func (m *mysqlLifecycleBindingStore) Bind(ctx context.Context, key, credentialSe
 	var existingIdentity []byte
 	var expired bool
 	err = transaction.QueryRowContext(ctx,
-		"SELECT `credential_set`,`identity_hash`,`expires_at`<=UTC_TIMESTAMP(6) FROM `"+m.table+"` WHERE `key_hash`=? FOR UPDATE",
+		"SELECT `credential_set`,`identity_hash`,`expires_at`<=UTC_TIMESTAMP(6) FROM "+quotedTable+" WHERE `key_hash`=? FOR UPDATE",
 		hash[:]).Scan(&existingSet, &existingIdentity, &expired)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		_, err = transaction.ExecContext(ctx,
-			"INSERT INTO `"+m.table+"` (`key_hash`,`binding_kind`,`binding_key`,`credential_set`,`identity_hash`,`expires_at`) VALUES (?,'lifecycle',?,?,?,DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND))",
+			"INSERT INTO "+quotedTable+" (`key_hash`,`binding_kind`,`binding_key`,`credential_set`,`identity_hash`,`expires_at`) VALUES (?,'lifecycle',?,?,?,DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND))",
 			hash[:], bindingKeyPreview(key), credentialSet, identity[:], durationMicroseconds(ttl))
 	case err != nil:
 		return err
@@ -584,7 +588,7 @@ func (m *mysqlLifecycleBindingStore) Bind(ctx context.Context, key, credentialSe
 		return errors.New("lifecycle key is already bound to another credential set")
 	default:
 		_, err = transaction.ExecContext(ctx,
-			"UPDATE `"+m.table+"` SET `binding_kind`='lifecycle',`binding_key`=?,`credential_set`=?,`identity_hash`=?,`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=?",
+			"UPDATE "+quotedTable+" SET `binding_kind`='lifecycle',`binding_key`=?,`credential_set`=?,`identity_hash`=?,`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=?",
 			bindingKeyPreview(key), credentialSet, identity[:], durationMicroseconds(ttl), hash[:])
 	}
 	if err != nil {
@@ -594,6 +598,10 @@ func (m *mysqlLifecycleBindingStore) Bind(ctx context.Context, key, credentialSe
 }
 
 func (m *mysqlLifecycleBindingStore) Resolve(ctx context.Context, key string) (string, [32]byte, error) {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return "", [32]byte{}, err
+	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
 		return "", [32]byte{}, err
@@ -603,7 +611,7 @@ func (m *mysqlLifecycleBindingStore) Resolve(ctx context.Context, key string) (s
 	var credentialSet string
 	var identityBytes []byte
 	err = db.QueryRowContext(ctx,
-		"SELECT `credential_set`,`identity_hash` FROM `"+m.table+"` WHERE `key_hash`=? AND `binding_kind`='lifecycle' AND `expires_at`>UTC_TIMESTAMP(6)",
+		"SELECT `credential_set`,`identity_hash` FROM "+quotedTable+" WHERE `key_hash`=? AND `binding_kind`='lifecycle' AND `expires_at`>UTC_TIMESTAMP(6)",
 		hash[:]).Scan(&credentialSet, &identityBytes)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", [32]byte{}, errLifecycleBindingNotFound
@@ -620,7 +628,11 @@ func (m *mysqlLifecycleBindingStore) Resolve(ctx context.Context, key string) (s
 }
 
 func ensureBindingSchema(ctx context.Context, db *sql.DB, table string) error {
-	query := "CREATE TABLE IF NOT EXISTS `" + table + "` (" +
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(table)
+	if err != nil {
+		return err
+	}
+	query := "CREATE TABLE IF NOT EXISTS " + quotedTable + " (" +
 		"`key_hash` BINARY(32) NOT NULL," +
 		"`binding_kind` VARCHAR(16) NOT NULL," +
 		"`binding_key` VARCHAR(512) NOT NULL," +
@@ -633,11 +645,15 @@ func ensureBindingSchema(ctx context.Context, db *sql.DB, table string) error {
 		"KEY `idx_credential_set` (`credential_set`)," +
 		"KEY `idx_expires_at` (`expires_at`)" +
 		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-	_, err := db.ExecContext(ctx, query)
+	_, err = db.ExecContext(ctx, query)
 	return err
 }
 
 func (m *mysqlLifecycleBindingStore) cleanupExpired(ctx context.Context, db *sql.DB) {
+	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
+	if err != nil {
+		return
+	}
 	now := time.Now().Unix()
 	last := m.cleanup.Load()
 	if last != 0 && now-last < int64(time.Minute/time.Second) {
@@ -646,7 +662,7 @@ func (m *mysqlLifecycleBindingStore) cleanupExpired(ctx context.Context, db *sql
 	if !m.cleanup.CompareAndSwap(last, now) {
 		return
 	}
-	_, _ = db.ExecContext(ctx, "DELETE FROM `"+m.table+"` WHERE `binding_kind`='lifecycle' AND `expires_at`<=UTC_TIMESTAMP(6) LIMIT 1000")
+	_, _ = db.ExecContext(ctx, "DELETE FROM "+quotedTable+" WHERE `binding_kind`='lifecycle' AND `expires_at`<=UTC_TIMESTAMP(6) LIMIT 1000")
 }
 
 func (m *mysqlLifecycleBindingStore) close() {}
