@@ -384,6 +384,13 @@ proxy_set_header X-Custom-Uri $request_uri;
 			},
 		},
 		{
+			desc:                 "grpc_set_header directive",
+			configurationSnippet: `grpc_set_header X-Custom-Method $request_method;`,
+			expectedRequestHeaders: map[string]string{
+				"X-Custom-Method": "GET",
+			},
+		},
+		{
 			desc: "proxy_set_header with empty value removes header",
 			configurationSnippet: `
 proxy_set_header Accept-Encoding "";
@@ -1548,6 +1555,50 @@ proxy_method $request_method;
 			expectedRequestHeaders: map[string]string{
 				"X-Auth-User": "john",
 				"X-Auth-Role": "admin",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   new(true),
+		},
+		{
+			// Nothing else sets these headers, so the test only passes if $authHeaderN is resolved.
+			desc: "grpc_set_header with $authHeaderN variables",
+			configurationSnippet: `
+grpc_set_header X-Grpc-Auth $authHeader0;
+grpc_set_header X-Grpc-Req $authHeader1;
+`,
+			authResponseHeaders: []string{"Authorization", "Request-Id"},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Authorization", "Bearer verified-token")
+					w.Header().Set("Request-Id", "req-42")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedRequestHeaders: map[string]string{
+				"X-Grpc-Auth": "Bearer verified-token",
+				"X-Grpc-Req":  "req-42",
+			},
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   new(true),
+		},
+		{
+			// The header keeps the verified token, not the literal "$authHeader0".
+			desc:                 "grpc_set_header Authorization with $authHeader0",
+			configurationSnippet: `grpc_set_header "Authorization" $authHeader0;`,
+			authResponseHeaders:  []string{"Authorization", "Request-Id"},
+			authServerHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+
+				return func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Authorization", "Bearer verified-token")
+					w.Header().Set("Request-Id", "req-42")
+					w.WriteHeader(http.StatusOK)
+				}
+			},
+			expectedRequestHeaders: map[string]string{
+				"Authorization": "Bearer verified-token",
 			},
 			expectedStatusCode: http.StatusOK,
 			expectNextCalled:   new(true),

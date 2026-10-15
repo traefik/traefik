@@ -162,7 +162,9 @@ func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
 	// Content phase - collect
 	case "auth_request_set":
 		return createAuthRequestSetCollectable(d)
-	case "proxy_set_header":
+	// grpc_set_header is the gRPC version of proxy_set_header in NGINX.
+	// Traefik forwards gRPC and HTTP requests the same way, so both directives do the same thing.
+	case "proxy_set_header", "grpc_set_header":
 		return createProxySetHeaderCollectable(d)
 	case "proxy_method":
 		return createProxyMethodCollectable(d)

@@ -19,6 +19,7 @@ var directiveContexts = map[string][]string{
 	"more_set_headers":         {contextServer, contextLocation, contextIf},
 	"more_clear_headers":       {contextServer, contextLocation, contextIf},
 	"proxy_set_header":         {contextServer, contextLocation},
+	"grpc_set_header":          {contextServer, contextLocation},
 	"more_set_input_headers":   {contextServer, contextLocation, contextIf},
 	"more_clear_input_headers": {contextServer, contextLocation, contextIf},
 	"if":                       {contextServer, contextLocation},
