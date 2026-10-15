@@ -405,6 +405,26 @@ proxy_set_header "X-Custom-Header" "my-value";
 			},
 		},
 		{
+			desc: "gRPC timeout directives in server snippet are accepted",
+			serverSnippet: `
+grpc_connect_timeout 10s;
+grpc_read_timeout 360d;
+grpc_send_timeout 360d;
+`,
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   new(true),
+		},
+		{
+			desc: "gRPC timeout directives in configuration snippet are accepted",
+			configurationSnippet: `
+grpc_connect_timeout 10s;
+grpc_read_timeout 360d;
+grpc_send_timeout 360d;
+`,
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   new(true),
+		},
+		{
 			desc: "set directive creates variable",
 			configurationSnippet: `
 set $my_var "hello";

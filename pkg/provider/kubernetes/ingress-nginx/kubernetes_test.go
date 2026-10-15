@@ -25211,6 +25211,120 @@ func TestLoadIngresses(t *testing.T) {
 	}
 }
 
+func TestLoadIngressesGRPCTimeouts(t *testing.T) {
+	transport := func(dial, read, write time.Duration) *dynamic.ServersTransport {
+		return &dynamic.ServersTransport{
+			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+				DialTimeout:     ptypes.Duration(dial),
+				ReadTimeout:     ptypes.Duration(read),
+				WriteTimeout:    ptypes.Duration(write),
+				IdleConnTimeout: ptypes.Duration(60 * time.Second),
+			},
+		}
+	}
+
+	testCases := []struct {
+		desc               string
+		paths              []string
+		expectedRouters    []string
+		expectedTransports map[string]*dynamic.ServersTransport
+	}{
+		{
+			desc:  "configuration-snippet sets the timeouts",
+			paths: []string{"ingresses/ingress-with-grpc-timeout-configuration-snippet.yml"},
+			expectedRouters: []string{
+				"default-ingress-with-grpc-timeout-configuration-snippet-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-configuration-snippet-rule-0-path-0-tls",
+			},
+			expectedTransports: map[string]*dynamic.ServersTransport{
+				"default-ingress-with-grpc-timeout-configuration-snippet": transport(5*time.Second, 10*time.Minute, 90*time.Minute),
+			},
+		},
+		{
+			desc:  "annotation wins over the directive",
+			paths: []string{"ingresses/ingress-with-grpc-timeout-and-proxy-timeout.yml"},
+			expectedRouters: []string{
+				"default-ingress-with-grpc-timeout-and-proxy-timeout-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-and-proxy-timeout-rule-0-path-0-tls",
+			},
+			expectedTransports: map[string]*dynamic.ServersTransport{
+				"default-ingress-with-grpc-timeout-and-proxy-timeout": transport(60*time.Second, 30*time.Second, 10*time.Minute),
+			},
+		},
+		{
+			desc:  "invalid value falls back to the default",
+			paths: []string{"ingresses/ingress-with-grpc-timeout-invalid.yml"},
+			expectedRouters: []string{
+				"default-ingress-with-grpc-timeout-invalid-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-invalid-rule-0-path-0-tls",
+			},
+			expectedTransports: map[string]*dynamic.ServersTransport{
+				"default-ingress-with-grpc-timeout-invalid": transport(60*time.Second, 60*time.Second, 60*time.Second),
+			},
+		},
+		{
+			desc:  "directives are ignored for a non-gRPC backend",
+			paths: []string{"ingresses/ingress-with-grpc-timeout-http-backend.yml"},
+			expectedRouters: []string{
+				"default-ingress-with-grpc-timeout-http-backend-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-http-backend-rule-0-path-0-tls",
+			},
+			expectedTransports: map[string]*dynamic.ServersTransport{
+				"default-ingress-with-grpc-timeout-http-backend": transport(60*time.Second, 60*time.Second, 60*time.Second),
+			},
+		},
+		{
+			// Only one of the two Ingresses has a server-snippet,
+			// but a server-snippet applies to every Ingress on the host.
+			desc:  "server-snippet applies to every Ingress on the host",
+			paths: []string{"ingresses/ingress-with-grpc-timeout-server-snippet-shared-host.yml"},
+			expectedRouters: []string{
+				"default-ingress-with-grpc-timeout-server-snippet-a-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-server-snippet-a-rule-0-path-0-tls",
+				"default-ingress-with-grpc-timeout-server-snippet-b-rule-0-path-0",
+				"default-ingress-with-grpc-timeout-server-snippet-b-rule-0-path-0-tls",
+			},
+			expectedTransports: map[string]*dynamic.ServersTransport{
+				"default-ingress-with-grpc-timeout-server-snippet-a": transport(60*time.Second, 360*24*time.Hour, 360*24*time.Hour),
+				"default-ingress-with-grpc-timeout-server-snippet-b": transport(60*time.Second, 360*24*time.Hour, 360*24*time.Hour),
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects := readResources(t, append([]string{"services.yml", "ingressclasses.yml"}, test.paths...))
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			client := newClient(kubeClient)
+
+			eventCh, err := client.WatchAll(t.Context(), "", "")
+			require.NoError(t, err)
+
+			// just wait for the first event
+			<-eventCh
+
+			p := Provider{
+				k8sClient:               client,
+				AllowSnippetAnnotations: true,
+				NonTLSEntryPoints:       []string{"http"},
+				TLSEntryPoints:          []string{"https"},
+			}
+			p.SetDefaults()
+
+			conf := p.loadConfiguration(t.Context())
+
+			var routers []string
+			for name := range conf.HTTP.Routers {
+				routers = append(routers, name)
+			}
+			assert.ElementsMatch(t, test.expectedRouters, routers)
+			assert.Equal(t, test.expectedTransports, conf.HTTP.ServersTransports)
+		})
+	}
+}
+
 func TestNginxSizeToBytes(t *testing.T) {
 	testCases := []struct {
 		desc     string

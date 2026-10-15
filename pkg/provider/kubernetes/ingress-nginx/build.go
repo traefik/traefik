@@ -352,7 +352,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 
 		// Normal ingress: build serversTransport, TLS options, and Locations.
-		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+		snippetTimeouts := snippetGRPCTimeouts(ctxIng, ing, serverSnippets)
+		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config, snippetTimeouts)
 		if err != nil {
 			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
 			continue
@@ -674,14 +675,14 @@ func inheritServerAppRoot(loc *location, appRoot string) {
 	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
 }
 
-func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
+func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig, grpc grpcTimeouts) (namedServersTransport, error) {
 	nst := namedServersTransport{
 		name: namespace + "-" + name,
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
-				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
-				WriteTimeout:    ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)) * time.Second),
+				DialTimeout:     forwardingTimeout(cfg.ProxyConnectTimeout, grpc.connect, p.ProxyConnectTimeout),
+				ReadTimeout:     forwardingTimeout(cfg.ProxyReadTimeout, grpc.read, p.ProxyReadTimeout),
+				WriteTimeout:    forwardingTimeout(cfg.ProxySendTimeout, grpc.send, p.ProxySendTimeout),
 				IdleConnTimeout: ptypes.Duration(time.Duration(p.UpstreamKeepaliveTimeout) * time.Second),
 			},
 		},
@@ -733,6 +734,20 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	}
 
 	return nst, nil
+}
+
+// forwardingTimeout picks a forwarding timeout.
+// The proxy-*-timeout annotation wins over the grpc_*_timeout snippet directive.
+// This matches ingress-nginx, which writes the annotation value as grpc_*_timeout in the location for gRPC backends.
+// If neither is set, the provider default is used.
+func forwardingTimeout(annotationSeconds *int, directive *time.Duration, defaultSeconds int) ptypes.Duration {
+	if annotationSeconds != nil {
+		return ptypes.Duration(time.Duration(*annotationSeconds) * time.Second)
+	}
+	if directive != nil {
+		return ptypes.Duration(*directive)
+	}
+	return ptypes.Duration(time.Duration(defaultSeconds) * time.Second)
 }
 
 func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, error) {

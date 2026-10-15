@@ -1,0 +1,47 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-grpc-timeout-server-snippet-b
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: GRPC
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grpc.localhost
+      http:
+        paths:
+          - path: /b
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-grpc-timeout-server-snippet-a
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: GRPC
+    nginx.ingress.kubernetes.io/server-snippet: |
+      grpc_read_timeout 360d;
+      grpc_send_timeout 360d;
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grpc.localhost
+      http:
+        paths:
+          - path: /a
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

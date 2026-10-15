@@ -1,0 +1,24 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-grpc-timeout-invalid
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: GRPC
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      grpc_read_timeout 10parsecs;
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grpc.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
