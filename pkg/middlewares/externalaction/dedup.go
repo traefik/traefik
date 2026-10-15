@@ -225,7 +225,7 @@ var mysqlDeduplicatorRegistry = struct {
 
 type mysqlDeduplicator struct {
 	config  dynamic.ExternalActionDedupMySQL
-	table   string
+	queries mysqlDedupQueries
 	manager *runtimeconfig.MySQLManager
 	cleanup atomic.Int64
 }
@@ -242,6 +242,10 @@ func getMySQLDeduplicator(ctx context.Context, config dynamic.ExternalActionDedu
 		return nil, fmt.Errorf("mysql table must match %s", deduplicationTablePattern)
 	}
 
+	queries, err := compileMySQLDedupQueries(table)
+	if err != nil {
+		return nil, err
+	}
 	raw, err := json.Marshal(config)
 	if err != nil {
 		return nil, fmt.Errorf("encoding deduplication configuration: %w", err)
@@ -278,7 +282,7 @@ func getMySQLDeduplicator(ctx context.Context, config dynamic.ExternalActionDedu
 	if err != nil {
 		return nil, err
 	}
-	value := &mysqlDeduplicator{config: config, table: table, manager: manager}
+	value := &mysqlDeduplicator{config: config, queries: queries, manager: manager}
 	mysqlDeduplicatorRegistry.values[key] = value
 	if ctx.Done() != nil {
 		go func() {
@@ -293,9 +297,8 @@ func getMySQLDeduplicator(ctx context.Context, config dynamic.ExternalActionDedu
 }
 
 func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, lease time.Duration) (string, bool, error) {
-	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
-	if err != nil {
-		return "", false, err
+	if m.queries.selectClaim == "" {
+		return "", false, errors.New("MySQL deduplication queries are not initialized")
 	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
@@ -319,12 +322,10 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 
 	var state string
 	var leaseExpired, expired bool
-	query := "SELECT `state`,`lease_until`<=UTC_TIMESTAMP(6),`expires_at`<=UTC_TIMESTAMP(6) FROM " + quotedTable + " WHERE `key_hash`=? FOR UPDATE"
-	err = transaction.QueryRowContext(ctx, query, hash[:]).Scan(&state, &leaseExpired, &expired)
+	err = m.queries.selectClaim.scan(ctx, transaction, []any{hash[:]}, &state, &leaseExpired, &expired)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		_, err = transaction.ExecContext(ctx,
-			"INSERT INTO "+quotedTable+" (`key_hash`,`rule_name`,`state`,`claim_id`,`lease_until`,`expires_at`) VALUES (?,?,'claimed',?,DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND))",
+		_, err = m.queries.insertClaim.exec(ctx, transaction,
 			hash[:], rule, claimID, durationMicroseconds(lease), durationMicroseconds(ttl))
 		if err != nil {
 			var mysqlError *mysqlDriver.MySQLError
@@ -340,8 +341,7 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 	case state == stateClaimed && !leaseExpired && !expired:
 		return "", false, nil
 	default:
-		_, err = transaction.ExecContext(ctx,
-			"UPDATE "+quotedTable+" SET `rule_name`=?,`state`='claimed',`claim_id`=?,`lease_until`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=?",
+		_, err = m.queries.updateClaim.exec(ctx, transaction,
 			rule, claimID, durationMicroseconds(lease), durationMicroseconds(ttl), hash[:])
 		if err != nil {
 			return "", false, err
@@ -354,9 +354,8 @@ func (m *mysqlDeduplicator) Claim(ctx context.Context, rule, key string, ttl, le
 }
 
 func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, ttl time.Duration) error {
-	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
-	if err != nil {
-		return err
+	if m.queries.complete == "" {
+		return errors.New("MySQL deduplication queries are not initialized")
 	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
@@ -364,8 +363,7 @@ func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, t
 	}
 	defer release()
 	hash := sha256.Sum256([]byte(key))
-	result, err := db.ExecContext(ctx,
-		"UPDATE "+quotedTable+" SET `state`='completed',`lease_until`=UTC_TIMESTAMP(6),`expires_at`=DATE_ADD(UTC_TIMESTAMP(6), INTERVAL ? MICROSECOND),`updated_at`=UTC_TIMESTAMP(6) WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
+	result, err := m.queries.complete.exec(ctx, db,
 		durationMicroseconds(ttl), hash[:], claimID)
 	if err != nil {
 		return err
@@ -381,9 +379,8 @@ func (m *mysqlDeduplicator) Complete(ctx context.Context, key, claimID string, t
 }
 
 func (m *mysqlDeduplicator) Release(ctx context.Context, key, claimID string) error {
-	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
-	if err != nil {
-		return err
+	if m.queries.release == "" {
+		return errors.New("MySQL deduplication queries are not initialized")
 	}
 	db, release, err := m.manager.Acquire(ctx)
 	if err != nil {
@@ -391,8 +388,7 @@ func (m *mysqlDeduplicator) Release(ctx context.Context, key, claimID string) er
 	}
 	defer release()
 	hash := sha256.Sum256([]byte(key))
-	_, err = db.ExecContext(ctx,
-		"DELETE FROM "+quotedTable+" WHERE `key_hash`=? AND `claim_id`=? AND `state`='claimed'",
+	_, err = m.queries.release.exec(ctx, db,
 		hash[:], claimID)
 	return err
 }
@@ -419,8 +415,7 @@ func ensureDeduplicationSchema(ctx context.Context, db *sql.DB, table string) er
 }
 
 func (m *mysqlDeduplicator) cleanupExpired(ctx context.Context, db *sql.DB) {
-	quotedTable, err := runtimeconfig.QuoteMySQLIdentifier(m.table)
-	if err != nil {
+	if m.queries.cleanup == "" {
 		return
 	}
 	now := time.Now().Unix()
@@ -431,7 +426,7 @@ func (m *mysqlDeduplicator) cleanupExpired(ctx context.Context, db *sql.DB) {
 	if !m.cleanup.CompareAndSwap(last, now) {
 		return
 	}
-	_, _ = db.ExecContext(ctx, "DELETE FROM "+quotedTable+" WHERE `expires_at`<=UTC_TIMESTAMP(6) LIMIT 1000")
+	_, _ = m.queries.cleanup.exec(ctx, db)
 }
 
 func (m *mysqlDeduplicator) close() {}

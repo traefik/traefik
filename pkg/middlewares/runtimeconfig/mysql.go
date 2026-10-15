@@ -11,8 +11,7 @@ import (
 	"sync"
 	"time"
 
-	// Register the driver used by reloadable MySQL connection pools.
-	_ "github.com/go-sql-driver/mysql"
+	mysql "github.com/go-sql-driver/mysql"
 	"github.com/rs/zerolog/log"
 )
 
@@ -363,10 +362,15 @@ func mysqlMaterial(settings MySQLSettings) (string, string, error) {
 }
 
 func openMySQLCandidate(parent context.Context, dsn string, settings MySQLSettings, initializer MySQLInitializer) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
+	config, err := mysqlDriverConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
+	connector, err := mysql.NewConnector(config)
+	if err != nil {
+		return nil, errors.New("creating MySQL connector failed")
+	}
+	db := sql.OpenDB(connector)
 	fail := func(err error) (*sql.DB, error) {
 		_ = db.Close()
 		return nil, err
