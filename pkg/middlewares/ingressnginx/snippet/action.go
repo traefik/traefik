@@ -959,6 +959,9 @@ func trimQuote(val string) string {
 		if val[0] == '"' && val[len(val)-1] == '"' {
 			return val[1 : len(val)-1]
 		}
+		if val[0] == '\'' && val[len(val)-1] == '\'' {
+			return val[1 : len(val)-1]
+		}
 	}
 	return val
 }
