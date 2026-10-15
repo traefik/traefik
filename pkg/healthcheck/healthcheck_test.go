@@ -3,6 +3,7 @@ package healthcheck
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -488,6 +489,58 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
 			assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues)
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
+		})
+	}
+}
+
+func TestServiceHealthChecker_checkHealthGRPC_TLS(t *testing.T) {
+	roots := x509.NewCertPool()
+	require.True(t, roots.AppendCertsFromPEM(localhostCert))
+
+	testCases := []struct {
+		desc      string
+		tlsConfig *tls.Config
+		expErr    string
+	}{
+		{
+			desc:      "trusted certificate",
+			tlsConfig: &tls.Config{RootCAs: roots, ServerName: "example.com"},
+		},
+		{
+			desc:      "untrusted certificate",
+			tlsConfig: &tls.Config{ServerName: "example.com"},
+			expErr:    "certificate signed by unknown authority",
+		},
+		{
+			desc:      "server name mismatch",
+			tlsConfig: &tls.Config{RootCAs: roots, ServerName: "foo.example.com"},
+			expErr:    "certificate is valid for example.com, not foo.example.com",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			targetURL, _ := newGRPCTLSServer(healthpb.HealthCheckResponse_SERVING).Start(t, func() {})
+
+			config := &dynamic.ServerHealthCheck{
+				Mode:    "grpc",
+				Timeout: ptypes.Duration(5 * time.Second),
+			}
+			hc := NewServiceHealthChecker(t.Context(), nil, config, nil, nil, http.DefaultTransport, test.tlsConfig, nil, "")
+
+			// A failed handshake must be reported right away, not once the timeout expires.
+			start := time.Now()
+			err := hc.executeHealthCheck(t.Context(), config, targetURL)
+			assert.Less(t, time.Since(start), time.Duration(config.Timeout))
+
+			if test.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+
+			require.ErrorContains(t, err, test.expErr)
 		})
 	}
 }
