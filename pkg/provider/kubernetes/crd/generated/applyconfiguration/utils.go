@@ -62,6 +62,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.DigestAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ErrorPage"):
 		return &traefikiov1alpha1.ErrorPageApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalAction"):
+		return &traefikiov1alpha1.ExternalActionApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionBinding"):
+		return &traefikiov1alpha1.ExternalActionBindingApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionCredentialSet"):
+		return &traefikiov1alpha1.ExternalActionCredentialSetApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionDeduplication"):
+		return &traefikiov1alpha1.ExternalActionDeduplicationApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionPoller"):
+		return &traefikiov1alpha1.ExternalActionPollerApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionQueue"):
+		return &traefikiov1alpha1.ExternalActionQueueApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ExternalActionRule"):
+		return &traefikiov1alpha1.ExternalActionRuleApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Failover"):
 		return &traefikiov1alpha1.FailoverApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("FailoverError"):
@@ -126,6 +140,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.RouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteUDP"):
 		return &traefikiov1alpha1.RouteUDPApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RuntimeObjectKeySelector"):
+		return &traefikiov1alpha1.RuntimeObjectKeySelectorApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RuntimeValueSource"):
+		return &traefikiov1alpha1.RuntimeValueSourceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServerHealthCheck"):
 		return &traefikiov1alpha1.ServerHealthCheckApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransport"):

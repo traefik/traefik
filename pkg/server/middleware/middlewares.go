@@ -19,6 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
+	"github.com/traefik/traefik/v3/pkg/middlewares/externalaction"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
@@ -193,6 +194,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return encodedcharacters.NewEncodedCharacters(ctx, next, *config.EncodedCharacters, middlewareName), nil
+		}
+	}
+
+	// ExternalAction
+	if config.ExternalAction != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return externalaction.New(ctx, next, *config.ExternalAction, middlewareName)
 		}
 	}
 

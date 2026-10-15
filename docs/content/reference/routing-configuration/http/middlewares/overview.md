@@ -37,6 +37,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | <a id="opt-DigestAuth" href="#opt-DigestAuth" title="#opt-DigestAuth">[DigestAuth](digestauth.md)</a> | Adds Digest Authentication                        | Security, Authentication    |
 | <a id="opt-EncodedCharacters" href="#opt-EncodedCharacters" title="#opt-EncodedCharacters">[EncodedCharacters](encodedcharacters.md)</a> | Defines allowed reserved encoded characters in the request path | Security, Request Lifecycle           |
 | <a id="opt-Errors" href="#opt-Errors" title="#opt-Errors">[Errors](errorpages.md)</a> | Defines custom error pages                        | Request Lifecycle           |
+| <a id="opt-ExternalAction" href="#opt-ExternalAction" title="#opt-ExternalAction">[ExternalAction](externalaction.md)</a> | Triggers mapped external actions                  | Integration, Request Lifecycle |
 | <a id="opt-ForwardAuth" href="#opt-ForwardAuth" title="#opt-ForwardAuth">[ForwardAuth](forwardauth.md)</a> | Delegates Authentication                          | Security, Authentication    |
 | <a id="opt-GrpcWeb" href="#opt-GrpcWeb" title="#opt-GrpcWeb">[GrpcWeb](grpcweb.md)</a> | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
 | <a id="opt-Headers" href="#opt-Headers" title="#opt-Headers">[Headers](headers.md)</a> | Adds / Updates headers                            | Security                    |

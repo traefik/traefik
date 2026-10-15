@@ -598,6 +598,625 @@ spec:
                       For example: "418": 404 or "410-418": 404
                     type: object
                 type: object
+              externalAction:
+                description: ExternalAction defines declarative external HTTP or executable
+                  actions.
+                properties:
+                  credentialSets:
+                    additionalProperties:
+                      description: ExternalActionCredentialSet defines one reloadable
+                        credential destination.
+                      properties:
+                        auth:
+                          description: ExternalActionAuth defines target authentication.
+                          properties:
+                            credentialSet:
+                              type: string
+                            header:
+                              type: string
+                            parameterFiles:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            parameters:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            password:
+                              type: string
+                            passwordFile:
+                              type: string
+                            scheme:
+                              type: string
+                            token:
+                              type: string
+                            tokenFile:
+                              type: string
+                            type:
+                              type: string
+                            username:
+                              type: string
+                          type: object
+                        immutableParameters:
+                          items:
+                            type: string
+                          type: array
+                        reloadInterval:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                    type: object
+                  pollers:
+                    items:
+                      description: ExternalActionPoller periodically observes a configured
+                        HTTP source.
+                      properties:
+                        coordination:
+                          description: ExternalActionDeduplication suppresses repeated
+                            actions produced by polling endpoints.
+                          properties:
+                            keyTemplate:
+                              type: string
+                            lease:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                              x-kubernetes-int-or-string: true
+                            memory:
+                              description: ExternalActionDedupMemory configures process-local
+                                deduplication.
+                              properties:
+                                maxEntries:
+                                  type: integer
+                              type: object
+                            mysql:
+                              description: ExternalActionDedupMySQL configures shared
+                                deduplication across Traefik replicas.
+                              properties:
+                                autoCreate:
+                                  type: boolean
+                                dsn:
+                                  type: string
+                                dsnFile:
+                                  type: string
+                                table:
+                                  type: string
+                              type: object
+                            ttl:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                              x-kubernetes-int-or-string: true
+                          type: object
+                        initialDelay:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        interval:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        name:
+                          type: string
+                        observation:
+                          description: |-
+                            ExternalActionPollerObservation supplies the stable request identity used to
+                            select existing ExternalAction rules for a polled response.
+                          properties:
+                            event:
+                              description: |-
+                                ExternalActionPollerEvent wraps a polled response in the same neutral HTTP
+                                observation envelope accepted from external event producers.
+                              properties:
+                                host:
+                                  type: string
+                                path:
+                                  type: string
+                                principal:
+                                  type: string
+                                source:
+                                  type: string
+                                type:
+                                  type: string
+                              type: object
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            host:
+                              type: string
+                            method:
+                              type: string
+                            path:
+                              type: string
+                            query:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            scheme:
+                              type: string
+                          type: object
+                        pagination:
+                          description: ExternalActionPollerPagination bounds page-number
+                            based source discovery.
+                          properties:
+                            itemsJSONPath:
+                              type: string
+                            maxPages:
+                              type: integer
+                            pageParameter:
+                              type: string
+                            pageSize:
+                              type: integer
+                            pageSizeParameter:
+                              type: string
+                            startPage:
+                              type: integer
+                            totalJSONPath:
+                              type: string
+                          type: object
+                        request:
+                          description: ExternalActionPollerRequest defines the independently
+                            authenticated source request.
+                          properties:
+                            auth:
+                              description: ExternalActionAuth defines target authentication.
+                              properties:
+                                credentialSet:
+                                  type: string
+                                header:
+                                  type: string
+                                parameterFiles:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                parameters:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                password:
+                                  type: string
+                                passwordFile:
+                                  type: string
+                                scheme:
+                                  type: string
+                                token:
+                                  type: string
+                                tokenFile:
+                                  type: string
+                                type:
+                                  type: string
+                                username:
+                                  type: string
+                              type: object
+                            body:
+                              type: string
+                            contentType:
+                              type: string
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            maxResponseBytes:
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            responseValidation:
+                              description: ExternalActionHTTPResponse validates HTTP
+                                and application-level target responses.
+                              properties:
+                                bodyRegex:
+                                  type: string
+                                messageJSONPath:
+                                  type: string
+                                statuses:
+                                  items:
+                                    type: string
+                                  type: array
+                                successJSONPath:
+                                  type: string
+                                successValues:
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            tls:
+                              description: ExternalActionTLS defines optional target
+                                TLS trust and client authentication.
+                              properties:
+                                caFile:
+                                  type: string
+                                certFile:
+                                  type: string
+                                insecureSkipVerify:
+                                  type: boolean
+                                keyFile:
+                                  type: string
+                                serverName:
+                                  type: string
+                              type: object
+                            url:
+                              type: string
+                          type: object
+                        timeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                    type: array
+                  queue:
+                    description: ExternalActionQueue controls bounded asynchronous
+                      dispatch.
+                    properties:
+                      capacity:
+                        type: integer
+                      enqueueWait:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                        x-kubernetes-int-or-string: true
+                      maxQueuedBytes:
+                        format: int64
+                        type: integer
+                      workers:
+                        type: integer
+                    type: object
+                  rules:
+                    items:
+                      description: ExternalActionRule defines one external action.
+                      properties:
+                        binding:
+                          description: ExternalActionBinding pins a lifecycle key
+                            to one immutable credential set.
+                          properties:
+                            allowedCredentialSets:
+                              items:
+                                type: string
+                              type: array
+                            credentialSet:
+                              type: string
+                            keyTemplate:
+                              type: string
+                            match:
+                              description: ExternalActionBindingMatch compares source
+                                identity fields with immutable credential parameters.
+                              properties:
+                                bodyJSONPaths:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                headers:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                responseBodyJSONPaths:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                templates:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            memory:
+                              description: ExternalActionBindingMemory configures
+                                process-local lifecycle bindings.
+                              properties:
+                                maxEntries:
+                                  type: integer
+                              type: object
+                            mode:
+                              type: string
+                            mysql:
+                              description: ExternalActionBindingMySQL configures shared
+                                lifecycle bindings across Traefik replicas and restarts.
+                              properties:
+                                autoCreate:
+                                  type: boolean
+                                dsn:
+                                  type: string
+                                dsnFile:
+                                  type: string
+                                table:
+                                  type: string
+                              type: object
+                            onMissing:
+                              enum:
+                              - fail
+                              - skip
+                              type: string
+                            ttl:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                              x-kubernetes-int-or-string: true
+                          type: object
+                        body:
+                          description: ExternalActionBody defines source-body handling
+                            and the target payload template.
+                          properties:
+                            contentType:
+                              type: string
+                            format:
+                              type: string
+                            maxBytes:
+                              format: int64
+                              type: integer
+                            overflow:
+                              type: string
+                            readMode:
+                              type: string
+                            template:
+                              type: string
+                          type: object
+                        deduplication:
+                          description: ExternalActionDeduplication suppresses repeated
+                            actions produced by polling endpoints.
+                          properties:
+                            keyTemplate:
+                              type: string
+                            lease:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                              x-kubernetes-int-or-string: true
+                            memory:
+                              description: ExternalActionDedupMemory configures process-local
+                                deduplication.
+                              properties:
+                                maxEntries:
+                                  type: integer
+                              type: object
+                            mysql:
+                              description: ExternalActionDedupMySQL configures shared
+                                deduplication across Traefik replicas.
+                              properties:
+                                autoCreate:
+                                  type: boolean
+                                dsn:
+                                  type: string
+                                dsnFile:
+                                  type: string
+                                table:
+                                  type: string
+                              type: object
+                            ttl:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                              x-kubernetes-int-or-string: true
+                          type: object
+                        exec:
+                          description: ExternalActionExec defines a direct, no-shell
+                            process action.
+                          properties:
+                            args:
+                              items:
+                                type: string
+                              type: array
+                            command:
+                              type: string
+                            env:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            stdin:
+                              type: string
+                          type: object
+                        failurePolicy:
+                          type: string
+                        forEach:
+                          description: ExternalActionForEach expands one source request
+                            or response into independently templated actions.
+                          properties:
+                            jsonPath:
+                              type: string
+                            matchJSONPaths:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            source:
+                              type: string
+                          type: object
+                        http:
+                          description: ExternalActionHTTP defines an HTTP action target.
+                          properties:
+                            auth:
+                              description: ExternalActionAuth defines target authentication.
+                              properties:
+                                credentialSet:
+                                  type: string
+                                header:
+                                  type: string
+                                parameterFiles:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                parameters:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                password:
+                                  type: string
+                                passwordFile:
+                                  type: string
+                                scheme:
+                                  type: string
+                                token:
+                                  type: string
+                                tokenFile:
+                                  type: string
+                                type:
+                                  type: string
+                                username:
+                                  type: string
+                              type: object
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            maxResponseBytes:
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            responseValidation:
+                              description: ExternalActionHTTPResponse validates HTTP
+                                and application-level target responses.
+                              properties:
+                                bodyRegex:
+                                  type: string
+                                messageJSONPath:
+                                  type: string
+                                statuses:
+                                  items:
+                                    type: string
+                                  type: array
+                                successJSONPath:
+                                  type: string
+                                successValues:
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            tls:
+                              description: ExternalActionTLS defines optional target
+                                TLS trust and client authentication.
+                              properties:
+                                caFile:
+                                  type: string
+                                certFile:
+                                  type: string
+                                insecureSkipVerify:
+                                  type: boolean
+                                keyFile:
+                                  type: string
+                                serverName:
+                                  type: string
+                              type: object
+                            url:
+                              type: string
+                          type: object
+                        match:
+                          description: ExternalActionMatch selects source requests
+                            and optional response statuses.
+                          properties:
+                            bodyJSONPaths:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hosts:
+                              items:
+                                type: string
+                              type: array
+                            methods:
+                              items:
+                                type: string
+                              type: array
+                            pathRegex:
+                              type: string
+                            query:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            responseBodyJSONPaths:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            responseStatuses:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        mode:
+                          type: string
+                        name:
+                          type: string
+                        phase:
+                          type: string
+                        responseBody:
+                          description: ExternalActionResponseBody controls bounded
+                            capture and parsing of the source service response.
+                          properties:
+                            format:
+                              type: string
+                            maxBytes:
+                              format: int64
+                              type: integer
+                            overflow:
+                              type: string
+                            readMode:
+                              type: string
+                          type: object
+                        timeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                    type: array
+                  runtimeValues:
+                    additionalProperties:
+                      description: |-
+                        RuntimeValueSource declares one arbitrarily named value owned by this
+                        Middleware configuration. Exactly one source must be configured.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        file:
+                          type: string
+                        secretKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        value:
+                          type: string
+                      type: object
+                    type: object
+                  selectionMode:
+                    type: string
+                type: object
               forwardAuth:
                 description: |-
                   ForwardAuth holds the forward auth middleware configuration.

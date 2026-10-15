@@ -1,6 +1,7 @@
 package crd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -34,6 +36,300 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestLoadExternalActionMiddlewares(t *testing.T) {
+	externalAction := &dynamic.ExternalAction{
+		SelectionMode: "first",
+		CredentialSets: map[string]dynamic.ExternalActionCredentialSet{
+			"project-a-1001": {
+				Auth: dynamic.ExternalActionAuth{
+					Type: "headers",
+					ParameterFiles: map[string]string{
+						"token":       "/run/secrets/project-a-token",
+						"projectname": "/run/secrets/project-a-name",
+						"projectid":   "/run/secrets/project-a-id",
+					},
+				},
+				ImmutableParameters: []string{"projectname", "projectid"},
+				ReloadInterval:      ptypes.Duration(5 * time.Second),
+			},
+		},
+		Pollers: []dynamic.ExternalActionPoller{
+			{
+				Name:         "jobs",
+				Interval:     ptypes.Duration(time.Minute),
+				InitialDelay: ptypes.Duration(5 * time.Second),
+				Timeout:      ptypes.Duration(15 * time.Second),
+				Request: dynamic.ExternalActionPollerRequest{
+					URL:              "runtime://jobsURL",
+					Method:           "GET",
+					MaxResponseBytes: 2 * 1024 * 1024,
+				},
+				Observation: dynamic.ExternalActionPollerObservation{
+					Method: "GET",
+					Path:   "/api/v1/jobs",
+				},
+				Pagination: &dynamic.ExternalActionPollerPagination{
+					PageParameter:     "page",
+					PageSizeParameter: "page_size",
+					StartPage:         1,
+					PageSize:          100,
+					MaxPages:          20,
+					ItemsJSONPath:     "$.items",
+					TotalJSONPath:     "$.total",
+				},
+				Coordination: &dynamic.ExternalActionDeduplication{
+					KeyTemplate: "poller:jobs",
+					TTL:         ptypes.Duration(30 * time.Second),
+					Lease:       ptypes.Duration(2 * time.Minute),
+					MySQL: &dynamic.ExternalActionDedupMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_dedup",
+						AutoCreate: true,
+					},
+				},
+			},
+		},
+		Rules: []dynamic.ExternalActionRule{
+			{
+				Name:  "notify",
+				Phase: "after",
+				Mode:  "async",
+				Match: dynamic.ExternalActionMatch{
+					ResponseStatuses: []string{"200-299"},
+					ResponseBodyJSONPaths: map[string]string{
+						"$.success": "true",
+					},
+				},
+				ResponseBody: dynamic.ExternalActionResponseBody{
+					ReadMode: "capture",
+					MaxBytes: 1024 * 1024,
+					Overflow: "skip",
+					Format:   "json",
+				},
+				ForEach: &dynamic.ExternalActionForEach{
+					Source:   "responseBody",
+					JSONPath: "$.items",
+					MatchJSONPaths: map[string]string{
+						"$.phase": "Succeeded|Failed",
+					},
+				},
+				Deduplication: &dynamic.ExternalActionDeduplication{
+					KeyTemplate: "{{ .Item.id }}:{{ .Item.phase }}",
+					TTL:         ptypes.Duration(24 * time.Hour),
+					Lease:       ptypes.Duration(time.Minute),
+					MySQL: &dynamic.ExternalActionDedupMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_dedup",
+						AutoCreate: true,
+					},
+				},
+				Binding: &dynamic.ExternalActionBinding{
+					Mode:                  "resolve",
+					OnMissing:             "skip",
+					KeyTemplate:           "{{ .Item.id }}",
+					AllowedCredentialSets: []string{"project-a-1001"},
+					TTL:                   ptypes.Duration(180 * 24 * time.Hour),
+					MySQL: &dynamic.ExternalActionBindingMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_binding",
+						AutoCreate: true,
+					},
+				},
+				HTTP: &dynamic.ExternalActionHTTP{
+					URL:    "https://example.com/hook",
+					Method: "POST",
+				},
+				Timeout: ptypes.Duration(10 * time.Second),
+			},
+		},
+	}
+	timeout := intstr.FromString("10s")
+	deduplicationTTL := intstr.FromString("24h")
+	deduplicationLease := intstr.FromString("1m")
+	credentialReloadInterval := intstr.FromString("5s")
+	bindingTTL := intstr.FromString("4320h")
+	pollerInterval := intstr.FromString("1m")
+	pollerInitialDelay := intstr.FromString("5s")
+	pollerTimeout := intstr.FromString("15s")
+	pollerCoordinationTTL := intstr.FromString("30s")
+	pollerCoordinationLease := intstr.FromString("2m")
+	externalActionCRD := &traefikv1alpha1.ExternalAction{
+		SelectionMode: externalAction.SelectionMode,
+		CredentialSets: map[string]traefikv1alpha1.ExternalActionCredentialSet{
+			"project-a-1001": {
+				Auth:                externalAction.CredentialSets["project-a-1001"].Auth,
+				ImmutableParameters: []string{"projectname", "projectid"},
+				ReloadInterval:      &credentialReloadInterval,
+			},
+		},
+		Pollers: []traefikv1alpha1.ExternalActionPoller{
+			{
+				Name:         "jobs",
+				Interval:     &pollerInterval,
+				InitialDelay: &pollerInitialDelay,
+				Timeout:      &pollerTimeout,
+				Request: dynamic.ExternalActionPollerRequest{
+					URL:              "runtime://jobsURL",
+					Method:           "GET",
+					MaxResponseBytes: 2 * 1024 * 1024,
+				},
+				Observation: dynamic.ExternalActionPollerObservation{
+					Method: "GET",
+					Path:   "/api/v1/jobs",
+				},
+				Pagination: &dynamic.ExternalActionPollerPagination{
+					PageParameter:     "page",
+					PageSizeParameter: "page_size",
+					StartPage:         1,
+					PageSize:          100,
+					MaxPages:          20,
+					ItemsJSONPath:     "$.items",
+					TotalJSONPath:     "$.total",
+				},
+				Coordination: &traefikv1alpha1.ExternalActionDeduplication{
+					KeyTemplate: "poller:jobs",
+					TTL:         &pollerCoordinationTTL,
+					Lease:       &pollerCoordinationLease,
+					MySQL: &dynamic.ExternalActionDedupMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_dedup",
+						AutoCreate: true,
+					},
+				},
+			},
+		},
+		Rules: []traefikv1alpha1.ExternalActionRule{
+			{
+				Name:  "notify",
+				Phase: "after",
+				Mode:  "async",
+				Match: dynamic.ExternalActionMatch{
+					ResponseStatuses: []string{"200-299"},
+					ResponseBodyJSONPaths: map[string]string{
+						"$.success": "true",
+					},
+				},
+				ResponseBody: dynamic.ExternalActionResponseBody{
+					ReadMode: "capture",
+					MaxBytes: 1024 * 1024,
+					Overflow: "skip",
+					Format:   "json",
+				},
+				ForEach: &dynamic.ExternalActionForEach{
+					Source:   "responseBody",
+					JSONPath: "$.items",
+					MatchJSONPaths: map[string]string{
+						"$.phase": "Succeeded|Failed",
+					},
+				},
+				Deduplication: &traefikv1alpha1.ExternalActionDeduplication{
+					KeyTemplate: "{{ .Item.id }}:{{ .Item.phase }}",
+					TTL:         &deduplicationTTL,
+					Lease:       &deduplicationLease,
+					MySQL: &dynamic.ExternalActionDedupMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_dedup",
+						AutoCreate: true,
+					},
+				},
+				Binding: &traefikv1alpha1.ExternalActionBinding{
+					Mode:                  "resolve",
+					OnMissing:             "skip",
+					KeyTemplate:           "{{ .Item.id }}",
+					AllowedCredentialSets: []string{"project-a-1001"},
+					TTL:                   &bindingTTL,
+					MySQL: &dynamic.ExternalActionBindingMySQL{
+						DSNFile:    "/run/secrets/mysql-dsn",
+						Table:      "traefik_external_action_binding",
+						AutoCreate: true,
+					},
+				},
+				HTTP: &dynamic.ExternalActionHTTP{
+					URL:    "https://example.com/hook",
+					Method: "POST",
+				},
+				Timeout: &timeout,
+			},
+		},
+	}
+
+	crdClient := traefikcrdfake.NewClientset(
+		&traefikv1alpha1.Middleware{
+			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Spec: traefikv1alpha1.MiddlewareSpec{
+				ExternalAction: externalActionCRD,
+			},
+		},
+	)
+	client := newClientImpl(kubefake.NewClientset(), crdClient)
+
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	conf := (&Provider{}).loadConfigurationFromCRD(t.Context(), client)
+
+	require.Contains(t, conf.HTTP.Middlewares, "default-governance")
+	assert.Equal(t, externalAction, conf.HTTP.Middlewares["default-governance"].ExternalAction)
+
+	safeProvider := &Provider{nameBuilder: nameBuilder{safe: true}}
+	safeConf := safeProvider.loadConfigurationFromCRD(t.Context(), client)
+	require.Contains(t, safeConf.HTTP.Middlewares, "default_governance")
+}
+
+func TestRuntimeSecretMaterialIsPrivateInDynamicConfiguration(t *testing.T) {
+	const material = "must-not-appear-in-dynamic-api"
+	crdClient := traefikcrdfake.NewClientset(&traefikv1alpha1.Middleware{
+		ObjectMeta: metav1.ObjectMeta{Name: "runtime", Namespace: "default"},
+		Spec: traefikv1alpha1.MiddlewareSpec{
+			ExternalAction: &traefikv1alpha1.ExternalAction{
+				RuntimeValues: map[string]traefikv1alpha1.RuntimeValueSource{
+					"arbitraryAlias": {
+						SecretKeyRef: &traefikv1alpha1.RuntimeObjectKeySelector{
+							Name: "arbitrary-secret",
+							Key:  "arbitrary-key",
+						},
+					},
+				},
+				Rules: []traefikv1alpha1.ExternalActionRule{{
+					Name: "runtime",
+					HTTP: &dynamic.ExternalActionHTTP{
+						URL: "https://example.test",
+						Auth: &dynamic.ExternalActionAuth{
+							Type:  "bearer",
+							Token: "runtime://arbitraryAlias",
+						},
+					},
+				}},
+			},
+		},
+	})
+	kubeClient := kubefake.NewClientset(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "arbitrary-secret", Namespace: "default", ResourceVersion: "42"},
+		Data:       map[string][]byte{"arbitrary-key": []byte(material)},
+	})
+	client := newClientImpl(kubeClient, crdClient)
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	conf := (&Provider{}).loadConfigurationFromCRD(t.Context(), client)
+	action := conf.HTTP.Middlewares["default-runtime"].ExternalAction
+	require.NotNil(t, action)
+	value := action.RuntimeValues["arbitraryAlias"]
+	require.Equal(t, material, value.Value)
+	require.Equal(t, "secret:default/arbitrary-secret:arbitrary-key", value.Source)
+	require.Equal(t, "42", value.Revision)
+
+	encoded, err := json.Marshal(action)
+	require.NoError(t, err)
+	require.NotContains(t, string(encoded), material)
+	require.Contains(t, string(encoded), "runtime://arbitraryAlias")
 }
 
 func TestLoadIngressRouteTCPs(t *testing.T) {
