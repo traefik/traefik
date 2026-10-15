@@ -138,15 +138,18 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 }
 
 func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan target, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	// Fire immediately so DOWN servers are identified on the first check rather
+	// than after waiting one full interval. Without this, every configuration
+	// reload opens a window (up to interval long) where all servers appear UP.
+	timer := time.NewTimer(0)
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
-		case <-ticker.C:
+		case <-timer.C:
 			// We collect the targets to check once for all,
 			// to avoid rechecking a target that has been moved during the health check.
 			var targetsToCheck []target
@@ -205,6 +208,8 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 					With("service", shc.serviceName, "url", target.targetURL.String()).
 					Set(serverUpMetricValue)
 			}
+
+			timer.Reset(interval)
 		}
 	}
 }
