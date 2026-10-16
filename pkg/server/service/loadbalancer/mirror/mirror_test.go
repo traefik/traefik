@@ -2,6 +2,7 @@ package mirror
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
@@ -133,6 +136,31 @@ func TestFlush(t *testing.T) {
 
 	pool.Stop()
 	assert.True(t, mirrorRequest)
+}
+
+func TestMirroringStripsRetryContext(t *testing.T) {
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		assert.NotNil(t, req.Context().Value(middlewares.RetryResponseWriterContextKey{}))
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	var mirrorCalled, mirrorSawRetryContext atomic.Bool
+	pool := safe.NewPool(t.Context())
+	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		mirrorCalled.Store(true)
+		mirrorSawRetryContext.Store(req.Context().Value(middlewares.RetryResponseWriterContextKey{}) != nil)
+	}), 100)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = req.WithContext(context.WithValue(req.Context(), middlewares.RetryResponseWriterContextKey{}, struct{}{}))
+	mirror.ServeHTTP(httptest.NewRecorder(), req)
+
+	pool.Stop()
+
+	assert.True(t, mirrorCalled.Load())
+	assert.False(t, mirrorSawRetryContext.Load())
 }
 
 func TestMirroringWithBody(t *testing.T) {
