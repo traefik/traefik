@@ -116,6 +116,50 @@ func TestForwardAuthSuccess(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestForwardAuthH2C(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	authServer := &http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, 2, r.ProtoMajor)
+			w.Header().Set("X-Auth-User", "user@example.com")
+			fmt.Fprintln(w, "Success")
+		}),
+	}
+	authServer.Protocols = new(http.Protocols)
+	authServer.Protocols.SetHTTP1(false)
+	authServer.Protocols.SetUnencryptedHTTP2(true)
+	go authServer.Serve(ln) //nolint:errcheck
+	t.Cleanup(func() { authServer.Close() })
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:             "h2c://" + ln.Addr().String(),
+		AuthResponseHeaders: []string{"X-Auth-User"},
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+	assert.Equal(t, "traefik\n", string(body))
+}
+
 func TestForwardAuthForwardBody(t *testing.T) {
 	data := []byte("forwardBodyTest")
 
