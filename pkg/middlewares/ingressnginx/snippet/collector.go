@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/tufanbarisyildirim/gonginx/config"
 )
 
@@ -471,37 +472,38 @@ type locationMatcher func(req *http.Request) bool
 func buildLocationMatcher(pathPattern string) (locationMatcher, error) {
 	// Check ~* (case-insensitive regex) before ~ (case-sensitive regex)
 	if pattern, ok := strings.CutPrefix(pathPattern, "~*"); ok {
-		pattern = strings.TrimSpace(pattern)
+		pattern = trimQuote(strings.TrimSpace(pattern))
 		re, err := compileRegex("(?i)" + pattern)
 		if err != nil {
 			return nil, fmt.Errorf("compiling location regex: %w", err)
 		}
 		return func(req *http.Request) bool {
-			return re.MatchString(req.URL.Path)
+			return re.MatchString(ingressnginx.OriginalPath(req))
 		}, nil
 	}
 
 	if pattern, ok := strings.CutPrefix(pathPattern, "~"); ok {
-		pattern = strings.TrimSpace(pattern)
+		pattern = trimQuote(strings.TrimSpace(pattern))
 		re, err := compileRegex(pattern)
 		if err != nil {
 			return nil, fmt.Errorf("compiling location regex: %w", err)
 		}
 		return func(req *http.Request) bool {
-			return re.MatchString(req.URL.Path)
+			return re.MatchString(ingressnginx.OriginalPath(req))
 		}, nil
 	}
 
 	if exact, ok := strings.CutPrefix(pathPattern, "="); ok {
-		exactPath := strings.TrimSpace(exact)
+		exactPath := trimQuote(strings.TrimSpace(exact))
 		return func(req *http.Request) bool {
-			return req.URL.Path == exactPath
+			return ingressnginx.OriginalPath(req) == exactPath
 		}, nil
 	}
 
 	// Prefix match
+	pathPattern = trimQuote(strings.TrimSpace(pathPattern))
 	return func(req *http.Request) bool {
-		return strings.HasPrefix(req.URL.Path, pathPattern)
+		return strings.HasPrefix(ingressnginx.OriginalPath(req), pathPattern)
 	}, nil
 }
 
