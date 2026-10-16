@@ -121,6 +121,11 @@ test-gateway-api-conformance-merged: build-image-dirty
 test-knative-conformance: build-image-dirty
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -v -tags knativeConformance -test.run KnativeConformanceSuite
 
+.PHONY: test-ingress-nginx-e2e
+#? test-ingress-nginx-e2e: Run the ingress-nginx e2e annotation tests against the Kubernetes Ingress NGINX provider
+test-ingress-nginx-e2e: build-image-dirty
+	go test ./integration/integration_test.go ./integration/ingress_nginx_e2e_test.go -v -timeout 3h -tags ingressNGINXE2E -test.run IngressNGINXE2ESuite $(TESTFLAGS)
+
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui
 test-ui-unit:

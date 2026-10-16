@@ -1,0 +1,104 @@
+# Ginkgo skip regexes, one per line, for upstream specs that are expected to fail against Traefik.
+# Each entry matches the end of the full text of a single spec (ginkgo prefixes it with the suite description),
+# and is grouped under the reason it fails.
+# "Documented" refers to docs/content/reference/routing-configuration/kubernetes/ingress-nginx.md.
+# "Undocumented" entries are behavior differences to either fix in the provider or document.
+
+# Harness: asserts on nginx.conf captured by a WaitForNginxServer matcher, which cannot be evaluated against Traefik.
+\[Annotations\] custom-http-errors configures Nginx correctly$
+\[Annotations\] relative-redirects configures Nginx correctly$
+
+# Documented as unsupported: auth-cache-*.
+\[Annotations\] auth-\* when external authentication with caching is configured should deny login for different location on same server$
+\[Annotations\] auth-\* when external authentication with caching is configured should deny login for different servers$
+\[Annotations\] auth-\* when external authentication with caching is configured should redirect to signin url when not signed in$
+\[Annotations\] auth-\* when external authentication with caching is configured should return status code 200 when signed in after auth backend is deleted $
+
+# Documented as unsupported: satisfy.
+\[Annotations\] satisfy should allow multiple auth with satisfy any$
+
+# Documented as unsupported: disable-proxy-intercept-errors.
+\[Annotations\] disable-proxy-intercept-errors configures Nginx correctly$
+
+# Documented as unsupported: auth-tls-error-page, auth-tls-match-cn.
+\[Annotations\] auth-tls-\* should 302 redirect to error page instead of 400 when auth-tls-error-page is set$
+\[Annotations\] auth-tls-\* should reload the nginx config when auth-tls-match-cn is updated$
+\[Annotations\] auth-tls-\* should return 403 using auth-tls-match-cn with no matching CN from client$
+
+# Documented as unsupported: backend-protocol FCGI.
+\[Annotations\] backend-protocol - FastCGI should return OK for service with backend protocol FastCGI$
+
+# Documented as unsupported: affinity-canary-behavior legacy.
+\[Annotations\] canary-\* canary affinity behavior routes traffic to either mainline or canary backend \(legacy behavior\)$
+
+# Documented as unsupported: connection-proxy-header.
+\[Annotations\] connection-proxy-header set connection header to keep-alive$
+
+# Documented difference: limit-connections returns 429 instead of 503.
+\[Annotations\] Annotation - limit-connections should limit-connections$
+
+# Documented difference: CORS headers are handled differently than NGINX.
+\[Annotations\] auth-\* should return status code 401 and cors headers when authentication and cors is configured but Authorization header is not configured$
+\[Annotations\] cors-\* should allow - missing origins \(should allow all origins\)$
+\[Annotations\] cors-\* should allow correct origins - single origin for multiple cors values$
+\[Annotations\] cors-\* should not break functionality$
+\[Annotations\] cors-\* should not break functionality - without `\*`$
+\[Annotations\] cors-\* should not break functionality with extra domain$
+
+# Documented difference: server-alias conflicting with an Ingress host rule is ignored.
+\[Annotations\] server-alias should return status code 200 for hosts defined in two ingresses, different path with one alias$
+
+# Undocumented: error responses do not use the NGINX default error page bodies.
+\[Annotations\] auth-\* should return status code 401 when authentication is configured and Authorization header is sent with invalid credentials$
+\[Annotations\] auth-\* should return status code 401 when authentication is configured but Authorization header is not configured$
+\[Annotations\] custom-headers-\* should return status code 503 when custom-headers is configured with an invalid secret$
+\[Annotations\] server-alias should return status code 200 for host 'foo' and 404 for 'bar'$
+
+# Undocumented: a TLS request without SNI to a host with client authentication gets 421 Misdirected Request.
+\[Annotations\] auth-tls-\* should pass URL-encoded certificate to upstream$
+\[Annotations\] auth-tls-\* should set sslClientCertificate, sslVerifyClient and sslVerifyDepth with auth-tls-secret$
+\[Annotations\] auth-tls-\* should set valid auth-tls-secret, sslVerify to off, and sslVerifyDepth to 2$
+\[Annotations\] auth-tls-\* should validate auth-tls-verify-client$
+
+# Undocumented: session affinity cookie path, secure flag and expires format, and use-regex with session-cookie-path.
+\[Annotations\] affinity session-cookie-name does not set the path to / on the generated cookie if there's more than one rule referring to the same backend$
+\[Annotations\] affinity session-cookie-name should not set affinity across all server locations when using separate ingresses$
+\[Annotations\] affinity session-cookie-name should set cookie with expires$
+\[Annotations\] affinity session-cookie-name should set secure in cookie with provided false annotation on https$
+\[Annotations\] affinity session-cookie-name should set the path to /something on the generated cookie$
+\[Annotations\] affinity session-cookie-name should warn user when use-regex is true and session-cookie-path is not set$
+\[Annotations\] affinity session-cookie-name should work with use-regex annotation and session-cookie-path$
+
+# Undocumented: sticky canary affinity routes to the mainline backend.
+\[Annotations\] canary-\* canary affinity behavior always routes traffic to canary if first request was affinitized to canary \(default behavior\)$
+\[Annotations\] canary-\* canary affinity behavior always routes traffic to canary if first request was affinitized to canary \(explicit sticky behavior\)$
+
+# Undocumented: external authentication differences.
+\[Annotations\] auth-\* cookie set by external authentication server user retains cookie by default$
+\[Annotations\] auth-\* cookie set by external authentication server user with annotated ingress retains cookie if upstream returns error status code$
+\[Annotations\] auth-\* should return status code 503 when authentication is configured with an invalid secret$
+\[Annotations\] auth-\* when external authentication is configured with a custom redirect param should redirect to signin url when not signed in$
+\[Annotations\] auth-\* with invalid auth-url should deny whole location should return 503 \(location was denied\)$
+
+# Undocumented: redirect Location differences (trailing slash, explicit port, relative URL).
+\[Annotations\] force-ssl-redirect should redirect to https$
+\[Annotations\] from-to-www-redirect should redirect from www HTTP to HTTP$
+\[Annotations\] from-to-www-redirect should redirect from www HTTPS to HTTPS$
+\[Annotations\] relative-redirects should respond with absolute URL in Location$
+
+# Undocumented: rewrite-target with use-regex.
+\[Annotations\] rewrite-target use-regex enable-rewrite-log should allow for custom rewrite parameters$
+\[Annotations\] rewrite-target use-regex enable-rewrite-log should fail to use longest match for documented warning$
+\[Annotations\] rewrite-target use-regex enable-rewrite-log should use ~\* location modifier if regex annotation is present$
+
+# Undocumented: default-backend annotation when the Ingress service does not exist.
+\[Annotations\] default-backend when default backend annotation is enabled should use a custom default backend as upstream$
+
+# Undocumented: GRPCS backend configured through a grpc_ssl_* configuration-snippet.
+\[Annotations\] backend-protocol - GRPC should return OK for service with backend protocol GRPCS$
+
+# Undocumented: upstream-hash-by-subset.
+\[Annotations\] upstream-hash-by-\* should connect to the same subset of pods$
+
+# Undocumented: stream-snippet.
+\[Setting\] stream-snippet should add value of stream-snippet to nginx config$
