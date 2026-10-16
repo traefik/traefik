@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -2073,4 +2074,65 @@ func TestForwardAuthAddress_interpolation(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, authSrvCalled)
+}
+
+func TestSnippetUpstreamVhost(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		authStatus          int
+		expectedStatus      int
+		expectedLocation    string
+		expectedBackendHost string
+	}{
+		{
+			desc:             "unauthorized request redirects to the original host",
+			authStatus:       http.StatusUnauthorized,
+			expectedStatus:   http.StatusFound,
+			expectedLocation: "https://dashboard.example.internal/oauth2/start?rd=%2Fprivate",
+		},
+		{
+			desc:                "authorized request uses the upstream host",
+			authStatus:          http.StatusOK,
+			expectedStatus:      http.StatusNoContent,
+			expectedBackendHost: "svc.ns.svc.cluster.local:8084",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "dashboard.example.internal", req.Header.Get("X-Forwarded-Host"))
+				rw.WriteHeader(test.authStatus)
+			}))
+			t.Cleanup(authServer.Close)
+
+			var backendHost string
+			backendCalled := false
+			var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				backendCalled = true
+				backendHost = req.Host
+				rw.WriteHeader(http.StatusNoContent)
+			})
+			handler, err := upstreamvhost.New(t.Context(), handler, dynamic.UpstreamVHost{VHost: "svc.ns.svc.cluster.local:8084"}, "vhost")
+			require.NoError(t, err)
+			handler, err = New(t.Context(), handler, &dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address:       authServer.URL,
+					AuthSigninURL: "https://$host/oauth2/start?rd=$escaped_request_uri",
+				},
+			}, "auth")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "https://dashboard.example.internal/private", nil)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expectedStatus, recorder.Code)
+			assert.Equal(t, test.expectedLocation, recorder.Header().Get("Location"))
+			assert.Equal(t, test.authStatus == http.StatusOK, backendCalled)
+			assert.Equal(t, test.expectedBackendHost, backendHost)
+		})
+	}
 }
