@@ -425,9 +425,23 @@ func TestLoadIgnoresDefaultConfigFileWhenExplicitConfigFileIsMissing(t *testing.
 
 	require.NoError(t, os.WriteFile("traefik.toml", []byte("[pilot]\n  token = \"XXX\"\n"), 0o600))
 
-	c := &cli.Command{Configuration: cmd.NewTraefikConfiguration()}
-	deprecated, err := DeprecationLoader{}.Load([]string{"--configfile=missing-traefik.toml"}, c)
+	testCases := []struct {
+		desc string
+		args []string
+	}{
+		{desc: "missing file", args: []string{"--configfile=missing-traefik.toml"}},
+		{desc: "camel case", args: []string{"--configFile=missing-traefik.toml"}},
+		{desc: "empty path", args: []string{"--configfile="}},
+		{desc: "blank path", args: []string{"--configfile=   "}},
+	}
 
-	require.NoError(t, err)
-	assert.False(t, deprecated)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			c := &cli.Command{Configuration: cmd.NewTraefikConfiguration()}
+			deprecated, err := DeprecationLoader{}.Load(test.args, c)
+
+			require.NoError(t, err)
+			assert.False(t, deprecated)
+		})
+	}
 }
