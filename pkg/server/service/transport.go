@@ -379,22 +379,26 @@ func (s *stickyRoundTrippers) get(owner *kerberosRoundTripper) http.RoundTripper
 	return s.roundTrippers[owner]
 }
 
-// stick keeps the round tripper already stored for the given owner, as concurrent requests on the same client
-// connection (HTTP/2 streams) can race on the same owner, and replacing an in-use round tripper would orphan the
-// backend connections it holds.
-func (s *stickyRoundTrippers) stick(owner *kerberosRoundTripper) {
+// stick returns the dedicated round tripper for the given owner, creating and storing it on the first call
+// and returning the existing one afterwards. It keeps the round tripper already stored, as concurrent requests
+// on the same client connection (HTTP/2 streams) can race on the same owner, and replacing an in-use round
+// tripper would orphan the backend connections it holds.
+func (s *stickyRoundTrippers) stick(owner *kerberosRoundTripper) http.RoundTripper {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.roundTrippers[owner]; ok {
-		return
+	if roundTripper, ok := s.roundTrippers[owner]; ok {
+		return roundTripper
 	}
+
+	roundTripper := owner.new()
 
 	if s.roundTrippers == nil {
 		s.roundTrippers = make(map[*kerberosRoundTripper]http.RoundTripper)
 	}
+	s.roundTrippers[owner] = roundTripper
 
-	s.roundTrippers[owner] = owner.new()
+	return roundTripper
 }
 
 type transportKeyType string
@@ -413,28 +417,36 @@ type kerberosRoundTripper struct {
 func (k *kerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 	connRoundTrippers, ok := request.Context().Value(transportKey).(*stickyRoundTrippers)
 	if !ok {
+		// This should never happen, as the context is set in the entrypoint handler,
+		// but we fall back to the original round tripper to avoid panics.
 		return k.OriginalRoundTripper.RoundTrip(request)
 	}
 
+	// Once a dedicated round tripper has been stuck for this owner, every subsequent request on the same
+	// client connection reuses it, whether it is a concurrent request (HTTP/2 streams) or a later
+	// credential-less request relying on the connection-bound NTLM/Kerberos authentication.
 	if roundTripper := connRoundTrippers.get(k); roundTripper != nil {
 		return roundTripper.RoundTrip(request)
 	}
 
-	resp, err := k.OriginalRoundTripper.RoundTrip(request)
-
-	// If we found that we are authenticating with Kerberos (Negotiate) or NTLM.
-	// We put a dedicated roundTripper in the ConnContext.
-	// This will stick the next calls to the same connection with the backend.
-	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
-		connRoundTrippers.stick(k)
+	// NTLM and Kerberos (Negotiate) are connection-bound authentication schemes: the request carrying
+	// the credential authenticates the backend connection it is dispatched on, and the backend
+	// keeps that connection bound to the authenticated identity for reuse.
+	// Such a request must never be dispatched through the shared OriginalRoundTripper, otherwise the
+	// now authenticated connection would stay in the globally shared pool where an unrelated frontend
+	// connection could later be handed the same socket and inherit the identity.
+	if containsNTLMorNegotiate(request.Header.Values("Authorization")) {
+		roundTripper := connRoundTrippers.stick(k)
+		return roundTripper.RoundTrip(request)
 	}
-	return resp, err
+
+	return k.OriginalRoundTripper.RoundTrip(request)
 }
 
 func containsNTLMorNegotiate(h []string) bool {
 	return slices.ContainsFunc(h, func(s string) bool {
 		// RFC 9110 section 11.1 defines the auth-scheme as case-insensitive,
-		// hence a challenge is matched on its scheme token whatever its case.
+		// hence a credential or challenge is matched on its scheme token whatever its case.
 		scheme, _, _ := strings.Cut(s, " ")
 		return strings.EqualFold(scheme, "NTLM") || strings.EqualFold(scheme, "Negotiate")
 	})

@@ -46,13 +46,24 @@ spec:
           args:
             - --log.level=DEBUG
             - --api.insecure
+            # A TLS connection matching no route is terminated and handed to the HTTP
+            # server, which waits for a request the conformance TCP client never sends.
+            # Such a connection is only released at the read timeout, which therefore has
+            # to stay below the conformance consistency window.
             - --entrypoints.web.address=:80
+            - --entrypoints.web.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.web8080.address=:8080
+            - --entrypoints.web8080.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.web8090.address=:8090
+            - --entrypoints.web8090.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.tls8443.address=:8443
+            - --entrypoints.tls8443.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.tls8883.address=:8883
+            - --entrypoints.tls8883.transport.respondingTimeouts.readTimeout=1s
             - --entrypoints.web5300.address=:5300
+            - --entrypoints.web5300.transport.respondingTimeouts.readTimeout=1s
             # A TCP entryPoint peeks at the first bytes to detect TLS as long as no
             # TCPRoute is programmed on it. The conformance TCP backend speaks first,
             # so without this timeout the connection blocks until the route shows up.

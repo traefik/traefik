@@ -3,7 +3,7 @@ title: "ServersTransport TCP"
 description: "The ServersTransport allows configuring the connection between Traefik and the TCP servers in Kubernetes."
 ---
 
-ServersTransport allows to configure the transport between Traefik and your TCP servers.
+ServersTransport allows configuring the transport between Traefik and your TCP servers.
 
 ## Configuration Example
 

@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -82,6 +83,8 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 		ConnContext: func(ctx context.Context, c *quic.Conn) context.Context {
 			// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 			ctx = service.AddTransportOnContext(ctx)
+			// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
+			ctx = fast.AddConnPoolsOnContext(ctx)
 
 			tlsOptionsName, err := h3.getTLSOptionsName(c)
 			if err != nil {

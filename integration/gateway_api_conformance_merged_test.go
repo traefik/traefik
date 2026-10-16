@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/gateway-api/conformance/tests"
 	"sigs.k8s.io/gateway-api/conformance/utils/config"
 	ksuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
+	"sigs.k8s.io/gateway-api/pkg/features"
 	"sigs.k8s.io/yaml"
 )
 
@@ -42,7 +43,7 @@ import (
 // It is the counterpart to the operator-provisioned per-Gateway data planes the
 // GatewayAPIConformanceSuite exercises: here one Traefik merges all Gateways
 // behind a single address, so the features a single instance cannot satisfy
-// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructurePropagation,
+// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructure,
 // and the multiple-Gateways test) are left out.
 type GatewayAPIConformanceMergedSuite struct {
 	BaseSuite
@@ -81,7 +82,7 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.1.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -181,37 +182,47 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				ksuite.GatewayHTTPConformanceProfileName,
 				ksuite.GatewayGRPCConformanceProfileName,
 				ksuite.GatewayTLSConformanceProfileName,
+				ksuite.GatewayTCPConformanceProfileName,
 			},
-			SupportedFeatures: gateway.SupportedFeatures(),
+			// GatewayInfrastructure gates GatewayInvalidParametersRef, which a single Traefik instance satisfies.
+			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
+				features.SupportGatewayInfrastructure,
+			}),
 			// The following tests are skipped because they require features that a single Traefik instance
 			// cannot satisfy in merged mode cause they enforce having an operator.
 			SkipTests: []string{
 				tests.HTTPRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
+				tests.GatewayInfrastructureMetadata.ShortName,
 			},
 		},
 	})
 	require.NoError(s.T(), err)
 
+	// The suite only stops considering itself running in a cleanup function it
+	// registers when run, so the report is generated from a cleanup function
+	// registered beforehand, for it to run after.
+	s.T().Cleanup(func() {
+		report, err := cSuite.Report()
+		require.NoError(s.T(), err, "failed generating conformance report")
+
+		// Ordering profile reports for the serialized report to be comparable.
+		slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+
+		rawReport, err := yaml.Marshal(report)
+		require.NoError(s.T(), err)
+		s.T().Logf("Conformance report:\n%s", string(rawReport))
+
+		require.NoError(s.T(), os.MkdirAll("./gateway-api-conformance-reports/"+report.GatewayAPIVersion, 0o755))
+		outFile := filepath.Join("gateway-api-conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
+		require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
+		s.T().Logf("Report written to: %s", outFile)
+	})
+
 	cSuite.Setup(s.T(), tests.ConformanceTests)
 
 	err = cSuite.Run(s.T(), tests.ConformanceTests)
 	require.NoError(s.T(), err)
-
-	report, err := cSuite.Report()
-	require.NoError(s.T(), err, "failed generating conformance report")
-
-	// Ordering profile reports for the serialized report to be comparable.
-	slices.SortFunc(report.ProfileReports, func(a, b v1.ProfileReport) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-
-	rawReport, err := yaml.Marshal(report)
-	require.NoError(s.T(), err)
-	s.T().Logf("Conformance report:\n%s", string(rawReport))
-
-	require.NoError(s.T(), os.MkdirAll("./gateway-api-conformance-reports/"+report.GatewayAPIVersion, 0o755))
-	outFile := filepath.Join("gateway-api-conformance-reports/"+report.GatewayAPIVersion, fmt.Sprintf("%s-%s-%s-report.yaml", report.GatewayAPIChannel, report.Version, report.Mode))
-	require.NoError(s.T(), os.WriteFile(outFile, rawReport, 0o600))
-	s.T().Logf("Report written to: %s", outFile)
 }
