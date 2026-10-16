@@ -1,9 +1,6 @@
 package failover
 
 import (
-	"bufio"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -62,16 +59,7 @@ func (r *responseWriter) WriteHeader(statusCode int) {
 	}
 }
 
-func (r *responseWriter) Flush() {
-	if flusher, ok := r.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
-}
-
-func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", r.ResponseWriter)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseWriter) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
 }

@@ -2,6 +2,7 @@ package fast
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -41,12 +42,6 @@ func upgradeResponseHandler(ctx context.Context, reqUpType string) upgradeHandle
 			return
 		}
 
-		hj, ok := rw.(http.Hijacker)
-		if !ok {
-			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("can't switch protocols using non-Hijacker ResponseWriter type %T", rw))
-			backConn.Close()
-			return
-		}
 		backConnCloseCh := make(chan bool)
 		go func() {
 			// Ensure that the cancellation of a request closes the backend.
@@ -59,7 +54,11 @@ func upgradeResponseHandler(ctx context.Context, reqUpType string) upgradeHandle
 		}()
 		defer close(backConnCloseCh)
 
-		conn, brw, err := hj.Hijack()
+		conn, brw, err := http.NewResponseController(rw).Hijack()
+		if errors.Is(err, http.ErrNotSupported) {
+			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("can't switch protocols using non-Hijacker ResponseWriter type %T: %w", rw, err))
+			return
+		}
 		if err != nil {
 			httputil.ErrorHandlerWithContext(ctx, rw, fmt.Errorf("hijack failed on protocol switch: %w", err))
 			return
