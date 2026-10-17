@@ -93,6 +93,57 @@ func TestTLSInStore(t *testing.T) {
 	}
 }
 
+func TestTLSInStore_hostnames(t *testing.T) {
+	cert := Certificate{CertFile: localhostCert, KeyFile: localhostKey}
+
+	testCases := []struct {
+		desc     string
+		configs  []*CertAndStores
+		expected []string
+	}{
+		{
+			desc:    "certificate without hostname",
+			configs: []*CertAndStores{{Certificate: cert}},
+		},
+		{
+			desc:     "certificate with a hostname",
+			configs:  []*CertAndStores{{Certificate: cert, Hostname: "a.example.com"}},
+			expected: []string{"a.example.com"},
+		},
+		{
+			desc: "same certificate with several hostnames",
+			configs: []*CertAndStores{
+				{Certificate: cert, Hostname: "b.example.com"},
+				{Certificate: cert, Hostname: "a.example.com"},
+			},
+			expected: []string{"a.example.com", "b.example.com"},
+		},
+		{
+			desc: "same certificate with and without hostname",
+			configs: []*CertAndStores{
+				{Certificate: cert, Hostname: "a.example.com"},
+				{Certificate: cert},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			tlsManager := NewManager(nil)
+			tlsManager.UpdateConfigs(t.Context(), nil, nil, test.configs)
+
+			certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
+			require.Len(t, certs, 1)
+
+			for _, certData := range certs {
+				assert.Equal(t, test.expected, certData.Hostnames)
+			}
+		})
+	}
+}
+
 func TestTLSInvalidStore(t *testing.T) {
 	dynamicConfigs := []*CertAndStores{{
 		Certificate: Certificate{
