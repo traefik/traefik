@@ -808,6 +808,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 							})
 							continue
 						}
+						tlsCert.Hostname = string(ptr.Deref(listener.Hostname, ""))
 						listenerTLSCerts[configKey] = tlsCert
 					}
 				}
@@ -866,9 +867,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 				}
 
 				// Only copy if the certificate TLS config is not already known.
+				// The hostname is part of the key because a Secret can be referenced
+				// by several listeners with distinct hostnames.
 				for key, listenerTLSCert := range listenerTLSCerts {
-					if _, ok := tlsCerts[key]; !ok {
-						tlsCerts[key] = listenerTLSCert
+					tlsKey := key + "@" + listenerTLSCert.Hostname
+					if _, ok := tlsCerts[tlsKey]; !ok {
+						tlsCerts[tlsKey] = listenerTLSCert
 					}
 				}
 			}
