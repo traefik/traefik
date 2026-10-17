@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"maps"
@@ -19,6 +20,17 @@ import (
 type CertificateData struct {
 	Hash        string
 	Certificate *tls.Certificate
+	Hostnames   []string
+}
+
+func (c *CertificateData) matchHostnames(serverName string) bool {
+	if len(c.Hostnames) == 0 {
+		return true
+	}
+
+	return slices.ContainsFunc(c.Hostnames, func(hostname string) bool {
+		return matchHostname(hostname, serverName)
+	})
 }
 
 // CertificateStore store for dynamic certificates.
@@ -111,9 +123,9 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		})
 
 		for _, certDomains := range sorted {
-			if matchDomain(serverName, certDomains) {
+			certificateData := certs[certDomains]
+			if matchDomain(serverName, certDomains) && certificateData.matchHostnames(serverName) {
 				// cache best match
-				certificateData := certs[certDomains]
 				c.CertCache.SetDefault(serverName, certificateData)
 
 				if c.ocspStapler != nil && certificateData.Hash != "" {
@@ -217,6 +229,8 @@ func appendCertificate(certs map[string]map[string]*CertificateData, subjectAltN
 		}
 	}
 	if certExists {
+		certs[storeName][certKey] = mergeHostnames(certs[storeName][certKey], cert)
+
 		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
 		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
@@ -284,4 +298,45 @@ func matchDomain(serverName, certDomains string) bool {
 		}
 	}
 	return false
+}
+
+// matchHostname returns whether the server name is covered by the hostname.
+// Contrary to a wildcard in a certificate, a leading wildcard label in a hostname matches one or more labels, as defined by the Gateway API.
+func matchHostname(hostname, serverName string) bool {
+	suffix, isWildcard := strings.CutPrefix(hostname, "*")
+	if !isWildcard {
+		return hostname == serverName
+	}
+
+	return len(serverName) > len(suffix) && strings.HasSuffix(serverName, suffix)
+}
+
+// mergeHostnames returns the existing certificate data extended with the hostnames of the given one,
+// when both hold the same certificate. Otherwise, the existing certificate data is returned unchanged.
+// A certificate without hostnames can be served for any server name, so it takes precedence over a restricted one.
+func mergeHostnames(existing, cert *CertificateData) *CertificateData {
+	if len(existing.Hostnames) == 0 || !sameCertificate(existing.Certificate, cert.Certificate) {
+		return existing
+	}
+
+	merged := *existing
+
+	if len(cert.Hostnames) == 0 {
+		merged.Hostnames = nil
+		return &merged
+	}
+
+	merged.Hostnames = slices.Concat(existing.Hostnames, cert.Hostnames)
+	slices.Sort(merged.Hostnames)
+	merged.Hostnames = slices.Compact(merged.Hostnames)
+
+	return &merged
+}
+
+// sameCertificate returns whether both TLS certificates have the same leaf certificate.
+func sameCertificate(a, b *tls.Certificate) bool {
+	if a == nil || b == nil || len(a.Certificate) == 0 || len(b.Certificate) == 0 {
+		return false
+	}
+	return bytes.Equal(a.Certificate[0], b.Certificate[0])
 }
