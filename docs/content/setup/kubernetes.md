@@ -335,7 +335,7 @@ On the `websecure` entry point TLS is enabled by default. However, it currently 
 
 ```yaml
 additionalArguments:
-  - "--certificatesresolvers.le.acme.email=your-email@example.com"
+  - "--certificatesresolvers.le.acme.email=your-email@example.com" # optional
   - "--certificatesresolvers.le.acme.storage=/data/acme.json"
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
   # - "--certificatesresolvers.le.acme.dnschallenge.provider=your-dns-provider" # Requires provider-specific config, adjust if you control your DNS provider
@@ -348,7 +348,7 @@ persistence:
   storageClass: ""
 ```
 
-This enables a certificate resolver named `le`, configures the mandatory email and storage file, and sets up the HTTP challenge (requires port 80 access). Refer to the [HTTPS/TLS Documentation](../reference/install-configuration/tls/certificate-resolvers/overview.md) and [Let's Encrypt Documentation](../reference/install-configuration/tls/certificate-resolvers/acme.md) for full details, including DNS challenge configuration.
+This enables a certificate resolver named `le`, configures the optional email and storage file, and sets up the HTTP challenge (requires port 80 access). Refer to the [HTTPS/TLS Documentation](../reference/install-configuration/tls/certificate-resolvers/overview.md) and [Let's Encrypt Documentation](../reference/install-configuration/tls/certificate-resolvers/acme.md) for full details, including DNS challenge configuration.
 
 !!!info "Let's Encrypt in Production"
     Let's Encrypt can only issue certificates for hostnames that point to a public IP address reachable on ports 80 (HTTP‑01) or via your DNS provider's API (DNS‑01). Replace the `*.docker.localhost` examples with a real domain you control, create the DNS records, and keep ports 80/443 open to your cluster so the validation can succeed.

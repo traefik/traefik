@@ -449,7 +449,7 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 }
 
 func (p *Provider) initAccount() (*Account, error) {
-	if p.account == nil || len(p.account.Email) == 0 {
+	if p.account == nil || len(p.account.PrivateKey) == 0 {
 		var err error
 		p.account, err = NewAccount(p.Email)
 		if err != nil {
