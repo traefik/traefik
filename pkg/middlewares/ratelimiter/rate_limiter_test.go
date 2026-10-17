@@ -28,13 +28,14 @@ const delta float64 = 1e-10
 
 func TestNewRateLimiter(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		config           dynamic.RateLimit
-		expectedMaxDelay time.Duration
-		expectedSourceIP string
-		requestHeader    string
-		expectedError    string
-		expectedRTL      rate.Limit
+		desc                string
+		config              dynamic.RateLimit
+		expectedMaxDelay    time.Duration
+		expectedSourceIP    string
+		requestHeader       string
+		expectedError       string
+		expectedRTL         rate.Limit
+		expectedDenyOnError *bool
 	}{
 		{
 			desc: "no ratelimit on Average == 0",
@@ -102,6 +103,49 @@ func TestNewRateLimiter(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "denyOnError true for Redis",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(true),
+				},
+			},
+			expectedDenyOnError: new(true),
+		},
+		{
+			desc: "denyOnError can be set to false for Redis",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(false),
+				},
+			},
+			expectedDenyOnError: new(false),
+		},
+		{
+			desc: "denyOnError defaults to true for Redis when unset",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				Redis: &dynamic.Redis{
+					Endpoints: []string{"localhost:6379"},
+				},
+			},
+			expectedDenyOnError: new(true),
+		},
+		{
+			desc: "denyOnError is true for the in-memory limiter",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+			},
+			expectedDenyOnError: new(true),
+		},
 	}
 
 	for _, test := range testCases {
@@ -149,6 +193,9 @@ func TestNewRateLimiter(t *testing.T) {
 			}
 			if test.expectedRTL != 0 {
 				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
+			}
+			if test.expectedDenyOnError != nil {
+				assert.Equal(t, *test.expectedDenyOnError, rtl.denyOnError)
 			}
 		})
 	}
@@ -549,6 +596,90 @@ func TestRedisRateLimit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRateLimiterDenyOnError(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		config         dynamic.RateLimit
+		expectedStatus int
+	}{
+		{
+			desc: "deny on error true returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(true),
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			desc: "deny on error false passes request through",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints:   []string{"localhost:6379"},
+					DenyOnError: new(false),
+				},
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			// A provider that does not apply defaults, such as the REST provider, leaves the
+			// option unset. That must keep the existing fail-closed behavior.
+			desc: "deny on error unset returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+				Redis: &dynamic.Redis{
+					Endpoints: []string{"localhost:6379"},
+				},
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			desc: "in-memory limiter returns 500",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   1,
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
+			require.NoError(t, err)
+
+			// Swap the limiter for one that always returns an error (simulates Redis being unavailable).
+			h.(*rateLimiter).limiter = &errorLimiter{}
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.RemoteAddr = "127.0.0.1:1234"
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+			assert.Equal(t, test.expectedStatus, w.Code)
+		})
+	}
+}
+
+// errorLimiter is a limiter stub that always returns an error, simulating a broken Redis connection.
+type errorLimiter struct{}
+
+func (e *errorLimiter) Allow(_ context.Context, _ string) (*time.Duration, error) {
+	return nil, errors.New("redis unavailable")
 }
 
 type mockRedisClient struct {

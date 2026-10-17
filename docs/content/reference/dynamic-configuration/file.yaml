@@ -397,6 +397,7 @@ http:
           readTimeout: 42s
           writeTimeout: 42s
           dialTimeout: 42s
+          denyOnError: true
     Middleware19:
       redirectRegex:
         regex: foobar
