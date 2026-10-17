@@ -1179,6 +1179,56 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 			},
 		},
 		{
+			desc: "Non-root router with observability metadata only",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+					Observability: &dynamic.RouterObservabilityConfig{
+						Metadata: &dynamic.ObservabilityMetadata{
+							Ingress: &dynamic.KubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
+						},
+					},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+		},
+		{
+			desc: "Non-root router with observability metadata and config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+					Observability: &dynamic.RouterObservabilityConfig{
+						AccessLogs: new(false),
+						Metadata: &dynamic.ObservabilityMetadata{
+							Ingress: &dynamic.KubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
+						},
+					},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have Observability configuration"},
+			},
+		},
+		{
 			desc: "Non-root router with EntryPoints config",
 			routers: map[string]*dynamic.Router{
 				"A": {},
