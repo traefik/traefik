@@ -141,7 +141,7 @@ func (o *ocspStapler) updateStaples(ctx context.Context) {
 		}
 
 		if err := o.updateStaple(ctx, entry); err != nil {
-			log.Error().Err(err).Msgf("Unable to retieve OCSP staple for: %s", entry.leaf.Subject.CommonName)
+			log.Error().Err(err).Msgf("Unable to retrieve OCSP staple for: %s", entry.leaf.Subject.CommonName)
 			continue
 		}
 	}

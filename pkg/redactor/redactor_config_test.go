@@ -149,6 +149,8 @@ func init() {
 					IdleConnTimeout:       42,
 					ReadIdleTimeout:       42,
 					PingTimeout:           42,
+					ReadTimeout:           42,
+					WriteTimeout:          42,
 				},
 			},
 		},
@@ -946,6 +948,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 					DelayBeforeCheck:        42,
 					Resolvers:               []string{"resolver1", "resolver2"},
 					DisablePropagationCheck: true,
+					Propagation: acme.Propagation{
+						DisableChecks:     true,
+						DisableANSChecks:  true,
+						RequireAllRNS:     true,
+						DelayBeforeChecks: 42,
+					},
 				},
 				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",

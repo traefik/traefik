@@ -558,6 +558,20 @@ func TestParseDomains(t *testing.T) {
 			description: "Host rule with no domain",
 			expression:  "Host() && Path(`/test`)",
 		},
+		{
+			description: "Negated Host rule",
+			expression:  "!Host(`foo.bar`)",
+		},
+		{
+			description: "Host rule and negated Host rule",
+			expression:  "Host(`foo.bar`) && !Host(`bar.buz`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Negated group of Host rules",
+			expression:  "Host(`foo.bar`) && !(Host(`bar.buz`) || Host(`buz.bar`))",
+			domain:      []string{"foo.bar"},
+		},
 	}
 
 	for _, test := range testCases {
@@ -661,6 +675,26 @@ func TestGetRulePriority(t *testing.T) {
 			desc:     "simple rule",
 			rule:     "Host(`example.org`)",
 			expected: 19,
+		},
+		{
+			desc:     "subdomain rule",
+			rule:     "Host(`a.example.org`)",
+			expected: 21,
+		},
+		{
+			desc:     "wildcard rule",
+			rule:     "Host(`*.example.org`)",
+			expected: 21,
+		},
+		{
+			desc:     "double wildcard rule",
+			rule:     "Host(`**.example.org`)",
+			expected: 20,
+		},
+		{
+			desc:     "negated double wildcard rule",
+			rule:     "Host(`example.org`) && !Host(`**.example.org`)",
+			expected: 46,
 		},
 	}
 

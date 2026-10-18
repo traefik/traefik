@@ -368,6 +368,15 @@ func TestParseHostSNI(t *testing.T) {
 			desc:       "HostSNI rule with no domain",
 			expression: "HostSNI() && ClientIP(`10.1`)",
 		},
+		{
+			desc:       "Negated HostSNI rule",
+			expression: "!HostSNI(`example.com`)",
+		},
+		{
+			desc:       "HostSNI rule and negated HostSNI rule",
+			expression: "HostSNI(`example.com`) && !HostSNI(`example.org`)",
+			domain:     []string{"example.com"},
+		},
 	}
 
 	for _, test := range testCases {
@@ -502,6 +511,36 @@ func TestGetRulePriority(t *testing.T) {
 			desc:     "strange HostSNI(`*`) rule",
 			rule:     "   HostSNI ( `*` )       ",
 			expected: -1,
+		},
+		{
+			desc:     "subdomain rule",
+			rule:     "HostSNI(`a.example.org`)",
+			expected: 24,
+		},
+		{
+			desc:     "wildcard rule",
+			rule:     "HostSNI(`*.example.org`)",
+			expected: 24,
+		},
+		{
+			desc:     "double wildcard rule",
+			rule:     "HostSNI(`**.example.org`)",
+			expected: 23,
+		},
+		{
+			desc:     "negated double wildcard rule",
+			rule:     "HostSNI(`example.org`) && !HostSNI(`**.example.org`)",
+			expected: 52,
+		},
+		{
+			desc:     "double wildcard rule with another matcher",
+			rule:     "HostSNI(`**.example.org`) && ALPN(`h2`)",
+			expected: 37,
+		},
+		{
+			desc:     "HostSNI(`*`) rule with another matcher",
+			rule:     "HostSNI(`*`) && ALPN(`h2`)",
+			expected: 26,
 		},
 	}
 

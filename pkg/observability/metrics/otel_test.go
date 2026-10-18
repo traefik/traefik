@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/version"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -447,6 +448,75 @@ func TestOpenTelemetry(t *testing.T) {
 			registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(20000)
 
 			tryAssertMessage(t, c, expectedEntryPointReqDuration)
+		})
+	}
+}
+
+func TestOpenTelemetry_histogramAggregation(t *testing.T) {
+	tests := []struct {
+		desc                 string
+		histogramAggregation string
+		expectedMetricType   pmetric.MetricType
+	}{
+		{
+			desc:               "default",
+			expectedMetricType: pmetric.MetricTypeHistogram,
+		},
+		{
+			desc:                 "explicit_bucket_histogram",
+			histogramAggregation: "explicit_bucket_histogram",
+			expectedMetricType:   pmetric.MetricTypeHistogram,
+		},
+		{
+			desc:                 "base2_exponential_bucket_histogram",
+			histogramAggregation: "base2_exponential_bucket_histogram",
+			expectedMetricType:   pmetric.MetricTypeExponentialHistogram,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Setenv("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", test.histogramAggregation)
+
+			c := make(chan pmetric.Metrics, 1)
+
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gzr, err := gzip.NewReader(r.Body)
+				require.NoError(t, err)
+
+				body, err := io.ReadAll(gzr)
+				require.NoError(t, err)
+
+				req := pmetricotlp.NewExportRequest()
+				err = req.UnmarshalProto(body)
+				require.NoError(t, err)
+
+				c <- req.Metrics()
+			}))
+			t.Cleanup(ts.Close)
+
+			var cfg otypes.OTLP
+			(&cfg).SetDefaults()
+			cfg.HTTP = &otypes.OTelHTTP{
+				Endpoint: ts.URL,
+			}
+			cfg.PushInterval = ptypes.Duration(time.Hour)
+
+			registry := RegisterOpenTelemetry(t.Context(), &cfg)
+			require.NotNil(t, registry)
+
+			registry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(1)
+
+			// Shutdown flushes the metrics.
+			StopOpenTelemetry()
+
+			require.Len(t, c, 1)
+
+			metrics := (<-c).ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics()
+			require.Equal(t, 1, metrics.Len())
+
+			assert.Equal(t, "traefik_entrypoint_request_duration_seconds", metrics.At(0).Name())
+			assert.Equal(t, test.expectedMetricType, metrics.At(0).Type())
 		})
 	}
 }

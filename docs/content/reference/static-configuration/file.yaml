@@ -3,6 +3,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+core:
+  strictTLSOptions: true
 serversTransport:
   insecureSkipVerify: true
   rootCAs:
@@ -13,6 +15,8 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readTimeout: 42s
+    writeTimeout: 42s
   spiffe:
     ids:
       - foobar
@@ -95,6 +99,7 @@ entryPoints:
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
+      aliasHeadersStrategy: foobar
       underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
@@ -201,6 +206,8 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+    defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar

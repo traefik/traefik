@@ -58,6 +58,9 @@ type backend struct {
 	// ServiceName is the original Kubernetes service name (without namespace or port).
 	ServiceName string
 
+	// ServicePort is the original port specification (number or name) from the Ingress rule.
+	ServicePort string
+
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
 }
@@ -165,6 +168,10 @@ type location struct {
 	ServiceName string
 	ServicePort string
 
+	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
+	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
+	SSLPassthrough bool
+
 	// SSLRedirectOnly is true when the non-TLS router should only perform an
 	// HTTPS redirect. All other middlewares are suppressed for that router.
 	SSLRedirectOnly bool
@@ -174,6 +181,9 @@ type location struct {
 
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
+
+	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
+	AppRootExtraRouterRule string
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
@@ -208,6 +218,11 @@ type location struct {
 	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
 	LimitConnections *dynamic.InFlightReq
 
+	// LimitAllowlist holds the client IP ranges exempted from the rate and connection
+	// limits above. In nginx those limits share a single counting key, and the allowlist
+	// empties it, so an allowlisted client is exempted from all of them at once.
+	LimitAllowlist []string
+
 	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
@@ -224,6 +239,11 @@ type location struct {
 	// ingress-level spec.defaultBackend fallback (host-only rule, no path,
 	// no serversTransport).
 	IsIngressDefaultBackend bool
+}
+
+// hasLimits returns true when the location carries at least one rate or connection limit.
+func (l *location) hasLimits() bool {
+	return l.RateLimitRPM != nil || l.RateLimitRPS != nil || l.LimitConnections != nil
 }
 
 // middlewareCustomHTTPErrors configures error-page routing for specific HTTP status codes.
@@ -281,6 +301,7 @@ func (c *canaryConfig) RequiresNonCanaryRouter() bool {
 }
 
 // sslPassthroughBackend holds a TLS passthrough entry.
+// It only describes the TCP router: the HTTP side of an ssl-passthrough ingress goes through the regular location path, like any other ingress.
 type sslPassthroughBackend struct {
 	// BackendName is the key into Configuration.Backends.
 	BackendName string

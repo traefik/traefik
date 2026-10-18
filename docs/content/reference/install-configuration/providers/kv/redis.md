@@ -5,6 +5,12 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 # Traefik & Redis
 
+!!! tip "Routing configuration updates"
+
+    Updates to the routing configuration require Redis [keyspace notifications](https://redis.io/docs/latest/develop/use/keyspace-notifications/) to be enabled.
+    Cloud-managed Redis services (e.g., GCP Memorystore, AWS ElastiCache) may disable this by default due to CPU performance concerns.
+    For more information, see the [Redis documentation](https://redis.io/docs/latest/develop/use/keyspace-notifications/) or your cloud provider's documentation for configuration steps.
+
 ## Configuration Example
 
 You can enable the Redis provider as detailed below:

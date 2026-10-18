@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM alpine:3.24
 
 RUN apk --no-cache --no-progress add \

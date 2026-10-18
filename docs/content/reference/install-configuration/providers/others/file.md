@@ -116,7 +116,7 @@ http:
     For example, in Docker, if the host file is renamed, the link to the mounted file is broken and the container's file is no longer updated.
     To avoid this kind of issue, it is recommended to:
 
-    * set the Traefik [**directory**](#directory) configuration with the parent directory
+    * set the Traefik [**directory**](#opt-providers-file-directory) configuration with the parent directory
     * mount/bind the parent directory
 
     As it is very difficult to listen to all file system notifications, Traefik uses [fsnotify](https://github.com/fsnotify/fsnotify).

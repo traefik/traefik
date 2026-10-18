@@ -118,7 +118,8 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Observability config.
-		if router.Observability != nil {
+		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
+		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
@@ -299,6 +300,10 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 	}
 
 	if routerConfig.TLS != nil {
+		if routerConfig.TLS.ConflictingOptions {
+			return nil, errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host")
+		}
+
 		// Don't build the router if the TLSOptions configuration is invalid.
 		tlsOptionsName := tls.DefaultTLSConfigName
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {

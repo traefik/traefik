@@ -1,0 +1,88 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-tcp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tcp
+      protocol: TCP
+      port: 9000
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-tls-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tls
+      protocol: TLS
+      port: 9000
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+
+# A TLSRoute without host names and a TCPRoute both give the rule HostSNI("*").
+# The TLSRoute router is evaluated by the TLS muxer, and the TCPRoute router by the non-TLS muxer.
+# Thus the two routers do not compete, and Traefik creates both.
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tcp-app
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""

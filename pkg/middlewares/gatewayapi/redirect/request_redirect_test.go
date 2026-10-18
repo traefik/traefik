@@ -171,6 +171,46 @@ func TestRequestRedirectHandler(t *testing.T) {
 			wantStatus: http.StatusFound,
 		},
 		{
+			desc: "dot-segment traversal fused with an encoded slash",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo/..%2Fadmin",
+			wantURL:    "http://foo.com:80/baz/..%2Fadmin",
+			wantStatus: http.StatusFound,
+		},
+		{
+			desc: "encoded slash in the trimmed tail",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo/a%2Fb",
+			wantURL:    "http://foo.com:80/baz/a%2Fb",
+			wantStatus: http.StatusFound,
+		},
+		{
+			desc: "replace prefix path with trailing slash prefix",
+			config: dynamic.RequestRedirect{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo/"),
+			},
+			url:        "http://foo.com:80/foo",
+			wantURL:    "http://foo.com:80/baz",
+			wantStatus: http.StatusFound,
+		},
+		{
+			desc: "replace prefix path with empty replacement with slash",
+			config: dynamic.RequestRedirect{
+				Path:       new(""),
+				PathPrefix: new("/foo"),
+			},
+			url:        "http://foo.com:80/foo",
+			wantURL:    "http://foo.com:80/",
+			wantStatus: http.StatusFound,
+		},
+		{
 			desc: "simple redirection",
 			config: dynamic.RequestRedirect{
 				Scheme:   new("https"),

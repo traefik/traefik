@@ -163,7 +163,7 @@ plugins:
         # Dynamic Configuration
         'reference/dynamic-configuration/file.md': 'reference/routing-configuration/other-providers/file.md'
         'reference/dynamic-configuration/docker.md': 'reference/routing-configuration/other-providers/docker.md'
-        'reference/dynamic-configuration/kubernetes-crd.md': 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+        'reference/dynamic-configuration/kubernetes-crd.md': 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
         'reference/dynamic-configuration/kubernetes-gateway.md': 'reference/routing-configuration/kubernetes/gateway-api.md'
         'reference/dynamic-configuration/consul-catalog.md': 'reference/routing-configuration/other-providers/consul-catalog.md'
         "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
@@ -341,6 +341,7 @@ nav:
               - 'Retry': 'reference/routing-configuration/http/middlewares/retry.md'
               - 'StripPrefix': 'reference/routing-configuration/http/middlewares/stripprefix.md'
               - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
+              - 'Tap': 'reference/routing-configuration/http/middlewares/tap.md'
               - '<span class="nav-link-with-icon">WAF <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/waf.md'
           - 'TCP' :
               - 'Routing' :
@@ -392,7 +393,7 @@ nav:
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
         - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
-        - 'Headers with Underscores': 'security/header-underscores.md'
+        - 'Headers with Aliasing Names': 'security/header-aliases.md'
         - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
@@ -402,8 +403,11 @@ nav:
       - 'Submitting Issues': 'contributing/submitting-issues.md'
       - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
       - 'Security': 'contributing/submitting-security-issues.md'
+      - 'Security Decisions': 'contributing/security-decisions.md'
       - 'Building and Testing': 'contributing/building-testing.md'
-      - 'Documentation': 'contributing/documentation.md'
+      - 'Documentation':
+          - 'Building Documentation': 'contributing/documentation.md'
+          - 'Style Guide': 'contributing/documentation-style-guide.md'
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
