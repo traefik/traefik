@@ -517,7 +517,7 @@ type connPoolsKeyType string
 var connPoolsKey connPoolsKeyType = "connPools"
 
 // AddConnPoolsOnContext adds an empty holder in the frontend connection context to store the dedicated connection
-// pools isolating connection-bound NTLM/Negotiate authentications, mirroring service.AddTransportOnContext for the
+// pools isolating connection-bound NTLM/Negotiate authentications, mirroring kerberos.AddTransportOnContext for the
 // FastProxy connection pools.
 func AddConnPoolsOnContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, connPoolsKey, &stickyConnPools{})
