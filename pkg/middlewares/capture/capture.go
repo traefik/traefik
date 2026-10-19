@@ -28,8 +28,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-
-	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 type key string
@@ -140,8 +138,6 @@ func (r *readCounter) Read(p []byte) (int, error) {
 func (r *readCounter) Close() error {
 	return r.source.Close()
 }
-
-var _ middlewares.Stateful = &captureResponseWriter{}
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks response status and size.

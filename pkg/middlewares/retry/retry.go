@@ -26,9 +26,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Compile time validation that the response writer implements http interfaces correctly.
-var _ middlewares.Stateful = &responseWriter{}
-
 const typeName = "Retry"
 
 // Listener is used to inform about retry attempts.

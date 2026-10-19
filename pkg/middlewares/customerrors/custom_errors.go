@@ -17,12 +17,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-// Compile time validation that the response recorder implements http interfaces correctly.
-var (
-	_ middlewares.Stateful = &codeModifier{}
-	_ middlewares.Stateful = &codeCatcher{}
-)
-
 const (
 	typeName        = "CustomError"
 	schemeHTTP      = "http"
