@@ -1085,18 +1085,18 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 		middlewareType = "digestAuth"
 	}
 
-	urnRefs := make(map[string]string, len(users))
+	// With an auth-map Secret, each user comes from its own key, so each user has its own URN and URNRefs.AddUsers, which takes one key, does not fit.
+	refs := k8s.URNRefs{}
 	userURNs := make(dynamic.Users, len(users))
 	for i, user := range users {
-		urnRefs["/"+middlewareType+"/users/"+strconv.Itoa(i)] = user.value
-		userURNs[i] = k8s.SecretURN(authSecret, user.key)
+		userURNs[i] = refs.Add(dynamic.JSONPointer(middlewareType, "users", strconv.Itoa(i)), authSecret, user.key, user.value)
 	}
 
 	realm := ptr.Deref(cfg.AuthRealm, "")
 	if authType == "digest" {
-		return nil, &dynamic.DigestAuth{Users: userURNs, Realm: realm}, urnRefs, nil
+		return nil, &dynamic.DigestAuth{Users: userURNs, Realm: realm}, refs.OrNil(), nil
 	}
-	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, urnRefs, nil
+	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
 }
 
 func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {

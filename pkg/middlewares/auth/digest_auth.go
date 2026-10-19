@@ -123,7 +123,7 @@ func digestUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 3 {
 		// The user is not part of the error, as it may come from a secret.
-		return "", "", errors.New("error parsing DigestUser: expected user:realm:hash format")
+		return "", "", errors.New("expected user:realm:hash format")
 	}
 	return split[0] + ":" + split[1], split[2], nil
 }

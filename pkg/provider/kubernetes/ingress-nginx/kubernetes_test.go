@@ -23887,6 +23887,11 @@ func TestLoadIngresses(t *testing.T) {
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
+
+			for name, middleware := range conf.HTTP.Middlewares {
+				_, err := middleware.ResolveURNRefs()
+				assert.NoError(t, err, name)
+			}
 		})
 	}
 }

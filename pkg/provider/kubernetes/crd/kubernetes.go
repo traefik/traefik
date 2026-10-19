@@ -282,7 +282,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		logger := log.Ctx(ctx).With().Str(logs.MiddlewareName, id).Logger()
 		ctxMid := logger.WithContext(ctx)
 
-		refs := urnRefs{}
+		refs := k8s.URNRefs{}
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth, refs)
 		if err != nil {
@@ -375,7 +375,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Plugin:            plugin,
-			URNRefs:           refs.orNil(),
+			URNRefs:           refs.OrNil(),
 		})
 	}
 
@@ -786,7 +786,7 @@ func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort)
 	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
-func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON, refs urnRefs) (map[string]dynamic.PluginConf, error) {
+func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON, refs k8s.URNRefs) (map[string]dynamic.PluginConf, error) {
 	if plugins == nil {
 		return nil, nil
 	}
@@ -814,7 +814,7 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 
 // loadSecretKeys records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN.
 // The URNs stay in the configuration: the middleware builder replaces them with their values.
-func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs urnRefs) error {
+func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) error {
 	switch v := value.(type) {
 	case string:
 		if !strings.HasPrefix(v, k8s.SecretURNPrefix) {
@@ -935,7 +935,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit, refs urnRefs) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit, refs k8s.URNRefs) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -993,8 +993,8 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 				if err != nil {
 					return nil, fmt.Errorf("failed to load auth secret: %w", err)
 				}
-				rl.Redis.TLS.Cert = refs.add("/rateLimit/redis/tls/cert", rateLimit.Redis.TLS.CertSecret, "tls.crt", authSecretCert)
-				rl.Redis.TLS.Key = refs.add("/rateLimit/redis/tls/key", rateLimit.Redis.TLS.CertSecret, "tls.key", authSecretKey)
+				rl.Redis.TLS.Cert = refs.Add("/rateLimit/redis/tls/cert", rateLimit.Redis.TLS.CertSecret, "tls.crt", authSecretCert)
+				rl.Redis.TLS.Key = refs.Add("/rateLimit/redis/tls/key", rateLimit.Redis.TLS.CertSecret, "tls.key", authSecretKey)
 			}
 		}
 
@@ -1024,8 +1024,8 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 			if err != nil {
 				return nil, err
 			}
-			rl.Redis.Username = refs.add("/rateLimit/redis/username", rateLimit.Redis.Secret, "username", username)
-			rl.Redis.Password = refs.add("/rateLimit/redis/password", rateLimit.Redis.Secret, "password", password)
+			rl.Redis.Username = refs.Add("/rateLimit/redis/username", rateLimit.Redis.Secret, "username", username)
+			rl.Redis.Password = refs.Add("/rateLimit/redis/password", rateLimit.Redis.Secret, "password", password)
 		}
 	}
 
@@ -1084,7 +1084,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth, refs urnRefs) (*dynamic.ForwardAuth, error) {
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth, refs k8s.URNRefs) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
@@ -1133,8 +1133,8 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 			if err != nil {
 				return nil, fmt.Errorf("failed to load auth secret: %w", err)
 			}
-			forwardAuth.TLS.Cert = refs.add("/forwardAuth/tls/cert", auth.TLS.CertSecret, "tls.crt", authSecretCert)
-			forwardAuth.TLS.Key = refs.add("/forwardAuth/tls/key", auth.TLS.CertSecret, "tls.key", authSecretKey)
+			forwardAuth.TLS.Cert = refs.Add("/forwardAuth/tls/cert", auth.TLS.CertSecret, "tls.crt", authSecretCert)
+			forwardAuth.TLS.Key = refs.Add("/forwardAuth/tls/key", auth.TLS.CertSecret, "tls.key", authSecretKey)
 		}
 
 		forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
@@ -1212,7 +1212,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth, refs urnRefs) (*dynamic.BasicAuth, error) {
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth, refs k8s.URNRefs) (*dynamic.BasicAuth, error) {
 	if basicAuth == nil {
 		return nil, nil
 	}
@@ -1240,7 +1240,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 
 		return &dynamic.BasicAuth{
 			// The user is computed from both keys: the password key is the one that must not be exposed.
-			Users:        refs.addUsers("/basicAuth/users", basicAuth.Secret, "password", credentials),
+			Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, "password", credentials),
 			Realm:        basicAuth.Realm,
 			RemoveHeader: basicAuth.RemoveHeader,
 			HeaderField:  basicAuth.HeaderField,
@@ -1253,14 +1253,14 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}
 
 	return &dynamic.BasicAuth{
-		Users:        refs.addUsers("/basicAuth/users", basicAuth.Secret, key, credentials),
+		Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, key, credentials),
 		Realm:        basicAuth.Realm,
 		RemoveHeader: basicAuth.RemoveHeader,
 		HeaderField:  basicAuth.HeaderField,
 	}, nil
 }
 
-func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth, refs urnRefs) (*dynamic.DigestAuth, error) {
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth, refs k8s.URNRefs) (*dynamic.DigestAuth, error) {
 	if digestAuth == nil {
 		return nil, nil
 	}
@@ -1286,7 +1286,7 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 	}
 
 	return &dynamic.DigestAuth{
-		Users:        refs.addUsers("/digestAuth/users", digestAuth.Secret, key, credentials),
+		Users:        refs.AddUsers("/digestAuth/users", digestAuth.Secret, key, credentials),
 		Realm:        digestAuth.Realm,
 		RemoveHeader: digestAuth.RemoveHeader,
 		HeaderField:  digestAuth.HeaderField,

@@ -10245,6 +10245,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+
+			for name, middleware := range conf.HTTP.Middlewares {
+				_, err := middleware.ResolveURNRefs()
+				assert.NoError(t, err, name)
+			}
 		})
 	}
 }
@@ -14638,7 +14643,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	// Testing for username/password components in basic-auth secret
-	refs := urnRefs{}
+	refs := k8s.URNRefs{}
 	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "basic-auth-secret"}, refs)
 	require.NoError(t, secretErr)
 	assert.Equal(t, dynamic.Users{"urn:k8s:secret:basic-auth-secret:password"}, basicAuth.Users)
@@ -14655,7 +14660,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	refs = urnRefs{}
+	refs = k8s.URNRefs{}
 	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "auth-secret"}, refs)
 	require.NoError(t, secretErr)
 	assert.Equal(t, dynamic.Users{"urn:k8s:secret:auth-secret:users", "urn:k8s:secret:auth-secret:users"}, basicAuth.Users)

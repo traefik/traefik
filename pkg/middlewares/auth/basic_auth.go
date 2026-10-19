@@ -154,7 +154,7 @@ func basicUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 2 {
 		// The user is not part of the error, as it may come from a secret.
-		return "", "", errors.New("error parsing BasicUser: expected user:hash format")
+		return "", "", errors.New("expected user:hash format")
 	}
 	return split[0], split[1], nil
 }
