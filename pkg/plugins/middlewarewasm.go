@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -81,7 +82,10 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 
-	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
+	config := wazero.NewModuleConfig().
+		WithSysWalltime().
+		WithRandSource(rand.Reader).
+		WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
 		config = config.WithEnv(env, os.Getenv(env))
 	}
