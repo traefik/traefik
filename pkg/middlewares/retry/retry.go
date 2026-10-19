@@ -371,7 +371,7 @@ func (r *responseWriter) WriteHeader(code int) {
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	conn, brw, err := http.NewResponseController(r.responseWriter).Hijack()
 	if errors.Is(err, http.ErrNotSupported) {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker: %w", r.responseWriter, err)
+		return nil, nil, err
 	}
 
 	// When the connection is Hijacked when using Websockets, we don't want to retry anymore,

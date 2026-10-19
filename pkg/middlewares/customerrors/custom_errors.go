@@ -2,7 +2,6 @@ package customerrors
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"net/http"
@@ -307,12 +306,7 @@ func (cc *codeCatcher) FlushError() error {
 		return nil
 	}
 
-	err := http.NewResponseController(cc.responseWriter).Flush()
-	if errors.Is(err, http.ErrNotSupported) {
-		return fmt.Errorf("%T is not a http.Flusher: %w", cc.responseWriter, err)
-	}
-
-	return err
+	return http.NewResponseController(cc.responseWriter).Flush()
 }
 
 // Unwrap exposes the underlying ResponseWriter for http.ResponseController.
@@ -401,12 +395,7 @@ func (r *codeModifier) WriteHeader(code int) {
 func (r *codeModifier) FlushError() error {
 	r.WriteHeader(r.code)
 
-	err := http.NewResponseController(r.responseWriter).Flush()
-	if errors.Is(err, http.ErrNotSupported) {
-		return fmt.Errorf("%T is not a http.Flusher: %w", r.responseWriter, err)
-	}
-
-	return err
+	return http.NewResponseController(r.responseWriter).Flush()
 }
 
 // Unwrap exposes the underlying ResponseWriter for http.ResponseController.

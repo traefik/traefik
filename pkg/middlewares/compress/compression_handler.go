@@ -321,12 +321,7 @@ func (r *responseWriter) FlushError() (err error) {
 	// It was already established by Write that compression is disabled, we only
 	// have to flush the uncompressed writer.
 	if r.compressionDisabled {
-		err := http.NewResponseController(r.rw).Flush()
-		if errors.Is(err, http.ErrNotSupported) {
-			return fmt.Errorf("%T is not a http.Flusher: %w", r.rw, err)
-		}
-
-		return err
+		return http.NewResponseController(r.rw).Flush()
 	}
 
 	// Here, nothing was ever written either to rw or to bw (since we're still
@@ -351,9 +346,6 @@ func (r *responseWriter) FlushError() (err error) {
 		_ = r.compressionWriter.Flush()
 
 		err = http.NewResponseController(r.rw).Flush()
-		if errors.Is(err, http.ErrNotSupported) {
-			err = fmt.Errorf("%T is not a http.Flusher: %w", r.rw, err)
-		}
 	}()
 
 	// We empty whatever is left of the buffer that Write never took care of.
@@ -376,7 +368,7 @@ func (r *responseWriter) FlushError() (err error) {
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	conn, brw, err := http.NewResponseController(r.rw).Hijack()
 	if errors.Is(err, http.ErrNotSupported) {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker: %w", r.rw, err)
+		return nil, nil, err
 	}
 
 	// We only make use of r.hijacked in close (and not in Write/WriteHeader)

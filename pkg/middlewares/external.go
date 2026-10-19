@@ -3,8 +3,6 @@ package middlewares
 import (
 	"bufio"
 	"context"
-	"errors"
-	"fmt"
 	"net"
 	"net/http"
 )
@@ -86,22 +84,12 @@ func (w *entryWriter) Flush() {
 
 // FlushError sends any buffered data to the client, and is preferred over Flush by http.ResponseController.
 func (w *entryWriter) FlushError() error {
-	err := w.rc.Flush()
-	if errors.Is(err, http.ErrNotSupported) {
-		return fmt.Errorf("%T is not a http.Flusher: %w", w.ResponseWriter, err)
-	}
-
-	return err
+	return w.rc.Flush()
 }
 
 // Hijack hijacks the connection.
 func (w *entryWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	conn, brw, err := w.rc.Hijack()
-	if errors.Is(err, http.ErrNotSupported) {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker: %w", w.ResponseWriter, err)
-	}
-
-	return conn, brw, err
+	return w.rc.Hijack()
 }
 
 // Unwrap exposes the underlying ResponseWriter for http.ResponseController.
@@ -130,12 +118,7 @@ func (w *exitWriter) FlushError() error {
 		target = w.ResponseWriter
 	}
 
-	err := http.NewResponseController(target).Flush()
-	if errors.Is(err, http.ErrNotSupported) {
-		return fmt.Errorf("%T is not a http.Flusher: %w", target, err)
-	}
-
-	return err
+	return http.NewResponseController(target).Flush()
 }
 
 // Hijack hijacks the connection.
@@ -146,12 +129,7 @@ func (w *exitWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		target = w.ResponseWriter
 	}
 
-	conn, brw, err := http.NewResponseController(target).Hijack()
-	if errors.Is(err, http.ErrNotSupported) {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker: %w", target, err)
-	}
-
-	return conn, brw, err
+	return http.NewResponseController(target).Hijack()
 }
 
 // Unwrap exposes the external ResponseWriter when it can itself be unwrapped,
