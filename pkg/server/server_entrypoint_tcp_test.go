@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -26,6 +27,40 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"golang.org/x/net/http2"
 )
+
+func TestAcceptTCPWithKeepAlive(t *testing.T) {
+	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
+
+	var clients []net.Conn
+	for range 2 {
+		client, err := net.Dial("tcp", listener.Addr().String())
+		require.NoError(t, err)
+		clients = append(clients, client)
+	}
+	t.Cleanup(func() {
+		for _, client := range clients {
+			_ = client.Close()
+		}
+	})
+
+	var failed *net.TCPConn
+	accepted, err := acceptTCPWithKeepAlive(listener.AcceptTCP, func(conn *net.TCPConn) error {
+		if failed == nil {
+			failed = conn
+			return syscall.ECONNRESET
+		}
+		return configureTCPKeepAlive(conn)
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = accepted.Close() })
+	require.NotNil(t, failed)
+	assert.NotSame(t, failed, accepted)
+
+	// A closed TCPConn rejects operations rather than retaining the accepted socket.
+	assert.ErrorIs(t, failed.SetKeepAlive(true), net.ErrClosed)
+}
 
 func TestShutdownHijacked(t *testing.T) {
 	router, err := tcprouter.NewRouter(nil)
