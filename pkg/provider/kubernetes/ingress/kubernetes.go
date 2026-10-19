@@ -53,10 +53,11 @@ type Provider struct {
 	AllowExternalNameServices bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	CrossProviderNamespaces   []string            `description:"List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	// Deprecated: please use DisableClusterScopeResources.
-	DisableIngressClassLookup    bool `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
-	DisableClusterScopeResources bool `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
-	NativeLBByDefault            bool `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
-	StrictPrefixMatching         bool `description:"Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching)." json:"strictPrefixMatching,omitempty" toml:"strictPrefixMatching,omitempty" yaml:"strictPrefixMatching,omitempty" export:"true"`
+	DisableIngressClassLookup    bool                `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
+	DisableClusterScopeResources bool                `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
+	NativeLBByDefault            bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	Secrets                      map[string][]string `description:"Restricts the watched Secrets to the given names, grouped by namespace. Use * as the name to watch all the Secrets of a namespace." json:"secrets,omitempty" toml:"secrets,omitempty" yaml:"secrets,omitempty" export:"true"`
+	StrictPrefixMatching         bool                `description:"Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching)." json:"strictPrefixMatching,omitempty" toml:"strictPrefixMatching,omitempty" yaml:"strictPrefixMatching,omitempty" export:"true"`
 
 	// The default rule syntax is initialized with the configuration defined by the user with the core.DefaultRuleSyntax option.
 	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
@@ -213,6 +214,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 	cl.ingressLabelSelector = p.LabelSelector
 	cl.disableIngressClassInformer = p.DisableIngressClassLookup || p.DisableClusterScopeResources
+	cl.secrets = p.Secrets
 	cl.disableClusterScopeInformer = p.DisableClusterScopeResources
 	return cl, nil
 }
