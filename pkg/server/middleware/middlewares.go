@@ -81,14 +81,12 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 
 			constructor, err := b.buildConstructor(constructorContext, middlewareName)
 			if err != nil {
-				err = b.configs[middlewareName].RedactURNRefs(err)
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			handler, err := constructor(next)
 			if err != nil {
-				err = b.configs[middlewareName].RedactURNRefs(err)
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
@@ -422,13 +420,19 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, fmt.Errorf("plugin: %w", err)
 		}
 
+		// Unlike the other middlewares, the decoding of a plugin configuration puts the invalid values in its errors.
 		plug, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
 		if err != nil {
-			return nil, fmt.Errorf("plugin: %w", err)
+			return nil, info.RedactURNRefs(fmt.Errorf("plugin: %w", err))
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return newTraceablePlugin(ctx, middlewareName, plug, next)
+			handler, err := newTraceablePlugin(ctx, middlewareName, plug, next)
+			if err != nil {
+				return nil, info.RedactURNRefs(err)
+			}
+
+			return handler, nil
 		}
 	}
 

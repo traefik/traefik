@@ -46,8 +46,9 @@ func (m *Middleware) ResolveURNRefs() (*Middleware, error) {
 	return resolved, nil
 }
 
-// RedactURNRefs returns err where each value of a URN reference is replaced by its URN.
-// The builders get the values, so their errors can contain them, and the API and the log show these errors.
+// RedactURNRefs returns err where each quoted value of a URN reference is replaced by its quoted URN.
+// The decoding of a plugin configuration puts the invalid values in its errors, and the API and the log show these errors.
+// Only the quoted forms are replaced, because replacing a value that matches a word of the message would reveal it.
 func (m *Middleware) RedactURNRefs(err error) error {
 	if err == nil || len(m.URNRefs) == 0 {
 		return err
@@ -69,8 +70,11 @@ func (m *Middleware) RedactURNRefs(err error) error {
 
 	var oldnew []string
 	for _, value := range values {
-		// The quoted form escapes some characters, so it does not always contain the raw value.
-		oldnew = append(oldnew, strconv.Quote(value), strconv.Quote(urns[value]), value, urns[value])
+		// The decoding errors put the values between double quotes (strconv, time) or single quotes (mapstructure).
+		oldnew = append(oldnew,
+			strconv.Quote(value), strconv.Quote(urns[value]),
+			"'"+value+"'", "'"+urns[value]+"'",
+		)
 	}
 
 	msg := err.Error()

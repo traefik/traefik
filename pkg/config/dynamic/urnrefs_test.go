@@ -301,25 +301,39 @@ func TestMiddleware_RedactURNRefs(t *testing.T) {
 		expected   string
 	}{
 		{
-			desc:       "raw value is replaced with its URN",
+			desc:       "double quoted value is replaced with its double quoted URN",
 			pluginConf: PluginConf{"token": "urn:k8s:secret:creds:token"},
 			urnRefs:    map[string]string{"/plugin/my-plugin/token": "s3cr3t"},
-			err:        errors.New("invalid token s3cr3t"),
-			expected:   "invalid token urn:k8s:secret:creds:token",
+			err:        errors.New(`strconv.ParseInt: parsing "s3cr3t": invalid syntax`),
+			expected:   `strconv.ParseInt: parsing "urn:k8s:secret:creds:token": invalid syntax`,
 		},
 		{
-			desc:       "quoted value with escaped characters is replaced with its quoted URN",
+			desc:       "double quoted value with escaped characters is replaced with its double quoted URN",
 			pluginConf: PluginConf{"token": "urn:k8s:secret:creds:token"},
 			urnRefs:    map[string]string{"/plugin/my-plugin/token": `s3"cr\3t`},
 			err:        fmt.Errorf("parsing %q: invalid syntax", `s3"cr\3t`),
 			expected:   `parsing "urn:k8s:secret:creds:token": invalid syntax`,
 		},
 		{
+			desc:       "single quoted value is replaced with its single quoted URN",
+			pluginConf: PluginConf{"token": "urn:k8s:secret:creds:token"},
+			urnRefs:    map[string]string{"/plugin/my-plugin/token": "s3cr3t"},
+			err:        errors.New("'token' expected type 'int', got unconvertible type 'string', value: 's3cr3t'"),
+			expected:   "'token' expected type 'int', got unconvertible type 'string', value: 'urn:k8s:secret:creds:token'",
+		},
+		{
+			desc:       "value that is not quoted is not replaced",
+			pluginConf: PluginConf{"password": "urn:k8s:secret:redis:password"},
+			urnRefs:    map[string]string{"/plugin/my-plugin/password": "redis"},
+			err:        errors.New("dial tcp: lookup redis: no such host"),
+			expected:   "dial tcp: lookup redis: no such host",
+		},
+		{
 			desc:       "value that contains another value is replaced first",
 			pluginConf: PluginConf{"a": "urn:k8s:secret:creds:a", "b": "urn:k8s:secret:creds:b"},
-			urnRefs:    map[string]string{"/plugin/my-plugin/a": "abc", "/plugin/my-plugin/b": "abcdef"},
-			err:        errors.New("abcdef abc"),
-			expected:   "urn:k8s:secret:creds:b urn:k8s:secret:creds:a",
+			urnRefs:    map[string]string{"/plugin/my-plugin/a": "ab", "/plugin/my-plugin/b": "ab'c"},
+			err:        errors.New("value: 'ab'c'"),
+			expected:   "value: 'urn:k8s:secret:creds:b'",
 		},
 		{
 			desc:     "empty value is ignored",

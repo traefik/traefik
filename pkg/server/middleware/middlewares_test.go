@@ -436,13 +436,13 @@ func TestBuilder_BuildMiddlewareChain_pluginErrorURNRefs(t *testing.T) {
 	}{
 		{
 			desc:           "build error",
-			pluginsBuilder: &fakePluginsBuilder{buildErr: errors.New("invalid token s3cr3t")},
-			expectedErr:    "plugin: invalid token urn:k8s:secret:creds:token",
+			pluginsBuilder: &fakePluginsBuilder{buildErr: errors.New(`strconv.ParseInt: parsing "s3cr3t": invalid syntax`)},
+			expectedErr:    `plugin: strconv.ParseInt: parsing "urn:k8s:secret:creds:token": invalid syntax`,
 		},
 		{
 			desc:           "constructor error",
-			pluginsBuilder: &fakePluginsBuilder{constructorErr: errors.New("invalid token s3cr3t")},
-			expectedErr:    "invalid token urn:k8s:secret:creds:token",
+			pluginsBuilder: &fakePluginsBuilder{constructorErr: errors.New(`strconv.ParseInt: parsing "s3cr3t": invalid syntax`)},
+			expectedErr:    `strconv.ParseInt: parsing "urn:k8s:secret:creds:token": invalid syntax`,
 		},
 	}
 
