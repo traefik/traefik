@@ -1,13 +1,19 @@
 package snippet
 
 import (
+	"context"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -2073,4 +2079,85 @@ func TestForwardAuthAddress_interpolation(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, authSrvCalled)
+}
+
+func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
+	type authConnKey struct{}
+	type authConn struct{ user string }
+
+	// The auth server mimics IIS Windows Authentication: an NTLM credential authenticates the connection it
+	// is sent on, and later requests without credential on that connection are authenticated as the same user.
+	authSrv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		conn := req.Context().Value(authConnKey{}).(*authConn)
+		if scheme, user, ok := strings.Cut(req.Header.Get("Authorization"), " "); ok && scheme == "NTLM" {
+			conn.user = user
+		}
+
+		if conn.user == "" {
+			rw.Header().Set("WWW-Authenticate", "NTLM")
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		rw.Header().Set("X-Auth-User", conn.user)
+	}))
+	authSrv.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+		return context.WithValue(ctx, authConnKey{}, &authConn{})
+	}
+	authSrv.Start()
+	t.Cleanup(authSrv.Close)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, _ = fmt.Fprint(rw, req.Header.Get("X-Auth-User"))
+	})
+
+	auth := &dynamic.Auth{
+		Address:             authSrv.URL,
+		AuthResponseHeaders: []string{"X-Auth-User"},
+	}
+	middleware, err := New(t.Context(), next, &dynamic.Snippet{Auth: auth}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewUnstartedServer(middleware)
+	ts.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+		return kerberos.AddTransportOnContext(ctx)
+	}
+	ts.Start()
+	t.Cleanup(ts.Close)
+
+	// Each client has its own transport, hence its own connection to Traefik.
+	send := func(client *http.Client, authorization string) (int, string) {
+		t.Helper()
+
+		req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
+
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = res.Body.Close() })
+
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		return res.StatusCode, string(body)
+	}
+
+	alice := &http.Client{Transport: &http.Transport{}}
+	t.Cleanup(alice.CloseIdleConnections)
+	bob := &http.Client{Transport: &http.Transport{}}
+	t.Cleanup(bob.CloseIdleConnections)
+
+	status, user := send(alice, "NTLM alice")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "alice", user)
+
+	status, user = send(bob, "")
+	assert.Equal(t, http.StatusUnauthorized, status)
+	assert.Empty(t, user)
+
+	status, user = send(alice, "")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "alice", user)
 }
