@@ -129,9 +129,8 @@ func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
 
-	// The client connection context carries the transports dedicated to that connection (see service.AddTransportOnContext),
-	// but its cancellation must not abort the authentication request.
-	forwardReq, err := http.NewRequestWithContext(context.WithoutCancel(req.Context()), http.MethodGet, fa.address, nil)
+	// The request context carries the transports dedicated to the client connection (see service.AddTransportOnContext).
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
 	if err != nil {
 		logger.Debugf("Error calling %s. Cause %s", fa.address, err)
