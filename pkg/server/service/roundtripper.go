@@ -177,6 +177,15 @@ type KerberosRoundTripper struct {
 	OriginalRoundTripper http.RoundTripper
 }
 
+// NewKerberosRoundTripper creates a KerberosRoundTripper sharing original between client connections,
+// and calling newRoundTripper to create the round tripper dedicated to a client connection.
+func NewKerberosRoundTripper(original http.RoundTripper, newRoundTripper func() http.RoundTripper) *KerberosRoundTripper {
+	return &KerberosRoundTripper{
+		new:                  newRoundTripper,
+		OriginalRoundTripper: original,
+	}
+}
+
 // stickyRoundTrippers is keyed by owner, as there is one KerberosRoundTripper per ServersTransport and a dedicated
 // round tripper carries the whole transport configuration (TLS client configuration, timeouts, connection pool) of
 // the ServersTransport that created it, hence cannot be shared with another one.

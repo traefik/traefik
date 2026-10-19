@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -80,6 +81,11 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		Timeout: 30 * time.Second,
 	}
 
+	transport := http.DefaultTransport
+	newTransport := func() http.RoundTripper {
+		return http.DefaultTransport.(*http.Transport).Clone()
+	}
+
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
@@ -88,8 +94,16 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig
-		fa.client.Transport = tr
+		transport = tr
+		newTransport = func() http.RoundTripper {
+			return tr.Clone()
+		}
 	}
+
+	// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
+	// Authentication does), which requires the authentication requests of a client connection to be sent
+	// on a connection to the auth server dedicated to it.
+	fa.client.Transport = service.NewKerberosRoundTripper(transport, newTransport)
 
 	if config.AuthResponseHeadersRegex != "" {
 		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
@@ -115,7 +129,8 @@ func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
 
-	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
+	// The request context carries the transports dedicated to the client connection (see service.AddTransportOnContext).
+	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
 	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
 	if err != nil {
 		logger.Debugf("Error calling %s. Cause %s", fa.address, err)
