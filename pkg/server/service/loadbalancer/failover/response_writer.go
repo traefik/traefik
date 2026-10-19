@@ -59,6 +59,21 @@ func (r *responseWriter) WriteHeader(statusCode int) {
 	}
 }
 
+// FlushError sends any buffered data to the client.
+func (r *responseWriter) FlushError() error {
+	if !r.written {
+		r.WriteHeader(http.StatusOK)
+	}
+
+	// The response is discarded for the fallback,
+	// and flushing it would commit an implicit 200 to the client.
+	if r.needFallback {
+		return nil
+	}
+
+	return http.NewResponseController(r.ResponseWriter).Flush()
+}
+
 // Unwrap exposes the underlying ResponseWriter for http.ResponseController.
 func (r *responseWriter) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter

@@ -365,6 +365,21 @@ func (r *responseWriter) WriteHeader(code int) {
 	r.written = true
 }
 
+// FlushError sends any buffered data to the client.
+func (r *responseWriter) FlushError() error {
+	if !r.written {
+		r.WriteHeader(http.StatusOK)
+	}
+
+	// The response is discarded for a retry,
+	// and flushing it would commit an implicit 200 to the client.
+	if r.shouldNotWrite {
+		return nil
+	}
+
+	return http.NewResponseController(r.responseWriter).Flush()
+}
+
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	conn, brw, err := http.NewResponseController(r.responseWriter).Hijack()
 	if errors.Is(err, http.ErrNotSupported) {
