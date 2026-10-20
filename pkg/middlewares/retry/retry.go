@@ -19,6 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -252,6 +253,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
 		logger.Debug().Err(err).Msg("Final retry attempt failed")
+		httputil.ErrorHandler(rw, req, err)
 	}
 
 	if currentSpan != nil {
