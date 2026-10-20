@@ -1,3 +1,9 @@
+## [v2.11.60](https://github.com/traefik/traefik/tree/v2.11.60) (2026-10-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.59...v2.11.60)
+
+**Bug fixes:**
+- **[authentication, service]** Support NTLM and Kerberos authentication in ForwardAuth ([#14084](https://github.com/traefik/traefik/pull/14084) @juliens)
+
 ## [v2.11.59](https://github.com/traefik/traefik/tree/v2.11.59) (2026-10-15)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.58...v2.11.59)
 
