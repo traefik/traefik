@@ -1,8 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -10,11 +12,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/hpack"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert
@@ -292,23 +297,20 @@ func TestDisableHTTP2(t *testing.T) {
 	}
 }
 
-func TestHTTP2Schemes(t *testing.T) {
+func TestProxyHTTP2BackendScheme(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		urlScheme      string
-		expectedScheme string
 		tls            bool
+		expectedScheme string
 	}{
 		{
-			desc:           "HTTP2 server with h2c scheme",
-			urlScheme:      "h2c",
+			desc:           "h2c backend",
 			expectedScheme: "http",
 		},
 		{
-			desc:           "HTTP2 server with https scheme",
-			urlScheme:      "https",
-			expectedScheme: "https",
+			desc:           "https backend",
 			tls:            true,
+			expectedScheme: "https",
 		},
 	}
 
@@ -316,40 +318,140 @@ func TestHTTP2Schemes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				rw.WriteHeader(http.StatusOK)
-				assert.Equal(t, test.tls, req.TLS != nil)
-				assert.Equal(t, test.urlScheme, req.Header.Get(":scheme"))
-			}))
-			defer srv.Close()
-
-			srv.EnableHTTP2 = true
-			srv.StartTLS()
+			backendURL, schemes := startHTTP2FramerBackend(t, test.tls)
 
 			rtManager := NewRoundTripperManager()
-
-			dynamicConf := map[string]*dynamic.ServersTransport{
+			rtManager.Update(map[string]*dynamic.ServersTransport{
 				"test": {
 					InsecureSkipVerify: true,
 				},
+			})
+
+			rt, err := rtManager.Get("test")
+			require.NoError(t, err)
+
+			proxy, err := buildProxy(new(true), nil, rt, newBufferPool())
+			require.NoError(t, err)
+
+			// The load balancer sets the backend server on the request URL before the proxy runs.
+			handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				req.URL.Scheme = backendURL.Scheme
+				req.URL.Host = backendURL.Host
+				proxy.ServeHTTP(rw, req)
+			})
+
+			srv := httptest.NewServer(handler)
+			t.Cleanup(srv.Close)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, srv.URL, nil)
+			require.NoError(t, err)
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+
+			select {
+			case scheme := <-schemes:
+				assert.Equal(t, test.expectedScheme, scheme)
+			default:
+				t.Error("backend did not receive an HTTP/2 request")
+			}
+		})
+	}
+}
+
+// startHTTP2FramerBackend starts a backend speaking raw HTTP/2 frames,
+// as the standard library server does not expose the :scheme pseudo-header.
+func startHTTP2FramerBackend(t *testing.T, useTLS bool) (*url.URL, <-chan string) {
+	t.Helper()
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	scheme := "h2c"
+	if useTLS {
+		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+		require.NoError(t, err)
+
+		ln = tls.NewListener(ln, &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			NextProtos:   []string{"h2"},
+		})
+		scheme = "https"
+	}
+	t.Cleanup(func() { _ = ln.Close() })
+
+	schemes := make(chan string, 1)
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
 			}
 
-			rtManager.Update(dynamicConf)
+			go serveHTTP2Frames(conn, schemes)
+		}
+	}()
 
-			tr, err := rtManager.Get("test")
-			require.NoError(t, err)
+	return &url.URL{Scheme: scheme, Host: ln.Addr().String()}, schemes
+}
 
-			url, err := url.Parse(srv.URL)
-			require.NoError(t, err)
-			url.Scheme = test.urlScheme
+func serveHTTP2Frames(conn net.Conn, schemes chan<- string) {
+	defer func() { _ = conn.Close() }()
 
-			client := http.Client{Transport: tr}
+	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
 
-			resp, err := client.Get(url.String())
-			require.NoError(t, err)
+	preface := make([]byte, len(http2.ClientPreface))
+	if _, err := io.ReadFull(conn, preface); err != nil || string(preface) != http2.ClientPreface {
+		return
+	}
 
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
-		})
+	framer := http2.NewFramer(conn, conn)
+	framer.ReadMetaHeaders = hpack.NewDecoder(4096, nil)
+
+	if err := framer.WriteSettings(); err != nil {
+		return
+	}
+
+	for {
+		frame, err := framer.ReadFrame()
+		if err != nil {
+			return
+		}
+
+		switch f := frame.(type) {
+		case *http2.SettingsFrame:
+			if f.IsAck() {
+				continue
+			}
+
+			if err := framer.WriteSettingsAck(); err != nil {
+				return
+			}
+
+		case *http2.MetaHeadersFrame:
+			select {
+			case schemes <- f.PseudoValue("scheme"):
+			default:
+			}
+
+			var headers bytes.Buffer
+			if err := hpack.NewEncoder(&headers).WriteField(hpack.HeaderField{Name: ":status", Value: "200"}); err != nil {
+				return
+			}
+
+			err := framer.WriteHeaders(http2.HeadersFrameParam{
+				StreamID:      f.StreamID,
+				BlockFragment: headers.Bytes(),
+				EndHeaders:    true,
+				EndStream:     true,
+			})
+			if err != nil {
+				return
+			}
+		}
 	}
 }
 
