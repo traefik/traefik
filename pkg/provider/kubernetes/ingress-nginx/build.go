@@ -120,7 +120,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	})
 
 	for _, ingress := range ingresses {
-		if !p.shouldProcess(ingress, ingressClasses) {
+		if !p.shouldProcess(ingress, ingressClasses, p.k8sClient.ignoreIngressClasses) {
 			continue
 		}
 
@@ -952,8 +952,8 @@ func (p *Provider) resolveHTTPErrorBackend(namespace string, cfg IngressConfig) 
 	return ""
 }
 
-func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
-	if len(ingressClasses) > 0 && ing.Spec.IngressClassName != nil {
+func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.IngressClass, ignoreIngressClasses bool) bool {
+	if !ignoreIngressClasses && ing.Spec.IngressClassName != nil {
 		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
 			return *ing.Spec.IngressClassName == ic.ObjectMeta.Name
 		})
@@ -963,7 +963,7 @@ func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.Ing
 		return class == p.IngressClass
 	}
 
-	return p.WatchIngressWithoutClass && ing.Spec.IngressClassName == nil
+	return p.WatchIngressWithoutClass
 }
 
 func (p *Provider) validateIngress(ing *netv1.Ingress, cfg IngressConfig) error {
