@@ -17345,6 +17345,7 @@ func TestProvider_validateConfiguration(t *testing.T) {
 func TestProvider_shouldProcess(t *testing.T) {
 	t.Parallel()
 
+	ingressClassName := "traefik"
 	testCases := []struct {
 		desc                     string
 		ingressClassName         *string
@@ -17355,37 +17356,37 @@ func TestProvider_shouldProcess(t *testing.T) {
 	}{
 		{
 			desc:                     "explicit non-matching class",
-			ingressClassName:         ptr.To("traefik"),
+			ingressClassName:         &ingressClassName,
 			watchIngressWithoutClass: true,
 		},
 		{
 			desc:                     "explicit non-matching class with matching annotation",
-			ingressClassName:         ptr.To("traefik"),
+			ingressClassName:         &ingressClassName,
 			annotations:              map[string]string{annotationIngressClass: "nginx"},
 			watchIngressWithoutClass: true,
 		},
 		{
 			desc:                     "ignored explicit class with watch without class enabled",
-			ingressClassName:         ptr.To("traefik"),
+			ingressClassName:         &ingressClassName,
 			ignoreIngressClasses:     true,
 			watchIngressWithoutClass: true,
 			expected:                 true,
 		},
 		{
 			desc:                 "ignored explicit class with watch without class disabled",
-			ingressClassName:     ptr.To("traefik"),
+			ingressClassName:     &ingressClassName,
 			ignoreIngressClasses: true,
 		},
 		{
 			desc:                 "ignored explicit class with matching annotation",
-			ingressClassName:     ptr.To("traefik"),
+			ingressClassName:     &ingressClassName,
 			annotations:          map[string]string{annotationIngressClass: "nginx"},
 			ignoreIngressClasses: true,
 			expected:             true,
 		},
 		{
 			desc:                     "ignored explicit class with non-matching annotation",
-			ingressClassName:         ptr.To("traefik"),
+			ingressClassName:         &ingressClassName,
 			annotations:              map[string]string{annotationIngressClass: "traefik"},
 			ignoreIngressClasses:     true,
 			watchIngressWithoutClass: true,
