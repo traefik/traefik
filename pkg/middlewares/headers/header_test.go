@@ -573,3 +573,21 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestNewHeader_customResponseHeaders_setCookie(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mid, err := NewHeader(next, dynamic.Headers{CustomResponseHeaders: map[string]string{"Set-Cookie": "foo=bar; Path=/"}})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+
+	rw := httptest.NewRecorder()
+	rw.Header().Add("Set-Cookie", "sticky=abc; Path=/")
+
+	mid.ServeHTTP(rw, req)
+
+	assert.Equal(t, []string{"sticky=abc; Path=/", "foo=bar; Path=/"}, rw.Result().Header.Values("Set-Cookie"))
+}
