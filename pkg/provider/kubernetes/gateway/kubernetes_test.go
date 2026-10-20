@@ -29,6 +29,7 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
+	ktesting "k8s.io/client-go/testing"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 )
@@ -109,6 +110,54 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 	assert.Equal(t, gatev1.IPAddressType, *gw.Status.Addresses[0].Type)
 	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
+}
+
+func TestGatewayClassFieldSelector(t *testing.T) {
+	// The resources are only there to make the informer emit a first event to wait for.
+	_, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
+
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+	client := newClientImpl(kubefake.NewClientset(), gwClient)
+	client.gatewayClass = "traefik-internal"
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	<-eventCh
+
+	// The fake clientset ignores field selectors, so the lister cannot show the filtering.
+	// The API server does the filtering. This test only checks the selector is sent to it.
+	var (
+		listed  bool
+		watched bool
+	)
+	for _, action := range gwClient.Actions() {
+		if action.GetResource().Resource != "gatewayclasses" {
+			continue
+		}
+
+		switch a := action.(type) {
+		case ktesting.ListAction:
+			listed = true
+			assert.Equal(t, "metadata.name=traefik-internal", a.GetListRestrictions().Fields.String())
+		case ktesting.WatchAction:
+			watched = true
+			assert.Equal(t, "metadata.name=traefik-internal", a.GetWatchRestrictions().Fields.String())
+		}
+	}
+
+	assert.True(t, listed)
+	assert.True(t, watched)
+}
+
+func TestGatewayClassAndLabelSelectorExclusive(t *testing.T) {
+	p := Provider{
+		GatewayClass:  "traefik-internal",
+		LabelSelector: "name=traefik-internal",
+	}
+
+	_, err := p.newK8sClient(t.Context())
+	require.EqualError(t, err, "gatewayClass and labelSelector options are mutually exclusive")
 }
 
 func TestGatewayScoping(t *testing.T) {
