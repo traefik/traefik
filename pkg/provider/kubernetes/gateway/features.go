@@ -36,6 +36,7 @@ func extendedGatewayFeatures() sets.Set[features.Feature] {
 		features.GatewayHTTPListenerIsolationFeature,
 		features.GatewayHTTPSListenerDetectMisdirectedRequestsFeature,
 		features.ListenerSetFeature,
+		features.GatewayBackendClientCertificateFeature,
 		features.GatewayFrontendClientCertificateValidationFeature,
 		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature,
 	)

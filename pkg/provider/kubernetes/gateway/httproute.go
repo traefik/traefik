@@ -612,7 +612,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy)
+			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy, listener.backendClientCertificates())
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -650,6 +650,15 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 		}
 	}
 
+	// The backend must not be reached without the client certificate the Gateway is configured with.
+	// The failure is reported in the Gateway status, not in the route one,
+	// and the load balancer without servers responds with a 503 status code.
+	if serversTransport != nil && listener.BackendTLS != nil && listener.BackendTLS.certificate == nil {
+		lb := &dynamic.ServersLoadBalancer{}
+		lb.SetDefaults()
+		return lb, nil, nil
+	}
+
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -678,9 +687,10 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 	return lb, serversTransport, nil
 }
 
-func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
+func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.ServersTransport, metav1.Condition) {
 	st := &dynamic.ServersTransport{
-		ServerName: string(policy.Spec.Validation.Hostname),
+		ServerName:   string(policy.Spec.Validation.Hostname),
+		Certificates: clientCertificates,
 	}
 
 	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
