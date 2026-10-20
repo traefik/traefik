@@ -173,11 +173,31 @@ type gatewayListener struct {
 
 	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
 	ListenerSet *gatev1.ListenerSet
+
+	// BackendTLS is the backend TLS configuration of the Gateway, nil when the Gateway does not define one.
+	BackendTLS *gatewayBackendTLS
 }
 
 type gatewayWithListeners struct {
-	gateway   *gatev1.Gateway
-	listeners []gatewayListener
+	gateway    *gatev1.Gateway
+	listeners  []gatewayListener
+	backendTLS *gatewayBackendTLS
+}
+
+type gatewayBackendTLS struct {
+	// certificate is nil when the client certificate reference cannot be resolved,
+	// in which case the backends using TLS must not be reached without it.
+	certificate *tls.Certificate
+	condition   metav1.Condition
+}
+
+// backendClientCertificates returns the client certificates presented to the backends using TLS.
+func (l gatewayListener) backendClientCertificates() tls.Certificates {
+	if l.BackendTLS == nil || l.BackendTLS.certificate == nil {
+		return nil
+	}
+
+	return tls.Certificates{*l.BackendTLS.certificate}
 }
 
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
@@ -472,9 +492,17 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 		listeners = append(listeners, p.loadListenerSetListeners(logger.WithContext(ctx), gateway, listenerSets, claims, conf, statusReport)...)
 
+		// The backend TLS configuration is defined at the Gateway level,
+		// so the ListenerSet listeners use the one of their parent Gateway.
+		backendTLS := p.loadGatewayBackendTLS(gateway)
+		for i := range listeners {
+			listeners[i].BackendTLS = backendTLS
+		}
+
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
-			gateway:   gateway,
-			listeners: listeners,
+			gateway:    gateway,
+			listeners:  listeners,
+			backendTLS: backendTLS,
 		})
 	}
 
@@ -509,6 +537,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		})
 
 		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, accepted)
+
+		// An invalid client certificate reference does not prevent the Gateway from being accepted.
+		if gwl.backendTLS != nil {
+			gatewayStatus.Conditions = append(gatewayStatus.Conditions, gwl.backendTLS.condition)
+		}
+
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -1390,6 +1424,56 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 	}
 
 	return nil
+}
+
+// loadGatewayBackendTLS resolves the client certificate the Gateway presents to the backends using TLS.
+// It returns nil when the Gateway does not define one.
+func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) *gatewayBackendTLS {
+	if gateway.Spec.TLS == nil || gateway.Spec.TLS.Backend == nil || gateway.Spec.TLS.Backend.ClientCertificateRef == nil {
+		return nil
+	}
+
+	certRef := gateway.Spec.TLS.Backend.ClientCertificateRef
+	invalid := func(reason gatev1.GatewayConditionReason, message string) *gatewayBackendTLS {
+		return &gatewayBackendTLS{
+			condition: metav1.Condition{
+				Type:               string(gatev1.GatewayConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(reason),
+				Message:            message,
+			},
+		}
+	}
+
+	group := ptr.Deref(certRef.Group, "")
+	kind := ptr.Deref(certRef.Kind, kindSecret)
+	if (group != "" && group != groupCore) || kind != kindSecret {
+		return invalid(gatev1.GatewayReasonInvalidClientCertificateRef, fmt.Sprintf("Unsupported ClientCertificateRef group/kind: %s/%s", group, kind))
+	}
+
+	namespace := string(ptr.Deref(certRef.Namespace, gatev1.Namespace(gateway.Namespace)))
+	if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, kindSecret, string(certRef.Name), namespace); err != nil {
+		return invalid(gatev1.GatewayReasonRefNotPermitted, fmt.Sprintf("Cannot reference ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err))
+	}
+
+	cert, err := p.getTLSCert(certRef.Name, namespace)
+	if err != nil {
+		return invalid(gatev1.GatewayReasonInvalidClientCertificateRef, fmt.Sprintf("Cannot load ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err))
+	}
+
+	return &gatewayBackendTLS{
+		certificate: &cert.Certificate,
+		condition: metav1.Condition{
+			Type:               string(gatev1.GatewayConditionResolvedRefs),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonResolvedRefs),
+			Message:            conditionNoErrorMessage,
+		},
+	}
 }
 
 func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
