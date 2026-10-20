@@ -713,90 +713,94 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs() {
 // TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles uses two CA:s in two different files
 // and test that clients with client signed by either of them can connect.
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles() {
-	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
-	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
-	defer func() {
-		server1.Close()
-		server2.Close()
-	}()
-
-	file := s.adaptFile("fixtures/https/clientca/https_2ca2config.toml", struct {
-		Server1 string
-		Server2 string
+	for _, test := range []struct {
+		name    string
+		certDir string
+		caDir   string
 	}{
-		Server1: server1.URL,
-		Server2: server2.URL,
-	})
-	s.traefikCmd(withConfigFile(file))
+		{name: "RSA", certDir: "fixtures/https", caDir: "fixtures/https/clientca"},
+		{name: "ML-DSA-44", certDir: "fixtures/https/mldsa", caDir: "fixtures/https/mldsa"},
+	} {
+		s.Run(test.name, func() {
+			server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
+			server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
+			defer func() {
+				server1.Close()
+				server2.Close()
+			}()
 
-	// wait for Traefik
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
-	require.NoError(s.T(), err)
+			file := s.adaptFile("fixtures/https/clientca/https_2ca2config.toml", struct {
+				Server1 string
+				Server2 string
+				CertDir string
+				CADir   string
+			}{
+				Server1: server1.URL,
+				Server2: server2.URL,
+				CertDir: test.certDir,
+				CADir:   test.caDir,
+			})
+			s.traefikCmd(withConfigFile(file))
 
-	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
-	require.NoError(s.T(), err)
-	req.Host = "snitest.com"
+			// Wait for Traefik.
+			err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
+			require.NoError(s.T(), err)
 
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         "snitest.com",
-		Certificates:       []tls.Certificate{},
+			req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
+			require.NoError(s.T(), err)
+			req.Host = "snitest.com"
+
+			serverCert, err := os.ReadFile(test.certDir + "/snitest.com.cert")
+			require.NoError(s.T(), err)
+			roots := x509.NewCertPool()
+			require.True(s.T(), roots.AppendCertsFromPEM(serverCert))
+
+			for _, clientTest := range []struct {
+				name    string
+				client  string
+				wantErr bool
+			}{
+				{name: "no certificate", wantErr: true},
+				{name: "CA1", client: "client1"},
+				{name: "CA2", client: "client2"},
+				{name: "CA3", client: "client3", wantErr: true},
+			} {
+				s.Run(clientTest.name, func() {
+					tlsConfig := &tls.Config{
+						RootCAs:    roots,
+						ServerName: "snitest.com",
+					}
+					if clientTest.client != "" {
+						cert, err := tls.LoadX509KeyPair(test.caDir+"/"+clientTest.client+".crt", test.caDir+"/"+clientTest.client+".key")
+						require.NoError(s.T(), err)
+
+						// Send even untrusted certificates to exercise server verification.
+						tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+							return &cert, nil
+						}
+					}
+
+					transport := &http.Transport{TLSClientConfig: tlsConfig}
+					defer transport.CloseIdleConnections()
+					client := http.Client{
+						Transport: transport,
+						Timeout:   1 * time.Second,
+					}
+
+					resp, err := client.Do(req)
+					if resp != nil {
+						defer resp.Body.Close()
+					}
+					if clientTest.wantErr {
+						assert.Error(s.T(), err)
+						return
+					}
+					require.NoError(s.T(), err)
+					assert.Equal(s.T(), http.StatusOK, resp.StatusCode)
+				})
+			}
+		})
 	}
-
-	client := http.Client{
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-		Timeout:   1 * time.Second,
-	}
-
-	// Connection without client certificate should fail
-	_, err = client.Do(req)
-	assert.Error(s.T(), err)
-
-	// Connect with client signed by ca1
-	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
-	assert.NoError(s.T(), err, "unable to load client certificate and key")
-	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
-
-	_, err = client.Do(req)
-	require.NoError(s.T(), err)
-
-	// Connect with client signed by ca2
-	tlsConfig = &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         "snitest.com",
-		Certificates:       []tls.Certificate{},
-	}
-
-	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
-	assert.NoError(s.T(), err, "unable to load client certificate and key")
-	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
-
-	client = http.Client{
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-		Timeout:   1 * time.Second,
-	}
-
-	_, err = client.Do(req)
-	require.NoError(s.T(), err)
-
-	// Connect with client signed by ca3 should fail
-	tlsConfig = &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         "snitest.com",
-		Certificates:       []tls.Certificate{},
-	}
-
-	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client3.crt", "fixtures/https/clientca/client3.key")
-	assert.NoError(s.T(), err, "unable to load client certificate and key")
-	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
-
-	client = http.Client{
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-		Timeout:   1 * time.Second,
-	}
-
-	_, err = client.Do(req)
-	assert.Error(s.T(), err)
 }
 
 func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend() {
