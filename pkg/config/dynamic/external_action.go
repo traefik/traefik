@@ -6,6 +6,8 @@ import ptypes "github.com/traefik/paerser/types"
 
 // ExternalAction holds rules that transform a request into an authenticated external action.
 type ExternalAction struct {
+	// Enrichment references QueryEnrichment middlewares for every trigger, including internal pollers.
+	Enrichment     []string                               `json:"enrichment,omitempty" toml:"enrichment,omitempty" yaml:"enrichment,omitempty" export:"true"`
 	RuntimeValues  map[string]RuntimeValue                `json:"runtimeValues,omitempty" toml:"runtimeValues,omitempty" yaml:"runtimeValues,omitempty" label:"-" export:"true"`
 	SelectionMode  string                                 `json:"selectionMode,omitempty" toml:"selectionMode,omitempty" yaml:"selectionMode,omitempty"`
 	CredentialSets map[string]ExternalActionCredentialSet `json:"credentialSets,omitempty" toml:"credentialSets,omitempty" yaml:"credentialSets,omitempty" label:"-" export:"true"`

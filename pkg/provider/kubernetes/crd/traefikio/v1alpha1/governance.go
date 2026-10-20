@@ -29,12 +29,45 @@ type RuntimeObjectKeySelector struct {
 
 // ExternalAction transforms matching requests into external actions.
 type ExternalAction struct {
+	// Enrichment references same-namespace QueryEnrichment middlewares in execution order.
+	Enrichment     []string                               `json:"enrichment,omitempty"`
 	RuntimeValues  map[string]RuntimeValueSource          `json:"runtimeValues,omitempty"`
 	SelectionMode  string                                 `json:"selectionMode,omitempty"`
 	CredentialSets map[string]ExternalActionCredentialSet `json:"credentialSets,omitempty"`
 	Pollers        []ExternalActionPoller                 `json:"pollers,omitempty"`
 	Rules          []ExternalActionRule                   `json:"rules,omitempty"`
 	Queue          ExternalActionQueue                    `json:"queue,omitempty"`
+}
+
+// QueryEnrichment defines event metadata lookups with namespaced runtime credentials.
+// +k8s:deepcopy-gen=true
+type QueryEnrichment struct {
+	RuntimeValues  map[string]RuntimeValueSource          `json:"runtimeValues,omitempty"`
+	CredentialSets map[string]ExternalActionCredentialSet `json:"credentialSets,omitempty"`
+	InputTemplate  string                                 `json:"inputTemplate,omitempty"`
+	Queries        []EnrichmentQuery                      `json:"queries,omitempty"`
+	OutputTemplate string                                 `json:"outputTemplate,omitempty"`
+}
+
+// EnrichmentQuery accepts the same Kubernetes duration format as other middlewares.
+// +k8s:deepcopy-gen=true
+type EnrichmentQuery struct {
+	Name           string                                  `json:"name,omitempty"`
+	When           string                                  `json:"when,omitempty"`
+	HTTP           dynamic.ExternalActionHTTP              `json:"http,omitempty"`
+	Body           dynamic.ExternalActionBody              `json:"body,omitempty"`
+	AllowedOrigins []string                                `json:"allowedOrigins,omitempty"`
+	ResultTemplate string                                  `json:"resultTemplate,omitempty"`
+	MaxConcurrent  int                                     `json:"maxConcurrent,omitempty"`
+	CacheEntries   int                                     `json:"cacheEntries,omitempty"`
+	CacheBytes     int64                                   `json:"cacheBytes,omitempty"`
+	Pagination     *dynamic.ExternalActionPollerPagination `json:"pagination,omitempty"`
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	CacheTTL *intstr.IntOrString `json:"cacheTTL,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

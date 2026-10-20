@@ -343,6 +343,16 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			logger.Error().Err(err).Msg("Error while reading external action middleware")
 			continue
 		}
+		if externalAction != nil {
+			for i, reference := range externalAction.Enrichment {
+				externalAction.Enrichment[i] = p.nameBuilder.makeID(middleware.Namespace, reference)
+			}
+		}
+		queryEnrichment, err := createQueryEnrichmentMiddlewareWithRuntime(client, middleware.Namespace, middleware.Spec.QueryEnrichment)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading query enrichment middleware")
+			continue
+		}
 
 		addToConfig(log.Ctx(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
@@ -372,6 +382,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Tap:               tap,
 			ExternalAction:    externalAction,
+			QueryEnrichment:   queryEnrichment,
 			Plugin:            plugin,
 			URNRefs:           refs.OrNil(),
 		})
@@ -986,6 +997,12 @@ func createExternalActionMiddlewareWithRuntime(k8sClient Client, namespace strin
 			MaxQueuedBytes: source.Queue.MaxQueuedBytes,
 		},
 	}
+	for _, reference := range source.Enrichment {
+		if reference == "" || strings.ContainsAny(reference, "@/") {
+			return nil, errors.New("enrichment references must name middlewares in the same namespace")
+		}
+		result.Enrichment = append(result.Enrichment, reference)
+	}
 	if len(source.CredentialSets) > 0 {
 		result.CredentialSets = make(map[string]dynamic.ExternalActionCredentialSet, len(source.CredentialSets))
 	}
@@ -1103,6 +1120,42 @@ func createExternalActionMiddlewareWithRuntime(k8sClient Client, namespace strin
 		result.Rules = append(result.Rules, converted)
 	}
 
+	return result, nil
+}
+
+func createQueryEnrichmentMiddlewareWithRuntime(k8sClient Client, namespace string, source *traefikv1alpha1.QueryEnrichment) (*dynamic.QueryEnrichment, error) {
+	if source == nil {
+		return nil, nil
+	}
+	common, err := createExternalActionMiddlewareWithRuntime(k8sClient, namespace, &traefikv1alpha1.ExternalAction{
+		RuntimeValues: source.RuntimeValues, CredentialSets: source.CredentialSets,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := &dynamic.QueryEnrichment{
+		RuntimeValues: common.RuntimeValues, CredentialSets: common.CredentialSets,
+		InputTemplate: source.InputTemplate, OutputTemplate: source.OutputTemplate,
+	}
+	for _, query := range source.Queries {
+		converted := dynamic.EnrichmentQuery{
+			Name: query.Name, When: query.When, HTTP: query.HTTP, Body: query.Body,
+			AllowedOrigins: query.AllowedOrigins, ResultTemplate: query.ResultTemplate,
+			MaxConcurrent: query.MaxConcurrent, CacheEntries: query.CacheEntries,
+			CacheBytes: query.CacheBytes, Pagination: query.Pagination,
+		}
+		if query.Timeout != nil {
+			if err := converted.Timeout.Set(query.Timeout.String()); err != nil {
+				return nil, fmt.Errorf("query %q timeout: %w", query.Name, err)
+			}
+		}
+		if query.CacheTTL != nil {
+			if err := converted.CacheTTL.Set(query.CacheTTL.String()); err != nil {
+				return nil, fmt.Errorf("query %q cacheTTL: %w", query.Name, err)
+			}
+		}
+		result.Queries = append(result.Queries, converted)
+	}
 	return result, nil
 }
 

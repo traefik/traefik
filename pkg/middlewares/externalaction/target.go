@@ -3,9 +3,11 @@ package externalaction
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,6 +53,12 @@ func newTemplate(name, value string) (*compiledTemplate, error) {
 	}
 	functions["query"] = func(data *actionData, name string) string {
 		return data.Request.Query.Get(name)
+	}
+	// The signed string and header names belong to configuration, not a vendor.
+	functions["hmacSHA256Base64"] = func(key, message string) string {
+		mac := hmac.New(sha256.New, []byte(key))
+		_, _ = mac.Write([]byte(message))
+		return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	}
 	functions["cookie"] = func(data *actionData, name string) string {
 		return data.Request.Cookies[name]
@@ -118,6 +126,8 @@ func newLiteralTemplate(value string) *compiledTemplate {
 }
 
 type httpTarget struct {
+	enrichments     []*compiledEnrichment
+	perform         func(*http.Request) (*http.Response, error)
 	client          *http.Client
 	url             *compiledTemplate
 	method          string
@@ -266,6 +276,10 @@ func newHTTPTarget(rule dynamic.ExternalActionRule, configuredCredentialSets ...
 }
 
 func (h *httpTarget) Run(ctx context.Context, data *actionData) error {
+	return h.run(ctx, data, nil)
+}
+
+func (h *httpTarget) run(ctx context.Context, data *actionData, capture func([]byte) error) (err error) {
 	auth := h.auth
 	credentialSet := data.credentialSet
 	if credentialSet == "" {
@@ -283,29 +297,50 @@ func (h *httpTarget) Run(ctx context.Context, data *actionData) error {
 	if err != nil {
 		return err
 	}
+	// Template, transport and mapping failures can echo credentials as well as
+	// upstream error responses. Redact at the complete authenticated-call boundary.
+	defer func() { err = bound.redactError(err) }()
 	if warning != nil {
 		log.Ctx(ctx).Warn().Err(warning).Str("credentialSet", credentialSet).Msg("Using the last valid external action credentials")
 	}
 	if data.expectedCredentialIdentity != ([32]byte{}) && identity != data.expectedCredentialIdentity {
 		return fmt.Errorf("credential set %q immutable identity does not match the lifecycle binding", credentialSet)
 	}
-	targetURL, err := h.url.render(renderData)
-	if err != nil {
-		return fmt.Errorf("rendering URL: %w", err)
+	render := (*compiledTemplate).render
+	if capture != nil {
+		render = renderEnrichmentTemplate
 	}
-	body, err := h.body.render(renderData)
+	body, err := render(h.body, renderData)
 	if err != nil {
 		return fmt.Errorf("rendering body: %w", err)
 	}
 	if strings.Contains(h.contentType, "json") && !json.Valid([]byte(body)) {
 		return errors.New("rendered external action body is not valid JSON")
 	}
+	// Queries run only for an already selected event, with its pinned credentials.
+	// Lookup targets never recurse into the request's deferred enrichments.
+	if capture == nil {
+		renderData, body, err = enrichPayload(ctx, renderData, body, h.enrichments)
+		if err != nil {
+			return bound.redactError(err)
+		}
+	}
+	targetURL, err := render(h.url, renderData)
+	if err != nil {
+		return bound.redactError(fmt.Errorf("rendering URL: %w", err))
+	}
 	request, err := http.NewRequestWithContext(ctx, h.method, targetURL, strings.NewReader(body))
 	if err != nil {
 		return err
 	}
+	renderData.OutboundBody = body
+	if capture != nil && len(renderData.lookupPageQuery) != 0 {
+		query := request.URL.Query()
+		maps.Copy(query, renderData.lookupPageQuery)
+		request.URL.RawQuery = query.Encode()
+	}
 	for name, value := range h.headers {
-		rendered, err := value.render(renderData)
+		rendered, err := render(value, renderData)
 		if err != nil {
 			return fmt.Errorf("rendering header %q: %w", name, err)
 		}
@@ -318,7 +353,11 @@ func (h *httpTarget) Run(ctx context.Context, data *actionData) error {
 		return err
 	}
 
-	response, err := h.client.Do(request)
+	perform := h.perform
+	if perform == nil {
+		perform = h.client.Do
+	}
+	response, err := perform(request)
 	if err != nil {
 		return err
 	}
@@ -344,6 +383,9 @@ func (h *httpTarget) Run(ctx context.Context, data *actionData) error {
 		if err := h.response.validate(responseBody); err != nil {
 			return bound.redactError(err)
 		}
+	}
+	if capture != nil {
+		return capture(responseBody)
 	}
 	return nil
 }
@@ -868,12 +910,15 @@ func (a *boundAuth) addSecret(value string) {
 }
 
 func (a *boundAuth) redactError(err error) error {
-	if a == nil {
+	if a == nil || err == nil {
 		return err
 	}
 	value := err.Error()
 	for _, secret := range a.secrets {
 		value = strings.ReplaceAll(value, secret, "<redacted>")
+	}
+	if value == err.Error() {
+		return err
 	}
 	return errors.New(value)
 }
@@ -987,10 +1032,11 @@ func buildTransport(config *dynamic.ExternalActionTLS) (*http.Transport, error) 
 }
 
 type execTarget struct {
-	command string
-	args    []*compiledTemplate
-	env     map[string]*compiledTemplate
-	stdin   *compiledTemplate
+	enrichments []*compiledEnrichment
+	command     string
+	args        []*compiledTemplate
+	env         map[string]*compiledTemplate
+	stdin       *compiledTemplate
 }
 
 func newExecTarget(rule dynamic.ExternalActionRule) (target, error) {
@@ -1027,6 +1073,14 @@ func newExecTarget(rule dynamic.ExternalActionRule) (target, error) {
 }
 
 func (e *execTarget) Run(ctx context.Context, data *actionData) error {
+	stdin, err := e.stdin.render(data)
+	if err != nil {
+		return fmt.Errorf("rendering stdin: %w", err)
+	}
+	data, stdin, err = enrichPayload(ctx, data, stdin, e.enrichments)
+	if err != nil {
+		return err
+	}
 	arguments := make([]string, len(e.args))
 	for index, argument := range e.args {
 		value, err := argument.render(data)
@@ -1043,10 +1097,6 @@ func (e *execTarget) Run(ctx context.Context, data *actionData) error {
 			return fmt.Errorf("rendering environment variable %q: %w", name, err)
 		}
 		command.Env = append(command.Env, name+"="+value)
-	}
-	stdin, err := e.stdin.render(data)
-	if err != nil {
-		return fmt.Errorf("rendering stdin: %w", err)
 	}
 	command.Stdin = strings.NewReader(stdin)
 

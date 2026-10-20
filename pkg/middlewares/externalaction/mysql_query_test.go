@@ -144,6 +144,33 @@ func TestMySQLQueriesUseBoundValues(t *testing.T) {
 	}
 }
 
+func TestMySQLQueryCompilationRejectsUntrustedIdentifiers(t *testing.T) {
+	for _, table := range []string{
+		"", "9table", "schema.table", "events` WHERE 1=1 --", "events;DROP TABLE events",
+		"events/*comment*/", "events\n", "events\x00", "events\u202e", strings.Repeat("a", 65),
+	} {
+		t.Run(table, func(t *testing.T) {
+			binding, err := compileMySQLBindingQueries(table)
+			require.Error(t, err)
+			require.Empty(t, binding)
+			dedup, err := compileMySQLDedupQueries(table)
+			require.Error(t, err)
+			require.Empty(t, dedup)
+		})
+	}
+	for _, table := range []string{"A", "action_events_2", strings.Repeat("a", 64)} {
+		t.Run(table, func(t *testing.T) {
+			binding, err := compileMySQLBindingQueries(table)
+			require.NoError(t, err)
+			dedup, err := compileMySQLDedupQueries(table)
+			require.NoError(t, err)
+			for _, query := range []mysqlQuery{binding.insertCredential, binding.cleanup, dedup.selectClaim} {
+				require.Contains(t, string(query), "`"+table+"`")
+			}
+		})
+	}
+}
+
 func TestMySQLQueryClosesStatementsOnFailure(t *testing.T) {
 	for _, scan := range []bool{false, true} {
 		t.Run(map[bool]string{false: "exec", true: "scan"}[scan], func(t *testing.T) {

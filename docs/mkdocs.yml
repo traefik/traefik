@@ -322,6 +322,7 @@ nav:
               - 'EncodedCharacters': 'reference/routing-configuration/http/middlewares/encodedcharacters.md'
               - 'Errors': 'reference/routing-configuration/http/middlewares/errorpages.md'
               - 'ExternalAction': 'reference/routing-configuration/http/middlewares/externalaction.md'
+              - 'QueryEnrichment': 'reference/routing-configuration/http/middlewares/queryenrichment.md'
               - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
               - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
               - 'Headers': 'reference/routing-configuration/http/middlewares/headers.md'

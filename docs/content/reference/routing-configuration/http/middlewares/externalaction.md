@@ -388,6 +388,15 @@ response byte limit, and an `observation` whose method, host, and path select
 the intended rules. Pagination limits bound each poll. Multiple replicas need
 shared MySQL coordination and action deduplication to avoid duplicate work.
 
+A failed synchronous action is recorded without preventing independent items
+or subsequent pages from being observed. After finishing the bounded scan, the
+poller reports the failure and releases its coordination claim so a later poll
+can retry. Successfully completed action keys remain deduplicated. Source fetch,
+source validation, cancellation and pagination-limit errors still stop the scan.
+With `failurePolicy: ignore`, action failures do not fail poller coordination.
+Asynchronous dispatch records queue acceptance; worker failures are retried only
+when the source is observed again and the failed action claim is available.
+
 An optional `observation.event` wraps the response as a structured observation
 event for `before` rules. Its principal is available as `.Body.data.principal`
 and in the synthetic request's `X-Governance-Principal` header. This is configured

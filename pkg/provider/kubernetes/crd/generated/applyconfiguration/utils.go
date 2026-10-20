@@ -60,6 +60,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.CompressApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("DigestAuth"):
 		return &traefikiov1alpha1.DigestAuthApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("EnrichmentQuery"):
+		return &traefikiov1alpha1.EnrichmentQueryApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ErrorPage"):
 		return &traefikiov1alpha1.ErrorPageApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ExternalAction"):
@@ -120,6 +122,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.ObjectReferenceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PassiveServerHealthCheck"):
 		return &traefikiov1alpha1.PassiveServerHealthCheckApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("QueryEnrichment"):
+		return &traefikiov1alpha1.QueryEnrichmentApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RateLimit"):
 		return &traefikiov1alpha1.RateLimitApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Redis"):

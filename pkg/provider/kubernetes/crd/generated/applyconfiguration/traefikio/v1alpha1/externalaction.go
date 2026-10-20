@@ -31,6 +31,8 @@ package v1alpha1
 //
 // ExternalAction transforms matching requests into external actions.
 type ExternalActionApplyConfiguration struct {
+	// Enrichment references same-namespace QueryEnrichment middlewares in execution order.
+	Enrichment     []string                                                 `json:"enrichment,omitempty"`
 	RuntimeValues  map[string]RuntimeValueSourceApplyConfiguration          `json:"runtimeValues,omitempty"`
 	SelectionMode  *string                                                  `json:"selectionMode,omitempty"`
 	CredentialSets map[string]ExternalActionCredentialSetApplyConfiguration `json:"credentialSets,omitempty"`
@@ -43,6 +45,16 @@ type ExternalActionApplyConfiguration struct {
 // apply.
 func ExternalAction() *ExternalActionApplyConfiguration {
 	return &ExternalActionApplyConfiguration{}
+}
+
+// WithEnrichment adds the given value to the Enrichment field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Enrichment field.
+func (b *ExternalActionApplyConfiguration) WithEnrichment(values ...string) *ExternalActionApplyConfiguration {
+	for i := range values {
+		b.Enrichment = append(b.Enrichment, values[i])
+	}
+	return b
 }
 
 // WithRuntimeValues puts the entries into the RuntimeValues field in the declarative configuration

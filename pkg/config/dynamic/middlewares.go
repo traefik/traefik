@@ -53,6 +53,7 @@ type Middleware struct {
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
 	Tap               *Tap               `json:"tap,omitempty" toml:"tap,omitempty" yaml:"tap,omitempty" export:"true"`
 	ExternalAction    *ExternalAction    `json:"externalAction,omitempty" toml:"externalAction,omitempty" yaml:"externalAction,omitempty" export:"true"`
+	QueryEnrichment   *QueryEnrichment   `json:"queryEnrichment,omitempty" toml:"queryEnrichment,omitempty" yaml:"queryEnrichment,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 

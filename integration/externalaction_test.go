@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -37,19 +39,33 @@ func TestExternalActionSuite(t *testing.T) {
 }
 
 func (s *ExternalActionSuite) SetupSuite() {
-	s.BaseSuite.SetupSuite()
-	s.createComposeProject("governance")
-	s.composeUp()
+	// Published ports work with both local Linux Docker and VM-backed runtimes.
+	container, err := testcontainers.GenericContainer(s.T().Context(), testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image: "mysql:8.4",
+			Env: map[string]string{
+				"MYSQL_ROOT_PASSWORD": "integration-only", "MYSQL_ROOT_HOST": "%", "MYSQL_DATABASE": "governance",
+			},
+			ExposedPorts: []string{"3306/tcp"},
+			WaitingFor:   wait.ForListeningPort("3306/tcp").WithStartupTimeout(2 * time.Minute),
+		},
+		Started: true,
+	})
+	require.NoError(s.T(), err)
+	s.containers = map[string]testcontainers.Container{"mysql": container}
+	host, err := container.Host(s.T().Context())
+	require.NoError(s.T(), err)
+	port, err := container.MappedPort(s.T().Context(), "3306/tcp")
+	require.NoError(s.T(), err)
 	config := mysql.NewConfig()
 	config.User = "root"
 	config.Passwd = "integration-only"
 	config.Net = "tcp"
-	config.Addr = net.JoinHostPort(s.getComposeServiceIP("mysql"), "3306")
+	config.Addr = net.JoinHostPort(host, port.Port())
 	config.DBName = "governance"
 	config.ParseTime = true
 	config.Timeout = time.Second
 	s.dsn = config.FormatDSN()
-	var err error
 	s.db, err = sql.Open("mysql", s.dsn)
 	require.NoError(s.T(), err)
 	require.NoError(s.T(), try.Do(time.Minute, func() error { return s.db.PingContext(s.T().Context()) }))

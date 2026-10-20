@@ -55,6 +55,8 @@ type MiddlewareSpec struct {
 	Tap               *Tap                       `json:"tap,omitempty"`
 	// ExternalAction defines declarative external HTTP or executable actions.
 	ExternalAction *ExternalAction `json:"externalAction,omitempty"`
+	// QueryEnrichment defines reusable, bounded event metadata lookups.
+	QueryEnrichment *QueryEnrichment `json:"queryEnrichment,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`

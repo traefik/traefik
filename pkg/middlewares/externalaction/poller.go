@@ -324,8 +324,8 @@ func (p *compiledPoller) observationRequest(ctx context.Context) (*http.Request,
 
 func (p *compiledPoller) poll(ctx context.Context, middleware *middleware, renderData *actionData) error {
 	if p.config.Pagination == nil {
-		_, err := p.pollPage(ctx, middleware, renderData, 0, 0)
-		return err
+		result, err := p.pollPage(ctx, middleware, renderData, 0, 0)
+		return errors.Join(result.observationErr, err)
 	}
 
 	pagination := p.config.Pagination
@@ -333,21 +333,27 @@ func (p *compiledPoller) poll(ctx context.Context, middleware *middleware, rende
 	if page <= 0 {
 		page = 1
 	}
+	var failures observationFailures
 	for range pagination.MaxPages {
+		if err := ctx.Err(); err != nil {
+			return errors.Join(failures.err(), err)
+		}
 		result, err := p.pollPage(ctx, middleware, renderData, page, pagination.PageSize)
+		failures.add(result.observationErr)
 		if err != nil {
-			return err
+			return errors.Join(failures.err(), err)
 		}
 		if result.done {
-			return nil
+			return failures.err()
 		}
 		page++
 	}
-	return fmt.Errorf("pagination reached maxPages=%d before the source was exhausted", pagination.MaxPages)
+	return errors.Join(failures.err(), fmt.Errorf("pagination reached maxPages=%d before the source was exhausted", pagination.MaxPages))
 }
 
 type pollPageResult struct {
-	done bool
+	done           bool
+	observationErr error
 }
 
 func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, renderData *actionData, page, pageSize int) (pollPageResult, error) {
@@ -444,40 +450,41 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 		}
 	}
 
+	result := pollPageResult{}
 	if p.config.Observation.Event == nil {
 		observation, err := p.observationRequest(ctx)
 		if err != nil {
 			return pollPageResult{}, err
 		}
-		middleware.observeResponse(observation, nil, response.StatusCode, response.Header.Clone(), responseBody, started, completed)
+		result.observationErr = middleware.observeResponse(observation, nil, response.StatusCode, response.Header.Clone(), responseBody, started, completed)
 	} else {
 		eventRequest, payload, err := p.responseEventRequest(ctx, response.StatusCode, responseBody, completed)
 		if err != nil {
 			return pollPageResult{}, err
 		}
-		if err := middleware.observeRequest(eventRequest, payload); err != nil {
-			return pollPageResult{}, err
-		}
+		result.observationErr = middleware.observeRequest(eventRequest, payload)
 	}
 
 	if p.config.Pagination == nil {
-		return pollPageResult{done: true}, nil
+		result.done = true
+		return result, ctx.Err()
 	}
 	payload, err := decodeJSON(responseBody)
 	if err != nil {
-		return pollPageResult{}, fmt.Errorf("paginated response is not valid JSON: %w", err)
+		return result, fmt.Errorf("paginated response is not valid JSON: %w", err)
 	}
 	items, ok := selectJSON(payload, p.config.Pagination.ItemsJSONPath).([]any)
 	if !ok {
-		return pollPageResult{}, fmt.Errorf("pagination itemsJSONPath %q did not select an array", p.config.Pagination.ItemsJSONPath)
+		return result, fmt.Errorf("pagination itemsJSONPath %q did not select an array", p.config.Pagination.ItemsJSONPath)
 	}
 	if len(items) == 0 || len(items) < pageSize {
-		return pollPageResult{done: true}, nil
+		result.done = true
+		return result, ctx.Err()
 	}
 	if path := strings.TrimSpace(p.config.Pagination.TotalJSONPath); path != "" {
 		total, ok := integerValue(selectJSON(payload, path))
 		if !ok {
-			return pollPageResult{}, fmt.Errorf("pagination totalJSONPath %q did not select an integer", path)
+			return result, fmt.Errorf("pagination totalJSONPath %q did not select an integer", path)
 		}
 		startPage := p.config.Pagination.StartPage
 		if startPage <= 0 {
@@ -485,10 +492,11 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 		}
 		observed := (page - startPage + 1) * pageSize
 		if observed >= total {
-			return pollPageResult{done: true}, nil
+			result.done = true
+			return result, ctx.Err()
 		}
 	}
-	return pollPageResult{}, nil
+	return result, ctx.Err()
 }
 
 func (p *compiledPoller) responseEventRequest(ctx context.Context, status int, responseBody []byte, observedAt time.Time) (*http.Request, []byte, error) {

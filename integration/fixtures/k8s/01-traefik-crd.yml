@@ -1553,6 +1553,12 @@ spec:
                           x-kubernetes-int-or-string: true
                       type: object
                     type: object
+                  enrichment:
+                    description: Enrichment references same-namespace QueryEnrichment
+                      middlewares in execution order.
+                    items:
+                      type: string
+                    type: array
                   pollers:
                     items:
                       description: ExternalActionPoller periodically observes a configured
@@ -2640,6 +2646,252 @@ spec:
                 description: |-
                   Plugin defines the middleware plugin configuration.
                   More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
+                type: object
+              queryEnrichment:
+                description: QueryEnrichment defines reusable, bounded event metadata
+                  lookups.
+                properties:
+                  credentialSets:
+                    additionalProperties:
+                      description: ExternalActionCredentialSet defines one reloadable
+                        credential destination.
+                      properties:
+                        auth:
+                          description: ExternalActionAuth defines target authentication.
+                          properties:
+                            credentialSet:
+                              type: string
+                            header:
+                              type: string
+                            parameterFiles:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            parameters:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            password:
+                              type: string
+                            passwordFile:
+                              type: string
+                            scheme:
+                              type: string
+                            token:
+                              type: string
+                            tokenFile:
+                              type: string
+                            type:
+                              type: string
+                            username:
+                              type: string
+                          type: object
+                        immutableParameters:
+                          items:
+                            type: string
+                          type: array
+                        reloadInterval:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                    type: object
+                  inputTemplate:
+                    type: string
+                  outputTemplate:
+                    type: string
+                  queries:
+                    items:
+                      description: EnrichmentQuery accepts the same Kubernetes duration
+                        format as other middlewares.
+                      properties:
+                        allowedOrigins:
+                          items:
+                            type: string
+                          type: array
+                        body:
+                          description: ExternalActionBody defines source-body handling
+                            and the target payload template.
+                          properties:
+                            contentType:
+                              type: string
+                            format:
+                              type: string
+                            maxBytes:
+                              format: int64
+                              type: integer
+                            overflow:
+                              type: string
+                            readMode:
+                              type: string
+                            template:
+                              type: string
+                          type: object
+                        cacheBytes:
+                          format: int64
+                          type: integer
+                        cacheEntries:
+                          type: integer
+                        cacheTTL:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        http:
+                          description: ExternalActionHTTP defines an HTTP action target.
+                          properties:
+                            auth:
+                              description: ExternalActionAuth defines target authentication.
+                              properties:
+                                credentialSet:
+                                  type: string
+                                header:
+                                  type: string
+                                parameterFiles:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                parameters:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                                password:
+                                  type: string
+                                passwordFile:
+                                  type: string
+                                scheme:
+                                  type: string
+                                token:
+                                  type: string
+                                tokenFile:
+                                  type: string
+                                type:
+                                  type: string
+                                username:
+                                  type: string
+                              type: object
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            maxResponseBytes:
+                              format: int64
+                              type: integer
+                            method:
+                              type: string
+                            responseValidation:
+                              description: ExternalActionHTTPResponse validates HTTP
+                                and application-level target responses.
+                              properties:
+                                bodyRegex:
+                                  type: string
+                                messageJSONPath:
+                                  type: string
+                                statuses:
+                                  items:
+                                    type: string
+                                  type: array
+                                successJSONPath:
+                                  type: string
+                                successValues:
+                                  items:
+                                    type: string
+                                  type: array
+                              type: object
+                            tls:
+                              description: ExternalActionTLS defines optional target
+                                TLS trust and client authentication.
+                              properties:
+                                caFile:
+                                  type: string
+                                certFile:
+                                  type: string
+                                insecureSkipVerify:
+                                  type: boolean
+                                keyFile:
+                                  type: string
+                                serverName:
+                                  type: string
+                              type: object
+                            url:
+                              type: string
+                          type: object
+                        maxConcurrent:
+                          type: integer
+                        name:
+                          type: string
+                        pagination:
+                          description: ExternalActionPollerPagination bounds page-number
+                            based source discovery.
+                          properties:
+                            itemsJSONPath:
+                              type: string
+                            maxPages:
+                              type: integer
+                            pageParameter:
+                              type: string
+                            pageSize:
+                              type: integer
+                            pageSizeParameter:
+                              type: string
+                            startPage:
+                              type: integer
+                            totalJSONPath:
+                              type: string
+                          type: object
+                        resultTemplate:
+                          type: string
+                        timeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        when:
+                          type: string
+                      type: object
+                    type: array
+                  runtimeValues:
+                    additionalProperties:
+                      description: |-
+                        RuntimeValueSource declares one arbitrarily named value owned by this
+                        Middleware configuration. Exactly one source must be configured.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        file:
+                          type: string
+                        secretKeyRef:
+                          description: |-
+                            RuntimeObjectKeySelector selects one key from an object in the Middleware
+                            namespace. Cross-namespace secret access is intentionally not supported.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        value:
+                          type: string
+                      type: object
+                    type: object
                 type: object
               rateLimit:
                 description: |-

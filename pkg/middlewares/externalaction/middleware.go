@@ -82,19 +82,51 @@ type middleware struct {
 
 // New creates a general external action middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ExternalAction, name string) (http.Handler, error) {
+	return NewWithEnrichment(ctx, next, config, name, nil)
+}
+
+// NewWithEnrichment resolves event enrichment independently of the HTTP chain so pollers use it too.
+func NewWithEnrichment(ctx context.Context, next http.Handler, config dynamic.ExternalAction, name string, definitions map[string]dynamic.QueryEnrichment) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
 
+	if len(config.Enrichment) > 8 {
+		return nil, errors.New("at most 8 query enrichment references may be configured")
+	}
+	var enrichments []*compiledEnrichment
+	for _, reference := range config.Enrichment {
+		definition, ok := definitions[reference]
+		if !ok {
+			return nil, fmt.Errorf("query enrichment %q is not configured", reference)
+		}
+		enrichment, err := getEnrichment(ctx, reference, definition)
+		if err != nil {
+			return nil, fmt.Errorf("query enrichment %q: %w", reference, err)
+		}
+		enrichments = append(enrichments, enrichment)
+	}
+	encoded, err := json.Marshal(definitions)
+	if err != nil {
+		return nil, err
+	}
 	config.ConfigurationID = name
 	compiled, err := compileConfigWithContext(ctx, config)
 	if err != nil {
 		return nil, err
 	}
+	for _, rule := range compiled.rules {
+		switch destination := rule.target.(type) {
+		case *httpTarget:
+			destination.enrichments = enrichments
+		case *execTarget:
+			destination.enrichments = enrichments
+		}
+	}
 	raw, err := json.Marshal(compiled.config)
 	if err != nil {
 		return nil, fmt.Errorf("encoding external action configuration: %w", err)
 	}
-	configHash := sha256.Sum256(raw)
+	configHash := sha256.Sum256(append(raw, encoded...))
 	dispatch := getDispatcher(ctx, compiled.config, configHash, *logger)
 	value := &middleware{
 		next:       next,
@@ -220,10 +252,12 @@ func (m *middleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	m.dispatchAfter(matched, req, rawBody, overflow, status, recorder.Header(), capturedResponseBody, recorder.Size(), responseCaptureOverflow, started, completed)
+	// After-actions must not replace the already-written business response.
+	_ = m.dispatchAfter(matched, req, rawBody, overflow, status, recorder.Header(), capturedResponseBody, recorder.Size(), responseCaptureOverflow, started, completed)
 }
 
-func (m *middleware) dispatchAfter(matched []*compiledRule, req *http.Request, rawBody []byte, requestBodyOverflow bool, status int, responseHeaders http.Header, capturedResponseBody []byte, responseSize int64, responseCaptureOverflow bool, started, completed time.Time) {
+func (m *middleware) dispatchAfter(matched []*compiledRule, req *http.Request, rawBody []byte, requestBodyOverflow bool, status int, responseHeaders http.Header, capturedResponseBody []byte, responseSize int64, responseCaptureOverflow bool, started, completed time.Time) error {
+	var failures observationFailures
 	afterData := newActionData(req, rawBody, status, responseHeaders, started, completed)
 	afterData.Response.Bytes = responseSize
 	afterData.Response.RawBody = string(capturedResponseBody)
@@ -253,9 +287,15 @@ func (m *middleware) dispatchAfter(matched []*compiledRule, req *http.Request, r
 		}
 		dispatched := false
 		for _, expanded := range rule.expandPrepared(data) {
+			if err := req.Context().Err(); err != nil {
+				return errors.Join(failures.err(), err)
+			}
 			bindingMatches, err := rule.binding.matches(expanded)
 			if err != nil {
 				m.logger.Error().Err(err).Str("rule", rule.config.Name).Msg("External action credential identity match failed")
+				if failurePolicy(rule.config.FailurePolicy) != failureIgnore {
+					failures.add(fmt.Errorf("rule %q credential identity match: %w", rule.config.Name, err))
+				}
 				continue
 			}
 			if !bindingMatches {
@@ -263,6 +303,9 @@ func (m *middleware) dispatchAfter(matched []*compiledRule, req *http.Request, r
 			}
 			dispatched = true
 			if err := m.dispatchPrepared(rule, expanded); err != nil {
+				if failurePolicy(rule.config.FailurePolicy) != failureIgnore {
+					failures.add(fmt.Errorf("rule %q: %w", rule.config.Name, err))
+				}
 				if !errors.Is(err, errQueueFull) {
 					m.logger.Error().Err(err).Str("rule", rule.config.Name).Msg("External action failed")
 				}
@@ -272,9 +315,10 @@ func (m *middleware) dispatchAfter(matched []*compiledRule, req *http.Request, r
 			break
 		}
 	}
+	return failures.err()
 }
 
-func (m *middleware) observeResponse(req *http.Request, rawBody []byte, status int, responseHeaders http.Header, responseBody []byte, started, completed time.Time) {
+func (m *middleware) observeResponse(req *http.Request, rawBody []byte, status int, responseHeaders http.Header, responseBody []byte, started, completed time.Time) error {
 	matched := make([]*compiledRule, 0, len(m.config.rules))
 	for _, rule := range m.config.rules {
 		if phase(rule.config.Phase) != phaseAfter || !rule.matchesRequest(req) || !rule.matchesBody(req.Header.Get("Content-Type"), rawBody) || !rule.matchesStatus(status) {
@@ -283,12 +327,13 @@ func (m *middleware) observeResponse(req *http.Request, rawBody []byte, status i
 		matched = append(matched, rule)
 	}
 	if len(matched) == 0 {
-		return
+		return nil
 	}
-	m.dispatchAfter(matched, req, rawBody, false, status, responseHeaders, responseBody, int64(len(responseBody)), false, started, completed)
+	return m.dispatchAfter(matched, req, rawBody, false, status, responseHeaders, responseBody, int64(len(responseBody)), false, started, completed)
 }
 
 func (m *middleware) observeRequest(req *http.Request, rawBody []byte) error {
+	var failures observationFailures
 	data := newActionData(req, rawBody, 0, nil, time.Now().UTC(), time.Time{})
 	for _, rule := range m.config.rules {
 		if phase(rule.config.Phase) != "before" || !rule.matchesRequest(req) || !rule.matchesBody(req.Header.Get("Content-Type"), rawBody) {
@@ -297,10 +342,13 @@ func (m *middleware) observeRequest(req *http.Request, rawBody []byte) error {
 		ruleData := data.withFormats(rule.config.Body.Format, rule.config.ResponseBody.Format)
 		dispatched := false
 		for _, expanded := range rule.expandPrepared(ruleData) {
+			if err := req.Context().Err(); err != nil {
+				return errors.Join(failures.err(), err)
+			}
 			bindingMatches, err := rule.binding.matches(expanded)
 			if err != nil {
 				if failurePolicy(rule.config.FailurePolicy) != failureIgnore {
-					return fmt.Errorf("rule %q credential identity match: %w", rule.config.Name, err)
+					failures.add(fmt.Errorf("rule %q credential identity match: %w", rule.config.Name, err))
 				}
 				m.logger.Error().Err(err).Str("rule", rule.config.Name).Msg("External action credential identity match failed")
 				continue
@@ -311,7 +359,7 @@ func (m *middleware) observeRequest(req *http.Request, rawBody []byte) error {
 			dispatched = true
 			if err := m.dispatchPrepared(rule, expanded); err != nil {
 				if failurePolicy(rule.config.FailurePolicy) != failureIgnore {
-					return fmt.Errorf("rule %q: %w", rule.config.Name, err)
+					failures.add(fmt.Errorf("rule %q: %w", rule.config.Name, err))
 				}
 				if !errors.Is(err, errQueueFull) {
 					m.logger.Error().Err(err).Str("rule", rule.config.Name).Msg("External action failed")
@@ -322,7 +370,30 @@ func (m *middleware) observeRequest(req *http.Request, rawBody []byte) error {
 			break
 		}
 	}
-	return nil
+	return failures.err()
+}
+
+// Keep only the first failure so a large unsuccessful scan cannot accumulate errors.
+type observationFailures struct {
+	count int
+	first error
+}
+
+func (f *observationFailures) add(err error) {
+	if err == nil {
+		return
+	}
+	f.count++
+	if f.first == nil {
+		f.first = err
+	}
+}
+
+func (f *observationFailures) err() error {
+	if f.first == nil {
+		return nil
+	}
+	return fmt.Errorf("%d observation failures (first): %w", f.count, f.first)
 }
 
 func (c *compiledConfig) selectsFirst() bool {
@@ -918,15 +989,24 @@ func matchValue(value any) string {
 }
 
 type actionData struct {
-	Context          context.Context
-	Request          actionRequest
-	Body             any
-	RawBody          string
-	Response         actionResponse
-	Item             any
-	ItemIndex        int
-	AuthParameters   map[string]string
-	LifecycleBinding actionLifecycleBinding
+	Context              context.Context
+	Request              actionRequest
+	Body                 any
+	RawBody              string
+	Response             actionResponse
+	Item                 any
+	ItemIndex            int
+	AuthParameters       map[string]string
+	LifecycleBinding     actionLifecycleBinding
+	Payload              any
+	Input                any
+	Result               any
+	Enrichment           map[string]any
+	SourceAuthParameters map[string]string
+	LookupTime           time.Time
+	OutboundBody         string
+	lookupPageQuery      url.Values
+	deferredEnrichments  []*compiledEnrichment
 
 	credentialSet              string
 	expectedCredentialIdentity [32]byte
@@ -968,7 +1048,8 @@ func newActionData(req *http.Request, raw []byte, status int, responseHeaders ht
 		cookies[cookie.Name] = cookie.Value
 	}
 	data := &actionData{
-		Context: req.Context(),
+		Context:             req.Context(),
+		deferredEnrichments: enrichmentsFromContext(req.Context()),
 		Request: actionRequest{
 			Method:   req.Method,
 			Scheme:   scheme(req),
