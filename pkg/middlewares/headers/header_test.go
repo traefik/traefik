@@ -575,19 +575,44 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 }
 
 func TestNewHeader_customResponseHeaders_setCookie(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testCases := []struct {
+		desc     string
+		config   map[string]string
+		expected []string
+	}{
+		{
+			desc:     "Appending Set-Cookie",
+			config:   map[string]string{"Set-Cookie": "foo=bar; Path=/"},
+			expected: []string{"sticky=abc; Path=/", "foo=bar; Path=/"},
+		},
+		{
+			desc:     "Appending lowercase set-cookie",
+			config:   map[string]string{"set-cookie": "foo=bar; Path=/"},
+			expected: []string{"sticky=abc; Path=/", "foo=bar; Path=/"},
+		},
+		{
+			desc:   "Deleting Set-Cookie",
+			config: map[string]string{"Set-Cookie": ""},
+		},
+	}
+
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mid, err := NewHeader(next, dynamic.Headers{CustomResponseHeaders: map[string]string{"Set-Cookie": "foo=bar; Path=/"}})
-	require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config})
+			require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 
-	rw := httptest.NewRecorder()
-	rw.Header().Add("Set-Cookie", "sticky=abc; Path=/")
+			rw := httptest.NewRecorder()
+			rw.Header().Add("Set-Cookie", "sticky=abc; Path=/")
 
-	mid.ServeHTTP(rw, req)
+			mid.ServeHTTP(rw, req)
 
-	assert.Equal(t, []string{"sticky=abc; Path=/", "foo=bar; Path=/"}, rw.Result().Header.Values("Set-Cookie"))
+			assert.Equal(t, test.expected, rw.Result().Header.Values("Set-Cookie"))
+		})
+	}
 }
