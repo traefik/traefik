@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"regexp"
 	"slices"
@@ -16,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
@@ -437,7 +439,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				// Pre-resolve basic auth.
 				if ing.config.AuthType != nil {
-					basic, digest, err := p.resolveBasicAuth(ing.Namespace, ing.config)
+					basic, digest, authURNRefs, err := p.resolveBasicAuth(ing.Namespace, ing.config)
 					if err != nil {
 						logger.Error().
 							Err(err).
@@ -449,6 +451,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 					loc.BasicAuth = basic
 					loc.DigestAuth = digest
+					loc.AuthURNRefs = authURNRefs
 				}
 
 				// Pre-resolve custom headers ConfigMap.
@@ -969,12 +972,13 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 // then skips the ingress, as ingress-nginx does.
 func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, loc *location) error {
 	if cfg.AuthType != nil {
-		basic, digest, err := p.resolveBasicAuth(namespace, cfg)
+		basic, digest, authURNRefs, err := p.resolveBasicAuth(namespace, cfg)
 		if err != nil {
 			return err
 		}
 		loc.BasicAuth = basic
 		loc.DigestAuth = digest
+		loc.AuthURNRefs = authURNRefs
 	}
 
 	if cfg.CustomHeaders != nil {
@@ -1028,24 +1032,26 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 	}
 }
 
-func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, error) {
+// resolveBasicAuth returns the basic or digest auth configuration, and the URN references of its users.
+// The users hold the URNs of their Secret keys, and the returned URN references hold their values.
+func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, map[string]string, error) {
 	if cfg.AuthType == nil {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	authType := *cfg.AuthType
 	if authType != "basic" && authType != "digest" {
-		return nil, nil, fmt.Errorf("invalid auth-type %q", authType)
+		return nil, nil, nil, fmt.Errorf("invalid auth-type %q", authType)
 	}
 
 	authSecret := ptr.Deref(cfg.AuthSecret, "")
 	if authSecret == "" {
-		return nil, nil, errors.New("auth-secret must not be empty")
+		return nil, nil, nil, errors.New("auth-secret must not be empty")
 	}
 
 	parts := strings.Split(authSecret, "/")
 	if len(parts) > 2 {
-		return nil, nil, fmt.Errorf("invalid auth secret format %q", authSecret)
+		return nil, nil, nil, fmt.Errorf("invalid auth secret format %q", authSecret)
 	}
 
 	secretName := parts[0]
@@ -1056,29 +1062,41 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 	}
 
 	if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
-		return nil, nil, fmt.Errorf("cross-namespace auth secret not allowed: %s/%s", secretNamespace, secretName)
+		return nil, nil, nil, fmt.Errorf("cross-namespace auth secret not allowed: %s/%s", secretNamespace, secretName)
 	}
 
 	secret, err := p.k8sClient.GetSecret(secretNamespace, secretName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting secret %s: %w", authSecret, err)
+		return nil, nil, nil, fmt.Errorf("getting secret %s: %w", authSecret, err)
 	}
 
 	authSecretType := ptr.Deref(cfg.AuthSecretType, "auth-file")
 	if authSecretType != "auth-file" && authSecretType != "auth-map" {
-		return nil, nil, fmt.Errorf("invalid auth-secret-type %q", authSecretType)
+		return nil, nil, nil, fmt.Errorf("invalid auth-secret-type %q", authSecretType)
 	}
 
 	users, err := basicAuthUsers(secret, authSecretType)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting users from secret: %w", err)
+		return nil, nil, nil, fmt.Errorf("getting users from secret: %w", err)
+	}
+
+	middlewareType := "basicAuth"
+	if authType == "digest" {
+		middlewareType = "digestAuth"
+	}
+
+	// With an auth-map Secret, each user comes from its own key, so each user has its own URN and URNRefs.AddUsers, which takes one key, does not fit.
+	refs := k8s.URNRefs{}
+	userURNs := make(dynamic.Users, len(users))
+	for i, user := range users {
+		userURNs[i] = refs.Add(dynamic.JSONPointer(middlewareType, "users", strconv.Itoa(i)), authSecret, user.key, user.value)
 	}
 
 	realm := ptr.Deref(cfg.AuthRealm, "")
 	if authType == "digest" {
-		return nil, &dynamic.DigestAuth{Users: dynamic.Users(users), Realm: realm}, nil
+		return nil, &dynamic.DigestAuth{Users: userURNs, Realm: realm}, refs.OrNil(), nil
 	}
-	return &dynamic.BasicAuth{Users: dynamic.Users(users), Realm: realm}, nil, nil
+	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
 }
 
 func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
@@ -1230,14 +1248,21 @@ func clientAuthTypeFromString(verifyClient *string) string {
 	}
 }
 
-func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]string, error) {
-	var users []string
+// secretUser is a user read from a Secret, with the key of the Secret holding it.
+type secretUser struct {
+	key   string
+	value string
+}
+
+func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]secretUser, error) {
+	var users []secretUser
 	if authSecretType == "auth-map" {
 		if len(secret.Data) == 0 {
 			return nil, fmt.Errorf("secret %s/%s contains no user credentials", secret.Namespace, secret.Name)
 		}
-		for user, pass := range secret.Data {
-			users = append(users, user+":"+string(pass))
+		// Sorted, so that an unchanged Secret gives the same configuration and does not trigger a reload.
+		for _, user := range slices.Sorted(maps.Keys(secret.Data)) {
+			users = append(users, secretUser{key: user, value: user + ":" + string(secret.Data[user])})
 		}
 		return users, nil
 	}
@@ -1250,7 +1275,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]string, err
 	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
-			users = append(users, line)
+			users = append(users, secretUser{key: "auth", value: line})
 		}
 	}
 

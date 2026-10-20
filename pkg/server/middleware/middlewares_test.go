@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/plugins"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
@@ -379,4 +381,142 @@ func TestBuilder_buildConstructor(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fakePluginsBuilder struct {
+	config         map[string]any
+	buildErr       error
+	constructorErr error
+}
+
+func (b *fakePluginsBuilder) Build(_ string, config map[string]any, _ string) (plugins.Constructor, error) {
+	b.config = config
+	if b.buildErr != nil {
+		return nil, b.buildErr
+	}
+
+	return func(_ context.Context, next http.Handler) (http.Handler, error) {
+		if b.constructorErr != nil {
+			return nil, b.constructorErr
+		}
+
+		return next, nil
+	}, nil
+}
+
+func TestBuilder_BuildMiddlewareChain_pluginURNRefs(t *testing.T) {
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Middlewares: map[string]*dynamic.Middleware{
+				"plugin@file": {
+					Plugin:  map[string]dynamic.PluginConf{"my-plugin": {"token": "urn:k8s:secret:creds:token"}},
+					URNRefs: map[string]string{"/plugin/my-plugin/token": "secret"},
+				},
+			},
+		},
+	})
+
+	pluginsBuilder := &fakePluginsBuilder{}
+	builder := NewBuilder(rtConf.Middlewares, nil, pluginsBuilder)
+
+	_, err := builder.BuildMiddlewareChain(t.Context(), []string{"plugin@file"}).Then(http.NotFoundHandler())
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]any{"token": "secret"}, pluginsBuilder.config)
+	assert.Equal(t, dynamic.PluginConf{"token": "urn:k8s:secret:creds:token"}, rtConf.Middlewares["plugin@file"].Plugin["my-plugin"])
+}
+
+func TestBuilder_BuildMiddlewareChain_pluginErrorURNRefs(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc           string
+		pluginsBuilder *fakePluginsBuilder
+		expectedErr    string
+	}{
+		{
+			desc:           "build error",
+			pluginsBuilder: &fakePluginsBuilder{buildErr: errors.New(`strconv.ParseInt: parsing "s3cr3t": invalid syntax`)},
+			expectedErr:    `plugin: strconv.ParseInt: parsing "urn:k8s:secret:creds:token": invalid syntax`,
+		},
+		{
+			desc:           "constructor error",
+			pluginsBuilder: &fakePluginsBuilder{constructorErr: errors.New(`strconv.ParseInt: parsing "s3cr3t": invalid syntax`)},
+			expectedErr:    `strconv.ParseInt: parsing "urn:k8s:secret:creds:token": invalid syntax`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{
+						"plugin@file": {
+							Plugin:  map[string]dynamic.PluginConf{"my-plugin": {"token": "urn:k8s:secret:creds:token"}},
+							URNRefs: map[string]string{"/plugin/my-plugin/token": "s3cr3t"},
+						},
+					},
+				},
+			})
+
+			builder := NewBuilder(rtConf.Middlewares, nil, test.pluginsBuilder)
+
+			_, err := builder.BuildMiddlewareChain(t.Context(), []string{"plugin@file"}).Then(http.NotFoundHandler())
+			require.EqualError(t, err, test.expectedErr)
+
+			assert.Equal(t, []string{test.expectedErr}, rtConf.Middlewares["plugin@file"].Err)
+		})
+	}
+}
+
+func TestBuilder_BuildMiddlewareChain_basicAuthURNRefs(t *testing.T) {
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Middlewares: map[string]*dynamic.Middleware{
+				"auth@file": {
+					BasicAuth: &dynamic.BasicAuth{Users: dynamic.Users{"urn:k8s:secret:auth:users"}},
+					URNRefs:   map[string]string{"/basicAuth/users/0": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+				},
+			},
+		},
+	})
+
+	builder := NewBuilder(rtConf.Middlewares, nil, nil)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	handler, err := builder.BuildMiddlewareChain(t.Context(), []string{"auth@file"}).Then(next)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+	req.SetBasicAuth("test", "test")
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, http.StatusOK, rw.Code)
+	assert.Equal(t, dynamic.Users{"urn:k8s:secret:auth:users"}, rtConf.Middlewares["auth@file"].BasicAuth.Users)
+}
+
+func TestBuilder_BuildMiddlewareChain_invalidURNRefs(t *testing.T) {
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Middlewares: map[string]*dynamic.Middleware{
+				"auth@file": {
+					BasicAuth: &dynamic.BasicAuth{Users: dynamic.Users{"urn:k8s:secret:auth:users"}},
+					URNRefs:   map[string]string{"/basicAuth/users/1": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+				},
+			},
+		},
+	})
+
+	builder := NewBuilder(rtConf.Middlewares, nil, nil)
+
+	_, err := builder.BuildMiddlewareChain(t.Context(), []string{"auth@file"}).Then(http.NotFoundHandler())
+	require.Error(t, err)
+
+	assert.Equal(t, runtime.StatusDisabled, rtConf.Middlewares["auth@file"].Status)
 }
