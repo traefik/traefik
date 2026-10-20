@@ -76,6 +76,23 @@ If you've discovered a security vulnerability in Traefik,
 we appreciate your help in disclosing it to us in a responsible manner,
 by creating a [security advisory](https://github.com/traefik/traefik/security/advisories).
 
+## Coordinated Disclosure
+
+A reported vulnerability stays under embargo until its security advisory is published.
+Until then, please keep the report, the proof of concept, and any exchange with the security team confidential,
+and do not share them outside the people already involved in the report.
+This confidentiality is a fundamental part of the security of Traefik users:
+until the fixed releases are out, a disclosed vulnerability can be exploited
+against every deployment that has no way to upgrade yet.
+
+We publish the security advisory together with the releases that fix the vulnerability,
+and we coordinate the publication date with the reporter.
+Once the advisory is published, the reporter is free to discuss the vulnerability publicly,
+and is credited in it unless the Code of Conduct below says otherwise.
+
+If you need to share the report with a third party before publication,
+for example another affected vendor, please ask us first on the security advisory.
+
 ## Code of Conduct for Vulnerability Submissions
 
 We are committed to handling every legitimate report responsibly,

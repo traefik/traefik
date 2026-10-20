@@ -121,6 +121,12 @@ func (c *conn) readLoop() {
 
 		c.expectedResponse.Store(false)
 		c.ErrCh <- nil
+
+		// An upgraded connection is handed over to the tunnel copiers, which read from the same bufio.Reader:
+		// the read loop must not touch it anymore, and the connection can never be pooled again.
+		if c.isUpgraded() {
+			return
+		}
 	}
 }
 
@@ -511,7 +517,7 @@ type connPoolsKeyType string
 var connPoolsKey connPoolsKeyType = "connPools"
 
 // AddConnPoolsOnContext adds an empty holder in the frontend connection context to store the dedicated connection
-// pools isolating connection-bound NTLM/Negotiate authentications, mirroring service.AddTransportOnContext for the
+// pools isolating connection-bound NTLM/Negotiate authentications, mirroring kerberos.AddTransportOnContext for the
 // FastProxy connection pools.
 func AddConnPoolsOnContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, connPoolsKey, &stickyConnPools{})

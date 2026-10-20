@@ -1,0 +1,139 @@
+# Relay: forwards pull request and issue events to traefik/ai.
+#
+# Reference copy of `.github/workflows/aw-dispatch.yaml` in every repository
+# the agents act on. Keep it identical on every branch: only the copy on the
+# default branch runs, whatever branch a pull request targets.
+#
+# It forwards the identifiers of every pull request event, every comment on a
+# pull request and the opening of an issue, except those sent by a bot. The
+# routing table in traefik/ai (.github/workflows/dispatch.yml) decides what
+# starts an agent, or which fixed action is taken. Reviews are not forwarded:
+# on a fork pull request they get no secrets.
+#
+# Needs, shared by the organisation: vars.AW_DISPATCH_APP_CLIENT_ID and
+# secrets.AW_DISPATCH_APP_PRIVATE_KEY, the traefik-aw-dispatch App, installed on
+# traefik/ai only with `actions: write`.
+#
+# pull_request_target is safe here only because nothing is checked out.
+name: "Relay: pull request and issue events to traefik/ai"
+
+on:
+  pull_request_target:
+    # All of them: the default is only opened, synchronize and reopened.
+    types: [opened, edited, closed, reopened, synchronize, converted_to_draft,
+            ready_for_review, labeled, unlabeled, assigned, unassigned,
+            review_requested, review_request_removed, milestoned, demilestoned,
+            locked, unlocked, auto_merge_enabled, auto_merge_disabled, enqueued,
+            dequeued]
+  issue_comment:
+    types: [created, edited, deleted]
+  issues:
+    types: [opened, edited, deleted, transferred, pinned, unpinned, closed,
+            reopened, assigned, unassigned, labeled, unlabeled, locked, unlocked,
+            milestoned, demilestoned]
+
+permissions:
+  pull-requests: read # a comment payload has no pull request data
+
+concurrency:
+  group: aw-dispatch-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}-${{ github.event.action }}-${{ github.event.label.name || github.event.comment.id }}
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    name: Relay to traefik/ai
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Nothing from a bot: the agents write with an App token, whose events
+    # start workflows, so they would start themselves again. A comment is
+    # forwarded only from a pull request; an issue is forwarded only when it
+    # is opened.
+    if: >-
+      github.event.sender.type != 'Bot'
+      && (
+        github.event_name == 'pull_request_target'
+        || github.event_name == 'issues'
+        || github.event.issue.pull_request != null
+      )
+    steps:
+      - name: Resolve the pull request and the command
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          PAYLOAD_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PAYLOAD_DRAFT: ${{ github.event.pull_request.draft }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+
+          # An issue has neither: both stay empty for `issues`.
+          head_repo="${PAYLOAD_HEAD_REPO}"
+          draft="${PAYLOAD_DRAFT}"
+          if [ "${EVENT_NAME}" = "issue_comment" ]; then
+            pr=$(gh api "repos/${SOURCE_REPO}/pulls/${NUMBER}")
+            head_repo=$(printf '%s' "${pr}" | jq -r '.head.repo.full_name // ""')
+            draft=$(printf '%s' "${pr}" | jq -r '.draft')
+          fi
+
+          # Only `/ai-<name>` alone on the first line is a command, and only
+          # its name is sent: the comment text never leaves this repository.
+          command=""
+          if [ "${EVENT_NAME}" = "issue_comment" ] && [ "${ACTION}" != "deleted" ]; then
+            first_line=$(printf '%s' "${COMMENT_BODY}" | tr -d '\r' | head -n 1)
+            read -r word rest <<< "${first_line}" || true
+            if [ -z "${rest:-}" ] && printf '%s' "${word:-}" | grep -qE '^/ai-[a-z0-9][a-z0-9-]*$'; then
+              command="${word#/ai-}"
+            fi
+          fi
+
+          {
+            echo "head_repo=${head_repo}"
+            echo "draft=${draft}"
+            echo "command=${command}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Mint a token for traefik/ai
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AW_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AW_DISPATCH_APP_PRIVATE_KEY }}
+          owner: traefik
+          repositories: ai
+          permission-actions: write
+
+      # Identifiers only; traefik/ai checks them and reads the rest itself.
+      - name: Dispatch in the control repository
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          SOURCE_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          HEAD_REPO: ${{ steps.resolve.outputs.head_repo }}
+          DRAFT: ${{ steps.resolve.outputs.draft }}
+          LABEL: ${{ github.event.label.name }}
+          COMMAND: ${{ steps.resolve.outputs.command }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
+          ACTOR: ${{ github.event.sender.login }}
+        run: |
+          set -euo pipefail
+          gh workflow run dispatch \
+            --repo traefik/ai \
+            --ref main \
+            --field source_repo="${SOURCE_REPO}" \
+            --field number="${NUMBER}" \
+            --field event_name="${EVENT_NAME}" \
+            --field action="${ACTION}" \
+            --field head_repo="${HEAD_REPO}" \
+            --field draft="${DRAFT}" \
+            --field label="${LABEL}" \
+            --field command="${COMMAND}" \
+            --field comment_id="${COMMENT_ID}" \
+            --field author_association="${AUTHOR_ASSOCIATION}" \
+            --field actor="${ACTOR}"
