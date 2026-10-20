@@ -1257,8 +1257,8 @@ github.com/tklauser/go-sysconf v0.3.16/go.mod h1:/qNL9xxDhc7tx3HSRsLWNnuzbVfh3e7
 github.com/tklauser/numcpus v0.11.0 h1:nSTwhKH5e1dMNsCdVBukSZrURJRoHbSEQjdEbY+9RXw=
 github.com/tklauser/numcpus v0.11.0/go.mod h1:z+LwcLq54uWZTX0u/bGobaV34u6V7KNlTZejzM6/3MQ=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/traefik/grpc-web v0.17.0 h1:ZMPoEeH/8SqO0vl0NOs03aW6ky56NKKVsucLp9xMi+g=
-github.com/traefik/grpc-web v0.17.0/go.mod h1:2jNLG2xOchSXr9/tUp8ZdqSvpeACPW3j7qGZrMwSfnw=
+github.com/traefik/grpc-web v0.18.0 h1:rPRPcpPSUPatFfT6lgOigqF4jz3zCUfrFCSxuRG5QF0=
+github.com/traefik/grpc-web v0.18.0/go.mod h1:2jNLG2xOchSXr9/tUp8ZdqSvpeACPW3j7qGZrMwSfnw=
 github.com/traefik/paerser v0.2.2 h1:cpzW/ZrQrBh3mdwD/jnp6aXASiUFKOVr6ldP+keJTcQ=
 github.com/traefik/paerser v0.2.2/go.mod h1:7BBDd4FANoVgaTZG+yh26jI6CA2nds7D/4VTEdIsh24=
 github.com/traefik/yaegi v0.16.1 h1:f1De3DVJqIDKmnasUF6MwmWv1dSEEat0wcpXhD2On3E=
