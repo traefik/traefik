@@ -62,6 +62,11 @@ type Middleware struct {
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
+	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
+	// Only providers set it, and it must stay part of the configuration hash, so that a change of a referenced value reloads the middleware.
+	URNRefs map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false" loggable:"false"`
 }
 
 // +k8s:deepcopy-gen=true

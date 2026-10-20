@@ -1571,17 +1571,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-basicauth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-basicauth-rule-0-path-0-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-basicauth-whoami-80-remove-authorization-header": {
@@ -1707,17 +1713,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-digestauth-rule-0-path-0-digest-auth": {
 							DigestAuth: &dynamic.DigestAuth{
 								Users: dynamic.Users{
-									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+									"urn:k8s:secret:default/digest-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/digestAuth/users/0": "user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
 							},
 						},
 						"default-ingress-with-digestauth-rule-0-path-0-tls-digest-auth": {
 							DigestAuth: &dynamic.DigestAuth{
 								Users: dynamic.Users{
-									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+									"urn:k8s:secret:default/digest-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/digestAuth/users/0": "user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
 							},
 						},
 						"default-ingress-with-digestauth-whoami-80-remove-authorization-header": {
@@ -3331,9 +3343,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-ssl-passthrough-and-auth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-ssl-passthrough-and-auth-rule-0-path-0-allowed-source-range": {
@@ -8518,17 +8533,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-backend-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-backend-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-backend-retry": {
@@ -8945,26 +8966,38 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-rule-0-path-0-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-remove-authorization-header": {
@@ -13182,6 +13215,138 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Auth TLS secret cross-namespace reference is rejected even when the TLS option is cached",
+			paths: []string{
+				"secrets-tls-option-cross-namespace.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-cross-namespace.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "a",
+										Name:      "ingress-with-auth-tls-secret-cross-namespace-owner",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "a-1-ca-2-require-and-verify-client-cert",
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-retry"},
+							Service:     "a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "a",
+										Name:      "ingress-with-auth-tls-secret-cross-namespace-owner",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "a",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"a-ingress-with-auth-tls-secret-cross-namespace-owner": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"a-1-ca-2-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----OWNER-----END CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
 			// Regression test for a TLS option name collision: a secret name may contain dots, and
 			// normalizing the name turns my.secret into my-secret without changing its length, so
 			// the length suffixes alone cannot keep the two secrets apart. Two Ingresses referencing
@@ -13795,6 +13960,329 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-same-host-second-ingress": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-7-ca-secret-9-require-and-verify-client-cert": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS secret applied to every Ingress on the same host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-mixed-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-public-ingress-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-public-ingress-rule-0-path-0-tls-retry"},
+							Service:     "default-public-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+							},
+						},
+						"default-public-ingress-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-public-ingress-rule-0-path-0-retry"},
+							Service:     "default-public-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/protected")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-protected-ingress-rule-0-path-0-tls-retry"},
+							Service:     "default-protected-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "protected-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+							},
+						},
+						"default-protected-ingress-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/protected")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-protected-ingress-rule-0-path-0-redirect-scheme",
+								"default-protected-ingress-rule-0-path-0-retry",
+							},
+							Service: "default-protected-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "protected-ingress",
+									},
+								},
+							},
+						},
+						"default-optional-ingress-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-optional-ingress-rule-0-path-0-tls-retry"},
+							Service:     "default-optional-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "optional-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+							},
+						},
+						"default-optional-ingress-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-optional-ingress-rule-0-path-0-retry"},
+							Service:     "default-optional-ingress-whoami-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "optional-ingress",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-public-ingress-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-public-ingress-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-protected-ingress-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-optional-ingress-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-optional-ingress-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-public-ingress-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-public-ingress",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-protected-ingress-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-protected-ingress",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-optional-ingress-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-optional-ingress",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-public-ingress": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-protected-ingress": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-optional-ingress": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -23399,6 +23887,11 @@ func TestLoadIngresses(t *testing.T) {
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
+
+			for name, middleware := range conf.HTTP.Middlewares {
+				_, err := middleware.ResolveURNRefs()
+				assert.NoError(t, err, name)
+			}
 		})
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -144,6 +145,12 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 				return http.ErrUseLastResponse
 			},
 			Timeout: 30 * time.Second,
+			// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
+			// Authentication does), which requires the authentication requests of a client connection to be sent
+			// on a connection to the auth server dedicated to it.
+			Transport: kerberos.NewRoundTripper(http.DefaultTransport, func() http.RoundTripper {
+				return http.DefaultTransport.(*http.Transport).Clone()
+			}),
 		}
 	}
 	return m, nil
