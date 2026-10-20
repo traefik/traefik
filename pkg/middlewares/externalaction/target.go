@@ -1077,22 +1077,24 @@ func (e *execTarget) Run(ctx context.Context, data *actionData) error {
 	if err != nil {
 		return fmt.Errorf("rendering stdin: %w", err)
 	}
-	data, stdin, err = enrichPayload(ctx, data, stdin, e.enrichments)
+	enriched, stdin, err := enrichPayload(ctx, data, stdin, e.enrichments)
 	if err != nil {
 		return err
 	}
 	arguments := make([]string, len(e.args))
 	for index, argument := range e.args {
-		value, err := argument.render(data)
+		value, err := argument.render(enriched)
 		if err != nil {
 			return fmt.Errorf("rendering argument %d: %w", index, err)
 		}
 		arguments[index] = value
 	}
+	// The executable is a literal absolute operator-configured path. Arguments
+	// stay separate: request data is never concatenated into a shell command.
 	command := exec.CommandContext(ctx, e.command, arguments...)
 	command.Env = os.Environ()
 	for name, variable := range e.env {
-		value, err := variable.render(data)
+		value, err := variable.render(enriched)
 		if err != nil {
 			return fmt.Errorf("rendering environment variable %q: %w", name, err)
 		}

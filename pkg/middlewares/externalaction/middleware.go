@@ -406,25 +406,21 @@ func (m *middleware) dispatch(rule *compiledRule, data *actionData) error {
 }
 
 func (m *middleware) dispatchPrepared(rule *compiledRule, data *actionData) error {
+	prepared := *data
 	if strings.EqualFold(rule.config.Body.ReadMode, "none") {
-		value := *data
-		value.Body = nil
-		value.RawBody = ""
-		data = &value
+		prepared.Body = nil
+		prepared.RawBody = ""
 	}
 	if !strings.EqualFold(rule.config.ResponseBody.ReadMode, "capture") {
-		value := *data
-		value.Response.Body = nil
-		value.Response.RawBody = ""
-		data = &value
+		prepared.Response.Body = nil
+		prepared.Response.RawBody = ""
 	}
 	if mode(rule.config.Mode) == "async" {
-		var err error
-		data, err = rule.pinCredential(data)
+		pinned, err := rule.pinCredential(&prepared)
 		if err != nil {
 			return err
 		}
-		task := actionTask{rule: rule, data: data.clone()}
+		task := actionTask{rule: rule, data: pinned.clone()}
 		if !m.dispatcher.enqueue(task) {
 			m.dispatcher.logDrop(rule.config.Name)
 			return errQueueFull
@@ -436,9 +432,9 @@ func (m *middleware) dispatchPrepared(rule *compiledRule, data *actionData) erro
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}
-	ctx, cancel := context.WithTimeout(data.Context, timeout)
+	ctx, cancel := context.WithTimeout(prepared.Context, timeout)
 	defer cancel()
-	return runRule(ctx, rule, data)
+	return runRule(ctx, rule, &prepared)
 }
 
 func (r *compiledRule) pinCredential(data *actionData) (*actionData, error) {
@@ -737,8 +733,8 @@ func validateRule(rule dynamic.ExternalActionRule) error {
 	if rule.ResponseBody.MaxBytes > maxResponseBytes {
 		return fmt.Errorf("response body maxBytes must not exceed %d", maxResponseBytes)
 	}
-	requiresResponseBody := len(rule.Match.ResponseBodyJSONPaths) > 0 ||
-		rule.ForEach != nil && strings.EqualFold(rule.ForEach.Source, "responseBody")
+	foreachResponse := rule.ForEach != nil && strings.EqualFold(rule.ForEach.Source, "responseBody")
+	requiresResponseBody := len(rule.Match.ResponseBodyJSONPaths) > 0 || foreachResponse
 	if requiresResponseBody && !strings.EqualFold(rule.ResponseBody.ReadMode, "capture") {
 		return errors.New("responseBody readMode must be capture when response body matching or iteration is configured")
 	}

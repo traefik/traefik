@@ -450,3 +450,8 @@ are selected by an administrator-supplied absolute path. Templates supply litera
 arguments, environment values, and stdin without invoking a shell. Use stdin for
 untrusted payloads, or an adapter's end-of-options separator when passing them
 as arguments; the adapter must validate any resulting application commands.
+An operator can explicitly choose an interpreter as the executable. Passing
+request-derived text to its evaluation option (for example, a shell's `-c`)
+would cross that interpreter's code-execution boundary and must be avoided.
+Passing separate arguments prevents shell expansion in Traefik; it does not
+sandbox the configured program or control how that program interprets its input.

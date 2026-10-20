@@ -115,36 +115,36 @@ func enrichmentsFromContext(ctx context.Context) []*compiledEnrichment {
 func compileEnrichment(name string, config dynamic.QueryEnrichment) (*compiledEnrichment, error) {
 	// JSON intentionally hides RuntimeValue.Value from the dashboard. Use the
 	// generated deep copy so Secret material survives without sharing mutable maps.
-	config = *config.DeepCopy()
-	credentialConfig := dynamic.ExternalAction{ConfigurationID: name, RuntimeValues: config.RuntimeValues, CredentialSets: config.CredentialSets}
+	resolved := *config.DeepCopy()
+	credentialConfig := dynamic.ExternalAction{ConfigurationID: name, RuntimeValues: resolved.RuntimeValues, CredentialSets: resolved.CredentialSets}
 	if err := resolveRuntimeConfig(&credentialConfig); err != nil {
 		return nil, err
 	}
-	if err := runtimeconfig.Resolve(config.RuntimeValues, &config); err != nil {
+	if err := runtimeconfig.Resolve(resolved.RuntimeValues, &resolved); err != nil {
 		return nil, err
 	}
 	credentials, err := compileCredentialSets(credentialConfig.CredentialSets)
 	if err != nil {
 		return nil, err
 	}
-	if len(config.Queries) == 0 || len(config.Queries) > 16 {
+	if len(resolved.Queries) == 0 || len(resolved.Queries) > 16 {
 		return nil, errors.New("queryEnrichment requires between 1 and 16 queries")
 	}
 	value := &compiledEnrichment{name: name}
-	if config.InputTemplate != "" {
-		value.input, err = newTemplate("enrichment-input", config.InputTemplate)
+	if resolved.InputTemplate != "" {
+		value.input, err = newTemplate("enrichment-input", resolved.InputTemplate)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if config.OutputTemplate != "" {
-		value.output, err = newTemplate("enrichment-output", config.OutputTemplate)
+	if resolved.OutputTemplate != "" {
+		value.output, err = newTemplate("enrichment-output", resolved.OutputTemplate)
 		if err != nil {
 			return nil, err
 		}
 	}
 	names := make(map[string]bool)
-	for _, query := range config.Queries {
+	for _, query := range resolved.Queries {
 		if query.Name == "" || names[query.Name] {
 			return nil, errors.New("query names must be nonempty and unique")
 		}
@@ -243,7 +243,7 @@ func compileQuery(config dynamic.EnrichmentQuery, credentials map[string]*compil
 	if transport, ok := query.target.client.Transport.(*http.Transport); ok {
 		transport.MaxResponseHeaderBytes = 32 * 1024
 	}
-	query.target.perform = query.do
+	query.target.perform = query.performLookupRequest
 	return query, nil
 }
 
@@ -447,7 +447,7 @@ func decodeEnrichmentJSON(body string) (any, error) {
 	return decodeJSON([]byte(body))
 }
 
-func (q *compiledQuery) do(req *http.Request) (*http.Response, error) {
+func (q *compiledQuery) performLookupRequest(req *http.Request) (*http.Response, error) {
 	if req.URL.User != nil || !q.origins[req.URL.Scheme+"://"+req.URL.Host] {
 		return nil, errors.New("lookup destination is outside allowedOrigins")
 	}

@@ -140,6 +140,7 @@ type memoryDeduplicator struct {
 	entries     map[[32]byte]memoryDeduplicationEntry
 	maxEntries  int
 	lastCleanup time.Time
+	nextExpiry  time.Time
 }
 
 func (m *memoryDeduplicator) Claim(_ context.Context, _ string, key string, ttl, lease time.Duration) (string, bool, error) {
@@ -149,11 +150,16 @@ func (m *memoryDeduplicator) Claim(_ context.Context, _ string, key string, ttl,
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if now.Sub(m.lastCleanup) >= time.Minute || len(m.entries) >= m.maxEntries {
+	// At capacity, scan only when an entry could have expired. Repeated claims
+	// against a full live map must not turn each request into a full-map scan.
+	if now.Sub(m.lastCleanup) >= time.Minute || (len(m.entries) >= m.maxEntries && !m.nextExpiry.After(now)) {
+		m.nextExpiry = time.Time{}
 		for candidate, entry := range m.entries {
 			if !entry.expiresAt.After(now) {
 				delete(m.entries, candidate)
+				continue
 			}
+			m.trackExpiry(entry.expiresAt)
 		}
 		m.lastCleanup = now
 	}
@@ -179,6 +185,7 @@ func (m *memoryDeduplicator) Claim(_ context.Context, _ string, key string, ttl,
 		leaseTill: now.Add(lease),
 		expiresAt: now.Add(ttl),
 	}
+	m.trackExpiry(now.Add(ttl))
 	return claimID, true, nil
 }
 
@@ -196,6 +203,7 @@ func (m *memoryDeduplicator) Complete(_ context.Context, key, claimID string, tt
 	entry.leaseTill = now
 	entry.expiresAt = now.Add(ttl)
 	m.entries[hash] = entry
+	m.trackExpiry(entry.expiresAt)
 	return nil
 }
 
@@ -208,6 +216,14 @@ func (m *memoryDeduplicator) Release(_ context.Context, key, claimID string) err
 		delete(m.entries, hash)
 	}
 	return nil
+}
+
+// Extensions and removals may leave an earlier lower bound, costing at most
+// one extra cleanup; shortening an expiry must immediately lower the bound.
+func (m *memoryDeduplicator) trackExpiry(expiresAt time.Time) {
+	if m.nextExpiry.IsZero() || expiresAt.Before(m.nextExpiry) {
+		m.nextExpiry = expiresAt
+	}
 }
 
 type mysqlDeduplicatorKey struct {

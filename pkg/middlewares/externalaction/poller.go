@@ -357,7 +357,7 @@ type pollPageResult struct {
 }
 
 func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, renderData *actionData, page, pageSize int) (pollPageResult, error) {
-	renderData, bound, _, warning, err := p.auth.bind(renderData)
+	authenticated, bound, _, warning, err := p.auth.bind(renderData)
 	if warning != nil {
 		// The last valid reloadable material remains in use; the warning is
 		// surfaced without including the credential value.
@@ -366,7 +366,7 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 	if err != nil {
 		return pollPageResult{}, fmt.Errorf("binding request authentication: %w", err)
 	}
-	targetURL, err := p.url.render(renderData)
+	targetURL, err := p.url.render(authenticated)
 	if err != nil {
 		return pollPageResult{}, bound.redactError(fmt.Errorf("rendering URL: %w", err))
 	}
@@ -374,7 +374,8 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 	if err != nil {
 		return pollPageResult{}, bound.redactError(fmt.Errorf("parsing URL: %w", err))
 	}
-	if (parsedURL.Scheme != schemeHTTP && parsedURL.Scheme != "https") || parsedURL.Host == "" {
+	validScheme := parsedURL.Scheme == schemeHTTP || parsedURL.Scheme == "https"
+	if !validScheme || parsedURL.Host == "" {
 		return pollPageResult{}, errors.New("rendered poller URL must use http or https with a host")
 	}
 	if p.config.Pagination != nil {
@@ -383,7 +384,7 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 		query.Set(p.config.Pagination.PageSizeParameter, strconv.Itoa(pageSize))
 		parsedURL.RawQuery = query.Encode()
 	}
-	body, err := p.body.render(renderData)
+	body, err := p.body.render(authenticated)
 	if err != nil {
 		return pollPageResult{}, bound.redactError(fmt.Errorf("rendering body: %w", err))
 	}
@@ -402,7 +403,7 @@ func (p *compiledPoller) pollPage(ctx context.Context, middleware *middleware, r
 		return pollPageResult{}, bound.redactError(err)
 	}
 	for name, value := range p.headers {
-		rendered, err := value.render(renderData)
+		rendered, err := value.render(authenticated)
 		if err != nil {
 			return pollPageResult{}, bound.redactError(fmt.Errorf("rendering header %q: %w", name, err))
 		}
