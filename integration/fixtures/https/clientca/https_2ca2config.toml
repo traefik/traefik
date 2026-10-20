@@ -40,14 +40,14 @@
         url = "{{ .Server2 }}"
 
 [[tls.certificates]]
-  certFile = "fixtures/https/snitest.com.cert"
-  keyFile = "fixtures/https/snitest.com.key"
+  certFile = "{{ .CertDir }}/snitest.com.cert"
+  keyFile = "{{ .CertDir }}/snitest.com.key"
 
 [[tls.certificates]]
-  certFile = "fixtures/https/snitest.org.cert"
-  keyFile = "fixtures/https/snitest.org.key"
+  certFile = "{{ .CertDir }}/snitest.org.cert"
+  keyFile = "{{ .CertDir }}/snitest.org.key"
 
 [tls.options]
   [tls.options.default.clientAuth]
-    caFiles = ["fixtures/https/clientca/ca1.crt", "fixtures/https/clientca/ca2.crt"]
+    caFiles = ["{{ .CADir }}/ca1.crt", "{{ .CADir }}/ca2.crt"]
     clientAuthType = "RequireAndVerifyClientCert"
