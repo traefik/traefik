@@ -161,7 +161,7 @@ Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) r
 
 The `tls.frontend` field on a `Gateway` (`spec.tls.frontend`, a sibling of `spec.listeners`) allows requiring a client certificate (mTLS) for incoming connections, as defined by [GEP-91](https://gateway-api.sigs.k8s.io/geps/gep-91/).
 
-Validation can be set for all HTTPS listeners on the `Gateway` via `default`, and optionally overridden per port via `perPort`. The CA certificates used to validate client certificates are provided through `caCertificateRefs`, referencing `ConfigMap` or `Secret` resources containing a `ca.crt` key.
+Validation can be set for all HTTPS listeners on the `Gateway` via `default`, and optionally overridden per port via `perPort`. The CA certificate used to validate client certificates is provided through `caCertificateRefs`, with a single reference to a `ConfigMap` containing a `ca.crt` key, as defined by the core support of the specification. Other kinds of resources and multiple references are not supported, and leave the listener not accepted.
 
 The `mode` field controls how a missing or invalid client certificate is handled:
 
@@ -225,8 +225,9 @@ spec:
 !!! warning "Gateways sharing an entry point"
 
     A client certificate validation is selected during the TLS handshake, from the hostname (SNI) the client connects to.
-    When several `Gateway` resources share an entry point, the validation of a listener applies to the hostnames of the routes attached to it, which are then no longer served by the other `Gateway` resources on that entry point.
-    A route without hostnames attached to a listener without hostname extends the validation to every hostname the other `Gateway` resources do not claim.
+    When several `Gateway` resources share an entry point, the validation of a listener applies to its hostname for every `Gateway` on that entry point, including the routes of the listeners without validation.
+    A listener without hostname extends its validation to every hostname the other listeners of the entry point do not declare.
+    When two listeners declare different validations for the same hostname, the one of the oldest `Gateway` applies and Traefik logs a warning.
 
 ## Exposing a Route
 
