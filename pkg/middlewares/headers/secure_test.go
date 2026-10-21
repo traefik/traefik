@@ -12,17 +12,12 @@ import (
 // Middleware tests based on https://github.com/unrolled/secure
 
 func Test_newSecure_sslForceHost(t *testing.T) {
-	type expected struct {
-		statusCode int
-		location   string
-	}
-
 	testCases := []struct {
-		expected
-
-		desc string
-		host string
-		cfg  dynamic.Headers
+		desc               string
+		host               string
+		cfg                dynamic.Headers
+		expectedStatusCode int
+		expectedLocation   string
 	}{
 		{
 			desc: "http should return a 301",
@@ -32,8 +27,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusMovedPermanently,
-			location:   "https://powpow.example.com",
+			expectedStatusCode: http.StatusMovedPermanently,
+			expectedLocation:   "https://powpow.example.com",
 		},
 		{
 			desc: "http sub domain should return a 301",
@@ -43,8 +38,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusMovedPermanently,
-			location:   "https://powpow.example.com",
+			expectedStatusCode: http.StatusMovedPermanently,
+			expectedLocation:   "https://powpow.example.com",
 		},
 		{
 			desc: "https should return a 200",
@@ -54,7 +49,7 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusOK,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc: "https sub domain should return a 301",
@@ -64,8 +59,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusMovedPermanently,
-			location:   "https://powpow.example.com",
+			expectedStatusCode: http.StatusMovedPermanently,
+			expectedLocation:   "https://powpow.example.com",
 		},
 		{
 			desc: "http without force host and sub domain should return a 301",
@@ -75,8 +70,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusMovedPermanently,
-			location:   "https://powpow.example.com",
+			expectedStatusCode: http.StatusMovedPermanently,
+			expectedLocation:   "https://powpow.example.com",
 		},
 		{
 			desc: "https without force host and sub domain should return a 301",
@@ -86,7 +81,7 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
 			},
-			statusCode: http.StatusOK,
+			expectedStatusCode: http.StatusOK,
 		},
 	}
 
@@ -104,8 +99,8 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 
 			mid.ServeHTTP(rw, req)
 
-			assert.Equal(t, test.expected.statusCode, rw.Result().StatusCode)
-			assert.Equal(t, test.expected.location, rw.Header().Get("Location"))
+			assert.Equal(t, test.expectedStatusCode, rw.Result().StatusCode)
+			assert.Equal(t, test.expectedLocation, rw.Header().Get("Location"))
 		})
 	}
 }
