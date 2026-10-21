@@ -165,6 +165,9 @@ Defines whether request query semicolons should be URLEncoded. (Default: ```fals
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MAXHEADERBYTES`:  
 Maximum size of request headers in bytes. (Default: ```1048576```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MAXHEADERVALUECOUNT`:  
+Maximum number of request header values. (Default: ```500```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 

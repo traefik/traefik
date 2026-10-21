@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -1661,6 +1662,50 @@ func (s *SimpleSuite) TestMaxHeaderBytes() {
 			require.NoError(s.T(), err)
 
 			req.Header.Set("X-Large-Header", strings.Repeat("A", test.headerSize))
+
+			err = try.Request(req, 2*time.Second, try.StatusCodeIs(test.expectedStatus))
+			require.NoError(s.T(), err)
+		})
+	}
+}
+
+func (s *SimpleSuite) TestMaxHeaderValueCount() {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	file := s.adaptFile("fixtures/simple_max_header_value_count.toml", struct {
+		TestServer string
+	}{ts.URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	testCases := []struct {
+		name           string
+		headerCount    int
+		expectedStatus int
+	}{
+		{
+			name:           "5 headers",
+			headerCount:    5,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "20 headers",
+			headerCount:    20,
+			expectedStatus: http.StatusRequestHeaderFieldsTooLarge,
+		},
+	}
+
+	for _, test := range testCases {
+		s.Run(test.name, func() {
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+			require.NoError(s.T(), err)
+
+			for i := range test.headerCount {
+				req.Header.Add("X-Header", strconv.Itoa(i))
+			}
 
 			err = try.Request(req, 2*time.Second, try.StatusCodeIs(test.expectedStatus))
 			require.NoError(s.T(), err)
