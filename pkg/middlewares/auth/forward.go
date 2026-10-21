@@ -148,15 +148,20 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		addr.Scheme = "http"
 		fa.address = addr.String()
 
-		tr, ok := fa.client.Transport.(*http.Transport)
+		tr, ok := transport.(*http.Transport)
 		if !ok {
 			tr = http.DefaultTransport.(*http.Transport).Clone()
+		} else {
+			tr = tr.Clone()
 		}
 		tr.Protocols = new(http.Protocols)
 		tr.Protocols.SetHTTP1(false)
 		tr.Protocols.SetUnencryptedHTTP2(true)
 		tr.ForceAttemptHTTP2 = true
-		fa.client.Transport = tr
+		transport = tr
+		newTransport = func() http.RoundTripper {
+			return tr.Clone()
+		}
 	}
 
 	// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
