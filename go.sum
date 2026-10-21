@@ -75,8 +75,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/HdrHistogram/hdrhistogram-go v1.1.0/go.mod h1:yDgFjdqOqDEKOvasDdhWNXYg9BVp4O+o5f6V/ehm6Oo=
 github.com/HdrHistogram/hdrhistogram-go v1.1.2/go.mod h1:yDgFjdqOqDEKOvasDdhWNXYg9BVp4O+o5f6V/ehm6Oo=
-github.com/HdrHistogram/hdrhistogram-go v1.2.0 h1:XMJkDWuz6bM9Fzy7zORuVFKH7ZJY41G2q8KWhVGkNiY=
-github.com/HdrHistogram/hdrhistogram-go v1.2.0/go.mod h1:CiIeGiHSd06zjX+FypuEJ5EQ07KKtxZ+8J6hszwVQig=
+github.com/HdrHistogram/hdrhistogram-go v1.4.0 h1:JdU0squ73hT0G45GVKzZ8KXS8ImiFuPHAA36aWaCfMM=
+github.com/HdrHistogram/hdrhistogram-go v1.4.0/go.mod h1:CiIeGiHSd06zjX+FypuEJ5EQ07KKtxZ+8J6hszwVQig=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
@@ -622,8 +622,8 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/gravitational/trace v1.5.1 h1:CdSymAjkE1VOef+lsC5x29jX9WbgI0fBtnRqeT4Fh+c=
-github.com/gravitational/trace v1.5.1/go.mod h1:sJKfJHIQ7IkG8kvYpFPEr6mj3WDEdZ0YAc7xAD8w7lw=
+github.com/gravitational/trace v1.5.4 h1:nMmF7alwvNiQJhC817Hhmgm95bzKOXbnxvkickTkRDY=
+github.com/gravitational/trace v1.5.4/go.mod h1:/uCbC3ukVU8Pdrh8+3vNLyyE1aGheBWpGGrMnwIK80E=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
 github.com/grpc-ecosystem/grpc-gateway v1.9.0/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
@@ -1297,8 +1297,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/volcengine/volc-sdk-golang v1.0.256 h1:UDSYn6iXipw8u/NuvN0XLzDiCxAi9zZT182poqZ3qq0=
 github.com/volcengine/volc-sdk-golang v1.0.256/go.mod h1:zHJlaqiMbIB+0mcrsZPTwOb3FB7S/0MCfqlnO8R7hlM=
-github.com/vulcand/oxy/v2 v2.1.0 h1:JnFb/qz+o96E6NEl4X6WSmNmcrlccPmCIyhAZLBVLWM=
-github.com/vulcand/oxy/v2 v2.1.0/go.mod h1:9kY0wYBlMqrgXCZTNYCwE89NYwGGdM3sSD+w59CKMhw=
+github.com/vulcand/oxy/v2 v2.3.0 h1:hi/zBnfuYILg7Q5HYBFbj0spAQ8t+1n7hg0elj54nus=
+github.com/vulcand/oxy/v2 v2.3.0/go.mod h1:iIM9ASk0fRs926AtnLaKVWB+Y6qjHw1ZFLZ7WudM2gA=
 github.com/vulcand/predicate v1.3.0 h1:jtNe4PHbLJ649dR7Gl+MSAzUhLGtLspAkWlSjoOiXg8=
 github.com/vulcand/predicate v1.3.0/go.mod h1:opzv9MetRuMNnuoPeTSWtwzjcXsxQC00/fuWzkPTn4s=
 github.com/vultr/govultr/v3 v3.33.0 h1:SD8y4tmoSXbpX137JT5k7jLxJ5j0WcnRtDbq/+P26IA=
