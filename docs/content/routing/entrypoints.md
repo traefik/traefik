@@ -1347,6 +1347,40 @@ entryPoints:
 --entryPoints.websecure.http.maxHeaderBytes=524288
 ```
 
+### MaxHeaderValueCount
+
+_Optional, Default=500_
+
+The `maxHeaderValueCount` option defines the maximum number of request header values Traefik reads for each request.
+A request exceeding this limit is rejected with a `431 Request Header Fields Too Large` status.
+
+Comma-separated values in a single header line count as one value, while values sent on multiple header lines count once per line.
+
+!!! note "HTTP/3"
+
+    This option applies to HTTP/1 and HTTP/2 only; it has no effect on HTTP/3 requests.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      maxHeaderValueCount: 100
+```
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    maxHeaderValueCount = 100
+```
+
+```bash tab="CLI"
+--entryPoints.websecure.address=:443
+--entryPoints.websecure.http.maxHeaderValueCount=100
+```
+
 ### AliasHeadersStrategy
 
 _Optional, Default=keep_

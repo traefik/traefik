@@ -698,13 +698,14 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	serverHTTP := &http.Server{
-		Protocols:      &protocols,
-		Handler:        handler,
-		ErrorLog:       httpServerLogger,
-		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		Protocols:           &protocols,
+		Handler:             handler,
+		ErrorLog:            httpServerLogger,
+		ReadTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:        time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
+		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
 		HTTP2: &http.HTTP2Config{
 			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
 		},
