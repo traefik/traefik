@@ -17,7 +17,7 @@ const (
 
 type buffer struct {
 	name   string
-	buffer http.Handler
+	buffer *oxybuffer.Buffer
 }
 
 // New creates a buffering middleware.
@@ -45,9 +45,10 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 		options = append(options, oxybuffer.DisableResponseBuffer())
 	}
 
-	oxyBuffer, err := middlewares.WrapExternal(next, func(next http.Handler) (http.Handler, error) {
-		return oxybuffer.New(next, options...)
-	})
+	oxyBuffer, err := oxybuffer.New(
+		next,
+		options...,
+	)
 	if err != nil {
 		return nil, err
 	}

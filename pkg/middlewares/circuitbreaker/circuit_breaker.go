@@ -17,7 +17,7 @@ import (
 const typeName = "CircuitBreaker"
 
 type circuitBreaker struct {
-	circuitBreaker http.Handler
+	circuitBreaker *cbreaker.CircuitBreaker
 	name           string
 }
 
@@ -56,9 +56,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 		cbOpts = append(cbOpts, cbreaker.RecoveryDuration(time.Duration(confCircuitBreaker.RecoveryDuration)))
 	}
 
-	oxyCircuitBreaker, err := middlewares.WrapExternal(next, func(next http.Handler) (http.Handler, error) {
-		return cbreaker.New(next, expression, cbOpts...)
-	})
+	oxyCircuitBreaker, err := cbreaker.New(next, expression, cbOpts...)
 	if err != nil {
 		return nil, err
 	}
