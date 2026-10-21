@@ -1,4 +1,4 @@
-package middlewares
+package plugins
 
 import (
 	"bufio"
@@ -150,7 +150,7 @@ func TestWrapExternal(t *testing.T) {
 			})
 
 			var externalWriter http.ResponseWriter
-			handler, err := WrapExternal(next, func(next http.Handler) (http.Handler, error) {
+			handler, err := wrapExternal(next, func(next http.Handler) (http.Handler, error) {
 				return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 					externalWriter = test.externalWriter(rw)
 					next.ServeHTTP(externalWriter, req)
@@ -187,7 +187,7 @@ func TestWrapExternal_entryWriterPassedThrough(t *testing.T) {
 		assert.True(t, ok)
 	})
 
-	handler, err := WrapExternal(next, func(next http.Handler) (http.Handler, error) {
+	handler, err := wrapExternal(next, func(next http.Handler) (http.Handler, error) {
 		return next, nil
 	})
 	require.NoError(t, err)

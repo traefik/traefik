@@ -1,4 +1,4 @@
-package middlewares
+package plugins
 
 import (
 	"bufio"
@@ -11,15 +11,15 @@ import (
 
 type entryWriterKey struct{}
 
-// WrapExternal builds, with the given build function, a handler we do not control (third-party middleware, plugin) around next.
+// wrapExternal builds, with the given build function, a plugin handler (Yaegi, Wasm), whose code we do not control, around next.
 // The external handler receives a ResponseWriter implementing http.Flusher and http.Hijacker,
 // as such code asserts them directly instead of using http.ResponseController.
 // The ResponseWriter it gives to next may not implement Unwrap:
 // it is wrapped to reach the deadlines, full duplex and hijacking of the ResponseWriter given to the external handler,
 // when the external ResponseWriter does not support them.
 // Flush is left to the external ResponseWriter: a buffering writer must not be flushed past.
-func WrapExternal(next http.Handler, build func(next http.Handler) (http.Handler, error)) (http.Handler, error) {
-	handler, _, err := WrapExternalWith(next, func(next http.Handler) (http.Handler, struct{}, error) {
+func wrapExternal(next http.Handler, build func(next http.Handler) (http.Handler, error)) (http.Handler, error) {
+	handler, _, err := wrapExternalWith(next, func(next http.Handler) (http.Handler, struct{}, error) {
 		external, err := build(next)
 		return external, struct{}{}, err
 	})
@@ -27,8 +27,8 @@ func WrapExternal(next http.Handler, build func(next http.Handler) (http.Handler
 	return handler, err
 }
 
-// WrapExternalWith is WrapExternal for a build function which also returns a value, such as a context modifier, returned as is.
-func WrapExternalWith[T any](next http.Handler, build func(next http.Handler) (http.Handler, T, error)) (http.Handler, T, error) {
+// wrapExternalWith is wrapExternal for a build function which also returns a value, such as a context modifier, returned as is.
+func wrapExternalWith[T any](next http.Handler, build func(next http.Handler) (http.Handler, T, error)) (http.Handler, T, error) {
 	external, value, err := build(exitHandler(next))
 	if err != nil {
 		var zero T
