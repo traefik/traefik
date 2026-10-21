@@ -120,9 +120,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 	}
 
 	status := gatev1.HTTPRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
+		Parents: parentStatuses,
 	}
 	if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
 		logger.Warn().

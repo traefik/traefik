@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -57,8 +56,8 @@ func TestProvider_resolveBasicAuth_authMap(t *testing.T) {
 	t.Parallel()
 
 	kubeClient := kubefake.NewClientset(&corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "basic-auth", Namespace: "default"},
-		Data:       map[string][]byte{"user2": []byte("hash2"), "user1": []byte("hash1")},
+		Name: "basic-auth", Namespace: "default",
+		Data: map[string][]byte{"user2": []byte("hash2"), "user1": []byte("hash1")},
 	})
 	client := newClient(kubeClient)
 

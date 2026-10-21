@@ -42,10 +42,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
 		cp := mc.Certs[k]
 		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
-			Certificate: tls.Certificate{
-				CertFile: types.FileOrContent(cp.Cert),
-				KeyFile:  types.FileOrContent(cp.Key),
-			},
+			CertFile: types.FileOrContent(cp.Cert),
+			KeyFile:  types.FileOrContent(cp.Key),
 		})
 	}
 

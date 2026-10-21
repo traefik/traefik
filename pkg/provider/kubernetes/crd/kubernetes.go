@@ -1580,10 +1580,8 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores,
 	}
 
 	return &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: types.FileOrContent(cert),
-			KeyFile:  types.FileOrContent(key),
-		},
+		CertFile: types.FileOrContent(cert),
+		KeyFile:  types.FileOrContent(key),
 	}, nil
 }
 

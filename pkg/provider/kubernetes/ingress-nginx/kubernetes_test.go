@@ -1313,10 +1313,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -2883,10 +2881,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -3452,10 +3448,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -3737,10 +3731,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -9920,10 +9912,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -12948,10 +12938,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -13722,10 +13710,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -13972,10 +13958,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -14295,10 +14279,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -17299,10 +17281,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -17465,10 +17445,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -21409,10 +21387,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -22455,10 +22431,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -22989,16 +22963,12 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -23120,10 +23090,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -23266,10 +23234,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -23630,10 +23596,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
