@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"golang.org/x/net/http2"
@@ -295,6 +296,30 @@ func TestDisableHTTP2(t *testing.T) {
 			assert.Equal(t, test.expectedProto, resp.Proto)
 		})
 	}
+}
+
+func TestHTTP2HealthCheckTimeouts(t *testing.T) {
+	rt, err := createRoundTripper(&dynamic.ServersTransport{
+		ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+			ReadIdleTimeout: ptypes.Duration(10 * time.Second),
+			PingTimeout:     ptypes.Duration(15 * time.Second),
+		},
+	})
+	require.NoError(t, err)
+
+	krt, ok := rt.(*KerberosRoundTripper)
+	require.True(t, ok)
+
+	srt, ok := krt.OriginalRoundTripper.(*smartRoundTripper)
+	require.True(t, ok)
+
+	expected := &http.HTTP2Config{
+		SendPingTimeout: 10 * time.Second,
+		PingTimeout:     15 * time.Second,
+	}
+	assert.Equal(t, expected, srt.http.HTTP2)
+	assert.Equal(t, expected, srt.http2.HTTP2)
+	assert.Equal(t, expected, srt.h2c.HTTP2)
 }
 
 func TestProxyHTTP2BackendScheme(t *testing.T) {
