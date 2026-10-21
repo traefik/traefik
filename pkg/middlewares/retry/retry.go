@@ -382,6 +382,16 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (r *responseWriter) Flush() {
+	// Same test as Header: nothing has been committed to the client for this
+	// attempt. Either it is being swallowed so the request can be retried, or no
+	// status has been chosen yet — and flushing an uncommitted response makes
+	// net/http write an implicit 200 and release it to the client while the retry
+	// loop is still running. The next attempt then writes into a response that has
+	// already been sent, so its status and headers are silently dropped.
+	if r.shouldNotWrite || !r.written {
+		return
+	}
+
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
