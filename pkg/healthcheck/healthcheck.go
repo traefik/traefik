@@ -1,7 +1,6 @@
 package healthcheck
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -483,16 +482,7 @@ func (c *codeCatcher) Write(bytes []byte) (int, error) {
 	return c.ResponseWriter.Write(bytes)
 }
 
-func (c *codeCatcher) Flush() {
-	if flusher, ok := c.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
-}
-
-func (c *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := c.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", c.ResponseWriter)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (c *codeCatcher) Unwrap() http.ResponseWriter {
+	return c.ResponseWriter
 }

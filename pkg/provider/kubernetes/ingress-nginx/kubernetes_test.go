@@ -1314,10 +1314,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -1572,17 +1570,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-basicauth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-basicauth-rule-0-path-0-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-basicauth-whoami-80-remove-authorization-header": {
@@ -1708,17 +1712,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-digestauth-rule-0-path-0-digest-auth": {
 							DigestAuth: &dynamic.DigestAuth{
 								Users: dynamic.Users{
-									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+									"urn:k8s:secret:default/digest-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/digestAuth/users/0": "user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
 							},
 						},
 						"default-ingress-with-digestauth-rule-0-path-0-tls-digest-auth": {
 							DigestAuth: &dynamic.DigestAuth{
 								Users: dynamic.Users{
-									"user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
+									"urn:k8s:secret:default/digest-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/digestAuth/users/0": "user:Authentication Required:0a132d8fa4138c56c1c2b50e9c9d1a1f",
 							},
 						},
 						"default-ingress-with-digestauth-whoami-80-remove-authorization-header": {
@@ -2872,10 +2882,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -3332,9 +3340,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-ssl-passthrough-and-auth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-ssl-passthrough-and-auth-rule-0-path-0-allowed-source-range": {
@@ -3438,10 +3449,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -3723,10 +3732,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -8519,17 +8526,23 @@ func TestLoadIngresses(t *testing.T) {
 						"default-backend-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-backend-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
-									"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
+									"urn:k8s:secret:default/basic-auth:auth",
 								},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-backend-retry": {
@@ -8946,26 +8959,38 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-rule-0-path-0-tls-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g="},
+								Users: dynamic.Users{"urn:k8s:secret:default/basic-auth:auth"},
 								Realm: "Authentication Required",
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "user:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=",
 							},
 						},
 						"default-ingress-with-default-backend-per-host-basic-auth-default-backend-remove-authorization-header": {
@@ -9888,10 +9913,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -12916,10 +12939,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -13690,10 +13711,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -13940,10 +13959,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -14263,10 +14280,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -17267,10 +17282,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -17433,10 +17446,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -21654,10 +21665,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -23311,10 +23320,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -23845,16 +23852,12 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -23976,10 +23979,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -24122,10 +24123,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -24944,10 +24943,8 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: "-----BEGIN CERTIFICATE-----",
-								KeyFile:  "-----BEGIN CERTIFICATE-----",
-							},
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
 				},
@@ -25207,6 +25204,11 @@ func TestLoadIngresses(t *testing.T) {
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
+
+			for name, middleware := range conf.HTTP.Middlewares {
+				_, err := middleware.ResolveURNRefs()
+				assert.NoError(t, err, name)
+			}
 		})
 	}
 }

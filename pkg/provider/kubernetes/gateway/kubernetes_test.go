@@ -705,10 +705,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -1363,10 +1361,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -1444,16 +1440,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -1997,10 +1989,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -2121,10 +2111,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -3897,10 +3885,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -6991,10 +6977,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7306,10 +7290,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -8236,10 +8218,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -8325,10 +8305,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -8409,10 +8387,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9027,10 +9003,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9251,10 +9225,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9445,10 +9417,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9639,10 +9609,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9791,10 +9759,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -10092,16 +10058,12 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -10308,10 +10270,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -10560,10 +10520,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{},
@@ -10780,10 +10738,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -10891,7 +10847,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Unsupported group",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10901,7 +10857,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Unsupported kind",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10912,7 +10868,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Namespace does not match the listener",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10924,7 +10880,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Route namespace defaulting does not match the listener",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{SectionName: "foo"}},
 			}},
 			routeNamespace: "foo",
@@ -10936,7 +10892,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Name does not match the listener",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10949,7 +10905,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Match",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -10973,7 +10929,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "Match with route namespace defaulting",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{}},
 			}},
 			routeNamespace: "default",
@@ -10999,7 +10955,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			// this controller.
 			desc: "Only parentRefs targeting our Gateways are returned",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{}},
 			}},
 			parentRefs: []gatev1.ParentReference{
@@ -11031,7 +10987,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 		{
 			desc: "ParentRef is associated to all the listeners of its Gateway",
 			gateways: []gatewayWithListeners{{
-				gateway: &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway: &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{
 					{SectionName: "web"},
 					{SectionName: "websecure"},
@@ -11064,11 +11020,11 @@ func Test_matchingGatewayListener(t *testing.T) {
 			desc: "ParentRef is only associated to the referenced Gateway",
 			gateways: []gatewayWithListeners{
 				{
-					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-a", Namespace: "default"}},
+					gateway:   &gatev1.Gateway{Name: "gateway-a", Namespace: "default"},
 					listeners: []gatewayListener{{SectionName: "web"}},
 				},
 				{
-					gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway-b", Namespace: "default"}},
+					gateway:   &gatev1.Gateway{Name: "gateway-b", Namespace: "default"},
 					listeners: []gatewayListener{{SectionName: "web"}},
 				},
 			},
@@ -11096,7 +11052,7 @@ func Test_matchingGatewayListener(t *testing.T) {
 			// ResolvedRefs even though the route attaches to none of them.
 			desc: "ParentRef with a non-matching port still returns the Gateway listeners",
 			gateways: []gatewayWithListeners{{
-				gateway:   &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default"}},
+				gateway:   &gatev1.Gateway{Name: "gateway", Namespace: "default"},
 				listeners: []gatewayListener{{SectionName: "web", Port: 80}},
 			}},
 			parentRefs: []gatev1.ParentReference{{
@@ -11456,7 +11412,7 @@ func Test_attachedRoutes_conflicts(t *testing.T) {
 // Traefik instance (our controllerName but a parentRef not targeting a managed
 // Gateway), while replacing our stale statuses with the freshly computed ones.
 func Test_mergeRouteParentStatuses(t *testing.T) {
-	gateways := []gatewayWithListeners{{gateway: &gatev1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"}}}}
+	gateways := []gatewayWithListeners{{gateway: &gatev1.Gateway{Name: "my-gateway", Namespace: "default"}}}
 
 	otherController := gatev1.RouteParentStatus{
 		ControllerName: "example.com/other-controller",
@@ -11542,10 +11498,8 @@ func Test_managesGateway(t *testing.T) {
 		{
 			desc: "no scoping manages everything",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -11553,10 +11507,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "matching ref",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -11564,10 +11516,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "different name",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "bar",
-				},
+				Namespace: "default",
+				Name:      "bar",
 			},
 			want: false,
 		},
@@ -11575,10 +11525,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "different namespace",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "other",
-					Name:      "foo",
-				},
+				Namespace: "other",
+				Name:      "foo",
 			},
 			want: false,
 		},
@@ -11589,10 +11537,8 @@ func Test_managesGateway(t *testing.T) {
 				{Namespace: "other", Name: "bar"},
 			},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -11603,10 +11549,8 @@ func Test_managesGateway(t *testing.T) {
 				{Namespace: "other", Name: "bar"},
 			},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "baz",
-				},
+				Namespace: "default",
+				Name:      "baz",
 			},
 			want: false,
 		},
@@ -12918,10 +12862,8 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 
 func Test_listenerSetRefsGateway(t *testing.T) {
 	gw := &gatev1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-gw",
-			Namespace: "default",
-		},
+		Name:      "my-gw",
+		Namespace: "default",
 	}
 
 	testCases := []struct {
@@ -12932,10 +12874,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Matching reference",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "default",
-				},
+				Name:      "my-ls",
+				Namespace: "default",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Name: "my-gw",
@@ -12947,10 +12887,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Wrong name",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "default",
-				},
+				Name:      "my-ls",
+				Namespace: "default",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Name: "other-gw",
@@ -12962,10 +12900,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Wrong namespace",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "default",
-				},
+				Name:      "my-ls",
+				Namespace: "default",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Name:      "my-gw",
@@ -12978,10 +12914,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Cross-namespace matching",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "other",
-				},
+				Name:      "my-ls",
+				Namespace: "other",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Name:      "my-gw",
@@ -12994,10 +12928,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Wrong group",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "default",
-				},
+				Name:      "my-ls",
+				Namespace: "default",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Group: new(gatev1.Group("wrong.group")),
@@ -13010,10 +12942,8 @@ func Test_listenerSetRefsGateway(t *testing.T) {
 		{
 			desc: "Wrong kind",
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-ls",
-					Namespace: "default",
-				},
+				Name:      "my-ls",
+				Namespace: "default",
 				Spec: gatev1.ListenerSetSpec{
 					ParentRef: gatev1.ParentGatewayReference{
 						Kind: new(gatev1.Kind("NotAGateway")),
@@ -13045,18 +12975,18 @@ func Test_isListenerSetAllowed(t *testing.T) {
 		{
 			desc: "Nil AllowedListeners",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
-				Spec:       gatev1.GatewaySpec{},
+				Name: "gw", Namespace: "default",
+				Spec: gatev1.GatewaySpec{},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Name: "ls", Namespace: "default",
 			},
 			expected: false,
 		},
 		{
 			desc: "Nil From",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{},
@@ -13064,14 +12994,14 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Name: "ls", Namespace: "default",
 			},
 			expected: false,
 		},
 		{
 			desc: "FromNone",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13081,14 +13011,14 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Name: "ls", Namespace: "default",
 			},
 			expected: false,
 		},
 		{
 			desc: "FromSame - same namespace",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13098,14 +13028,14 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Name: "ls", Namespace: "default",
 			},
 			expected: true,
 		},
 		{
 			desc: "FromSame - different namespace",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13115,14 +13045,14 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "other"},
+				Name: "ls", Namespace: "other",
 			},
 			expected: false,
 		},
 		{
 			desc: "FromAll",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13132,14 +13062,14 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "any-namespace"},
+				Name: "ls", Namespace: "any-namespace",
 			},
 			expected: true,
 		},
 		{
 			desc: "FromSelector - matching namespace labels",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13152,17 +13082,13 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ls",
-					Namespace: "default",
-				},
+				Name:      "ls",
+				Namespace: "default",
 			},
 			namespaces: []*corev1.Namespace{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:   "default",
-						Labels: map[string]string{"env": "prod"},
-					},
+					Name:   "default",
+					Labels: map[string]string{"env": "prod"},
 				},
 			},
 			expected: true,
@@ -13170,7 +13096,7 @@ func Test_isListenerSetAllowed(t *testing.T) {
 		{
 			desc: "FromSelector - non-matching namespace labels",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Name: "gw", Namespace: "default",
 				Spec: gatev1.GatewaySpec{
 					AllowedListeners: &gatev1.AllowedListeners{
 						Namespaces: &gatev1.ListenerNamespaces{
@@ -13183,17 +13109,13 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				},
 			},
 			ls: &gatev1.ListenerSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "ls",
-					Namespace: "default",
-				},
+				Name:      "ls",
+				Namespace: "default",
 			},
 			namespaces: []*corev1.Namespace{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:   "default",
-						Labels: map[string]string{"env": "staging"},
-					},
+					Name:   "default",
+					Labels: map[string]string{"env": "staging"},
 				},
 			},
 			expected: false,
@@ -13250,7 +13172,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
+					ListenerSet: &gatev1.ListenerSet{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:           "http",
 						SupportedKinds: []gatev1.RouteGroupKind{{Kind: "HTTPRoute", Group: new(gatev1.Group(gatev1.GroupName))}},
@@ -13275,7 +13197,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "https",
-					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
+					ListenerSet: &gatev1.ListenerSet{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "https",
 						Conditions: []metav1.Condition{
@@ -13300,7 +13222,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
+					ListenerSet: &gatev1.ListenerSet{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "http",
 						Conditions: []metav1.Condition{
@@ -13325,7 +13247,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 			listeners: []gatewayListener{
 				{
 					SectionName: "http",
-					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
+					ListenerSet: &gatev1.ListenerSet{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name:       "http",
 						Conditions: []metav1.Condition{},
@@ -13333,7 +13255,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 				},
 				{
 					SectionName: "invalid",
-					ListenerSet: &gatev1.ListenerSet{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "my-ls"}},
+					ListenerSet: &gatev1.ListenerSet{Namespace: "default", Name: "my-ls"},
 					Status: &gatev1.ListenerStatus{
 						Name: "invalid",
 						Conditions: []metav1.Condition{
@@ -13407,7 +13329,7 @@ func Test_makeListenerSetStatus(t *testing.T) {
 // and the status of the ListenerSets the Gateway does not allow.
 func Test_loadListenerSetListeners(t *testing.T) {
 	gateway := &gatev1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default"},
+		Name: "my-gateway", Namespace: "default",
 		Spec: gatev1.GatewaySpec{
 			AllowedListeners: &gatev1.AllowedListeners{
 				Namespaces: &gatev1.ListenerNamespaces{From: new(gatev1.NamespacesFromAll)},
@@ -13417,11 +13339,9 @@ func Test_loadListenerSetListeners(t *testing.T) {
 
 	listenerSet := func(name string, created time.Time, listeners ...gatev1.ListenerEntry) *gatev1.ListenerSet {
 		return &gatev1.ListenerSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              name,
-				Namespace:         "default",
-				CreationTimestamp: metav1.NewTime(created),
-			},
+			Name:              name,
+			Namespace:         "default",
+			CreationTimestamp: metav1.NewTime(created),
 			Spec: gatev1.ListenerSetSpec{
 				ParentRef: gatev1.ParentGatewayReference{Name: "my-gateway"},
 				Listeners: listeners,

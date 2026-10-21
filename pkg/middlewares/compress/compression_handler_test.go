@@ -268,7 +268,7 @@ func Test_FlushBeforeWrite(t *testing.T) {
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 
 				_, err := rw.Write(bigTestBody)
 				require.NoError(t, err)
@@ -336,7 +336,7 @@ func Test_FlushAfterWrite(t *testing.T) {
 				_, err := rw.Write(bigTestBody[0:1])
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 				for _, b := range bigTestBody[1:] {
 					_, err := rw.Write([]byte{b})
 					require.NoError(t, err)
@@ -398,7 +398,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 				_, err := rw.Write(nil)
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -456,7 +456,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 					_, err := rw.Write(bigTestBody[i : i+1])
 					require.NoError(t, err)
 				}
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -523,7 +523,7 @@ func Test_FlushForceCompress(t *testing.T) {
 				_, err := rw.Write(smallTestBody)
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -867,7 +867,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 					require.NoError(t, err)
 
 					// Flush between each write
-					rw.(http.Flusher).Flush()
+					assert.NoError(t, http.NewResponseController(rw).Flush())
 					tb = tb[toWrite:]
 				}
 			})
@@ -988,7 +988,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 					require.NoError(t, err)
 
 					// Flush between each write
-					rw.(http.Flusher).Flush()
+					assert.NoError(t, http.NewResponseController(rw).Flush())
 					tb = tb[toWrite:]
 				}
 			})

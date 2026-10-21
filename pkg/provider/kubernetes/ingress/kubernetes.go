@@ -863,10 +863,8 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 			}
 
 			tlsConfigs[configKey] = &tls.CertAndStores{
-				Certificate: tls.Certificate{
-					CertFile: types.FileOrContent(cert),
-					KeyFile:  types.FileOrContent(key),
-				},
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(key),
 			}
 		}
 	}

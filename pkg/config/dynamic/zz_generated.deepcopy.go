@@ -1226,6 +1226,13 @@ func (in *Middleware) DeepCopyInto(out *Middleware) {
 		*out = new(AppRoot)
 		**out = **in
 	}
+	if in.URNRefs != nil {
+		in, out := &in.URNRefs, &out.URNRefs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
