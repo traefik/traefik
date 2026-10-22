@@ -224,9 +224,8 @@ spec:
 
 !!! warning "Gateways sharing an entry point"
 
-    A client certificate validation applies to a whole port, as the TLS handshake happens on the entry point that receives the connection.
-    When several `Gateway` resources have HTTPS listeners on the same port, they must declare the same validation for that port. A `Gateway` without validation does not match a `Gateway` declaring one.
-    Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer `Gateway` on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason and serve nothing.
+    `Gateway` resources with HTTPS listeners on the same port must declare the same validation, or none.
+    Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer ones on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason.
 
 ## Exposing a Route
 

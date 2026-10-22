@@ -69,8 +69,7 @@ const (
 	// attached to the same listener with intersecting hostnames.
 	routeReasonHostnameConflict gatev1.RouteConditionReason = "HostnameConflict"
 
-	// listenerReasonFrontendValidationConflict is raised when the frontend validation of a Gateway
-	// differs from the one an older Gateway already applies on the same port.
+	// listenerReasonFrontendValidationConflict reports a frontend validation that differs from the one an older Gateway applies on the port.
 	listenerReasonFrontendValidationConflict gatev1.ListenerConditionReason = "FrontendValidationConflict"
 
 	conditionNoErrorMessage = "No error found"
@@ -607,7 +606,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	tlsCerts := make(map[string]*tls.CertAndStores)
 	gatewayListeners := make([]gatewayListener, len(listeners))
 
-	// Load frontend validation certificate for the current Gateway.
 	var defaultFrontendValidation frontendValidation
 	frontendValidationPerPort := make(map[gatev1.PortNumber]frontendValidation)
 
@@ -828,15 +826,14 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					continue
 				}
 
-				// As defined in the Go documentation, Frontend validation only applies to HTTPS traffic.
+				// Frontend validation only applies to HTTPS listeners.
 				if listener.Protocol == gatev1.HTTPSProtocolType {
 					frontendValidation := defaultFrontendValidation
 					if perPortFV, ok := frontendValidationPerPort[listener.Port]; ok {
 						frontendValidation = perPortFV
 					}
 
-					// The single reference being invalid, no valid CA certificate remains and the listener is not accepted.
-					// It is left unattached, like a listener with an invalid certificate reference.
+					// An invalid CA certificate reference leaves the listener unattached, like an invalid certificate reference.
 					if frontendValidation.errCondition != nil {
 						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 							*frontendValidation.errCondition,
@@ -859,8 +856,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 						continue
 					}
 
-					// Gateways sharing a port must apply the same frontend validation, as the TLS handshake
-					// happens on the entry point. The oldest Gateway wins, the listener of a newer one is conflicted.
+					// Gateways sharing a port must declare the same frontend validation, the oldest Gateway wins.
 					if applied, ok := claims.frontendValidations[listener.Port]; ok && !reflect.DeepEqual(applied, frontendValidation.clientAuth) {
 						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 							makeListenerConflictConditions(generation, listenerReasonFrontendValidationConflict, "An older Gateway already applies a different frontend validation on this port")...)
@@ -1121,9 +1117,8 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 	}
 }
 
-// resolveCACertificateRefs returns the CA certificate the references point to, or the ResolvedRefs
-// condition reporting why it cannot. Only the Core support of the specification is implemented:
-// a single reference to a ConfigMap, with the CA certificate in a key named ca.crt.
+// resolveCACertificateRefs returns the referenced CA certificate, or the ResolvedRefs condition explaining why it cannot.
+// Only the Core support is implemented: a single ConfigMap reference with a ca.crt key.
 func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gatev1.ObjectReference) (string, *metav1.Condition) {
 	if len(refs) != 1 {
 		return "", &metav1.Condition{
@@ -1545,7 +1540,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	return backendServers, *svcPort, nil
 }
 
-// hasInsecureFrontendValidationMode returns true if the Gateway has a FrontendValidationModeType set to AllowInsecureFallback.
+// hasInsecureFrontendValidationMode reports whether a validation of the Gateway allows an insecure fallback.
 func hasInsecureFrontendValidationMode(gateway *gatev1.Gateway) bool {
 	if gateway.Spec.TLS == nil {
 		return false
@@ -2024,8 +2019,7 @@ type listenerClaims struct {
 	listeners map[string]struct{}
 	// tcpPorts reports, for each claimed port, whether TCP listeners or hostname based ones claim it.
 	tcpPorts map[gatev1.PortNumber]bool
-	// frontendValidations holds, per port, the frontend validation of the oldest Gateway with an HTTPS listener
-	// on it. It is shared by every Gateway, as they share the entry point in merged mode.
+	// frontendValidations holds the frontend validation applied on each port, shared by every Gateway of the load.
 	frontendValidations map[gatev1.PortNumber]*tls.ClientAuth
 }
 
