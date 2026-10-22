@@ -4125,16 +4125,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -4252,16 +4248,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -4350,10 +4342,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -5571,16 +5561,12 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -5698,16 +5684,12 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -5796,10 +5778,8 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 					Options: map[string]tls.Options{
@@ -13225,11 +13205,9 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	p := Provider{client: client}
 
 	gateway := &gatev1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "my-gateway",
-			Namespace:  "default",
-			Generation: 1,
-		},
+		Name:       "my-gateway",
+		Namespace:  "default",
+		Generation: 1,
 	}
 
 	testCases := []struct {
@@ -13441,11 +13419,9 @@ func Test_loadGatewayListeners(t *testing.T) {
 
 	newGateway := func(caCertificateRefs []gatev1.ObjectReference) *gatev1.Gateway {
 		return &gatev1.Gateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:       "my-gateway",
-				Namespace:  "default",
-				Generation: 1,
-			},
+			Name:       "my-gateway",
+			Namespace:  "default",
+			Generation: 1,
 			Spec: gatev1.GatewaySpec{
 				TLS: &gatev1.GatewayTLSConfig{
 					Frontend: &gatev1.FrontendTLSConfig{
@@ -13598,11 +13574,9 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 
 	newGateway := func(name string, hostname *gatev1.Hostname, validation *gatev1.FrontendTLSValidation) *gatev1.Gateway {
 		return &gatev1.Gateway{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:       name,
-				Namespace:  "default",
-				Generation: 1,
-			},
+			Name:       name,
+			Namespace:  "default",
+			Generation: 1,
 			Spec: gatev1.GatewaySpec{
 				TLS: &gatev1.GatewayTLSConfig{
 					Frontend: &gatev1.FrontendTLSConfig{
