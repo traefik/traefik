@@ -67,10 +67,9 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rc := http.NewResponseController(rw)
 
 	if h.readTimeout != nil && req.ContentLength != 0 {
-		switch {
-		case *h.readTimeout <= 0:
+		if *h.readTimeout <= 0 {
 			_ = rc.SetReadDeadline(time.Time{})
-		default:
+		} else {
 			// It is not cleared on return, as it also bounds the server draining an unread body after the handler.
 			_ = rc.SetReadDeadline(start.Add(*h.readTimeout))
 
@@ -82,14 +81,14 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	switch {
-	// Upgrade requests (WebSocket, ...) are left to the entrypoint writeTimeout:
-	// the proxy closes the tunnel when the request context is done, which a router deadline would do.
-	case h.writeTimeout == nil || isUpgradeRequest(req):
-		h.next.ServeHTTP(rw, req)
 	case *h.writeTimeout <= 0:
 		// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
 		// net/http resets the connection deadlines for the next request, so it is not restored on return.
 		_ = rc.SetWriteDeadline(time.Time{})
+		h.next.ServeHTTP(rw, req)
+	// Upgrade requests (WebSocket, ...) are left to the entrypoint writeTimeout:
+	// the proxy closes the tunnel when the request context is done, which a router deadline would do.
+	case h.writeTimeout == nil || isUpgradeRequest(req):
 		h.next.ServeHTTP(rw, req)
 	default:
 		h.serveWithWriteTimeout(rw, req, rc, start.Add(*h.writeTimeout))
