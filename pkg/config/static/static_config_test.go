@@ -223,8 +223,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -271,8 +272,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -330,8 +332,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -393,8 +396,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -504,8 +508,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						},
 						ForwardedHeaders: &ForwardedHeaders{},
 						HTTP: HTTPConfig{
-							SanitizePath:   new(true),
-							MaxHeaderBytes: 1048576,
+							SanitizePath:        new(true),
+							MaxHeaderBytes:      1048576,
+							MaxHeaderValueCount: 500,
 						},
 						HTTP2: &HTTP2Config{
 							MaxConcurrentStreams:      250,

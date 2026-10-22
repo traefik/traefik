@@ -33,7 +33,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -699,6 +699,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = denyFragment(handler)
 
+	handler = denyConnect(handler)
+
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
@@ -731,7 +733,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
+		ctx = kerberos.AddTransportOnContext(ctx)
 		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
 		ctx = fast.AddConnPoolsOnContext(ctx)
 
@@ -771,13 +773,14 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	}
 
 	serverHTTP := &http.Server{
-		Protocols:      &protocols,
-		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		Protocols:           &protocols,
+		Handler:             handler,
+		ErrorLog:            stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:        time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
+		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
 		HTTP2: &http.HTTP2Config{
 			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
@@ -869,6 +872,21 @@ func denyFragment(h http.Handler) http.Handler {
 		if strings.Contains(req.URL.RawPath, "#") {
 			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
 			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// denyConnect rejects the CONNECT requests, whatever the HTTP version.
+// CONNECT tunnels are not supported, and forwarding them without a dedicated handling is unsafe.
+func denyConnect(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodConnect {
+			log.Debug().Msg("Rejecting CONNECT request: CONNECT tunnels are not supported")
+			rw.WriteHeader(http.StatusNotImplemented)
 
 			return
 		}

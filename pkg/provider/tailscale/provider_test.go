@@ -175,12 +175,12 @@ func TestProvider_sendDynamicConfig(t *testing.T) {
 			},
 			want: []*traefiktls.CertAndStores{
 				{
-					Certificate: traefiktls.Certificate{CertFile: "bar.crt", KeyFile: "bar.key"},
-					Stores:      []string{traefiktls.DefaultTLSStoreName},
+					CertFile: "bar.crt", KeyFile: "bar.key",
+					Stores: []string{traefiktls.DefaultTLSStoreName},
 				},
 				{
-					Certificate: traefiktls.Certificate{CertFile: "foo.crt", KeyFile: "foo.key"},
-					Stores:      []string{traefiktls.DefaultTLSStoreName},
+					CertFile: "foo.crt", KeyFile: "foo.key",
+					Stores: []string{traefiktls.DefaultTLSStoreName},
 				},
 			},
 		},

@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/gateway-api/conformance/tests"
 	"sigs.k8s.io/gateway-api/conformance/utils/config"
 	ksuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
+	"sigs.k8s.io/gateway-api/pkg/features"
 	"sigs.k8s.io/yaml"
 )
 
@@ -44,7 +45,7 @@ import (
 // It is the counterpart to the operator-provisioned per-Gateway data planes the
 // GatewayAPIConformanceSuite exercises: here one Traefik merges all Gateways
 // behind a single address, so the features a single instance cannot satisfy
-// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructurePropagation,
+// (per-Gateway addresses, GatewayStaticAddresses, GatewayInfrastructure,
 // and the multiple-Gateways test) are left out.
 type GatewayAPIConformanceMergedSuite struct {
 	BaseSuite
@@ -87,7 +88,7 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.2.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -214,13 +215,21 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				ksuite.GatewayHTTPConformanceProfileName,
 				ksuite.GatewayGRPCConformanceProfileName,
 				ksuite.GatewayTLSConformanceProfileName,
+				ksuite.GatewayTCPConformanceProfileName,
 			},
-			SupportedFeatures: gateway.SupportedFeatures(),
+			// TCPRoute is only supported with the experimental channel enabled,
+			// which is why it is not part of the provider supported features.
+			// GatewayInfrastructure gates GatewayInvalidParametersRef, which a single Traefik instance satisfies.
+			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
+				features.SupportTCPRoute,
+				features.SupportGatewayInfrastructure,
+			}),
 			// The following tests are skipped because they require features that a single Traefik instance
 			// cannot satisfy in merged mode cause they enforce having an operator.
 			SkipTests: []string{
 				tests.HTTPRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
+				tests.GatewayInfrastructureMetadata.ShortName,
 			},
 		},
 	})

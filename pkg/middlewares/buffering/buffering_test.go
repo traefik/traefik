@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,4 +68,43 @@ func TestBuffering(t *testing.T) {
 			assert.Equal(t, test.expectedCode, recorder.Code)
 		})
 	}
+}
+
+// deadlineRecorder records the write deadline set through http.ResponseController.
+type deadlineRecorder struct {
+	*httptest.ResponseRecorder
+
+	writeDeadline time.Time
+}
+
+func (r *deadlineRecorder) SetWriteDeadline(deadline time.Time) error {
+	r.writeDeadline = deadline
+	return nil
+}
+
+func TestBuffering_responseController(t *testing.T) {
+	deadline := time.Now().Add(time.Minute)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rc := http.NewResponseController(rw)
+
+		assert.NoError(t, rc.SetWriteDeadline(deadline))
+
+		rw.WriteHeader(http.StatusServiceUnavailable)
+		assert.ErrorIs(t, rc.Flush(), http.ErrNotSupported)
+
+		_, err := rw.Write([]byte("unavailable"))
+		assert.NoError(t, err)
+	})
+
+	buffMiddleware, err := New(t.Context(), next, dynamic.Buffering{}, "foo")
+	require.NoError(t, err)
+
+	recorder := &deadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
+	buffMiddleware.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://localhost", nil))
+
+	assert.Equal(t, deadline, recorder.writeDeadline)
+	assert.False(t, recorder.Flushed)
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
+	assert.Equal(t, "unavailable", recorder.Body.String())
 }

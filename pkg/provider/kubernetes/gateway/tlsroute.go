@@ -129,9 +129,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 		}
 
 		routeStatus := gatev1.TLSRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, routeStatus); err != nil {
 			logger.Warn().
