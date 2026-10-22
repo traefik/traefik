@@ -2,12 +2,10 @@
 package respondingtimeout
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -215,22 +213,11 @@ func (s *statusRewriter) Write(b []byte) (int, error) {
 	return s.ResponseWriter.Write(b)
 }
 
-// Hijack is exposed for the handlers asserting http.Hijacker directly, which do not go through Unwrap.
-func (s *statusRewriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := s.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("not a hijacker: %T", s.ResponseWriter)
-	}
-
-	return hijacker.Hijack()
-}
-
-func (s *statusRewriter) Flush() {
+// FlushError arms the write deadline before flushing, and is preferred over Flush by http.ResponseController.
+func (s *statusRewriter) FlushError() error {
 	s.armWriteDeadline()
 
-	if f, ok := s.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
+	return s.responseController.Flush()
 }
 
 func (s *statusRewriter) Unwrap() http.ResponseWriter {

@@ -811,8 +811,7 @@ func TestFlushPropagatesThroughCompress(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	// Compress asserts http.Flusher directly on the ResponseWriter it receives:
-	// the statusRewriter must expose the full writer surface for flushes to reach the client.
+	// Compress flushes through http.ResponseController: the flush must reach the client through the statusRewriter.
 	compressHandler, err := compress.New(t.Context(), next, dynamic.Compress{Encodings: []string{"gzip"}}, "compress")
 	require.NoError(t, err)
 
