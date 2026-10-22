@@ -81,7 +81,7 @@ func (h *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	switch {
-	case *h.writeTimeout <= 0:
+	case h.writeTimeout != nil && *h.writeTimeout <= 0:
 		// Over HTTP/2, this also stops the entrypoint writeTimeout stream timer.
 		// net/http resets the connection deadlines for the next request, so it is not restored on return.
 		_ = rc.SetWriteDeadline(time.Time{})
