@@ -140,6 +140,47 @@ spec:
           from: Same
 ```
 
+### Backend Client Certificate
+
+The `tls.backend.clientCertificateRef` field on a `Gateway` (`spec.tls.backend`, a sibling of `spec.listeners`) sets the client certificate that Traefik presents to backends that require mutual TLS (mTLS), as defined by [GEP-3155](https://gateway-api.sigs.k8s.io/geps/gep-3155/).
+
+Traefik presents the certificate to the backends selected by a [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/), for `HTTPRoute` and `GRPCRoute` routes.
+Backends without a `BackendTLSPolicy` are not affected, because the field does not enable TLS by itself.
+The listeners of a `ListenerSet` use the certificate of their parent `Gateway`.
+
+The reference must point to a core `Secret` that contains the `tls.crt` and `tls.key` entries.
+A `Secret` in another namespace requires a [ReferenceGrant](https://gateway-api.sigs.k8s.io/reference/api-types/referencegrant/) in that namespace.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    backend:
+      # Presented to every backend selected by a BackendTLSPolicy.
+      clientCertificateRef:
+        name: backend-client-tls
+        # Set namespace only for a Secret in another namespace, which requires a ReferenceGrant.
+        # namespace: certs
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! warning "Unusable reference"
+
+    When Traefik cannot use the reference, it does not reach the backends selected by a `BackendTLSPolicy` without the certificate, and they answer with a `503` status code.
+    The `Gateway` stays accepted, and its `ResolvedRefs` condition is `False` with the reason `InvalidClientCertificateRef` (unsupported group or kind, or a missing or invalid `Secret`) or `RefNotPermitted` (missing `ReferenceGrant`).
+
 ### ListenerSets
 
 Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.
