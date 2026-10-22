@@ -21,6 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/requestmirror"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
@@ -42,6 +43,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tap"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
@@ -55,6 +57,7 @@ type Builder struct {
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
+	RoutinePool() *safe.Pool
 }
 
 // NewBuilder creates a new Builder.
@@ -481,6 +484,15 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
+		}
+	}
+
+	if config.RequestMirror != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return requestmirror.NewRequestMirror(ctx, next, *config.RequestMirror, b.serviceBuilder, b.serviceBuilder.RoutinePool(), middlewareName)
 		}
 	}
 

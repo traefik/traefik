@@ -87,6 +87,11 @@ func (m *Manager) SetMiddlewareChainBuilder(middlewareChainBuilder middlewareCha
 	m.middlewareChainBuilder = middlewareChainBuilder
 }
 
+// RoutinePool returns the routine pool used to run the services background tasks.
+func (m *Manager) RoutinePool() *safe.Pool {
+	return m.routinePool
+}
+
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
 	serviceName = provider.GetQualifiedName(rootCtx, serviceName)

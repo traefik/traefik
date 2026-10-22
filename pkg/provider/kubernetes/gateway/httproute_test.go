@@ -323,3 +323,44 @@ func Test_createCORS(t *testing.T) {
 		})
 	}
 }
+
+func Test_mirrorPercent(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		filter   gatev1.HTTPRequestMirrorFilter
+		expected int
+	}{
+		{
+			desc:     "no percent nor fraction",
+			expected: 100,
+		},
+		{
+			desc:     "percent",
+			filter:   gatev1.HTTPRequestMirrorFilter{Percent: new(int32(20))},
+			expected: 20,
+		},
+		{
+			desc:     "fraction",
+			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 25, Denominator: new(int32(50))}},
+			expected: 50,
+		},
+		{
+			desc:     "fraction with default denominator",
+			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 42}},
+			expected: 42,
+		},
+		{
+			desc:     "fraction rounded to the nearest percent",
+			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 2, Denominator: new(int32(3))}},
+			expected: 67,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, mirrorPercent(&test.filter))
+		})
+	}
+}
