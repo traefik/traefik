@@ -10335,10 +10335,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -10405,10 +10403,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Options: map[string]tls.Options{},
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
