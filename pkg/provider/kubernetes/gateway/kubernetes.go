@@ -822,38 +822,45 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					continue
 				}
 
+				// As defined in the Go documentation, Frontend validation only applies to HTTPS traffic.
+				if listener.Protocol == gatev1.HTTPSProtocolType {
+					frontendValidation := defaultFrontendValidation
+					if perPortFV, ok := frontendValidationPerPort[listener.Port]; ok {
+						frontendValidation = perPortFV
+					}
+
+					// The single reference being invalid, no valid CA certificate remains and the listener is not accepted.
+					// It is left unattached, like a listener with an invalid certificate reference.
+					if frontendValidation.errCondition != nil {
+						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+							*frontendValidation.errCondition,
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionAccepted),
+								Status:             metav1.ConditionFalse,
+								ObservedGeneration: generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
+								Message:            "No valid CA certificate found in CACertificateRefs",
+							},
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionProgrammed),
+								Status:             metav1.ConditionFalse,
+								ObservedGeneration: generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonInvalid),
+								Message:            "Invalid CA certificate configuration",
+							})
+						continue
+					}
+
+					gatewayListeners[i].FrontendValidation = frontendValidation.clientAuth
+				}
+
 				// Only copy if the certificate TLS config is not already known.
 				for key, listenerTLSCert := range listenerTLSCerts {
 					if _, ok := tlsCerts[key]; !ok {
 						tlsCerts[key] = listenerTLSCert
 					}
-				}
-			}
-
-			// As defined in the Go documentation, Frontend validation only applies to HTTPS traffic.
-			if listener.Protocol == gatev1.HTTPSProtocolType {
-				frontendValidation := defaultFrontendValidation
-				if perPortFV, ok := frontendValidationPerPort[listener.Port]; ok {
-					frontendValidation = perPortFV
-				}
-
-				gatewayListeners[i].FrontendValidation = frontendValidation.clientAuth
-
-				if frontendValidation.resolvedRefsErr != nil {
-					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, *frontendValidation.resolvedRefsErr)
-				}
-
-				if frontendValidation.acceptedErr != nil {
-					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
-						*frontendValidation.acceptedErr,
-						metav1.Condition{
-							Type:               string(gatev1.ListenerConditionProgrammed),
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: generation,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1.ListenerReasonInvalid),
-							Message:            "Invalid CA certificate configuration",
-						})
 				}
 			}
 		}
@@ -1082,9 +1089,8 @@ func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1
 }
 
 type frontendValidation struct {
-	clientAuth      *tls.ClientAuth
-	resolvedRefsErr *metav1.Condition
-	acceptedErr     *metav1.Condition
+	clientAuth   *tls.ClientAuth
+	errCondition *metav1.Condition
 }
 
 // resolveFrontendValidation resolves the client authentication of a frontend validation.
@@ -1095,22 +1101,7 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 
 	caCert, errCondition := p.resolveCACertificateRefs(gateway, validation.CACertificateRefs)
 	if errCondition != nil {
-		// The single reference being invalid, no valid CA certificate remains and the listener is not accepted.
-		return frontendValidation{
-			// RequireAndVerifyClientCert without CAFiles can never build a valid TLS config,
-			// so any router that references these options fails closed
-			// instead of silently serving without client-cert enforcement.
-			clientAuth:      &tls.ClientAuth{ClientAuthType: tls.RequireAndVerifyClientCert},
-			resolvedRefsErr: errCondition,
-			acceptedErr: &metav1.Condition{
-				Type:               string(gatev1.ListenerConditionAccepted),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-				Message:            "No valid CA certificate found in CACertificateRefs",
-			},
-		}
+		return frontendValidation{errCondition: errCondition}
 	}
 
 	clientAuthType := tls.RequireAndVerifyClientCert

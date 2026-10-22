@@ -4136,12 +4136,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
-						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
-						},
 					},
 					Options: map[string]tls.Options{
 						"listener-websecure-https-439feda8e3f1dbdca529": func() tls.Options {
@@ -5612,12 +5606,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
-						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
-						},
 						{
 							Certificate: tls.Certificate{
 								CertFile: types.FileOrContent(listenerCert),
@@ -13364,22 +13352,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
 					Message:            "Unsupported CACertificateRef group/kind: /Service",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13391,22 +13369,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
 					Message:            "Unsupported CACertificateRef group/kind: example.com/ConfigMap",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13418,22 +13386,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonRefNotPermitted),
 					Message:            "Cannot reference CACertificateRef: /ConfigMap: missing ReferenceGrant",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13459,22 +13417,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
 					Message:            "Unsupported CACertificateRef group/kind: /Secret",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13486,22 +13434,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
 					Message:            `Cannot resolve configmap: default/does-not-exist: configmap "does-not-exist" not found`,
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13513,22 +13451,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
 					Message:            "Cannot find ca.crt: ConfigMap default/ca-configmap-empty",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13541,22 +13469,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 			expected: frontendValidation{
-				clientAuth: &tls.ClientAuth{
-					ClientAuthType: tls.RequireAndVerifyClientCert,
-				},
-				resolvedRefsErr: &metav1.Condition{
+				errCondition: &metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
 					Message:            "Unsupported number of CACertificateRefs: 2, only one reference is supported",
-				},
-				acceptedErr: &metav1.Condition{
-					Type:               string(gatev1.ListenerConditionAccepted),
-					Status:             metav1.ConditionFalse,
-					ObservedGeneration: 1,
-					Reason:             string(gatev1.ListenerReasonNoValidCACertificate),
-					Message:            "No valid CA certificate found in CACertificateRefs",
 				},
 			},
 		},
@@ -13567,11 +13485,8 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			got := p.resolveFrontendValidation(gateway, test.validation)
 
 			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
-			if got.resolvedRefsErr != nil {
-				got.resolvedRefsErr.LastTransitionTime = metav1.Time{}
-			}
-			if got.acceptedErr != nil {
-				got.acceptedErr.LastTransitionTime = metav1.Time{}
+			if got.errCondition != nil {
+				got.errCondition.LastTransitionTime = metav1.Time{}
 			}
 
 			assert.Equal(t, test.expected, got)
@@ -13648,12 +13563,12 @@ func Test_loadGatewayListeners(t *testing.T) {
 			expectedConditions: []metav1.Condition{},
 		},
 		{
-			desc: "multiple CACertificateRefs are rejected and the Listener still attaches, relying on the fail-closed TLS option",
+			desc: "multiple CACertificateRefs are rejected and the Listener is not attached",
 			gateway: newGateway([]gatev1.ObjectReference{
 				{Kind: "ConfigMap", Name: "ca-configmap"},
 				{Kind: "ConfigMap", Name: "ca-configmap-empty"},
 			}),
-			expectedAttached: true,
+			expectedAttached: false,
 			expectedConditions: []metav1.Condition{
 				{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -13679,11 +13594,11 @@ func Test_loadGatewayListeners(t *testing.T) {
 			},
 		},
 		{
-			desc: "no valid CACertificateRefs reports NoValidCACertificate but still attaches, relying on the fail-closed TLS option",
+			desc: "no valid CACertificateRefs reports NoValidCACertificate and the Listener is not attached",
 			gateway: newGateway([]gatev1.ObjectReference{
 				{Kind: "Service", Name: "whoami"},
 			}),
-			expectedAttached: true,
+			expectedAttached: false,
 			expectedConditions: []metav1.Condition{
 				{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
