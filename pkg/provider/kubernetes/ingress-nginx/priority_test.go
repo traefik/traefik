@@ -119,7 +119,7 @@ func TestExactPathRouting(t *testing.T) {
 							{
 								Path: test.path, PathType: new(netv1.PathTypeExact),
 								Namespace: "default", IngressName: "exact", BackendName: "exact",
-								Canary: test.exactCanary,
+								Aliases: test.aliases, Canary: test.exactCanary,
 								BasicAuth: &dynamic.BasicAuth{
 									Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 								},
@@ -179,7 +179,7 @@ func TestExactPathRouting(t *testing.T) {
 						selected = nil
 						handler.ServeHTTP(httptest.NewRecorder(), req)
 						require.NotNil(t, selected)
-						assert.Equal(t, expectedPrefixService, selected.Service)
+						assert.Equal(t, test.expected, selected.Service)
 					}
 				})
 			}
