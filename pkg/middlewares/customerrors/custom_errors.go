@@ -58,7 +58,6 @@ type customErrors struct {
 	requestHeaders       []string
 	statusRewrites       []statusRewrite
 	forwardNginxHeaders  http.Header
-	forwardHeaders       []string
 	errorResponseHeaders []string
 }
 
@@ -104,7 +103,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		requestHeaders:       config.ErrorRequestHeaders,
 		statusRewrites:       statusRewrites,
 		forwardNginxHeaders:  ptr.Deref(config.NginxHeaders, nil),
-		forwardHeaders:       normalizeResponseHeaders(config.ForwardHeaders),
 		errorResponseHeaders: normalizeResponseHeaders(config.ErrorResponseHeaders),
 	}, nil
 }
@@ -221,17 +219,6 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		pageReq.Header.Del(name)
 		if values := catcher.getHeaders().Values(name); len(values) > 0 {
 			pageReq.Header[name] = append([]string(nil), values...)
-		}
-	}
-
-	// Forward whitelisted response headers from the original backend error response to the client.
-	if len(c.forwardHeaders) > 0 {
-		backendHeaders := catcher.getHeaders()
-		for _, name := range c.forwardHeaders {
-			if vals := backendHeaders.Values(name); len(vals) > 0 {
-				// Replace values already copied by an informational response.
-				rw.Header()[name] = append([]string(nil), vals...)
-			}
 		}
 	}
 

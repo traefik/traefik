@@ -101,7 +101,6 @@ spec:
 | <a id="opt-query" href="#opt-query" title="#opt-query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 | <a id="opt-errorRequestHeaders" href="#opt-errorRequestHeaders" title="#opt-errorRequestHeaders">`errorRequestHeaders`</a> | Defines the list of original request headers forwarded to the error page service.<br /> More information [here](#errorrequestheaders) | []      | No      |
 | <a id="opt-errorResponseHeaders" href="#opt-errorResponseHeaders" title="#opt-errorResponseHeaders">`errorResponseHeaders`</a> | Defines the list of original backend response headers forwarded to the error page service request.<br /> More information [here](#errorresponseheaders) | [] | No |
-| <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | Defines the list of original backend response headers forwarded to the client.<br /> More information [here](#forwardheaders) | [] | No |
 
 ### service and HostHeader
 
@@ -173,7 +172,7 @@ If a selected header is absent from the backend response, the matching request h
 All values of a selected header are copied. Header names are case-insensitive, and hop-by-hop headers are ignored.
 
 This option works independently of `errorRequestHeaders`, including when it is an empty list.
-It does not add headers to the client response: the error page service must return them, or `forwardHeaders` must be configured separately.
+It does not add headers to the client response: to send a header such as `WWW-Authenticate` back to the client, the error page service must return it (for example, an error page service that echoes selected request headers into its response).
 
 For example, the following configuration lets the error page service read the original authentication challenge and decide how to render the error page:
 
@@ -191,72 +190,4 @@ http:
           - WWW-Authenticate
 ```
 
-Use `errorRequestHeaders` for client request headers, `errorResponseHeaders` for backend response headers sent to the error page service, and `forwardHeaders` for backend response headers sent to the client.
-
-### `forwardHeaders`
-
-An optional list of HTTP response header names from the **original backend error response** that should be forwarded to the final client response.
-
-When the errors middleware intercepts an error status code and replaces the response body with a custom error page, the original backend's response headers are normally discarded.
-The `forwardHeaders` option allows specific headers to be preserved and sent to the client alongside the error page.
-
-If the error page service returns a header with the same name, its values replace the values forwarded from the original backend.
-Otherwise, the forwarded header values are preserved in the client response.
-
-This is useful when headers like `WWW-Authenticate` need to reach the browser so that it can display a login dialog, even when the error page body is replaced.
-
-!!! note "Security"
-
-    Only the headers explicitly listed in `forwardHeaders` are forwarded.
-    This whitelist approach avoids accidentally leaking backend headers such as `Set-Cookie`, `Location`, or `Content-Security-Policy` to the client.
-
-```yaml tab="Labels"
-labels:
-  - "traefik.http.middlewares.test-errors.errors.status=401,500-599"
-  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-  - "traefik.http.middlewares.test-errors.errors.forwardHeaders=WWW-Authenticate,Content-Language"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: test-errors
-spec:
-  errors:
-    status:
-      - "401"
-      - "500-599"
-    query: /{status}.html
-    forwardHeaders:
-      - WWW-Authenticate
-      - Content-Language
-    service:
-      name: whoami
-      port: 80
-```
-
-```yaml tab="Structured (YAML)"
-http:
-  middlewares:
-    test-errors:
-      errors:
-        status:
-          - "401"
-          - "500-599"
-        service: serviceError
-        query: "/{status}.html"
-        forwardHeaders:
-          - "WWW-Authenticate"
-          - "Content-Language"
-```
-
-```toml tab="Structured (TOML)"
-[http.middlewares]
-  [http.middlewares.test-errors.errors]
-    status = ["401","500-599"]
-    service = "serviceError"
-    query = "/{status}.html"
-    forwardHeaders = ["WWW-Authenticate", "Content-Language"]
-```
+Use `errorRequestHeaders` for client request headers and `errorResponseHeaders` for backend response headers sent to the error page service.

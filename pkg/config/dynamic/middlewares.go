@@ -286,12 +286,6 @@ type ErrorPage struct {
 	// These headers replace matching request headers. If not set, no response headers are forwarded to the service.
 	ErrorResponseHeaders []string `json:"errorResponseHeaders,omitempty" toml:"errorResponseHeaders,omitempty" yaml:"errorResponseHeaders,omitempty" export:"true"`
 
-	// ForwardHeaders defines a list of HTTP header names from the original backend error response
-	// that should be forwarded to the final client response.
-	// This is useful when headers such as WWW-Authenticate need to reach the browser
-	// even when the error page body is replaced by the configured error service.
-	ForwardHeaders []string `json:"forwardHeaders,omitempty" toml:"forwardHeaders,omitempty" yaml:"forwardHeaders,omitempty" export:"true"`
-
 	// NginxHeaders defines the headers to forward to the Error page service.
 	// NginxHeaders option is unexposed to other providers than the IngressNGINX one.
 	NginxHeaders *http.Header `json:"nginxHeaders,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`

@@ -293,151 +293,6 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "Custom error page.")
 			},
 		},
-		{
-			desc: "forwardHeaders: all backend header values are forwarded to the client",
-			errorPage: &dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/{status}",
-				Status:         []string{"401"},
-				ForwardHeaders: []string{"WWW-Authenticate"},
-			},
-			backendCode: http.StatusUnauthorized,
-			backendHeaders: http.Header{
-				"WWW-Authenticate": {`Basic realm="Login Required"`, `Bearer realm="Login Required"`},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page body.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
-				assert.Equal(t, []string{`Basic realm="Login Required"`, `Bearer realm="Login Required"`}, recorder.Header().Values("WWW-Authenticate"))
-				assert.Contains(t, recorder.Body.String(), "Error page body.")
-			},
-		},
-		{
-			desc: "forwardHeaders: error service headers take precedence",
-			errorPage: &dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/{status}",
-				Status:         []string{"401"},
-				ForwardHeaders: []string{"WWW-Authenticate", "Content-Language"},
-			},
-			backendCode: http.StatusUnauthorized,
-			backendHeaders: http.Header{
-				"WWW-Authenticate": {`Basic realm="backend"`},
-				"Content-Language": {"en"},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Add("WWW-Authenticate", `Basic realm="error service"`)
-				w.Header().Add("WWW-Authenticate", `Bearer realm="error service"`)
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page body.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
-				assert.Equal(t, []string{`Basic realm="error service"`, `Bearer realm="error service"`}, recorder.Result().Header.Values("WWW-Authenticate"))
-				assert.Equal(t, "en", recorder.Result().Header.Get("Content-Language"))
-				assert.Contains(t, recorder.Body.String(), "Error page body.")
-			},
-		},
-		{
-			desc: "forwardHeaders: headers not in list are not forwarded",
-			errorPage: &dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/{status}",
-				Status:         []string{"500"},
-				ForwardHeaders: []string{"WWW-Authenticate"},
-			},
-			backendCode: http.StatusInternalServerError,
-			backendHeaders: http.Header{
-				"X-Custom-Header":  {"should-not-appear"},
-				"WWW-Authenticate": {`Bearer realm="example"`},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
-				assert.Equal(t, `Bearer realm="example"`, recorder.Header().Get("WWW-Authenticate"))
-				assert.Empty(t, recorder.Header().Get("X-Custom-Header"))
-			},
-		},
-		{
-			desc: "forwardHeaders: hop-by-hop headers are filtered out even if listed",
-			errorPage: &dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/{status}",
-				Status:         []string{"401"},
-				ForwardHeaders: []string{"WWW-Authenticate", "Connection", "Transfer-Encoding", "Keep-Alive"},
-			},
-			backendCode: http.StatusUnauthorized,
-			backendHeaders: http.Header{
-				"WWW-Authenticate":  {`Basic realm="test"`},
-				"Connection":        {"keep-alive"},
-				"Transfer-Encoding": {"chunked"},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
-				assert.Equal(t, `Basic realm="test"`, recorder.Header().Get("WWW-Authenticate"))
-				assert.Empty(t, recorder.Header().Get("Connection"), "hop-by-hop header Connection must not be forwarded")
-				assert.Empty(t, recorder.Header().Get("Transfer-Encoding"), "hop-by-hop header Transfer-Encoding must not be forwarded")
-			},
-		},
-		{
-			desc: "forwardHeaders: whitespace and duplicates are normalized",
-			errorPage: &dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/{status}",
-				Status:         []string{"401"},
-				ForwardHeaders: []string{"  www-authenticate ", "WWW-Authenticate", "x-custom"},
-			},
-			backendCode: http.StatusUnauthorized,
-			backendHeaders: http.Header{
-				"WWW-Authenticate": {`Bearer realm="test"`},
-				"X-Custom":         {"value1"},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
-				assert.Equal(t, []string{`Bearer realm="test"`}, recorder.Header().Values("WWW-Authenticate"))
-				assert.Equal(t, "value1", recorder.Header().Get("X-Custom"))
-			},
-		},
-		{
-			desc: "forwardHeaders not set: backend headers not forwarded (default behavior)",
-			errorPage: &dynamic.ErrorPage{
-				Service: "error",
-				Query:   "/{status}",
-				Status:  []string{"401"},
-			},
-			backendCode: http.StatusUnauthorized,
-			backendHeaders: http.Header{
-				"WWW-Authenticate": {`Basic realm="Login Required"`},
-			},
-			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintln(w, "Error page.")
-			}),
-			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, http.StatusUnauthorized, recorder.Code, "HTTP status")
-				assert.Empty(t, recorder.Header().Get("WWW-Authenticate"))
-			},
-		},
 	}
 
 	for _, test := range testCases {
@@ -480,101 +335,84 @@ func TestHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	testCases := []struct {
-		desc           string
-		forwardHeaders []string
-	}{
-		{desc: "without forwarded headers"},
-		{desc: "forwarded headers are not duplicated", forwardHeaders: []string{"Link"}},
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Add("Link", "</style.css>; rel=preload; as=style")
+		h.Add("Link", "</script.js>; rel=preload; as=script")
+		w.WriteHeader(http.StatusEarlyHints)
+
+		h.Add("Link", "</foo.js>; rel=preload; as=script")
+		w.WriteHeader(http.StatusProcessing)
+
+		h.Add("User-Agent", "foobar")
+		_, _ = w.Write([]byte("Hello"))
+		w.WriteHeader(http.StatusBadGateway)
+	})
+
+	serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprintln(w, "My error page.")
+	})}
+
+	config := dynamic.ErrorPage{Service: "error", Query: "/", Status: []string{"200"}}
+
+	errorPageHandler, err := New(t.Context(), next, config, serviceBuilderMock, "test")
+	require.NoError(t, err)
+
+	server := httptest.NewServer(errorPageHandler)
+	t.Cleanup(server.Close)
+	frontendClient := server.Client()
+
+	checkLinkHeaders := func(t *testing.T, expected, got []string) {
+		t.Helper()
+
+		if len(expected) != len(got) {
+			t.Errorf("Expected %d link headers; got %d", len(expected), len(got))
+		}
+
+		for i := range expected {
+			if i >= len(got) {
+				t.Errorf("Expected %q link header; got nothing", expected[i])
+
+				continue
+			}
+
+			if expected[i] != got[i] {
+				t.Errorf("Expected %q link header; got %q", expected[i], got[i])
+			}
+		}
 	}
 
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				h := w.Header()
-				h.Add("Link", "</style.css>; rel=preload; as=style")
-				h.Add("Link", "</script.js>; rel=preload; as=script")
-				w.WriteHeader(http.StatusEarlyHints)
-
-				h.Add("Link", "</foo.js>; rel=preload; as=script")
-				w.WriteHeader(http.StatusProcessing)
-
-				h.Add("User-Agent", "foobar")
-				_, _ = w.Write([]byte("Hello"))
-				w.WriteHeader(http.StatusBadGateway)
-			})
-
-			serviceBuilderMock := &mockServiceBuilder{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				_, _ = fmt.Fprintln(w, "My error page.")
-			})}
-
-			config := dynamic.ErrorPage{
-				Service:        "error",
-				Query:          "/",
-				Status:         []string{"200"},
-				ForwardHeaders: test.forwardHeaders,
+	var respCounter uint8
+	trace := &httptrace.ClientTrace{
+		Got1xxResponse: func(code int, header textproto.MIMEHeader) error {
+			switch code {
+			case http.StatusEarlyHints:
+				checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script"}, header["Link"])
+			case http.StatusProcessing:
+				checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script", "</foo.js>; rel=preload; as=script"}, header["Link"])
+			default:
+				t.Error("Unexpected 1xx response")
 			}
 
-			errorPageHandler, err := New(t.Context(), next, config, serviceBuilderMock, "test")
-			require.NoError(t, err)
+			respCounter++
 
-			server := httptest.NewServer(errorPageHandler)
-			t.Cleanup(server.Close)
-			frontendClient := server.Client()
-
-			checkLinkHeaders := func(t *testing.T, expected, got []string) {
-				t.Helper()
-
-				if len(expected) != len(got) {
-					t.Errorf("Expected %d link headers; got %d", len(expected), len(got))
-				}
-
-				for i := range expected {
-					if i >= len(got) {
-						t.Errorf("Expected %q link header; got nothing", expected[i])
-
-						continue
-					}
-
-					if expected[i] != got[i] {
-						t.Errorf("Expected %q link header; got %q", expected[i], got[i])
-					}
-				}
-			}
-
-			var respCounter uint8
-			trace := &httptrace.ClientTrace{
-				Got1xxResponse: func(code int, header textproto.MIMEHeader) error {
-					switch code {
-					case http.StatusEarlyHints:
-						checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script"}, header["Link"])
-					case http.StatusProcessing:
-						checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script", "</foo.js>; rel=preload; as=script"}, header["Link"])
-					default:
-						t.Error("Unexpected 1xx response")
-					}
-
-					respCounter++
-
-					return nil
-				},
-			}
-			req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
-
-			res, err := frontendClient.Do(req)
-			assert.NoError(t, err)
-
-			defer res.Body.Close()
-
-			if respCounter != 2 {
-				t.Errorf("Expected 2 1xx responses; got %d", respCounter)
-			}
-			checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script", "</foo.js>; rel=preload; as=script"}, res.Header["Link"])
-
-			body, _ := io.ReadAll(res.Body)
-			assert.Equal(t, "My error page.\n", string(body))
-		})
+			return nil
+		},
 	}
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
+
+	res, err := frontendClient.Do(req)
+	assert.NoError(t, err)
+
+	defer res.Body.Close()
+
+	if respCounter != 2 {
+		t.Errorf("Expected 2 1xx responses; got %d", respCounter)
+	}
+	checkLinkHeaders(t, []string{"</style.css>; rel=preload; as=style", "</script.js>; rel=preload; as=script", "</foo.js>; rel=preload; as=script"}, res.Header["Link"])
+
+	body, _ := io.ReadAll(res.Body)
+	assert.Equal(t, "My error page.\n", string(body))
 }
 
 type mockServiceBuilder struct {

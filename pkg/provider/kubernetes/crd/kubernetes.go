@@ -722,7 +722,6 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		Query:                errorPage.Query,
 		ErrorRequestHeaders:  errorPage.ErrorRequestHeaders,
 		ErrorResponseHeaders: errorPage.ErrorResponseHeaders,
-		ForwardHeaders:       errorPage.ForwardHeaders,
 		Service:              serviceName,
 	}
 	if service != nil {
