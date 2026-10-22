@@ -179,8 +179,3 @@ func (crw *captureResponseWriter) WriteHeader(s int) {
 func (crw *captureResponseWriter) Unwrap() http.ResponseWriter {
 	return crw.rw
 }
-
-// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
-func (crw *captureResponseWriter) Unwrap() http.ResponseWriter {
-	return crw.rw
-}

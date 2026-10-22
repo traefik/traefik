@@ -30,8 +30,3 @@ func (s *statusCodeRecorder) Status() int {
 func (s *statusCodeRecorder) Unwrap() http.ResponseWriter {
 	return s.ResponseWriter
 }
-
-// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
-func (s *statusCodeRecorder) Unwrap() http.ResponseWriter {
-	return s.ResponseWriter
-}

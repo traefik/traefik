@@ -92,11 +92,6 @@ func (r *responseWriterWrapper) Unwrap() http.ResponseWriter {
 	return r.rw
 }
 
-// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
-func (r *responseWriterWrapper) Unwrap() http.ResponseWriter {
-	return r.rw
-}
-
 func (r *responseWriterWrapper) finalizeResponse() {
 	// If headers have been sent this is not possible to respond with an HTTP error,
 	// and we let the server abort the response silently thanks to the http.ErrAbortHandler sentinel panic value.
