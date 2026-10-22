@@ -26,9 +26,6 @@ metadata:
 spec:
   controllerName: traefik.io/gateway-controller
 
-# The route attaches to both listeners: the Default validation applies on the https listener,
-# the PerPort one overrides it on the https-insecure listener.
-
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1

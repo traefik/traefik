@@ -26,11 +26,6 @@ metadata:
 spec:
   controllerName: traefik.io/gateway-controller
 
-# Two Gateways declare different frontend validations on the websecure entry point:
-# - my-gateway has no frontend validation and, as the oldest Gateway, keeps the port.
-# - my-secure-gateway requires a client certificate, its listener is reported Conflicted, so only the routes
-#   of my-gateway are served.
-
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1
