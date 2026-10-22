@@ -1449,7 +1449,9 @@ func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) *gatewayBacken
 
 	group := ptr.Deref(certRef.Group, "")
 	kind := ptr.Deref(certRef.Kind, kindSecret)
-	if (group != "" && group != groupCore) || kind != kindSecret {
+	unsupportedGroup := group != "" && group != groupCore
+	unsupportedKind := kind != kindSecret
+	if unsupportedGroup || unsupportedKind {
 		return invalid(gatev1.GatewayReasonInvalidClientCertificateRef, fmt.Sprintf("Unsupported ClientCertificateRef group/kind: %s/%s", group, kind))
 	}
 
