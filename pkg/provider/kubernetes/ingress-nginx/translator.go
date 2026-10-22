@@ -361,7 +361,6 @@ func buildExactPathExclusions(srv *server, loc *location, backends map[string]*b
 			continue
 		}
 
-		// Include the host rule because the two locations can have different server aliases.
 		exclusions = append(exclusions, "("+exactRule+")")
 	}
 	return exclusions
