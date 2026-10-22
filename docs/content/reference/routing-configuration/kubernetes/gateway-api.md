@@ -224,10 +224,9 @@ spec:
 
 !!! warning "Gateways sharing an entry point"
 
-    A client certificate validation is selected during the TLS handshake, from the hostname (SNI) the client connects to.
-    When several `Gateway` resources share an entry point, the validation of a listener applies to its hostname for every `Gateway` on that entry point, including the routes of the listeners without validation.
-    A listener without hostname extends its validation to every hostname the other listeners of the entry point do not declare.
-    When two listeners declare different validations for the same hostname, the one of the oldest `Gateway` applies and Traefik logs a warning.
+    A client certificate validation applies to a whole port, as the TLS handshake happens on the entry point that receives the connection.
+    When several `Gateway` resources have HTTPS listeners on the same port, they must declare the same validation for that port. A `Gateway` without validation does not match a `Gateway` declaring one.
+    Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer `Gateway` on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason and serve nothing.
 
 ## Exposing a Route
 

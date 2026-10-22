@@ -26,10 +26,9 @@ metadata:
 spec:
   controllerName: traefik.io/gateway-controller
 
-# Two Gateways share the websecure entry point:
-# - my-gateway has a catch-all listener with no frontend validation.
-# - my-secure-gateway has a foo.com listener that requires a client certificate, which the foo.com
-#   parent router also applies to the routes of my-gateway for that hostname.
+# Two Gateways share the websecure entry point with the same frontend validation, as the port requires:
+# - my-gateway has a catch-all listener.
+# - my-secure-gateway has a foo.com listener, isolated from the catch-all one.
 
 ---
 kind: Gateway
@@ -39,6 +38,15 @@ metadata:
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
+  tls:
+    frontend:
+      default:
+        validation:
+          mode: AllowValidOnly
+          caCertificateRefs:
+            - kind: ConfigMap
+              name: ca-configmap
+              group: ""
   listeners:
     - name: https-catchall
       protocol: HTTPS

@@ -4151,7 +4151,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Listeners isolation applies the frontend validation of a hostname to the other Gateways sharing the entry point",
+			desc:  "Gateways sharing an entry point with the same frontend validation keep their listeners isolated",
 			paths: []string{"services.yml", "httproute/with_frontend_validation_listener_isolation.yml"},
 			entryPoints: map[string]Entrypoint{
 				"websecure": {Address: ":443"},
@@ -4265,7 +4265,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"listener-websecure-https-439feda8e3f1dbdca529": defaultListenerTLSOptions(),
+						"listener-websecure-https-439feda8e3f1dbdca529": func() tls.Options {
+							opts := defaultListenerTLSOptions()
+							opts.ClientAuth = tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA1"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							}
+							return opts
+						}(),
 						"listener-websecure-https-foo-com-c4461032f627a1b9033b": func() tls.Options {
 							opts := defaultListenerTLSOptions()
 							opts.ClientAuth = tls.ClientAuth{
@@ -4279,7 +4286,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Catch-all listeners sharing an entry point apply the frontend validation to every hostname",
+			desc:  "Catch-all listeners sharing an entry point with different frontend validations are conflicted, the oldest Gateway wins",
 			paths: []string{"services.yml", "httproute/with_frontend_validation_shared_entrypoint.yml"},
 			entryPoints: map[string]Entrypoint{
 				"websecure": {Address: ":443"},
@@ -4311,13 +4318,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Priority:   100001,
 							RuleSyntax: "default",
 						},
-						"httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658": {
-							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
-							Service:    "httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658-wrr",
-							Rule:       `Host("foo.com") && Path("/secure")`,
-							Priority:   100008,
-							RuleSyntax: "default",
-						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
@@ -4344,29 +4344,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								},
 							},
 						},
-						"httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658-svc-default-whoami-0",
-										Weight: new(1),
-									},
-								},
-							},
-						},
-						"httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658-svc-default-whoami-0": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Strategy: dynamic.BalancerStrategyWRR,
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								PassHostHeader: new(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
@@ -4378,22 +4355,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
-						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
-						},
 					},
 					Options: map[string]tls.Options{
-						"listener-websecure-https-439feda8e3f1dbdca529": func() tls.Options {
-							opts := defaultListenerTLSOptions()
-							opts.ClientAuth = tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"CA1"},
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-							}
-							return opts
-						}(),
+						"listener-websecure-https-439feda8e3f1dbdca529": defaultListenerTLSOptions(),
 					},
 				},
 			},
@@ -5633,7 +5597,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "GRPCRoute listeners isolation applies the frontend validation of a hostname to the other Gateways sharing the entry point",
+			desc:  "GRPCRoute Gateways sharing an entry point with the same frontend validation keep their listeners isolated",
 			paths: []string{"services.yml", "grpcroute/with_frontend_validation_listener_isolation.yml"},
 			entryPoints: map[string]Entrypoint{
 				"websecure": {Address: ":443"},
@@ -5747,7 +5711,14 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"listener-websecure-https-439feda8e3f1dbdca529": defaultListenerTLSOptions(),
+						"listener-websecure-https-439feda8e3f1dbdca529": func() tls.Options {
+							opts := defaultListenerTLSOptions()
+							opts.ClientAuth = tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"CA1"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							}
+							return opts
+						}(),
 						"listener-websecure-https-foo-com-c4461032f627a1b9033b": func() tls.Options {
 							opts := defaultListenerTLSOptions()
 							opts.ClientAuth = tls.ClientAuth{
@@ -5761,7 +5732,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "GRPCRoute catch-all listeners sharing an entry point apply the frontend validation to every hostname",
+			desc:  "GRPCRoute catch-all listeners sharing an entry point with different frontend validations are conflicted, the oldest Gateway wins",
 			paths: []string{"services.yml", "grpcroute/with_frontend_validation_shared_entrypoint.yml"},
 			entryPoints: map[string]Entrypoint{
 				"websecure": {Address: ":443"},
@@ -5793,13 +5764,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Priority:   15,
 							RuleSyntax: "default",
 						},
-						"grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c": {
-							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
-							Service:    "grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c-wrr",
-							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
-							RuleSyntax: "default",
-						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
@@ -5826,29 +5790,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								},
 							},
 						},
-						"grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c-svc-default-whoami-0",
-										Weight: new(1),
-									},
-								},
-							},
-						},
-						"grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c-svc-default-whoami-0": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Strategy: dynamic.BalancerStrategyWRR,
-								Servers: []dynamic.Server{
-									{URL: "h2c://10.10.0.1:80"},
-									{URL: "h2c://10.10.0.2:80"},
-								},
-								PassHostHeader: new(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
@@ -5860,22 +5801,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
-						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
-						},
 					},
 					Options: map[string]tls.Options{
-						"listener-websecure-https-439feda8e3f1dbdca529": func() tls.Options {
-							opts := defaultListenerTLSOptions()
-							opts.ClientAuth = tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"CA1"},
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-							}
-							return opts
-						}(),
+						"listener-websecure-https-439feda8e3f1dbdca529": defaultListenerTLSOptions(),
 					},
 				},
 			},
@@ -13628,7 +13556,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
-			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(), conf)
+			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}), conf)
 
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
@@ -13638,6 +13566,165 @@ func Test_loadGatewayListeners(t *testing.T) {
 				listeners[0].Status.Conditions[i].LastTransitionTime = metav1.Time{}
 			}
 			assert.Equal(t, test.expectedConditions, listeners[0].Status.Conditions)
+		})
+	}
+}
+
+func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"frontend_validation_ca_refs.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
+		client:      client,
+	}
+
+	newValidation := func(caConfigMap string, mode gatev1.FrontendValidationModeType) *gatev1.FrontendTLSValidation {
+		return &gatev1.FrontendTLSValidation{
+			Mode: mode,
+			CACertificateRefs: []gatev1.ObjectReference{
+				{Kind: "ConfigMap", Name: gatev1.ObjectName(caConfigMap)},
+			},
+		}
+	}
+
+	newGateway := func(name string, hostname *gatev1.Hostname, validation *gatev1.FrontendTLSValidation) *gatev1.Gateway {
+		return &gatev1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       name,
+				Namespace:  "default",
+				Generation: 1,
+			},
+			Spec: gatev1.GatewaySpec{
+				TLS: &gatev1.GatewayTLSConfig{
+					Frontend: &gatev1.FrontendTLSConfig{
+						Default: gatev1.TLSConfig{
+							Validation: validation,
+						},
+					},
+				},
+				Listeners: []gatev1.Listener{
+					{
+						Name:     "https",
+						Protocol: gatev1.HTTPSProtocolType,
+						Port:     443,
+						Hostname: hostname,
+						TLS: &gatev1.ListenerTLSConfig{
+							CertificateRefs: []gatev1.SecretObjectReference{
+								{Kind: new(gatev1.Kind("Secret")), Group: new(gatev1.Group("")), Name: "tls-secret"},
+							},
+						},
+						AllowedRoutes: &gatev1.AllowedRoutes{
+							Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	conflictedConditions := []metav1.Condition{
+		{
+			Type:               string(gatev1.ListenerConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: 1,
+			Reason:             string(listenerReasonFrontendValidationConflict),
+			Message:            "An older Gateway already applies a different frontend validation on this port",
+		},
+		{
+			Type:               string(gatev1.ListenerConditionProgrammed),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: 1,
+			Reason:             string(listenerReasonFrontendValidationConflict),
+			Message:            "An older Gateway already applies a different frontend validation on this port",
+		},
+		{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: 1,
+			Reason:             string(listenerReasonFrontendValidationConflict),
+			Message:            "An older Gateway already applies a different frontend validation on this port",
+		},
+	}
+
+	testCases := []struct {
+		desc               string
+		hostname           *gatev1.Hostname
+		validation         *gatev1.FrontendTLSValidation
+		expectedAttached   bool
+		expectedConditions []metav1.Condition
+	}{
+		{
+			desc:               "the same validation is shared",
+			validation:         newValidation("ca-configmap", gatev1.AllowValidOnly),
+			expectedAttached:   true,
+			expectedConditions: []metav1.Condition{},
+		},
+		{
+			desc:               "the same validation is shared on another hostname",
+			hostname:           new(gatev1.Hostname("foo.com")),
+			validation:         newValidation("ca-configmap", gatev1.AllowValidOnly),
+			expectedAttached:   true,
+			expectedConditions: []metav1.Condition{},
+		},
+		{
+			desc:               "a different CA is conflicted",
+			validation:         newValidation("ca-configmap-2", gatev1.AllowValidOnly),
+			expectedConditions: conflictedConditions,
+		},
+		{
+			desc:               "a different CA on another hostname is conflicted",
+			hostname:           new(gatev1.Hostname("foo.com")),
+			validation:         newValidation("ca-configmap-2", gatev1.AllowValidOnly),
+			expectedConditions: conflictedConditions,
+		},
+		{
+			desc:               "a different mode is conflicted",
+			validation:         newValidation("ca-configmap", gatev1.AllowInsecureFallback),
+			expectedConditions: conflictedConditions,
+		},
+		{
+			desc:               "no validation is conflicted",
+			validation:         nil,
+			expectedConditions: conflictedConditions,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
+			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
+
+			gateway := newGateway("my-gateway", nil, newValidation("ca-configmap", gatev1.AllowValidOnly))
+			listeners := p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			require.Len(t, listeners, 1)
+			require.True(t, listeners[0].Attached)
+
+			gateway = newGateway("my-other-gateway", test.hostname, test.validation)
+			listeners = p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			require.Len(t, listeners, 1)
+			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
+
+			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
+			for i := range listeners[0].Status.Conditions {
+				listeners[0].Status.Conditions[i].LastTransitionTime = metav1.Time{}
+			}
+			assert.Equal(t, test.expectedConditions, listeners[0].Status.Conditions)
+
+			// The certificate of a conflicted listener does not reach the TLS store.
+			expectedCertificates := 1
+			if test.expectedAttached {
+				expectedCertificates = 2
+			}
+			assert.Len(t, conf.TLS.Certificates, expectedCertificates)
 		})
 	}
 }
@@ -14618,7 +14705,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				gateway.Spec.AllowedListeners = test.allowedListeners
 			}
 
-			claims := newListenerClaims()
+			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{})
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
 				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}

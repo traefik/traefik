@@ -11,6 +11,15 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: ca-configmap-2
+  namespace: default
+data:
+  ca.crt: "CA2"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: ca-configmap-empty
   namespace: default
 data: {}

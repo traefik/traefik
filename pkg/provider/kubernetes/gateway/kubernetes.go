@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
 	"strconv"
@@ -67,6 +68,10 @@ const (
 	// routeReasonHostnameConflict is raised when an HTTP and a GRPC route are
 	// attached to the same listener with intersecting hostnames.
 	routeReasonHostnameConflict gatev1.RouteConditionReason = "HostnameConflict"
+
+	// listenerReasonFrontendValidationConflict is raised when the frontend validation of a Gateway
+	// differs from the one an older Gateway already applies on the same port.
+	listenerReasonFrontendValidationConflict gatev1.ListenerConditionReason = "FrontendValidationConflict"
 
 	conditionNoErrorMessage = "No error found"
 )
@@ -456,13 +461,14 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	})
 
 	var gatewaysWithListeners []gatewayWithListeners
+	frontendValidations := make(map[gatev1.PortNumber]*tls.ClientAuth)
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		claims := newListenerClaims()
+		claims := newListenerClaims(frontendValidations)
 
 		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, claims, conf)
 
@@ -477,7 +483,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	statusReport.gatewayListeners = gatewaysWithListeners
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	listenerRouters := p.buildListenerRouters(ctx, gatewaysWithListeners, conf)
+	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, conf)
 
 	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
@@ -853,6 +859,16 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 						continue
 					}
 
+					// Gateways sharing a port must apply the same frontend validation, as the TLS handshake
+					// happens on the entry point. The oldest Gateway wins, the listener of a newer one is conflicted.
+					if applied, ok := claims.frontendValidations[listener.Port]; ok && !reflect.DeepEqual(applied, frontendValidation.clientAuth) {
+						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+							makeListenerConflictConditions(generation, listenerReasonFrontendValidationConflict, "An older Gateway already applies a different frontend validation on this port")...)
+						continue
+					}
+
+					claims.frontendValidations[listener.Port] = frontendValidation.clientAuth
+
 					gatewayListeners[i].FrontendValidation = frontendValidation.clientAuth
 				}
 
@@ -889,7 +905,7 @@ type uniqListener struct {
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
 // is the most specific match for. Electing the listener per Gateway isolates the listeners of a
 // Gateway without hiding the routes of the other Gateways sharing the entry point.
-func (p *Provider) buildListenerRouters(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
+func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
 	var listenerRouterNames []string
 
 	hostnamesByListener := map[uniqListener][]string{}
@@ -925,7 +941,7 @@ func (p *Provider) buildListenerRouters(ctx context.Context, gateways []gatewayW
 				EntryPoints: []string{uniq.epName},
 			}
 
-			// The validation of the hostname is the one of the first Gateway electing a listener with one.
+			// Every attached HTTPS listener of an entry point applies the same validation.
 			var validation *tls.ClientAuth
 			for _, gateway := range gateways {
 				listener := mostSpecificListener(gateway.listeners, uniq, hostname)
@@ -935,20 +951,8 @@ func (p *Provider) buildListenerRouters(ctx context.Context, gateways []gatewayW
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
 
-				if listener.FrontendValidation == nil {
-					continue
-				}
-
 				if validation == nil {
 					validation = listener.FrontendValidation
-					continue
-				}
-
-				if validation.ClientAuthType != listener.FrontendValidation.ClientAuthType || !slices.Equal(validation.CAFiles, listener.FrontendValidation.CAFiles) {
-					log.Ctx(ctx).Warn().
-						Str("gateway", gateway.gateway.Namespace+"/"+gateway.gateway.Name).
-						Str("listener", listener.SectionName).
-						Msgf("Frontend validation differs from the one applied to hostname %q on entry point %q, the first Gateway one applies", hostname, uniq.epName)
 				}
 			}
 
@@ -2020,12 +2024,16 @@ type listenerClaims struct {
 	listeners map[string]struct{}
 	// tcpPorts reports, for each claimed port, whether TCP listeners or hostname based ones claim it.
 	tcpPorts map[gatev1.PortNumber]bool
+	// frontendValidations holds, per port, the frontend validation of the oldest Gateway with an HTTPS listener
+	// on it. It is shared by every Gateway, as they share the entry point in merged mode.
+	frontendValidations map[gatev1.PortNumber]*tls.ClientAuth
 }
 
-func newListenerClaims() *listenerClaims {
+func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth) *listenerClaims {
 	return &listenerClaims{
-		listeners: make(map[string]struct{}),
-		tcpPorts:  make(map[gatev1.PortNumber]bool),
+		listeners:           make(map[string]struct{}),
+		tcpPorts:            make(map[gatev1.PortNumber]bool),
+		frontendValidations: frontendValidations,
 	}
 }
 
