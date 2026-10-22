@@ -113,9 +113,21 @@ spec:
 By default, the buffering middleware reads the complete request body and the complete response body into an in-memory or on-disk buffer before forwarding them.
 This is incompatible with streaming responses such as Server-Sent Events, gRPC streaming, and Kubernetes `watch` endpoints, where chunks must reach the client as they are produced.
 
-For streaming responses, set `disableResponseBuffer` to `true`. This preserves the `maxRequestBodyBytes` enforcement on uploads while passing streaming responses through untouched.
+For streaming responses, set `disableResponseBuffer` to `true`.
+This preserves the `maxRequestBodyBytes` enforcement on uploads while passing streaming responses through untouched.
 
 WebSocket connections are not affected by this option because the buffering middleware already steps aside when the downstream connection is hijacked.
+
+!!! warning "Limitations"
+
+    Disabling a buffer also disables the size limit on the matching body:
+    `maxRequestBodyBytes` is not enforced when `disableRequestBuffer` is `true`,
+    and `maxResponseBodyBytes` is not enforced when `disableResponseBuffer` is `true`.
+
+    `retryExpression` cannot be used when `disableRequestBuffer` or `disableResponseBuffer` is `true`,
+    as replaying the request needs the buffered request body, and evaluating the expression needs the buffered response.
+
+    When both options are `true`, the middleware forwards requests and responses untouched.
 
 ### retryExpression
 

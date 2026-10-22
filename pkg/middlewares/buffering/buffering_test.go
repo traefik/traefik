@@ -208,3 +208,28 @@ func TestBuffering_DisableRequestBuffer(t *testing.T) {
 		})
 	}
 }
+
+func TestNew_retryExpressionWithDisabledBuffer(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		config dynamic.Buffering
+	}{
+		{
+			desc:   "disableRequestBuffer",
+			config: dynamic.Buffering{DisableRequestBuffer: true, RetryExpression: "IsNetworkError() && Attempts() < 2"},
+		},
+		{
+			desc:   "disableResponseBuffer",
+			config: dynamic.Buffering{DisableResponseBuffer: true, RetryExpression: "IsNetworkError() && Attempts() < 2"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := New(t.Context(), http.NotFoundHandler(), test.config, "foo")
+			require.Error(t, err)
+		})
+	}
+}
