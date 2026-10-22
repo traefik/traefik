@@ -110,7 +110,7 @@ func (h *handler) serveWithWriteTimeout(rw http.ResponseWriter, req *http.Reques
 
 			if err := rc.Flush(); err != nil {
 				logger := middlewares.GetLogger(req.Context(), name, typeName)
-				logger.Error().Err(err).Msg("Unable to flush response")
+				logger.Error().Err(err).Msg("Unable to flush response after the write timeout was exceeded")
 			}
 		}
 
