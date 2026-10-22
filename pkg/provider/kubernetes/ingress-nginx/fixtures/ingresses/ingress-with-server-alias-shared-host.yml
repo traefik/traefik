@@ -18,7 +18,7 @@ spec:
                 name: whoami
                 port:
                   number: 80
-            path: /
+            path: /app
             pathType: Prefix
 
 ---
