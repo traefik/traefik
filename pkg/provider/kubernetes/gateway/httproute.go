@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net"
 	"net/http"
 	"regexp"
@@ -160,8 +161,14 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 
 			var err error
-			// TODO loadMiddlewares errors could change the condition.
-			router.Middlewares, err = p.loadMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters, match.Path)
+			// TODO the filters loading issues should be reported in the route conditions, which is not done yet:
+			//  - an unsupported filter, or an invalid ExtensionRef or URLRewrite filter, makes the rule respond
+			//    with a 500 status, but the route keeps ResolvedRefs=True, whereas the spec requires a warning condition.
+			//    Backend-level filters already report it as ResolvedRefs=False with the InvalidKind reason, see loadService.
+			//  - an invalid RequestMirror backend reference only drops the mirror, as per the spec, but the route keeps
+			//    ResolvedRefs=True, whereas the spec requires ResolvedRefs=False, with the RefNotPermitted reason when
+			//    the reference is not allowed by a ReferenceGrant. This applies to backend-level filters too.
+			router.Middlewares, err = p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, route, routeRule.Filters, match.Path, statusReport)
 			switch {
 			case err != nil:
 				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
@@ -242,7 +249,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -269,7 +276,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -306,7 +313,7 @@ func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener ga
 		}
 	}
 
-	middlewares, err := p.loadMiddlewares(conf, route.Namespace, serviceName, backendRef.Filters, pathMatch)
+	middlewares, err := p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, conf, serviceName, route, backendRef.Filters, pathMatch, statusReport)
 	if err != nil {
 		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -389,7 +396,7 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, parentName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) ([]string, error) {
 	type namedMiddleware struct {
 		Name   string
 		Config *dynamic.Middleware
@@ -424,7 +431,7 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 			})
 
 		case gatev1.HTTPRouteFilterExtensionRef:
-			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
+			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(route.Namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
@@ -449,6 +456,29 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 				createCORS(filter.CORS),
 			})
 
+		case gatev1.HTTPRouteFilterRequestMirror:
+			if filter.RequestMirror == nil {
+				return nil, fmt.Errorf("invalid filter %s: missing configuration", filter.Type)
+			}
+
+			mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.RequestMirror.BackendRef}
+			serviceName, condition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, statusReport)
+			if condition != nil {
+				// As per the spec, an invalid mirror backend reference is dropped without failing the request.
+				log.Ctx(ctx).Error().Msgf("Dropping RequestMirror filter: %s", condition.Message)
+				continue
+			}
+
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				&dynamic.Middleware{
+					RequestMirror: &dynamic.RequestMirror{
+						Service: serviceName,
+						Percent: mirrorPercent(filter.RequestMirror),
+					},
+				},
+			})
+
 		default:
 			// As per the spec: https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
 			// In all cases where incompatible or unsupported filters are
@@ -467,6 +497,26 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 	}
 
 	return middlewareNames, nil
+}
+
+// mirrorPercent returns the percentage of requests to mirror.
+// As Traefik mirroring has a percent granularity, a fraction is rounded to the nearest percent.
+func mirrorPercent(filter *gatev1.HTTPRequestMirrorFilter) int {
+	switch {
+	case filter.Percent != nil:
+		return int(*filter.Percent)
+
+	case filter.Fraction != nil:
+		denominator := ptr.Deref(filter.Fraction.Denominator, 100)
+		if denominator <= 0 {
+			return 0
+		}
+		percent := math.Round(float64(filter.Fraction.Numerator) * 100 / float64(denominator))
+		return min(int(percent), 100)
+
+	default:
+		return 100
+	}
 }
 
 func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRef *gatev1.LocalObjectReference) (string, *dynamic.Middleware, error) {
