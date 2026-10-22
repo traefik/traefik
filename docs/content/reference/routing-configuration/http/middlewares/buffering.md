@@ -17,39 +17,56 @@ This can help services avoid large amounts of data (`multipart/form-data` for ex
 ## Configuration Examples
 
 ```yaml tab="Structured (YAML)"
-# Sets the maximum request body to 2MB
+# Sets the maximum request body to 2MB and the maximum response body to 10MB,
+# and buffers bodies larger than 1MB on disk.
 http:
   middlewares:
     limit:
       buffering:
         maxRequestBodyBytes: 2000000
+        memRequestBodyBytes: 1000000
+        maxResponseBodyBytes: 10000000
+        memResponseBodyBytes: 1000000
 ```
 
 ```toml tab="Structured (TOML)"
-# Sets the maximum request body to 2MB
+# Sets the maximum request body to 2MB and the maximum response body to 10MB,
+# and buffers bodies larger than 1MB on disk.
 [http.middlewares]
   [http.middlewares.limit.buffering]
     maxRequestBodyBytes = 2000000
+    memRequestBodyBytes = 1000000
+    maxResponseBodyBytes = 10000000
+    memResponseBodyBytes = 1000000
 ```
 
 ```yaml tab="Labels"
-# Sets the maximum request body to 2MB
+# Sets the maximum request body to 2MB and the maximum response body to 10MB,
+# and buffers bodies larger than 1MB on disk.
 labels:
   - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+  - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=1000000"
+  - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=10000000"
+  - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=1000000"
 ```
 
 ```json tab="Tags"
-// Sets the maximum request body to 2MB
+// Sets the maximum request body to 2MB and the maximum response body to 10MB,
+// and buffers bodies larger than 1MB on disk.
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+    "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000",
+    "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=1000000",
+    "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=10000000",
+    "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=1000000"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
-# Sets the maximum request body to 2MB
+# Sets the maximum request body to 2MB and the maximum response body to 10MB,
+# and buffers bodies larger than 1MB on disk.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -57,43 +74,9 @@ metadata:
 spec:
   buffering:
     maxRequestBodyBytes: 2000000
-```
-
-### Enforcing a request size limit on a route with streaming responses
-
-To cap request bodies while allowing streaming responses (Server-Sent Events, gRPC streaming, Kubernetes `watch` endpoints, etc.) to pass through, enable `disableResponseBuffer`:
-
-```yaml tab="Structured (YAML)"
-http:
-  middlewares:
-    limit:
-      buffering:
-        maxRequestBodyBytes: 2000000
-        disableResponseBuffer: true
-```
-
-```toml tab="Structured (TOML)"
-[http.middlewares]
-  [http.middlewares.limit.buffering]
-    maxRequestBodyBytes = 2000000
-    disableResponseBuffer = true
-```
-
-```yaml tab="Labels"
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-  - "traefik.http.middlewares.limit.buffering.disableResponseBuffer=true"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: limit
-spec:
-  buffering:
-    maxRequestBodyBytes: 2000000
-    disableResponseBuffer: true
+    memRequestBodyBytes: 1000000
+    maxResponseBodyBytes: 10000000
+    memResponseBodyBytes: 1000000
 ```
 
 ## Configuration Options
