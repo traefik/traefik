@@ -470,6 +470,7 @@ func acceptTCPWithKeepAlive(accept func() (*net.TCPConn, error), configure func(
 		// A reset peer can make a keep-alive setsockopt fail on FreeBSD. The
 		// accepted connection is unusable, but the listener can keep accepting.
 		if err := configure(tc); err != nil {
+			log.Debug().Err(err).Msg("Closing accepted connection after keep-alive setup failed")
 			_ = tc.Close()
 			continue
 		}
