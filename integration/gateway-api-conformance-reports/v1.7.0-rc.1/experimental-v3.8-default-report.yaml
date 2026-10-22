@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T14:22:24+02:00"
+date: "2026-10-22T17:29:10+02:00"
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.6.3
+gatewayAPIVersion: v1.7.0-rc.1
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -16,15 +16,17 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 14
+      Passed: 17
       Skipped: 0
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 11
+      Passed: 12
       Skipped: 0
     supportedFeatures:
+    - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -35,14 +37,19 @@ profiles:
     - GatewayStaticAddresses
     - ListenerSet
     unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
     - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
       Failed: 0
-      Passed: 36
+      Passed: 40
       Skipped: 0
   extended:
     result: success
@@ -83,12 +90,17 @@ profiles:
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
     - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
+    - HTTPRouteBackendURLRewrite
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
-    - HTTPRouteRetry
-    - HTTPRouteRetryBackendTimeout
+    - HTTPRouteRetryCodes
     - HTTPRouteRetryConnectionError
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
@@ -96,7 +108,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 18
+      Passed: 20
       Skipped: 0
   extended:
     result: success
@@ -116,22 +128,29 @@ profiles:
     - ListenerSet
     - TCPRoute
     unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
     - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
     result: success
     statistics:
       Failed: 0
-      Passed: 19
+      Passed: 21
       Skipped: 0
   extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 16
+      Passed: 17
       Skipped: 0
     supportedFeatures:
+    - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -144,6 +163,15 @@ profiles:
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
     - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
+succeededProvisionalTests:
+- BackendTLSPolicyPreserveForeignStatus
+- GatewayPreserveForeignConditions
+- HTTPRoutePreserveForeignStatus
