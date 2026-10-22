@@ -155,14 +155,13 @@ type listenerOwner struct {
 type gatewayListener struct {
 	SectionName string
 
-	Port               gatev1.PortNumber
-	Protocol           gatev1.ProtocolType
-	TLS                *gatev1.ListenerTLSConfig
-	FrontendValidation *tls.ClientAuth
-	Hostname           *gatev1.Hostname
-	Status             *gatev1.ListenerStatus
-	AllowedNamespaces  []string
-	AllowedRouteKinds  []string
+	Port              gatev1.PortNumber
+	Protocol          gatev1.ProtocolType
+	TLS               *gatev1.ListenerTLSConfig
+	Hostname          *gatev1.Hostname
+	Status            *gatev1.ListenerStatus
+	AllowedNamespaces []string
+	AllowedRouteKinds []string
 
 	Attached bool
 
@@ -482,7 +481,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	statusReport.gatewayListeners = gatewaysWithListeners
 
 	// The isolation of a listener depends on the other listeners of its entry point.
-	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, conf)
+	listenerRouters := p.buildListenerRouters(gatewaysWithListeners, frontendValidations, conf)
 
 	p.loadHTTPAndGRPCRoutes(ctx, gatewaysWithListeners, conf, statusReport)
 
@@ -864,8 +863,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 					}
 
 					claims.frontendValidations[listener.Port] = frontendValidation.clientAuth
-
-					gatewayListeners[i].FrontendValidation = frontendValidation.clientAuth
 				}
 
 				// Only copy if the certificate TLS config is not already known.
@@ -896,12 +893,13 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 type uniqListener struct {
 	epName   string
 	protocol gatev1.ProtocolType
+	port     gatev1.PortNumber
 }
 
 // buildListenerRouters builds a parent router per entry point hostname, scoped to the requests it
 // is the most specific match for. Electing the listener per Gateway isolates the listeners of a
 // Gateway without hiding the routes of the other Gateways sharing the entry point.
-func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *dynamic.Configuration) []string {
+func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, frontendValidations map[gatev1.PortNumber]*tls.ClientAuth, conf *dynamic.Configuration) []string {
 	var listenerRouterNames []string
 
 	hostnamesByListener := map[uniqListener][]string{}
@@ -912,7 +910,7 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				continue
 			}
 
-			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol}
+			uniq := uniqListener{epName: listener.EPName, protocol: listener.Protocol, port: listener.Port}
 
 			hostname := string(ptr.Deref(listener.Hostname, ""))
 			if !slices.Contains(hostnamesByListener[uniq], hostname) {
@@ -937,8 +935,6 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				EntryPoints: []string{uniq.epName},
 			}
 
-			// Every attached HTTPS listener of an entry point applies the same validation.
-			var validation *tls.ClientAuth
 			for _, gateway := range gateways {
 				listener := mostSpecificListener(gateway.listeners, uniq, hostname)
 				if listener == nil {
@@ -946,17 +942,13 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, conf *d
 				}
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
-
-				if validation == nil {
-					validation = listener.FrontendValidation
-				}
 			}
 
 			if uniq.protocol == gatev1.HTTPSProtocolType {
 				listenerTLSOptions := tls.Options{}
 				listenerTLSOptions.SetDefaults()
 
-				if validation != nil {
+				if validation := frontendValidations[uniq.port]; validation != nil {
 					listenerTLSOptions.ClientAuth = *validation
 				}
 
