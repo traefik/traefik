@@ -54,7 +54,7 @@ profiles:
     - GatewayInfrastructureMetadata
     statistics:
       Failed: 0
-      Passed: 43
+      Passed: 46
       Skipped: 1
     supportedFeatures:
     - BackendTLSPolicy
@@ -79,6 +79,9 @@ profiles:
     - HTTPRoutePathRewrite
     - HTTPRoutePortRedirect
     - HTTPRouteQueryParamMatching
+    - HTTPRouteRequestMirror
+    - HTTPRouteRequestMultipleMirrors
+    - HTTPRouteRequestPercentageMirror
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     - ListenerSet
@@ -89,9 +92,6 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
-    - HTTPRouteRequestMirror
-    - HTTPRouteRequestMultipleMirrors
-    - HTTPRouteRequestPercentageMirror
     - HTTPRouteRequestTimeout
     - HTTPRouteRetry
     - HTTPRouteRetryBackendTimeout
