@@ -121,6 +121,34 @@ func SetStatusErrorf(ctx context.Context, format string, args ...any) {
 	}
 }
 
+type httpRouteKey struct{}
+
+// httpRouteHolder carries the matched router rule produced by the router
+// handler during request processing so the entrypoint semconv metrics
+// middleware can read it after downstream handlers return.
+type httpRouteHolder struct {
+	route string
+}
+
+// withHTTPRoute sets the HTTP route pattern in the context.
+// If a route holder is already present in the context, it is updated in place and false is returned.
+// Otherwise, a new context holding the route is returned along with true.
+func withHTTPRoute(ctx context.Context, route string) (context.Context, bool) {
+	if holder, ok := ctx.Value(httpRouteKey{}).(*httpRouteHolder); ok {
+		holder.route = route
+		return ctx, false
+	}
+	return context.WithValue(ctx, httpRouteKey{}, &httpRouteHolder{route: route}), true
+}
+
+// HTTPRoute returns the HTTP route pattern from the context, if available.
+func HTTPRoute(ctx context.Context) (string, bool) {
+	if holder, ok := ctx.Value(httpRouteKey{}).(*httpRouteHolder); ok && holder.route != "" {
+		return holder.route, true
+	}
+	return "", false
+}
+
 func Proto(proto string) string {
 	switch proto {
 	case "HTTP/1.0":
