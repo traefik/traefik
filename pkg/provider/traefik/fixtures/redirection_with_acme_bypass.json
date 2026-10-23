@@ -9,7 +9,7 @@
           "redirect-web-to-websecure"
         ],
         "service": "noop@internal",
-        "rule": "HostRegexp(`^.+$`) \u0026\u0026 !PathPrefix(`/.well-known/acme-challenge/`)",
+        "rule": "Host(`*`) \u0026\u0026 !PathPrefix(`/.well-known/acme-challenge/`)",
         "ruleSyntax": "default"
       }
     },
