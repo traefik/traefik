@@ -174,6 +174,20 @@ func (p *ProviderAggregator) Init() error {
 	return nil
 }
 
+// ProviderCount returns the total number of individual providers that will send
+// configurations through the channel (including the file and internal providers).
+// This mirrors the launches performed by Provide.
+func (p *ProviderAggregator) ProviderCount() int {
+	n := len(p.providers)
+	if p.fileProvider != nil {
+		n++
+	}
+	if p.internalProvider != nil {
+		n++
+	}
+	return n
+}
+
 // Provide calls the provide method of every providers.
 func (p *ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
