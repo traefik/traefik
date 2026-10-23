@@ -892,7 +892,7 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 
 	for name, pc := range pcMap {
 		for key, value := range pc {
-			if err = loadSecretKeys(k8sClient, ns, dynamic.JSONPointer("plugin", name, key), value, refs); err != nil {
+			if pc[key], err = loadReferencedValues(k8sClient, ns, dynamic.JSONPointer("plugin", name, key), value, refs); err != nil {
 				return nil, err
 			}
 		}
@@ -901,47 +901,78 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 	return pcMap, nil
 }
 
-// loadSecretKeys records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN.
-// The URNs stay in the configuration: the middleware builder replaces them with their values.
-func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) error {
+// loadReferencedValues records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN,
+// and returns value where every ConfigMap URN is replaced with its value.
+// The Secret URNs stay in the configuration so that the API does not show their values: the middleware builder replaces them.
+// A ConfigMap holds no credential, so its value is set in the configuration, where the API shows it.
+func loadReferencedValues(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) (any, error) {
+	var err error
 	switch v := value.(type) {
 	case string:
-		if !strings.HasPrefix(v, k8s.SecretURNPrefix) {
-			return nil
-		}
+		switch {
+		case strings.HasPrefix(v, k8s.SecretURNPrefix):
+			secretValue, err := getSecretValue(k8sClient, ns, v)
+			if err != nil {
+				return nil, err
+			}
 
-		secretValue, err := getSecretValue(k8sClient, ns, v)
-		if err != nil {
-			return err
-		}
+			refs[pointer] = secretValue
 
-		refs[pointer] = secretValue
+		case strings.HasPrefix(v, k8s.ConfigMapURNPrefix):
+			return getConfigMapValue(k8sClient, ns, v)
+		}
 
 	case []any:
 		for i, item := range v {
-			if err := loadSecretKeys(k8sClient, ns, pointer+"/"+strconv.Itoa(i), item, refs); err != nil {
-				return err
+			if v[i], err = loadReferencedValues(k8sClient, ns, pointer+"/"+strconv.Itoa(i), item, refs); err != nil {
+				return nil, err
 			}
 		}
 
 	case map[string]any:
 		for key, item := range v {
-			if err := loadSecretKeys(k8sClient, ns, pointer+dynamic.JSONPointer(key), item, refs); err != nil {
-				return err
+			if v[key], err = loadReferencedValues(k8sClient, ns, pointer+dynamic.JSONPointer(key), item, refs); err != nil {
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	return value, nil
+}
+
+// getConfigMapValue reads one key of a ConfigMap, from Data or BinaryData alike: a reference names a key, not a shape.
+func getConfigMapValue(c Client, ns, urn string) (string, error) {
+	name, key, err := parseURN(urn)
+	if err != nil {
+		return "", err
+	}
+
+	configMap, ok, err := c.GetConfigMap(ns, name)
+	if err != nil {
+		return "", err
+	}
+
+	if !ok {
+		return "", fmt.Errorf("configMap %s/%s is not found", ns, name)
+	}
+
+	if value, ok := configMap.Data[key]; ok {
+		return value, nil
+	}
+
+	if value, ok := configMap.BinaryData[key]; ok {
+		return string(value), nil
+	}
+
+	return "", fmt.Errorf("key %q not found in configMap %s/%s", key, ns, name)
 }
 
 func getSecretValue(c Client, ns, urn string) (string, error) {
-	parts := strings.Split(urn, ":")
-	if len(parts) != 5 {
-		return "", fmt.Errorf("malformed secret URN %q", urn)
+	secretName, secretKey, err := parseURN(urn)
+	if err != nil {
+		return "", err
 	}
 
-	secretName := parts[3]
 	secret, ok, err := c.GetSecret(ns, secretName)
 	if err != nil {
 		return "", err
@@ -951,13 +982,23 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 		return "", fmt.Errorf("secret %s/%s is not found", ns, secretName)
 	}
 
-	secretKey := parts[4]
 	secretValue, ok := secret.Data[secretKey]
 	if !ok {
 		return "", fmt.Errorf("key %q not found in secret %s/%s", secretKey, ns, secretName)
 	}
 
 	return string(secretValue), nil
+}
+
+// parseURN returns the name and the key of a urn:k8s:<kind>:<name>:<key> reference.
+// The URN has no namespace on purpose: the object is read from the namespace of the Middleware, so a Middleware cannot read another namespace.
+func parseURN(urn string) (name, key string, err error) {
+	parts := strings.Split(urn, ":")
+	if len(parts) != 5 || parts[3] == "" || parts[4] == "" {
+		return "", "", fmt.Errorf("malformed URN %q", urn)
+	}
+
+	return parts[3], parts[4], nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
