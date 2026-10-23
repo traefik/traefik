@@ -120,11 +120,14 @@ The Kubernetes service to copy status from,
 depending on the service type:
 
 - **ClusterIP:** The ExternalIPs of the service will be propagated to the ingress status.
+  If no ExternalIPs are defined, the service's ClusterIP will be used instead, unless it is empty or `None` (a headless service).
 - **NodePort:** The ExternalIP addresses of the nodes in the cluster will be propagated to the ingress status.
 - **LoadBalancer:** The IPs from the service's `loadBalancer.status` field (which contains the endpoints provided by the load balancer) will be propagated to the ingress status.
 - **ExternalName:** The hostname from the service's `spec.externalName` field will be propagated to the ingress status.
 
-When using third-party tools such as External-DNS, this option enables the copying of external service IPs to the ingress resources.
+When using third-party tools such as External-DNS, this option enables the copying of service addresses to the ingress resources.
+For ClusterIP services without ExternalIPs, the published address may only be reachable from within the cluster.
+Ensure that it is reachable by the clients using DNS records derived from the ingress status.
 
 ```yaml tab="File (YAML)"
 providers:
