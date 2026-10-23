@@ -1250,7 +1250,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "HTTPRoute with request timeout",
+			desc:  "HTTPRoute with timeouts",
 			paths: []string{"services.yml", "httproute/with_request_timeout.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
@@ -1343,6 +1343,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
 							},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-6bebfd4e0e692b59df74-svc-default-whoami-0": {
@@ -1377,10 +1378,28 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-c465583028340322911a-svc-default-whoami-0",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           ptypes.Duration(30 * time.Second),
+								ResponseHeaderTimeout: ptypes.Duration(5 * time.Second),
+								IdleConnTimeout:       ptypes.Duration(90 * time.Second),
+								PingTimeout:           ptypes.Duration(15 * time.Second),
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-c465583028340322911a-svc-default-whoami-0": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           ptypes.Duration(30 * time.Second),
+								ResponseHeaderTimeout: ptypes.Duration(5 * time.Second),
+								IdleConnTimeout:       ptypes.Duration(90 * time.Second),
+								PingTimeout:           ptypes.Duration(15 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{},

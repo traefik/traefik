@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T10:20:59+02:00"
+date: "2026-10-23T14:25:00+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -58,7 +58,7 @@ profiles:
     - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 44
+      Passed: 45
       Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
@@ -75,6 +75,7 @@ profiles:
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
     - HTTPRouteBackendRequestHeaderModification
+    - HTTPRouteBackendTimeout
     - HTTPRouteCORS
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
@@ -93,7 +94,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayStaticAddresses
-    - HTTPRouteBackendTimeout
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror

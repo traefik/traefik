@@ -71,6 +71,7 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteParentRefPortFeature,
 		features.HTTPRouteCORS,
 		features.HTTPRouteRequestTimeoutFeature,
+		features.HTTPRouteBackendTimeoutFeature,
 	)
 }
 
