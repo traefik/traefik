@@ -258,12 +258,25 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 		return name, nil
 	}
 
+	// The backend request timeout is enforced by the transport until the backend response headers are received.
+	// Unlike what GEP-1742 describes, it does not bound reading the response body.
+	// A zero duration disables the timeout, which is the transport default.
+	var responseHeaderTimeout ptypes.Duration
+	if routeRule.Timeouts != nil && routeRule.Timeouts.BackendRequest != nil {
+		// The CRD CEL validation guarantees a valid GEP-2257 duration string.
+		if d, err := time.ParseDuration(string(*routeRule.Timeouts.BackendRequest)); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Ignoring HTTPRoute timeouts.backendRequest: invalid duration")
+		} else {
+			responseHeaderTimeout = ptypes.Duration(d)
+		}
+	}
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, statusReport)
+		svcName, errCondition := p.loadService(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, responseHeaderTimeout, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -290,7 +303,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -376,6 +389,16 @@ func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener ga
 	lb, st, errCondition := p.loadHTTPServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, errCondition
+	}
+
+	if responseHeaderTimeout > 0 {
+		if st == nil {
+			st = &dynamic.ServersTransport{}
+		}
+
+		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{}
+		st.ForwardingTimeouts.SetDefaults()
+		st.ForwardingTimeouts.ResponseHeaderTimeout = responseHeaderTimeout
 	}
 
 	if st != nil {
