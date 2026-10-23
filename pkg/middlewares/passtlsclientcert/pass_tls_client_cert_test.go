@@ -292,7 +292,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			desc:           "TLS with simple certificate, with pem option true",
 			certContents:   []string{minimalCheeseCrt},
 			config:         dynamic.PassTLSClientCert{PEM: true},
-			expectedHeader: getCleanCertContents([]string{minimalCert}),
+			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}),
 		},
 		{
 			desc:           "TLS with complete certificate, with pem option true",
@@ -305,6 +305,12 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			certContents:   []string{minimalCert, minimalCheeseCrt},
 			config:         dynamic.PassTLSClientCert{PEM: true},
 			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}),
+		},
+		{
+			desc:           "TLS with two certificates, with pem option true, onlyLeaf true",
+			certContents:   []string{minimalCert, signingCA},
+			config:         dynamic.PassTLSClientCert{PEM: true, OnlyLeaf: true},
+			expectedHeader: getCleanCertContents([]string{minimalCert}),
 		},
 	}
 
@@ -328,8 +334,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				expected := getCleanCertContents(test.certContents)
-				assert.Equal(t, expected, req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
+				assert.Equal(t, test.expectedHeader, req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
 			} else {
 				assert.Empty(t, req.Header.Get(xForwardedTLSClientCert))
 			}
@@ -527,6 +532,39 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 				},
 			},
 			expectedHeader: strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, certSeparator),
+		},
+		{
+			desc:         "TLS with 2 certificates, with all info, onlyLeaf true",
+			certContents: []string{completeCheeseCrt, signingCA},
+			config: dynamic.PassTLSClientCert{
+				OnlyLeaf: true,
+				Info: &dynamic.TLSClientCertificateInfo{
+					NotAfter:     true,
+					NotBefore:    true,
+					Sans:         true,
+					SerialNumber: true,
+					Subject: &dynamic.TLSClientCertificateSubjectDNInfo{
+						Country:            true,
+						Province:           true,
+						Locality:           true,
+						Organization:       true,
+						OrganizationalUnit: true,
+						CommonName:         true,
+						SerialNumber:       true,
+						DomainComponent:    true,
+					},
+					Issuer: &dynamic.TLSClientCertificateIssuerDNInfo{
+						Country:         true,
+						Province:        true,
+						Locality:        true,
+						Organization:    true,
+						CommonName:      true,
+						SerialNumber:    true,
+						DomainComponent: true,
+					},
+				},
+			},
+			expectedHeader: completeCertAllInfo,
 		},
 	}
 
