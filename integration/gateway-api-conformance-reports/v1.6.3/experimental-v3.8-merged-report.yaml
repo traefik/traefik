@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T14:25:00+02:00"
+date: "2026-10-23T19:19:05+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -27,6 +27,7 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -36,7 +37,6 @@ profiles:
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressEmpty
-    - GatewayBackendClientCertificate
     - GatewayStaticAddresses
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
@@ -58,11 +58,12 @@ profiles:
     - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 45
+      Passed: 47
       Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -92,7 +93,6 @@ profiles:
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressEmpty
-    - GatewayBackendClientCertificate
     - GatewayStaticAddresses
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
@@ -118,6 +118,7 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -128,7 +129,6 @@ profiles:
     - TCPRoute
     unsupportedFeatures:
     - GatewayAddressEmpty
-    - GatewayBackendClientCertificate
     - GatewayStaticAddresses
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
@@ -149,6 +149,7 @@ profiles:
       Passed: 13
       Skipped: 1
     supportedFeatures:
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -160,7 +161,6 @@ profiles:
     - TLSRouteModeTerminate
     unsupportedFeatures:
     - GatewayAddressEmpty
-    - GatewayBackendClientCertificate
     - GatewayStaticAddresses
   name: GATEWAY-TLS
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially

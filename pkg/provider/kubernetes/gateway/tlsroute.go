@@ -416,7 +416,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadTCPServersTransport(namespace, policy)
+			serversTransport, resolvedRefCondition = p.loadTCPServersTransport(namespace, policy, listener.backendClientCertificates())
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -454,6 +454,11 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 		}
 	}
 
+	// The load balancer without servers closes the connections.
+	if serversTransport != nil && listener.backendClientCertificateMissing() {
+		return &dynamic.TCPServersLoadBalancer{Servers: []dynamic.TCPServer{}}, nil, nil
+	}
+
 	if svcPort.Protocol != corev1.ProtocolTCP {
 		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -476,10 +481,11 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 	return lb, serversTransport, nil
 }
 
-func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.TCPServersTransport, metav1.Condition) {
+func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.TCPServersTransport, metav1.Condition) {
 	st := &dynamic.TCPServersTransport{
 		TLS: &dynamic.TLSClientConfig{
-			ServerName: string(policy.Spec.Validation.Hostname),
+			ServerName:   string(policy.Spec.Validation.Hostname),
+			Certificates: clientCertificates,
 		},
 	}
 

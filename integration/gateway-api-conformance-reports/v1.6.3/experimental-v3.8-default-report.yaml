@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T14:22:24+02:00"
+date: "2026-10-23T19:16:33+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -26,6 +26,7 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -34,8 +35,6 @@ profiles:
     - GatewayPort8080
     - GatewayStaticAddresses
     - ListenerSet
-    unsupportedFeatures:
-    - GatewayBackendClientCertificate
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -48,12 +47,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 52
+      Passed: 54
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -83,7 +83,6 @@ profiles:
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
-    - GatewayBackendClientCertificate
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
@@ -106,6 +105,7 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -115,8 +115,6 @@ profiles:
     - GatewayStaticAddresses
     - ListenerSet
     - TCPRoute
-    unsupportedFeatures:
-    - GatewayBackendClientCertificate
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -133,6 +131,7 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -143,7 +142,5 @@ profiles:
     - ListenerSet
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
-    unsupportedFeatures:
-    - GatewayBackendClientCertificate
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
