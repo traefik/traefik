@@ -454,10 +454,8 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 		}
 	}
 
-	// The backend must not be reached without the client certificate the Gateway is configured with.
-	// The failure is reported in the Gateway status, not in the route one,
-	// and the load balancer without servers closes the connections.
-	if serversTransport != nil && listener.BackendTLS != nil && listener.BackendTLS.certificate == nil {
+	// The load balancer without servers closes the connections.
+	if serversTransport != nil && listener.backendClientCertificateMissing() {
 		return &dynamic.TCPServersLoadBalancer{Servers: []dynamic.TCPServer{}}, nil, nil
 	}
 

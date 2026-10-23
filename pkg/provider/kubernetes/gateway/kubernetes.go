@@ -200,6 +200,13 @@ func (l gatewayListener) backendClientCertificates() tls.Certificates {
 	return tls.Certificates{*l.BackendTLS.certificate}
 }
 
+// backendClientCertificateMissing reports whether the Gateway client certificate cannot be resolved.
+// The backends using TLS must not be reached without it,
+// and the failure is reported in the Gateway status, not in the route one.
+func (l gatewayListener) backendClientCertificateMissing() bool {
+	return l.BackendTLS != nil && l.BackendTLS.certificate == nil
+}
+
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
 func (p *Provider) RegisterFilterFuncs(group, kind string, builderFunc BuildFilterFunc) {
 	if p.groupKindFilterFuncs == nil {
@@ -539,8 +546,18 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, accepted)
 
 		// An invalid client certificate reference does not prevent the Gateway from being accepted.
+		// TODO: the ResolvedRefs condition should also be reported when the Gateway has no backend TLS configuration.
 		if gwl.backendTLS != nil {
-			gatewayStatus.Conditions = append(gatewayStatus.Conditions, gwl.backendTLS.condition)
+			condition := gwl.backendTLS.condition
+
+			// The specification makes the condition a summary of the listeners ResolvedRefs condition too.
+			if condition.Status == metav1.ConditionTrue && hasUnresolvedListenerRefs(gwl.listeners) {
+				condition.Status = metav1.ConditionFalse
+				condition.Reason = string(gatev1.GatewayReasonListenersNotResolved)
+				condition.Message = "At least one Listener has unresolved references"
+			}
+
+			gatewayStatus.Conditions = append(gatewayStatus.Conditions, condition)
 		}
 
 		if len(errConditions) > 0 {
@@ -1476,6 +1493,19 @@ func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) *gatewayBacken
 			Message:            conditionNoErrorMessage,
 		},
 	}
+}
+
+func hasUnresolvedListenerRefs(listeners []gatewayListener) bool {
+	return slices.ContainsFunc(listeners, func(listener gatewayListener) bool {
+		// The ListenerSet listeners are reported in their own ListenerSet status.
+		if listener.ListenerSet != nil {
+			return false
+		}
+
+		return slices.ContainsFunc(listener.Status.Conditions, func(condition metav1.Condition) bool {
+			return condition.Type == string(gatev1.ListenerConditionResolvedRefs) && condition.Status == metav1.ConditionFalse
+		})
+	})
 }
 
 func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
