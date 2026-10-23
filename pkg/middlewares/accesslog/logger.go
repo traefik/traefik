@@ -94,7 +94,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 	case GenericCLFFormat:
 		formatter = new(GenericCLFLogFormatter)
 	case JSONFormat:
-		formatter = new(logrus.JSONFormatter)
+		formatter = &logrus.JSONFormatter{TimestampFormat: jsonLogTimeFormat}
 	default:
 		log.Error().Msgf("Unsupported access log format: %q, defaulting to common format instead.", config.Format)
 		formatter = new(CommonLogFormatter)
