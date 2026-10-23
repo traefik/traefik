@@ -338,6 +338,22 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, service)
 		}
 
+		externalAction, err := createExternalActionMiddlewareWithRuntime(client, middleware.Namespace, middleware.Spec.ExternalAction)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading external action middleware")
+			continue
+		}
+		if externalAction != nil {
+			for i, reference := range externalAction.Enrichment {
+				externalAction.Enrichment[i] = p.nameBuilder.makeID(middleware.Namespace, reference)
+			}
+		}
+		queryEnrichment, err := createQueryEnrichmentMiddlewareWithRuntime(client, middleware.Namespace, middleware.Spec.QueryEnrichment)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading query enrichment middleware")
+			continue
+		}
+
 		addToConfig(log.Ctx(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -365,6 +381,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
 			Tap:               tap,
+			ExternalAction:    externalAction,
+			QueryEnrichment:   queryEnrichment,
 			Plugin:            plugin,
 			URNRefs:           refs.OrNil(),
 		})
@@ -958,6 +976,279 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 	}
 
 	return string(secretValue), nil
+}
+
+func createExternalActionMiddlewareWithRuntime(k8sClient Client, namespace string, source *traefikv1alpha1.ExternalAction) (*dynamic.ExternalAction, error) {
+	if source == nil {
+		return nil, nil
+	}
+
+	runtimeValues, err := createRuntimeValues(k8sClient, namespace, source.RuntimeValues)
+	if err != nil {
+		return nil, fmt.Errorf("runtimeValues: %w", err)
+	}
+	result := &dynamic.ExternalAction{
+		RuntimeValues: runtimeValues,
+		SelectionMode: source.SelectionMode,
+		Rules:         make([]dynamic.ExternalActionRule, 0, len(source.Rules)),
+		Queue: dynamic.ExternalActionQueue{
+			Capacity:       source.Queue.Capacity,
+			Workers:        source.Queue.Workers,
+			MaxQueuedBytes: source.Queue.MaxQueuedBytes,
+		},
+	}
+	for _, reference := range source.Enrichment {
+		if reference == "" || strings.ContainsAny(reference, "@/") {
+			return nil, errors.New("enrichment references must name middlewares in the same namespace")
+		}
+		result.Enrichment = append(result.Enrichment, reference)
+	}
+	if len(source.CredentialSets) > 0 {
+		result.CredentialSets = make(map[string]dynamic.ExternalActionCredentialSet, len(source.CredentialSets))
+	}
+	for name, credentialSet := range source.CredentialSets {
+		converted := dynamic.ExternalActionCredentialSet{
+			Auth:                credentialSet.Auth,
+			ImmutableParameters: credentialSet.ImmutableParameters,
+		}
+		if credentialSet.ReloadInterval != nil {
+			if err := converted.ReloadInterval.Set(credentialSet.ReloadInterval.String()); err != nil {
+				return nil, fmt.Errorf("credential set %q reloadInterval: %w", name, err)
+			}
+		}
+		result.CredentialSets[name] = converted
+	}
+	for _, poller := range source.Pollers {
+		converted := dynamic.ExternalActionPoller{
+			Name:        poller.Name,
+			Request:     poller.Request,
+			Observation: poller.Observation,
+			Pagination:  poller.Pagination,
+		}
+		if poller.Interval != nil {
+			if err := converted.Interval.Set(poller.Interval.String()); err != nil {
+				return nil, fmt.Errorf("poller %q interval: %w", poller.Name, err)
+			}
+		}
+		if poller.InitialDelay != nil {
+			if err := converted.InitialDelay.Set(poller.InitialDelay.String()); err != nil {
+				return nil, fmt.Errorf("poller %q initialDelay: %w", poller.Name, err)
+			}
+		}
+		if poller.Timeout != nil {
+			if err := converted.Timeout.Set(poller.Timeout.String()); err != nil {
+				return nil, fmt.Errorf("poller %q timeout: %w", poller.Name, err)
+			}
+		}
+		if poller.Coordination != nil {
+			converted.Coordination = &dynamic.ExternalActionDeduplication{
+				KeyTemplate: poller.Coordination.KeyTemplate,
+				Memory:      poller.Coordination.Memory,
+				MySQL:       poller.Coordination.MySQL,
+			}
+			if poller.Coordination.TTL != nil {
+				if err := converted.Coordination.TTL.Set(poller.Coordination.TTL.String()); err != nil {
+					return nil, fmt.Errorf("poller %q coordination ttl: %w", poller.Name, err)
+				}
+			}
+			if poller.Coordination.Lease != nil {
+				if err := converted.Coordination.Lease.Set(poller.Coordination.Lease.String()); err != nil {
+					return nil, fmt.Errorf("poller %q coordination lease: %w", poller.Name, err)
+				}
+			}
+		}
+		result.Pollers = append(result.Pollers, converted)
+	}
+	if source.Queue.EnqueueWait != nil {
+		if err := result.Queue.EnqueueWait.Set(source.Queue.EnqueueWait.String()); err != nil {
+			return nil, fmt.Errorf("queue enqueueWait: %w", err)
+		}
+	}
+
+	for _, rule := range source.Rules {
+		converted := dynamic.ExternalActionRule{
+			Name:          rule.Name,
+			Match:         rule.Match,
+			Phase:         rule.Phase,
+			Mode:          rule.Mode,
+			FailurePolicy: rule.FailurePolicy,
+			Body:          rule.Body,
+			ResponseBody:  rule.ResponseBody,
+			ForEach:       rule.ForEach,
+			HTTP:          rule.HTTP,
+			Exec:          rule.Exec,
+		}
+		if rule.Deduplication != nil {
+			converted.Deduplication = &dynamic.ExternalActionDeduplication{
+				KeyTemplate: rule.Deduplication.KeyTemplate,
+				Memory:      rule.Deduplication.Memory,
+				MySQL:       rule.Deduplication.MySQL,
+			}
+			if rule.Deduplication.TTL != nil {
+				if err := converted.Deduplication.TTL.Set(rule.Deduplication.TTL.String()); err != nil {
+					return nil, fmt.Errorf("rule %q deduplication ttl: %w", rule.Name, err)
+				}
+			}
+			if rule.Deduplication.Lease != nil {
+				if err := converted.Deduplication.Lease.Set(rule.Deduplication.Lease.String()); err != nil {
+					return nil, fmt.Errorf("rule %q deduplication lease: %w", rule.Name, err)
+				}
+			}
+		}
+		if rule.Binding != nil {
+			converted.Binding = &dynamic.ExternalActionBinding{
+				Mode:                  rule.Binding.Mode,
+				OnMissing:             rule.Binding.OnMissing,
+				KeyTemplate:           rule.Binding.KeyTemplate,
+				CredentialSet:         rule.Binding.CredentialSet,
+				AllowedCredentialSets: rule.Binding.AllowedCredentialSets,
+				Match:                 rule.Binding.Match,
+				Memory:                rule.Binding.Memory,
+				MySQL:                 rule.Binding.MySQL,
+			}
+			if rule.Binding.TTL != nil {
+				if err := converted.Binding.TTL.Set(rule.Binding.TTL.String()); err != nil {
+					return nil, fmt.Errorf("rule %q binding ttl: %w", rule.Name, err)
+				}
+			}
+		}
+		if rule.Timeout != nil {
+			if err := converted.Timeout.Set(rule.Timeout.String()); err != nil {
+				return nil, fmt.Errorf("rule %q timeout: %w", rule.Name, err)
+			}
+		}
+		result.Rules = append(result.Rules, converted)
+	}
+
+	return result, nil
+}
+
+func createQueryEnrichmentMiddlewareWithRuntime(k8sClient Client, namespace string, source *traefikv1alpha1.QueryEnrichment) (*dynamic.QueryEnrichment, error) {
+	if source == nil {
+		return nil, nil
+	}
+	common, err := createExternalActionMiddlewareWithRuntime(k8sClient, namespace, &traefikv1alpha1.ExternalAction{
+		RuntimeValues: source.RuntimeValues, CredentialSets: source.CredentialSets,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := &dynamic.QueryEnrichment{
+		RuntimeValues: common.RuntimeValues, CredentialSets: common.CredentialSets,
+		InputTemplate: source.InputTemplate, OutputTemplate: source.OutputTemplate,
+	}
+	for _, query := range source.Queries {
+		converted := dynamic.EnrichmentQuery{
+			Name: query.Name, When: query.When, HTTP: query.HTTP, Body: query.Body,
+			AllowedOrigins: query.AllowedOrigins, ResultTemplate: query.ResultTemplate,
+			MaxConcurrent: query.MaxConcurrent, CacheEntries: query.CacheEntries,
+			CacheBytes: query.CacheBytes, Pagination: query.Pagination,
+		}
+		if query.Timeout != nil {
+			if err := converted.Timeout.Set(query.Timeout.String()); err != nil {
+				return nil, fmt.Errorf("query %q timeout: %w", query.Name, err)
+			}
+		}
+		if query.CacheTTL != nil {
+			if err := converted.CacheTTL.Set(query.CacheTTL.String()); err != nil {
+				return nil, fmt.Errorf("query %q cacheTTL: %w", query.Name, err)
+			}
+		}
+		result.Queries = append(result.Queries, converted)
+	}
+	return result, nil
+}
+
+func createRuntimeValues(k8sClient Client, namespace string, sources map[string]traefikv1alpha1.RuntimeValueSource) (map[string]dynamic.RuntimeValue, error) {
+	if len(sources) == 0 {
+		return nil, nil
+	}
+
+	result := make(map[string]dynamic.RuntimeValue, len(sources))
+	for alias, source := range sources {
+		configured := 0
+		if source.Value != "" {
+			configured++
+		}
+		if source.File != "" {
+			configured++
+		}
+		if source.SecretKeyRef != nil {
+			configured++
+		}
+		if source.ConfigMapKeyRef != nil {
+			configured++
+		}
+		if configured != 1 {
+			return nil, fmt.Errorf("%q must define exactly one of value, file, secretKeyRef, or configMapKeyRef", alias)
+		}
+
+		value := dynamic.RuntimeValue{}
+		switch {
+		case source.Value != "":
+			value.Source = "literal:" + alias
+			value.Value = source.Value
+			value.Revision = "literal"
+
+		case source.File != "":
+			value.Source = "file:" + source.File
+			value.File = source.File
+
+		case source.SecretKeyRef != nil:
+			if k8sClient == nil {
+				return nil, fmt.Errorf("%q secretKeyRef is only available through the Kubernetes provider", alias)
+			}
+			reference := source.SecretKeyRef
+			if reference.Name == "" || reference.Key == "" {
+				return nil, fmt.Errorf("%q secretKeyRef requires name and key", alias)
+			}
+			secret, exists, err := k8sClient.GetSecret(namespace, reference.Name)
+			if err != nil {
+				return nil, fmt.Errorf("reading secret %s/%s: %w", namespace, reference.Name, err)
+			}
+			if !exists {
+				return nil, fmt.Errorf("secret %s/%s was not found", namespace, reference.Name)
+			}
+			material, exists := secret.Data[reference.Key]
+			if !exists {
+				return nil, fmt.Errorf("key %q was not found in secret %s/%s", reference.Key, namespace, reference.Name)
+			}
+			value.Source = fmt.Sprintf("secret:%s/%s:%s", namespace, reference.Name, reference.Key)
+			value.Value = string(material)
+			value.Revision = secret.ResourceVersion
+
+		case source.ConfigMapKeyRef != nil:
+			if k8sClient == nil {
+				return nil, fmt.Errorf("%q configMapKeyRef is only available through the Kubernetes provider", alias)
+			}
+			reference := source.ConfigMapKeyRef
+			if reference.Name == "" || reference.Key == "" {
+				return nil, fmt.Errorf("%q configMapKeyRef requires name and key", alias)
+			}
+			configMap, exists, err := k8sClient.GetConfigMap(namespace, reference.Name)
+			if err != nil {
+				return nil, fmt.Errorf("reading configmap %s/%s: %w", namespace, reference.Name, err)
+			}
+			if !exists {
+				return nil, fmt.Errorf("configmap %s/%s was not found", namespace, reference.Name)
+			}
+			material, exists := configMap.Data[reference.Key]
+			if !exists {
+				if binary, found := configMap.BinaryData[reference.Key]; found {
+					material = string(binary)
+					exists = true
+				}
+			}
+			if !exists {
+				return nil, fmt.Errorf("key %q was not found in configmap %s/%s", reference.Key, namespace, reference.Name)
+			}
+			value.Source = fmt.Sprintf("configmap:%s/%s:%s", namespace, reference.Name, reference.Key)
+			value.Value = material
+			value.Revision = configMap.ResourceVersion
+		}
+		result[alias] = value
+	}
+	return result, nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {

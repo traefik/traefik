@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/auth"
@@ -19,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
+	"github.com/traefik/traefik/v3/pkg/middlewares/externalaction"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
@@ -193,6 +195,38 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return encodedcharacters.NewEncodedCharacters(ctx, next, *config.EncodedCharacters, middlewareName), nil
+		}
+	}
+
+	// ExternalAction
+	if config.ExternalAction != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			resolved := *config.ExternalAction
+			resolved.Enrichment = nil
+			definitions := make(map[string]dynamic.QueryEnrichment)
+			for _, reference := range config.ExternalAction.Enrichment {
+				qualified := provider.GetQualifiedName(ctx, reference)
+				info := b.configs[qualified]
+				if info == nil || info.Middleware == nil || info.QueryEnrichment == nil {
+					return nil, fmt.Errorf("query enrichment middleware %q does not exist or has the wrong type", qualified)
+				}
+				resolved.Enrichment = append(resolved.Enrichment, qualified)
+				definitions[qualified] = *info.QueryEnrichment
+			}
+			return externalaction.NewWithEnrichment(ctx, next, resolved, middlewareName, definitions)
+		}
+	}
+
+	// QueryEnrichment
+	if config.QueryEnrichment != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return externalaction.NewQueryEnrichment(ctx, next, *config.QueryEnrichment, middlewareName)
 		}
 	}
 
