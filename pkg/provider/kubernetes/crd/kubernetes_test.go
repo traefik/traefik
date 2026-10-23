@@ -21,7 +21,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -70,19 +69,22 @@ func TestLoadAccessGovernanceMiddlewares(t *testing.T) {
 
 	crdClient := traefikcrdfake.NewClientset(
 		&traefikv1alpha1.Middleware{
-			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Name:      "governance",
+			Namespace: "default",
 			Spec: traefikv1alpha1.MiddlewareSpec{
 				AccessGovernance: accessGovernanceCRD,
 			},
 		},
 		&traefikv1alpha1.MiddlewareTCP{
-			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Name:      "governance",
+			Namespace: "default",
 			Spec: traefikv1alpha1.MiddlewareTCPSpec{
 				AccessGovernance: accessGovernanceCRD,
 			},
 		},
 		&traefikv1alpha1.MiddlewareUDP{
-			ObjectMeta: metav1.ObjectMeta{Name: "governance", Namespace: "default"},
+			Name:      "governance",
+			Namespace: "default",
 			Spec: traefikv1alpha1.MiddlewareUDPSpec{
 				AccessGovernance: accessGovernanceCRD,
 			},
@@ -127,7 +129,8 @@ func TestLoadAccessGovernanceMiddlewares(t *testing.T) {
 func TestRuntimeSecretMaterialIsPrivateInDynamicConfiguration(t *testing.T) {
 	const material = "must-not-appear-in-dynamic-api"
 	crdClient := traefikcrdfake.NewClientset(&traefikv1alpha1.Middleware{
-		ObjectMeta: metav1.ObjectMeta{Name: "runtime", Namespace: "default"},
+		Name:      "runtime",
+		Namespace: "default",
 		Spec: traefikv1alpha1.MiddlewareSpec{
 			AccessGovernance: &traefikv1alpha1.AccessGovernance{
 				RuntimeValues: map[string]traefikv1alpha1.RuntimeValueSource{
@@ -146,8 +149,10 @@ func TestRuntimeSecretMaterialIsPrivateInDynamicConfiguration(t *testing.T) {
 		},
 	})
 	kubeClient := kubefake.NewClientset(&corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: "arbitrary-secret", Namespace: "default", ResourceVersion: "42"},
-		Data:       map[string][]byte{"arbitrary-key": []byte(material)},
+		Name:            "arbitrary-secret",
+		Namespace:       "default",
+		ResourceVersion: "42",
+		Data:            map[string][]byte{"arbitrary-key": []byte(material)},
 	})
 	client := newClientImpl(kubeClient, crdClient)
 	stopCh := make(chan struct{})

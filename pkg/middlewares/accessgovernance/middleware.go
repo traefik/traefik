@@ -135,7 +135,8 @@ func (m *middleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var bodyCapture *boundedReadCloser
 	needsRouteBody := m.config.needsBodyRoute(requestRoute(req))
 	needsIdentityBody := needsBody(m.config.identities) && m.config.identity(req, nil) == ""
-	if req.Body != nil && (needsRouteBody || needsIdentityBody) {
+	needsBodyCapture := req.Body != nil && (needsRouteBody || needsIdentityBody)
+	if needsBodyCapture {
 		var err error
 		// Database selection must be deterministic even when the backend does
 		// not consume the request body, so body-routed requests are read eagerly.
@@ -726,14 +727,14 @@ func parseJSONBody(raw []byte) any {
 }
 
 func selectJSON(value any, path string) any {
-	path = strings.TrimPrefix(strings.TrimSpace(path), "$")
-	path = strings.TrimPrefix(path, ".")
-	if path == "" {
+	normalizedPath := strings.TrimPrefix(strings.TrimSpace(path), "$")
+	normalizedPath = strings.TrimPrefix(normalizedPath, ".")
+	if normalizedPath == "" {
 		return value
 	}
 
 	current := value
-	for segment := range strings.SplitSeq(path, ".") {
+	for segment := range strings.SplitSeq(normalizedPath, ".") {
 		name, index, hasIndex := parsePathSegment(segment)
 		if name != "" {
 			object, ok := current.(map[string]any)

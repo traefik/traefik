@@ -66,7 +66,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				wrrName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
 			}
 
-			mds, err := p.makeMiddlewareUDPKeys(ctx, ingressRouteUDP.Namespace, route.Middlewares)
+			middlewareKeys, err := p.makeMiddlewareUDPKeys(ctx, ingressRouteUDP.Namespace, route.Middlewares)
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to create middleware keys")
 				continue
@@ -117,7 +117,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 
 			addToConfig(&logger, "router", routerName, conf.Routers, &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
-				Middlewares: mds,
+				Middlewares: middlewareKeys,
 				Service:     serviceName,
 			})
 		}
@@ -127,7 +127,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 }
 
 func (p *Provider) makeMiddlewareUDPKeys(ctx context.Context, ingressRouteUDPNamespace string, middlewares []traefikv1alpha1.ObjectReference) ([]string, error) {
-	var mds []string
+	var middlewareKeys []string
 
 	for _, middleware := range middlewares {
 		ctxMiddleware := log.Ctx(ctx).With().Str(logs.MiddlewareName, middleware.Name).Logger().WithContext(ctx)
@@ -137,10 +137,10 @@ func (p *Provider) makeMiddlewareUDPKeys(ctx context.Context, ingressRouteUDPNam
 			return nil, fmt.Errorf("invalid reference to middleware %s: %w", middleware.Name, err)
 		}
 
-		mds = append(mds, middlewareRef)
+		middlewareKeys = append(middlewareKeys, middlewareRef)
 	}
 
-	return mds, nil
+	return middlewareKeys, nil
 }
 
 func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service traefikv1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
