@@ -1104,6 +1104,7 @@ func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry) *dynamic.Mid
 	// The Gateway API attempts are the number of retries,
 	// whereas the Traefik ones also count the initial request, hence the +1.
 	r := &dynamic.Retry{
+		// TODO: Remove the ptr.Deref when bumping to Gateway API v1.7, where attempts is no longer a pointer and defaults to 1 in the CRD.
 		Attempts: ptr.Deref(retry.Attempts, 1) + 1,
 	}
 	r.SetDefaults()
