@@ -4094,6 +4094,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
 								AccessControlMaxAge:           new(int64(42)),
+								CORSStrict:                    true,
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-tls-cors": {
@@ -4104,6 +4105,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
 								AccessControlMaxAge:           new(int64(42)),
+								CORSStrict:                    true,
 							},
 						},
 						"default-ingress-with-cors-rule-0-path-0-retry": {
@@ -4229,6 +4231,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowOriginListRegex: []string{`^(?i)https://[A-Za-z0-9-]+\.example\.com$`},
 								AccessControlExposeHeaders:        []string{"X-Forwarded-For", "X-Forwarded-Host"},
 								AccessControlMaxAge:               new(int64(42)),
+								CORSStrict:                        true,
 							},
 						},
 						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-tls-cors": {
@@ -4240,6 +4243,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowOriginListRegex: []string{`^(?i)https://[A-Za-z0-9-]+\.example\.com$`},
 								AccessControlExposeHeaders:        []string{"X-Forwarded-For", "X-Forwarded-Host"},
 								AccessControlMaxAge:               new(int64(42)),
+								CORSStrict:                        true,
 							},
 						},
 						"default-ingress-with-cors-wildcard-origin-rule-0-path-0-retry": {
@@ -8398,6 +8402,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlMaxAge:           new(int64(1728000)),
+								CORSStrict:                    true,
 							},
 						},
 						"default-backend-tls-cors": {
@@ -8408,6 +8413,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlAllowMethods:     []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"},
 								AccessControlAllowOriginList:  []string{"*"},
 								AccessControlMaxAge:           new(int64(1728000)),
+								CORSStrict:                    true,
 							},
 						},
 						"default-backend-retry": {

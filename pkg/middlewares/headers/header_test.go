@@ -259,6 +259,180 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 	}
 }
 
+func TestNewHeader_CORSStrict(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		method            string
+		cfg               dynamic.Headers
+		requestHeaders    http.Header
+		backendHeaders    http.Header
+		expected          http.Header
+		expectedNextCalls int
+	}{
+		{
+			desc:   "Preflight with allowed origin is handled",
+			method: http.MethodOptions,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowHeaders:     []string{"authorization"},
+				AccessControlAllowMethods:     []string{"GET"},
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+				AccessControlMaxAge:           new(int64(600)),
+				CORSStrict:                    true,
+			},
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"authorization"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: http.Header{
+				"Access-Control-Allow-Credentials": {"true"},
+				"Access-Control-Allow-Headers":     {"authorization"},
+				"Access-Control-Allow-Methods":     {"GET"},
+				"Access-Control-Allow-Origin":      {"https://foo.bar.org"},
+				"Access-Control-Expose-Headers":    {"X-Expose"},
+				"Access-Control-Max-Age":           {"600"},
+				"Content-Length":                   {"0"},
+			},
+		},
+		{
+			desc:   "Preflight with disallowed origin is proxied",
+			method: http.MethodOptions,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowHeaders:     []string{"authorization"},
+				AccessControlAllowMethods:     []string{"GET"},
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+				AccessControlMaxAge:           new(int64(600)),
+				CORSStrict:                    true,
+			},
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"authorization"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Origin":                         {"https://other.example"},
+			},
+			expected:          http.Header{"X-Backend": {"true"}},
+			expectedNextCalls: 1,
+		},
+		{
+			desc:   "Preflight with disallowed origin without strict mode keeps the previous behavior",
+			method: http.MethodOptions,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowHeaders:     []string{"authorization"},
+				AccessControlAllowMethods:     []string{"GET"},
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+				AccessControlMaxAge:           new(int64(600)),
+			},
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"authorization"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Origin":                         {"https://other.example"},
+			},
+			expected: http.Header{
+				"Access-Control-Allow-Credentials": {"true"},
+				"Access-Control-Allow-Headers":     {"authorization"},
+				"Access-Control-Allow-Methods":     {"GET"},
+				"Access-Control-Expose-Headers":    {"X-Expose"},
+				"Access-Control-Max-Age":           {"600"},
+				"Content-Length":                   {"0"},
+			},
+		},
+		{
+			desc:   "Response with allowed origin has CORS headers",
+			method: http.MethodGet,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+				CORSStrict:                    true,
+			},
+			requestHeaders: http.Header{"Origin": {"https://foo.bar.org"}},
+			expected: http.Header{
+				"Access-Control-Allow-Credentials": {"true"},
+				"Access-Control-Allow-Origin":      {"https://foo.bar.org"},
+				"Access-Control-Expose-Headers":    {"X-Expose"},
+				"X-Backend":                        {"true"},
+			},
+			expectedNextCalls: 1,
+		},
+		{
+			desc:   "Response with disallowed origin is left untouched",
+			method: http.MethodGet,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+				CORSStrict:                    true,
+			},
+			requestHeaders: http.Header{"Origin": {"https://other.example"}},
+			backendHeaders: http.Header{
+				"Access-Control-Allow-Credentials": {"backend"},
+				"Access-Control-Allow-Origin":      {"https://backend.example"},
+				"Access-Control-Expose-Headers":    {"X-Backend-Expose"},
+			},
+			expected: http.Header{
+				"Access-Control-Allow-Credentials": {"backend"},
+				"Access-Control-Allow-Origin":      {"https://backend.example"},
+				"Access-Control-Expose-Headers":    {"X-Backend-Expose"},
+				"X-Backend":                        {"true"},
+			},
+			expectedNextCalls: 1,
+		},
+		{
+			desc:   "Response with disallowed origin without strict mode keeps the previous behavior",
+			method: http.MethodGet,
+			cfg: dynamic.Headers{
+				AccessControlAllowCredentials: true,
+				AccessControlAllowOriginList:  []string{"https://foo.bar.org"},
+				AccessControlExposeHeaders:    []string{"X-Expose"},
+			},
+			requestHeaders: http.Header{"Origin": {"https://other.example"}},
+			backendHeaders: http.Header{
+				"Access-Control-Allow-Origin": {"https://backend.example"},
+			},
+			expected: http.Header{
+				"Access-Control-Allow-Credentials": {"true"},
+				"Access-Control-Allow-Origin":      {"https://backend.example"},
+				"Access-Control-Expose-Headers":    {"X-Expose"},
+				"X-Backend":                        {"true"},
+			},
+			expectedNextCalls: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			nextCalls := 0
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalls++
+				for header, values := range test.backendHeaders {
+					for _, value := range values {
+						rw.Header().Add(header, value)
+					}
+				}
+				rw.Header().Set("X-Backend", "true")
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			mid, err := NewHeader(next, test.cfg)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(test.method, "/foo", nil)
+			req.Header = test.requestHeaders
+
+			rw := httptest.NewRecorder()
+			mid.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expected, rw.Result().Header)
+			assert.Equal(t, test.expectedNextCalls, nextCalls)
+		})
+	}
+}
+
 func TestNewHeader_CORSResponses(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
