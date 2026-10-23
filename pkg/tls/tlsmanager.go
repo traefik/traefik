@@ -181,7 +181,9 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	// CertificateStore owns a go-cache instance which runs a janitor goroutine,
 	// and go-cache stops that goroutine only through a finalizer on the value it
 	// returns. Replacing the whole map on each configuration update therefore
-	// leaves one live janitor per update, each retaining its cache.
+	// allocates a new store, cache and janitor per update, and releases the old
+	// ones only once the GC finalizes them, which any lingering reference to a
+	// discarded store prevents.
 	for storeName := range m.stores {
 		if _, ok := m.storesConfig[storeName]; !ok {
 			delete(m.stores, storeName)
