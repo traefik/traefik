@@ -138,6 +138,41 @@ spec:
                         More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
                       maximum: 9223372036854775000
                       type: integer
+                    respondingTimeouts:
+                      description: RespondingTimeouts defines the timeouts for responding
+                        to client requests.
+                      properties:
+                        readTimeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: |-
+                            ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
+                            If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                        writeTimeout:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: |-
+                            WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
+                            from when the router receives the request.
+                            If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+                          pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                          x-kubernetes-int-or-string: true
+                      type: object
+                      x-kubernetes-validations:
+                      - message: RespondingTimeouts must define at least one of ReadTimeout
+                          or WriteTimeout.
+                        rule: has(self.readTimeout) || has(self.writeTimeout)
+                      - message: ReadTimeout must be lower than or equal to WriteTimeout
+                          when both are set and non-zero.
+                        rule: '!has(self.readTimeout) || !has(self.writeTimeout) ||
+                          [[self.readTimeout, self.writeTimeout].map(t, string(t).matches(''^[0-9]+$'')
+                          ? duration(string(t) + ''s'') : duration(string(t)))].all(d,
+                          d[0] == duration(''0s'') || d[1] == duration(''0s'') ||
+                          d[0] <= d[1])'
                     services:
                       description: |-
                         Services defines the list of Service.
@@ -405,6 +440,7 @@ spec:
                   required:
                   - match
                   type: object
+                maxItems: 100000
                 type: array
               tls:
                 description: |-

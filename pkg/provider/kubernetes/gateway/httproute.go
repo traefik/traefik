@@ -11,8 +11,10 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -138,14 +140,33 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
+		var respondingTimeouts *dynamic.RouterRespondingTimeouts
+		if routeRule.Timeouts != nil {
+			if routeRule.Timeouts.Request != nil {
+				// The CRD CEL validation guarantees a valid GEP-2257 duration string.
+				// Both timeouts count from the same instant, so they share a single deadline bounding the whole request.
+				// A zero duration disables the timeout, lifting the entrypoint read and write deadlines, as GEP-1742 requires.
+				if d, err := time.ParseDuration(string(*routeRule.Timeouts.Request)); err != nil {
+					// TODO: Maybe it would be better to handle the error and put the routers in error.
+					log.Ctx(ctx).Error().Err(err).Msg("Ignoring HTTPRoute timeouts.request: invalid duration")
+				} else {
+					respondingTimeouts = &dynamic.RouterRespondingTimeouts{
+						ReadTimeout:  new(ptypes.Duration(d)),
+						WriteTimeout: new(ptypes.Duration(d)),
+					}
+				}
+			}
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax: "default",
-				Rule:       rule,
-				Priority:   priority + len(route.Spec.Rules) - ri,
-				ParentRefs: listener.RouterNames,
+				RuleSyntax:         "default",
+				Rule:               rule,
+				Priority:           priority + len(route.Spec.Rules) - ri,
+				ParentRefs:         listener.RouterNames,
+				RespondingTimeouts: respondingTimeouts,
 			}
 
 			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
