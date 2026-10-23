@@ -43,6 +43,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | <a id="opt-IPAllowList" href="#opt-IPAllowList" title="#opt-IPAllowList">[IPAllowList](ipallowlist.md)</a> | Limits the allowed client IPs                     | Security, Request lifecycle |
 | <a id="opt-InFlightReq" href="#opt-InFlightReq" title="#opt-InFlightReq">[InFlightReq](inflightreq.md)</a> | Limits the number of simultaneous connections     | Security, Request lifecycle |
 | <a id="opt-PassTLSClientCert" href="#opt-PassTLSClientCert" title="#opt-PassTLSClientCert">[PassTLSClientCert](passtlsclientcert.md)</a> | Adds Client Certificates in a Header              | Security                    |
+| <a id="opt-QueryParameters" href="#opt-QueryParameters" title="#opt-QueryParameters">[QueryParameters](queryparameters.md)</a> | Sets, adds and removes query parameters | Request lifecycle           |
 | <a id="opt-RateLimit" href="#opt-RateLimit" title="#opt-RateLimit">[RateLimit](ratelimit.md)</a> | Limits the call frequency                         | Security, Request lifecycle |
 | <a id="opt-RedirectScheme" href="#opt-RedirectScheme" title="#opt-RedirectScheme">[RedirectScheme](redirectscheme.md)</a> | Redirects based on scheme                         | Request lifecycle           |
 | <a id="opt-RedirectRegex" href="#opt-RedirectRegex" title="#opt-RedirectRegex">[RedirectRegex](redirectregex.md)</a> | Redirects based on regex                          | Request lifecycle           |
