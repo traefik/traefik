@@ -40,6 +40,12 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=traefik.io, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithKind("AccessGovernance"):
+		return &traefikiov1alpha1.AccessGovernanceApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("AccessGovernanceDatabase"):
+		return &traefikiov1alpha1.AccessGovernanceDatabaseApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("AccessGovernanceQueue"):
+		return &traefikiov1alpha1.AccessGovernanceQueueApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("BasicAuth"):
 		return &traefikiov1alpha1.BasicAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Buffering"):
@@ -98,6 +104,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.MiddlewareTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareTCPSpec"):
 		return &traefikiov1alpha1.MiddlewareTCPSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareUDP"):
+		return &traefikiov1alpha1.MiddlewareUDPApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("MiddlewareUDPSpec"):
+		return &traefikiov1alpha1.MiddlewareUDPSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Mirroring"):
 		return &traefikiov1alpha1.MirroringApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MirrorService"):
@@ -126,6 +136,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.RouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteUDP"):
 		return &traefikiov1alpha1.RouteUDPApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RuntimeObjectKeySelector"):
+		return &traefikiov1alpha1.RuntimeObjectKeySelectorApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RuntimeValueSource"):
+		return &traefikiov1alpha1.RuntimeValueSourceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServerHealthCheck"):
 		return &traefikiov1alpha1.ServerHealthCheckApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServersTransport"):

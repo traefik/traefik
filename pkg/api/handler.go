@@ -50,6 +50,7 @@ type RunTimeRepresentation struct {
 	TCPMiddlewares map[string]*runtime.TCPMiddlewareInfo    `json:"tcpMiddlewares,omitempty"`
 	TCPServices    map[string]*tcpServiceInfoRepresentation `json:"tcpServices,omitempty"`
 	UDPRouters     map[string]*runtime.UDPRouterInfo        `json:"udpRouters,omitempty"`
+	UDPMiddlewares map[string]*runtime.UDPMiddlewareInfo    `json:"udpMiddlewares,omitempty"`
 	UDPServices    map[string]*runtime.UDPServiceInfo       `json:"udpServices,omitempty"`
 }
 
@@ -162,6 +163,7 @@ func (h *Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.
 		TCPMiddlewares: h.runtimeConfiguration.TCPMiddlewares,
 		TCPServices:    tcpSIRepr,
 		UDPRouters:     h.runtimeConfiguration.UDPRouters,
+		UDPMiddlewares: h.runtimeConfiguration.UDPMiddlewares,
 		UDPServices:    h.runtimeConfiguration.UDPServices,
 	}
 

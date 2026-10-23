@@ -10,6 +10,7 @@ import (
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
+	udpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/udp"
 	"github.com/traefik/traefik/v3/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	udprouter "github.com/traefik/traefik/v3/pkg/server/router/udp"
@@ -23,8 +24,10 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP []string
-	entryPointsUDP []string
+	entryPointsTCP        []string
+	entryPointsUDP        []string
+	defaultTCPMiddlewares map[string][]string
+	defaultUDPMiddlewares map[string][]string
 
 	allowACMEByPass map[string]bool
 
@@ -57,6 +60,8 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 
 	allowACMEByPass := map[string]bool{}
 	var entryPointsTCP, entryPointsUDP []string
+	defaultTCPMiddlewares := make(map[string][]string)
+	defaultUDPMiddlewares := make(map[string][]string)
 	for name, ep := range staticConfiguration.EntryPoints {
 		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
 
@@ -68,8 +73,14 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 
 		if protocol == "udp" {
 			entryPointsUDP = append(entryPointsUDP, name)
+			if ep.UDP != nil {
+				defaultUDPMiddlewares[name] = ep.UDP.Middlewares
+			}
 		} else {
 			entryPointsTCP = append(entryPointsTCP, name)
+			if ep.TCP != nil {
+				defaultTCPMiddlewares[name] = ep.TCP.Middlewares
+			}
 		}
 	}
 
@@ -84,16 +95,18 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:      entryPointsTCP,
-		entryPointsUDP:      entryPointsUDP,
-		managerFactory:      managerFactory,
-		observabilityMgr:    observabilityMgr,
-		tlsManager:          tlsManager,
-		pluginBuilder:       pluginBuilder,
-		dialerManager:       dialerManager,
-		allowACMEByPass:     allowACMEByPass,
-		parser:              parser,
-		providersPrecedence: providersPrecedence,
+		entryPointsTCP:        entryPointsTCP,
+		entryPointsUDP:        entryPointsUDP,
+		defaultTCPMiddlewares: defaultTCPMiddlewares,
+		defaultUDPMiddlewares: defaultUDPMiddlewares,
+		managerFactory:        managerFactory,
+		observabilityMgr:      observabilityMgr,
+		tlsManager:            tlsManager,
+		pluginBuilder:         pluginBuilder,
+		dialerManager:         dialerManager,
+		allowACMEByPass:       allowACMEByPass,
+		parser:                parser,
+		providersPrecedence:   providersPrecedence,
 	}, nil
 }
 
@@ -128,6 +141,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager, f.providersPrecedence)
+	rtTCPManager.SetDefaultMiddlewares(f.defaultTCPMiddlewares)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
 
 	for ep, r := range routersTCP {
@@ -140,7 +154,9 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	// UDP
 	svcUDPManager := udpsvc.NewManager(rtConf)
-	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager)
+	middlewaresUDPBuilder := udpmiddleware.NewBuilder(rtConf.UDPMiddlewares)
+	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager, middlewaresUDPBuilder)
+	rtUDPManager.SetDefaultMiddlewares(f.defaultUDPMiddlewares)
 	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP)
 
 	rtConf.PopulateUsedBy()

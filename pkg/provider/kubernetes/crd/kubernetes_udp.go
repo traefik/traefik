@@ -9,6 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -18,6 +19,23 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	conf := &dynamic.UDPConfiguration{
 		Routers:  map[string]*dynamic.UDPRouter{},
 		Services: map[string]*dynamic.UDPService{},
+	}
+
+	for _, middlewareUDP := range client.GetMiddlewareUDPs() {
+		if conf.Middlewares == nil {
+			conf.Middlewares = map[string]*dynamic.UDPMiddleware{}
+		}
+
+		id := p.nameBuilder.makeID(middlewareUDP.Namespace, middlewareUDP.Name)
+		accessGovernance, err := createAccessGovernanceMiddlewareWithRuntime(client, middlewareUDP.Namespace, middlewareUDP.Spec.AccessGovernance)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Str(logs.MiddlewareName, id).Msg("Error while reading UDP access governance middleware")
+			continue
+		}
+
+		addToConfig(log.Ctx(ctx), "UDP middleware", id, conf.Middlewares, &dynamic.UDPMiddleware{
+			AccessGovernance: accessGovernance,
+		})
 	}
 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
@@ -46,6 +64,12 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			var wrrName string
 			if p.nameBuilder.safe && len(route.Services) > 1 {
 				wrrName = makeSafeKey(ingressRouteUDP.Namespace, ingressName, routeIndex, roleWRR)
+			}
+
+			middlewareKeys, err := p.makeMiddlewareUDPKeys(ctx, ingressRouteUDP.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Error().Err(err).Msg("Failed to create middleware keys")
+				continue
 			}
 
 			for si, service := range route.Services {
@@ -93,12 +117,30 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 
 			addToConfig(&logger, "router", routerName, conf.Routers, &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
+				Middlewares: middlewareKeys,
 				Service:     serviceName,
 			})
 		}
 	}
 
 	return conf
+}
+
+func (p *Provider) makeMiddlewareUDPKeys(ctx context.Context, ingressRouteUDPNamespace string, middlewares []traefikv1alpha1.ObjectReference) ([]string, error) {
+	var middlewareKeys []string
+
+	for _, middleware := range middlewares {
+		ctxMiddleware := log.Ctx(ctx).With().Str(logs.MiddlewareName, middleware.Name).Logger().WithContext(ctx)
+
+		middlewareRef, err := p.resolveReference(ctxMiddleware, ingressRouteUDPNamespace, middleware.Namespace, middleware.Name)
+		if err != nil {
+			return nil, fmt.Errorf("invalid reference to middleware %s: %w", middleware.Name, err)
+		}
+
+		middlewareKeys = append(middlewareKeys, middlewareRef)
+	}
+
+	return middlewareKeys, nil
 }
 
 func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service traefikv1alpha1.ServiceUDP) (*dynamic.UDPService, error) {

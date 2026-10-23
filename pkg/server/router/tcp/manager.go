@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accessgovernance"
 	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
@@ -35,6 +37,7 @@ type Manager struct {
 	tlsManager          *traefiktls.Manager
 	conf                *runtime.Configuration
 	providersPrecedence []string
+	defaultMiddlewares  map[string][]string
 }
 
 // NewManager Creates a new Manager.
@@ -57,6 +60,11 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
+// SetDefaultMiddlewares configures entry-point middlewares applied to every TCP router.
+func (m *Manager) SetDefaultMiddlewares(middlewares map[string][]string) {
+	m.defaultMiddlewares = middlewares
+}
+
 // BuildHandlers builds the handlers for the given entrypoints.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*Router {
 	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
@@ -69,7 +77,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -95,7 +103,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
 	// Build a new Router.
 	router, err := NewRouter(m.providersPrecedence)
 	if err != nil {
@@ -207,16 +215,17 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Keep in mind that defaultTLSConf might be nil here.
 	router.SetHTTPSHandler(handlerHTTPS, defaultTLSConf)
 
-	m.addTCPHandlers(ctx, configs, router)
+	m.addTCPHandlers(ctx, entryPointName, configs, router)
 
 	return router, nil
 }
 
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
-func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
+func (m *Manager) addTCPHandlers(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
+		ctxRouter = accessgovernance.WithRouteMetadata(ctxRouter, entryPointName, routerName, routerConfig.Service)
 
 		if routerConfig.Priority == 0 {
 			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
@@ -362,10 +371,11 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
 	var qualifiedNames []string
-	for _, name := range router.Middlewares {
+	metadata := accessgovernance.GetRouteMetadata(ctx)
+	middlewareNames := append(slices.Clone(m.defaultMiddlewares[metadata.EntryPoint]), router.Middlewares...)
+	for _, name := range middlewareNames {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
 	}
-	router.Middlewares = qualifiedNames
 
 	if router.Service == "" {
 		return nil, errors.New("the service is missing on the router")
@@ -376,7 +386,7 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 		return nil, err
 	}
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+	mHandler := m.middlewaresBuilder.BuildChain(ctx, qualifiedNames)
 
 	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
 }

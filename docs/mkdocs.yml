@@ -116,6 +116,7 @@ plugins:
         # HTTP
         'middlewares/http/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
         'middlewares/http/addprefix.md': 'reference/routing-configuration/http/middlewares/addprefix.md'
+        'middlewares/http/accessgovernance.md': 'reference/routing-configuration/http/middlewares/accessgovernance.md'
         'middlewares/http/basicauth.md': 'reference/routing-configuration/http/middlewares/basicauth.md'
         'middlewares/http/buffering.md': 'reference/routing-configuration/http/middlewares/buffering.md'
         'middlewares/http/chain.md': 'reference/routing-configuration/http/middlewares/chain.md'
@@ -141,6 +142,7 @@ plugins:
         'middlewares/http/stripprefixregex.md': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
         # TCP
         'middlewares/tcp/overview.md': 'reference/routing-configuration/tcp/middlewares/overview.md'
+        'middlewares/tcp/accessgovernance.md': 'reference/routing-configuration/tcp/middlewares/accessgovernance.md'
         'middlewares/tcp/inflightconn.md': 'reference/routing-configuration/tcp/middlewares/inflightconn.md'
         'middlewares/tcp/ipwhitelist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         'middlewares/tcp/ipallowlist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
@@ -308,6 +310,7 @@ nav:
               - 'TLS Options' : 'reference/routing-configuration/http/tls/tls-options.md'
             - 'Middlewares' :
               - 'Overview' : 'reference/routing-configuration/http/middlewares/overview.md'
+              - 'AccessGovernance' : 'reference/routing-configuration/http/middlewares/accessgovernance.md'
               - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md'
               - '<span class="nav-link-with-icon">APIKey <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/apikey.md'
               - 'BasicAuth' : 'reference/routing-configuration/http/middlewares/basicauth.md'
@@ -352,6 +355,7 @@ nav:
               - 'TLS' : 'reference/routing-configuration/tcp/tls.md'
               - 'Middlewares' :
                 - 'Overview' : 'reference/routing-configuration/tcp/middlewares/overview.md'
+                - 'AccessGovernance' : 'reference/routing-configuration/tcp/middlewares/accessgovernance.md'
                 - 'InFlightConn' : 'reference/routing-configuration/tcp/middlewares/inflightconn.md'
                 - 'IPAllowList' : 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
           - 'UDP' :
@@ -359,6 +363,8 @@ nav:
               - 'Router' : 'reference/routing-configuration/udp/routing/router.md'
               - 'Rules & Priority' : 'reference/routing-configuration/udp/routing/rules-priority.md'
             - 'Service' : 'reference/routing-configuration/udp/service.md'
+            - 'Middlewares' :
+              - 'AccessGovernance' : 'reference/routing-configuration/udp/middlewares/accessgovernance.md'
         - 'Kubernetes':
           - 'Gateway API' : 'reference/routing-configuration/kubernetes/gateway-api.md'
           - 'Kubernetes CRD' :

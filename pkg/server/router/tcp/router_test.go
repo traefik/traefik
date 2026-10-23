@@ -564,7 +564,7 @@ func Test_Routing(t *testing.T) {
 				router(dynConf)
 			}
 
-			router, err := manager.buildEntryPointHandler(t.Context(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
+			router, err := manager.buildEntryPointHandler(t.Context(), "", dynConf.TCPRouters, dynConf.Routers, nil, nil)
 			require.NoError(t, err)
 
 			if test.allowACMETLSPassthrough {

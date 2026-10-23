@@ -42,6 +42,8 @@ type Interface interface {
 	Middlewares() MiddlewareInformer
 	// MiddlewareTCPs returns a MiddlewareTCPInformer.
 	MiddlewareTCPs() MiddlewareTCPInformer
+	// MiddlewareUDPs returns a MiddlewareUDPInformer.
+	MiddlewareUDPs() MiddlewareUDPInformer
 	// ServersTransports returns a ServersTransportInformer.
 	ServersTransports() ServersTransportInformer
 	// ServersTransportTCPs returns a ServersTransportTCPInformer.
@@ -88,6 +90,11 @@ func (v *version) Middlewares() MiddlewareInformer {
 // MiddlewareTCPs returns a MiddlewareTCPInformer.
 func (v *version) MiddlewareTCPs() MiddlewareTCPInformer {
 	return &middlewareTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// MiddlewareUDPs returns a MiddlewareUDPInformer.
+func (v *version) MiddlewareUDPs() MiddlewareUDPInformer {
+	return &middlewareUDPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ServersTransports returns a ServersTransportInformer.

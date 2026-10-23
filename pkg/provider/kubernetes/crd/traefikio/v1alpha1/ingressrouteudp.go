@@ -22,6 +22,8 @@ type IngressRouteUDPSpec struct {
 type RouteUDP struct {
 	// Services defines the list of UDP services.
 	Services []ServiceUDP `json:"services,omitempty"`
+	// Middlewares defines the list of references to MiddlewareUDP resources.
+	Middlewares []ObjectReference `json:"middlewares,omitempty"`
 }
 
 // ServiceUDP defines an upstream UDP service to proxy traffic to.
