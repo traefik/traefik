@@ -480,13 +480,12 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		mergedStatus := mergeGatewayStatus(currentGateway.Status, status)
-		if gatewayStatusEqual(currentGateway.Status, mergedStatus) {
+		if gatewayStatusEqual(withoutForeignConditions(currentGateway.Status), status) {
 			return nil
 		}
 
 		currentGateway = currentGateway.DeepCopy()
-		currentGateway.Status = mergedStatus
+		currentGateway.Status = mergeGatewayStatus(currentGateway.Status, status)
 
 		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -791,6 +790,22 @@ var (
 	}
 )
 
+// withoutForeignConditions returns the status without the Gateway and listener conditions not owned by Traefik.
+func withoutForeignConditions(status gatev1.GatewayStatus) gatev1.GatewayStatus {
+	filtered := status.DeepCopy()
+	filtered.Conditions = slices.DeleteFunc(filtered.Conditions, func(condition metav1.Condition) bool {
+		return !slices.Contains(gatewayConditionTypes, condition.Type)
+	})
+
+	for i := range filtered.Listeners {
+		filtered.Listeners[i].Conditions = slices.DeleteFunc(filtered.Listeners[i].Conditions, func(condition metav1.Condition) bool {
+			return !slices.Contains(listenerConditionTypes, condition.Type)
+		})
+	}
+
+	return *filtered
+}
+
 // mergeGatewayStatus returns the desired status, with the Gateway and listener conditions
 // of the current status that are not owned by Traefik.
 func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewayStatus {
@@ -894,33 +909,11 @@ func listenersStatusEqual(listenerA, listenerB []gatev1.ListenerStatus) bool {
 }
 
 func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
-	if len(conditionsA) != len(conditionsB) {
-		return false
-	}
-
-	for _, cA := range conditionsA {
-		if !slices.ContainsFunc(conditionsB, func(cB metav1.Condition) bool {
-			return conditionEqual(cB, cA)
-		}) {
-			return false
-		}
-	}
-
-	for _, cB := range conditionsB {
-		if !slices.ContainsFunc(conditionsA, func(cA metav1.Condition) bool {
-			return conditionEqual(cA, cB)
-		}) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func conditionEqual(cA, cB metav1.Condition) bool {
-	return cA.Type == cB.Type &&
-		cA.Reason == cB.Reason &&
-		cA.Status == cB.Status &&
-		cA.Message == cB.Message &&
-		cA.ObservedGeneration == cB.ObservedGeneration
+	return slices.EqualFunc(conditionsA, conditionsB, func(cA metav1.Condition, cB metav1.Condition) bool {
+		return cA.Type == cB.Type &&
+			cA.Reason == cB.Reason &&
+			cA.Status == cB.Status &&
+			cA.Message == cB.Message &&
+			cA.ObservedGeneration == cB.ObservedGeneration
+	})
 }
