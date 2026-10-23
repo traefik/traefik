@@ -41,15 +41,13 @@ func TestExternalActionSuite(t *testing.T) {
 func (s *ExternalActionSuite) SetupSuite() {
 	// Published ports work with both local Linux Docker and VM-backed runtimes.
 	container, err := testcontainers.GenericContainer(s.T().Context(), testcontainers.GenericContainerRequest{
-		ContainerRequest: testcontainers.ContainerRequest{
-			Image: "mysql:8.4",
-			Env: map[string]string{
-				"MYSQL_ROOT_PASSWORD": "integration-only", "MYSQL_ROOT_HOST": "%", "MYSQL_DATABASE": "governance",
-			},
-			ExposedPorts: []string{"3306/tcp"},
-			WaitingFor:   wait.ForListeningPort("3306/tcp").WithStartupTimeout(2 * time.Minute),
+		Image: "mysql:8.4",
+		Env: map[string]string{
+			"MYSQL_ROOT_PASSWORD": "integration-only", "MYSQL_ROOT_HOST": "%", "MYSQL_DATABASE": "governance",
 		},
-		Started: true,
+		ExposedPorts: []string{"3306/tcp"},
+		WaitingFor:   wait.ForListeningPort("3306/tcp").WithStartupTimeout(2 * time.Minute),
+		Started:      true,
 	})
 	require.NoError(s.T(), err)
 	s.containers = map[string]testcontainers.Container{"mysql": container}

@@ -150,9 +150,9 @@ func (m *memoryDeduplicator) Claim(_ context.Context, _ string, key string, ttl,
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// At capacity, scan only when an entry could have expired. Repeated claims
-	// against a full live map must not turn each request into a full-map scan.
-	if now.Sub(m.lastCleanup) >= time.Minute || (len(m.entries) >= m.maxEntries && !m.nextExpiry.After(now)) {
+	// Scan only when an entry could have expired, regardless of capacity.
+	// Live entries must not cause periodic full-map scans under the mutex.
+	if !m.nextExpiry.After(now) {
 		m.nextExpiry = time.Time{}
 		for candidate, entry := range m.entries {
 			if !entry.expiresAt.After(now) {

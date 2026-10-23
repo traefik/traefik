@@ -11,7 +11,6 @@ import (
 	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
@@ -19,18 +18,18 @@ import (
 func TestQueryEnrichmentCRDRuntimeAndReferences(t *testing.T) {
 	crdClient := traefikcrdfake.NewClientset(
 		&traefikv1alpha1.Middleware{
-			ObjectMeta: metav1.ObjectMeta{Name: "metadata", Namespace: "default"},
+			Name: "metadata", Namespace: "default",
 			Spec: traefikv1alpha1.MiddlewareSpec{QueryEnrichment: &traefikv1alpha1.QueryEnrichment{
 				RuntimeValues: map[string]traefikv1alpha1.RuntimeValueSource{"reader": {SecretKeyRef: &traefikv1alpha1.RuntimeObjectKeySelector{Name: "lookup", Key: "arbitrary"}}},
 				Queries:       []traefikv1alpha1.EnrichmentQuery{{Name: "query", AllowedOrigins: []string{"https://metadata.example"}, HTTP: dynamic.ExternalActionHTTP{URL: "https://metadata.example", Auth: &dynamic.ExternalActionAuth{Type: "bearer", Token: "runtime://reader"}}}},
 			}},
 		},
 		&traefikv1alpha1.Middleware{
-			ObjectMeta: metav1.ObjectMeta{Name: "report", Namespace: "default"},
-			Spec:       traefikv1alpha1.MiddlewareSpec{ExternalAction: &traefikv1alpha1.ExternalAction{Enrichment: []string{"metadata"}}},
+			Name: "report", Namespace: "default",
+			Spec: traefikv1alpha1.MiddlewareSpec{ExternalAction: &traefikv1alpha1.ExternalAction{Enrichment: []string{"metadata"}}},
 		},
 	)
-	kubeClient := kubefake.NewClientset(&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "lookup", Namespace: "default", ResourceVersion: "41"}, Data: map[string][]byte{"arbitrary": []byte("private-lookup-token")}})
+	kubeClient := kubefake.NewClientset(&corev1.Secret{Name: "lookup", Namespace: "default", ResourceVersion: "41", Data: map[string][]byte{"arbitrary": []byte("private-lookup-token")}})
 	client := newClientImpl(kubeClient, crdClient)
 	stopCh := make(chan struct{})
 	t.Cleanup(func() { close(stopCh) })

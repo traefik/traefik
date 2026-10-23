@@ -2,6 +2,7 @@ package externalaction
 
 import (
 	"crypto/sha256"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,11 +16,12 @@ func TestFullDeduplicationDoesNotRepeatCleanup(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, claimed)
 	require.NoError(t, store.Complete(t.Context(), "existing", claim, time.Hour))
-	// Force one full-map scan to establish its next possible expiry.
-	store.lastCleanup = time.Now().Add(-time.Minute)
+	// An old cleanup timestamp must not force a scan of live entries.
+	store.lastCleanup = time.Now().Add(-time.Hour)
+	lastCleanup := store.lastCleanup
 	_, _, err = store.Claim(t.Context(), "rule", "new", time.Hour, time.Minute)
 	require.ErrorContains(t, err, "capacity is full")
-	lastCleanup := store.lastCleanup
+	assert.Equal(t, lastCleanup, store.lastCleanup)
 	for range 1000 {
 		_, claimed, err = store.Claim(t.Context(), "rule", "new", time.Hour, time.Minute)
 		require.ErrorContains(t, err, "capacity is full")
@@ -29,6 +31,74 @@ func TestFullDeduplicationDoesNotRepeatCleanup(t *testing.T) {
 		require.False(t, claimed)
 	}
 	assert.Equal(t, lastCleanup, store.lastCleanup)
+}
+
+func TestDeduplicationConcurrentExpiryReclaim(t *testing.T) {
+	store := &memoryDeduplicator{entries: make(map[[32]byte]memoryDeduplicationEntry), maxEntries: 1}
+	oldClaim, claimed, err := store.Claim(t.Context(), "rule", "existing", time.Hour, time.Minute)
+	require.NoError(t, err)
+	require.True(t, claimed)
+	require.NoError(t, store.Complete(t.Context(), "existing", oldClaim, -time.Second))
+
+	type result struct {
+		claimID string
+		claimed bool
+		err     error
+	}
+	results := make(chan result, 64)
+	start := make(chan struct{})
+	var workers sync.WaitGroup
+	for range cap(results) {
+		workers.Go(func() {
+			<-start
+			claimID, claimed, err := store.Claim(t.Context(), "rule", "existing", time.Hour, time.Minute)
+			results <- result{claimID: claimID, claimed: claimed, err: err}
+		})
+	}
+	close(start)
+	workers.Wait()
+	close(results)
+	var claims []string
+	for result := range results {
+		require.NoError(t, result.err)
+		if result.claimed {
+			claims = append(claims, result.claimID)
+		}
+	}
+	require.Len(t, claims, 1)
+	require.Error(t, store.Complete(t.Context(), "existing", oldClaim, time.Hour))
+	require.NoError(t, store.Release(t.Context(), "existing", oldClaim))
+	require.NoError(t, store.Complete(t.Context(), "existing", claims[0], time.Hour))
+	_, claimed, err = store.Claim(t.Context(), "rule", "existing", time.Hour, time.Minute)
+	require.NoError(t, err)
+	assert.False(t, claimed)
+}
+
+func TestDeduplicationCleanupBeforeCapacity(t *testing.T) {
+	store := &memoryDeduplicator{entries: make(map[[32]byte]memoryDeduplicationEntry), maxEntries: 3}
+	claim, claimed, err := store.Claim(t.Context(), "rule", "existing", time.Hour, time.Minute)
+	require.NoError(t, err)
+	require.True(t, claimed)
+	require.NoError(t, store.Complete(t.Context(), "existing", claim, time.Hour))
+	store.lastCleanup = time.Now().Add(-time.Hour)
+	lastCleanup := store.lastCleanup
+	_, claimed, err = store.Claim(t.Context(), "rule", "new", time.Hour, time.Minute)
+	require.NoError(t, err)
+	require.True(t, claimed)
+	assert.Equal(t, lastCleanup, store.lastCleanup)
+
+	// Expiry must still be reclaimed promptly when the map is not full.
+	hash := sha256.Sum256([]byte("existing"))
+	entry := store.entries[hash]
+	entry.expiresAt = time.Now().Add(-time.Second)
+	store.entries[hash] = entry
+	store.trackExpiry(entry.expiresAt)
+	_, claimed, err = store.Claim(t.Context(), "rule", "another", time.Hour, time.Minute)
+	require.NoError(t, err)
+	require.True(t, claimed)
+	assert.NotContains(t, store.entries, hash)
+	assert.Len(t, store.entries, 2)
+	assert.True(t, store.lastCleanup.After(lastCleanup))
 }
 
 func TestFullDeduplicationReclaimsDueExpiry(t *testing.T) {

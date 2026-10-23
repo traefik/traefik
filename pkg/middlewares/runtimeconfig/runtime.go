@@ -14,7 +14,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
-const referencePrefix = "runtime://"
+const (
+	referencePrefix = "runtime://"
+	maxRuntimeDepth = 128
+)
 
 var (
 	aliasPattern         = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,127}$`)
@@ -40,21 +43,21 @@ func Resolve(values map[string]dynamic.RuntimeValue, target any) error {
 	if root.Kind() != reflect.Pointer || root.IsNil() {
 		return errors.New("runtime target must be a non-nil pointer")
 	}
-	return resolveValue(root.Elem(), loaded)
+	return resolveValue(root.Elem(), loaded, 0)
 }
 
 // SourceIdentity returns a stable, non-secret identity for a connection value.
 // The identity remains stable when a Secret or file's contents rotate.
 func SourceIdentity(value, file string, values map[string]dynamic.RuntimeValue) (string, error) {
-	value = strings.TrimSpace(value)
-	file = strings.TrimSpace(file)
-	if value != "" && file != "" {
+	normalizedValue := strings.TrimSpace(value)
+	normalizedFile := strings.TrimSpace(file)
+	if normalizedValue != "" && normalizedFile != "" {
 		return "", errors.New("connection must not define both dsn and dsnFile")
 	}
-	if file != "" {
-		return "file:" + file, nil
+	if normalizedFile != "" {
+		return "file:" + normalizedFile, nil
 	}
-	if alias, ok := ExactAlias(value); ok {
+	if alias, ok := ExactAlias(normalizedValue); ok {
 		source, exists := values[alias]
 		if !exists {
 			return "", fmt.Errorf("runtime value %q is not declared", alias)
@@ -67,10 +70,10 @@ func SourceIdentity(value, file string, values map[string]dynamic.RuntimeValue) 
 		}
 		return "runtime:literal:" + alias, nil
 	}
-	if value == "" {
+	if normalizedValue == "" {
 		return "", errors.New("connection requires dsn or dsnFile")
 	}
-	sum := sha256.Sum256([]byte(value))
+	sum := sha256.Sum256([]byte(normalizedValue))
 	return "literal:" + hex.EncodeToString(sum[:]), nil
 }
 
@@ -144,7 +147,11 @@ func resolveString(value string, values map[string]string) (string, error) {
 	return result, nil
 }
 
-func resolveValue(value reflect.Value, values map[string]string) error {
+func resolveValue(value reflect.Value, values map[string]string, depth int) error {
+	// Bound both deeply nested configuration and cyclic programmatic values.
+	if depth > maxRuntimeDepth {
+		return errors.New("runtime configuration exceeds maximum nesting depth")
+	}
 	if !value.IsValid() {
 		return nil
 	}
@@ -155,7 +162,7 @@ func resolveValue(value reflect.Value, values map[string]string) error {
 	switch value.Kind() {
 	case reflect.Pointer:
 		if !value.IsNil() {
-			return resolveValue(value.Elem(), values)
+			return resolveValue(value.Elem(), values, depth+1)
 		}
 	case reflect.Interface:
 		if value.IsNil() {
@@ -163,27 +170,27 @@ func resolveValue(value reflect.Value, values map[string]string) error {
 		}
 		copyValue := reflect.New(value.Elem().Type()).Elem()
 		copyValue.Set(value.Elem())
-		if err := resolveValue(copyValue, values); err != nil {
+		if err := resolveValue(copyValue, values, depth+1); err != nil {
 			return err
 		}
 		value.Set(copyValue)
 	case reflect.Struct:
 		for _, field := range value.Fields() {
 			if field.CanSet() {
-				if err := resolveValue(field, values); err != nil {
+				if err := resolveValue(field, values, depth+1); err != nil {
 					return err
 				}
 			}
 		}
 	case reflect.Slice:
 		for index := range value.Len() {
-			if err := resolveValue(value.Index(index), values); err != nil {
+			if err := resolveValue(value.Index(index), values, depth+1); err != nil {
 				return err
 			}
 		}
 	case reflect.Array:
 		for index := range value.Len() {
-			if err := resolveValue(value.Index(index), values); err != nil {
+			if err := resolveValue(value.Index(index), values, depth+1); err != nil {
 				return err
 			}
 		}
@@ -197,7 +204,7 @@ func resolveValue(value reflect.Value, values map[string]string) error {
 			entry := iterator.Value()
 			copyValue := reflect.New(entry.Type()).Elem()
 			copyValue.Set(entry)
-			if err := resolveValue(copyValue, values); err != nil {
+			if err := resolveValue(copyValue, values, depth+1); err != nil {
 				return err
 			}
 			value.SetMapIndex(key, copyValue)
