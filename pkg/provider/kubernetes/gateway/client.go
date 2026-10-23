@@ -480,12 +480,13 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		if gatewayStatusEqual(currentGateway.Status, status) {
+		mergedStatus := mergeGatewayStatus(currentGateway.Status, status)
+		if gatewayStatusEqual(currentGateway.Status, mergedStatus) {
 			return nil
 		}
 
 		currentGateway = currentGateway.DeepCopy()
-		currentGateway.Status = status
+		currentGateway.Status = mergedStatus
 
 		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -773,6 +774,52 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 	}
 
 	return parentStatuses
+}
+
+// gatewayConditionTypes and listenerConditionTypes are the condition types Traefik writes,
+// conditions of any other type are owned by other controllers and must be preserved.
+var (
+	gatewayConditionTypes = []string{
+		string(gatev1.GatewayConditionAccepted),
+		string(gatev1.GatewayConditionProgrammed),
+	}
+	listenerConditionTypes = []string{
+		string(gatev1.ListenerConditionAccepted),
+		string(gatev1.ListenerConditionConflicted),
+		string(gatev1.ListenerConditionProgrammed),
+		string(gatev1.ListenerConditionResolvedRefs),
+	}
+)
+
+// mergeGatewayStatus returns the desired status, with the Gateway and listener conditions
+// of the current status that are not owned by Traefik.
+func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewayStatus {
+	status := desired
+	status.Conditions = mergeConditions(current.Conditions, desired.Conditions, gatewayConditionTypes)
+
+	status.Listeners = slices.Clone(desired.Listeners)
+	for i, listener := range status.Listeners {
+		idx := slices.IndexFunc(current.Listeners, func(l gatev1.ListenerStatus) bool {
+			return l.Name == listener.Name
+		})
+		if idx < 0 {
+			continue
+		}
+		status.Listeners[i].Conditions = mergeConditions(current.Listeners[idx].Conditions, listener.Conditions, listenerConditionTypes)
+	}
+
+	return status
+}
+
+func mergeConditions(current, desired []metav1.Condition, ownedTypes []string) []metav1.Condition {
+	conditions := slices.Clone(desired)
+	for _, condition := range current {
+		if !slices.Contains(ownedTypes, condition.Type) {
+			conditions = append(conditions, condition)
+		}
+	}
+
+	return conditions
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
