@@ -71,9 +71,13 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	// Loop through Custom response headers
 	for header, value := range s.headers.CustomResponseHeaders {
-		if value == "" {
+		switch {
+		case value == "":
 			res.Header.Del(header)
-		} else {
+		case http.CanonicalHeaderKey(header) == "Set-Cookie":
+			// Appended so that cookies already set on the response, like the sticky cookie, are kept.
+			res.Header.Add(header, value)
+		default:
 			res.Header.Set(header, value)
 		}
 	}
