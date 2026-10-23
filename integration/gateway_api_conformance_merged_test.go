@@ -197,6 +197,7 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				tests.GatewayFrontendClientCertificateValidation.ShortName,
 				tests.GatewayFrontendClientCertificateValidationInsecureFallback.ShortName,
 				tests.GatewayFrontendInvalidDefaultClientCertificateValidation.ShortName,
+				tests.GatewayInvalidFrontendClientCertificateValidation.ShortName,
 			},
 		},
 	})

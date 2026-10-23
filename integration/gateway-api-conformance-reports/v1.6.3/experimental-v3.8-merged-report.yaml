@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-20T16:14:25+02:00"
+date: "2026-10-23T10:20:59+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -55,10 +55,11 @@ profiles:
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayFrontendInvalidDefaultClientCertificateValidation
     - GatewayInfrastructureMetadata
+    - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 45
-      Skipped: 4
+      Passed: 44
+      Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
@@ -101,7 +102,7 @@ profiles:
     - HTTPRouteRetryConnectionError
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
-    succeeded with 4 test skips.
+    succeeded with 5 test skips.
 - core:
     result: success
     statistics:
