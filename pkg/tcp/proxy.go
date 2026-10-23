@@ -105,3 +105,10 @@ func isSocketNotConnectedError(err error) bool {
 	_, ok := errors.AsType[*net.OpError](err)
 	return ok && errors.Is(err, syscall.ENOTCONN)
 }
+
+// isReadOp reports whether op is a read operation.
+// io.Copy relies on the destination TCP connection ReadFrom method, which reports read failures
+// as a readfrom operation wrapping the underlying read one.
+func isReadOp(op string) bool {
+	return op == "read" || op == "readfrom"
+}
