@@ -15521,6 +15521,81 @@ func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *tes
 	}
 }
 
+func Test_loadConfigurationFromGateways_BackendClientCertificateResolvedRefs(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		path           string
+		expectedStatus metav1.ConditionStatus
+		expectedReason gatev1.GatewayConditionReason
+	}{
+		{
+			desc:           "resolved client certificate",
+			path:           "httproute/with_gateway_backend_client_certificate.yml",
+			expectedStatus: metav1.ConditionTrue,
+			expectedReason: gatev1.GatewayReasonResolvedRefs,
+		},
+		{
+			desc:           "missing client certificate Secret",
+			path:           "httproute/with_gateway_backend_client_certificate_missing_secret.yml",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: gatev1.GatewayReasonInvalidClientCertificateRef,
+		},
+		{
+			desc:           "cross namespace client certificate without ReferenceGrant",
+			path:           "httproute/with_gateway_backend_client_certificate_cross_namespace_without_reference_grant.yml",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: gatev1.GatewayReasonRefNotPermitted,
+		},
+		{
+			desc:           "resolved client certificate with an unresolved listener",
+			path:           "httproute/with_gateway_backend_client_certificate_unresolved_listener.yml",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: gatev1.GatewayReasonListenersNotResolved,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
+
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			// just wait for the first event
+			<-eventCh
+
+			p := Provider{
+				EntryPoints: map[string]Entrypoint{
+					"web":       {Address: ":80"},
+					"websecure": {Address: ":443"},
+				},
+				client: client,
+			}
+
+			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+			require.NoError(t, err)
+
+			statusReport.Flush(t.Context(), client)
+
+			gateway, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "my-gateway", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			i := slices.IndexFunc(gateway.Status.Conditions, func(condition metav1.Condition) bool {
+				return condition.Type == string(gatev1.GatewayConditionResolvedRefs)
+			})
+			require.NotEqual(t, -1, i)
+
+			assert.Equal(t, test.expectedStatus, gateway.Status.Conditions[i].Status)
+			assert.Equal(t, string(test.expectedReason), gateway.Status.Conditions[i].Reason)
+		})
+	}
+}
+
 func certificateCommonName(t *testing.T, certFile types.FileOrContent) string {
 	t.Helper()
 
