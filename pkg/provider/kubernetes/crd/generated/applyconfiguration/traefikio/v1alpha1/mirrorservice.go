@@ -36,7 +36,7 @@ import (
 //
 // MirrorService holds the mirror configuration.
 type MirrorServiceApplyConfiguration struct {
-	LoadBalancerSpecApplyConfiguration `json:",inline"`
+	LoadBalancerSpecApplyConfiguration `json:""`
 	// Percent defines the part of the traffic to mirror.
 	// Supported values: 0 to 100.
 	Percent *int `json:"percent,omitempty"`

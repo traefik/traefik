@@ -42,11 +42,39 @@ import (
 )
 
 // TLSOptionInformer provides access to a shared informer and lister for
-// TLSOptions.
+// TLSOptions. Prefer using the type-safe variant (see [TypedTLSOptionInformer]).
 type TLSOptionInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() traefikiov1alpha1.TLSOptionLister
 }
+
+// TypedTLSOptionInformer provides access to a shared informer and lister for
+// TLSOptions, including the type-safe TypedInformer variant.
+// It is a superset of TLSOptionInformer.
+type TypedTLSOptionInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() TLSOptionIndexInformer
+	Lister() traefikiov1alpha1.TLSOptionLister
+}
+
+// TLSOptionIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type TLSOptionIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSOption]
+
+// TLSOptionHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for TLSOption.
+type TLSOptionHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.TLSOption]
+
+// TLSOptionDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for TLSOption.
+type TLSOptionDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.TLSOption]
+
+// TLSOptionFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for TLSOption.
+type TLSOptionFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.TLSOption]
+
+// TLSOptionIndexers is a specialization of [cache.TypedIndexers] for TLSOption.
+type TLSOptionIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.TLSOption]
+
+// DeletedTLSOption is a specialization of [cache.DeletedObject] for TLSOption.
+type DeletedTLSOption = cache.DeletedObject[*crdtraefikiov1alpha1.TLSOption]
 
 type tLSOptionInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -57,25 +85,49 @@ type tLSOptionInformer struct {
 // NewTLSOptionInformer constructs a new informer for TLSOption type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTLSOptionInformer]).
 func NewTLSOptionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewTLSOptionInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedTLSOptionInformer constructs a new informer for TLSOption type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTLSOptionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TLSOptionIndexers) TLSOptionIndexInformer {
+	return NewTypedTLSOptionInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredTLSOptionInformer constructs a new informer for TLSOption type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredTLSOptionInformer]).
 func NewFilteredTLSOptionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewTLSOptionInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedTLSOptionInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredTLSOptionInformer constructs a new informer for TLSOption type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredTLSOptionInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TLSOptionIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) TLSOptionIndexInformer {
+	return NewTypedTLSOptionInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewTLSOptionInformerWithOptions constructs a new informer for TLSOption type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTLSOptionInformerWithOptions]).
 func NewTLSOptionInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedTLSOptionInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedTLSOptionInformerWithOptions constructs a new informer for TLSOption type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTLSOptionInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) TLSOptionIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "tlsoptions"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSOption](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -108,17 +160,57 @@ func NewTLSOptionInformerWithOptions(client versioned.Interface, namespace strin
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *tLSOptionInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewTLSOptionInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedTLSOptionInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *tLSOptionInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&crdtraefikiov1alpha1.TLSOption{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *tLSOptionInformer) TypedInformer() TLSOptionIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSOption](f.factory.InformerFor(&crdtraefikiov1alpha1.TLSOption{}, f.defaultInformer))
 }
 
 func (f *tLSOptionInformer) Lister() traefikiov1alpha1.TLSOptionLister {
 	return traefikiov1alpha1.NewTLSOptionLister(f.Informer().GetIndexer())
+}
+
+// ToTypedTLSOptionInformer converts an untyped informer into a TypedTLSOptionInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TLSOption. If that is not the case, calling type-safe methods of the returned
+// TypedTLSOptionInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedTLSOptionInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedTLSOptionInformer(informer TLSOptionInformer) TypedTLSOptionInformer {
+	if informer, ok := informer.(TypedTLSOptionInformer); ok {
+		return informer
+	}
+	return &tLSOptionTypedInformerAdapter{informer}
+}
+
+type tLSOptionTypedInformerAdapter struct {
+	TLSOptionInformer
+}
+
+func (a *tLSOptionTypedInformerAdapter) TypedInformer() TLSOptionIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSOption](a.Informer())
+}
+
+// ToTLSOptionIndexInformer converts an untyped informer into a TLSOptionIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TLSOption. If that is not the case, calling type-safe methods of the returned
+// TLSOptionIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a TLSOptionIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTLSOptionIndexInformer(informer cache.SharedIndexInformer) TLSOptionIndexInformer {
+	if informer, ok := informer.(TLSOptionIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSOption](informer)
 }
