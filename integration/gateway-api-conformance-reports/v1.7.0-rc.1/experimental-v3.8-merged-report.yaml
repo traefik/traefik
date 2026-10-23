@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T14:39:54+02:00"
+date: "2026-10-23T15:56:17+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.1
 implementation:
@@ -68,7 +68,7 @@ profiles:
     - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 45
+      Passed: 46
       Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
