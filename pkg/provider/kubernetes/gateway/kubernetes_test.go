@@ -2904,9 +2904,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-retry": {
 							Retry: &dynamic.Retry{
-								Attempts:        4,
-								Status:          []string{"500", "503"},
-								InitialInterval: ptypes.Duration(100 * time.Millisecond),
+								Attempts:            4,
+								Status:              []string{"500", "503"},
+								InitialInterval:     ptypes.Duration(100 * time.Millisecond),
+								MaxRequestBodyBytes: new(dynamic.RetryDefaultMaxRequestBodyBytes),
 							},
 						},
 					},
@@ -2981,7 +2982,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-retry": {
 							Retry: &dynamic.Retry{
-								Attempts: 2,
+								Attempts:            2,
+								MaxRequestBodyBytes: new(dynamic.RetryDefaultMaxRequestBodyBytes),
 							},
 						},
 					},
