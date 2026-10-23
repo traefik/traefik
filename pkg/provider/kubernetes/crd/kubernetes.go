@@ -1186,6 +1186,10 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 			rl.Redis.Username = refs.Add("/rateLimit/redis/username", rateLimit.Redis.Secret, "username", username)
 			rl.Redis.Password = refs.Add("/rateLimit/redis/password", rateLimit.Redis.Secret, "password", password)
 		}
+
+		if rateLimit.Redis.DenyOnError != nil {
+			rl.Redis.DenyOnError = new(*rateLimit.Redis.DenyOnError)
+		}
 	}
 
 	return rl, nil
