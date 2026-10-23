@@ -320,7 +320,7 @@ func TestOCSPStapler_updateStaple(t *testing.T) {
 			ocspStapler := newOCSPStapler(nil)
 			ocspStapler.client = &http.Client{Timeout: time.Second}
 
-			err = ocspStapler.updateStaple(t.Context(), test.entry)
+			err := ocspStapler.updateStaple(t.Context(), test.entry)
 			if test.expectError {
 				require.Error(t, err)
 				return
@@ -475,7 +475,7 @@ func TestOCSPStapler_updateStaples(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Equal(t, ocspResponse, toUpdate.(*ocspEntry).staple)
-	assert.Equal(t, stapleUpdate.UTC(), nilStaple.(*ocspEntry).nextUpdate)
+	assert.Equal(t, stapleUpdate.UTC(), toUpdate.(*ocspEntry).nextUpdate)
 
 	noUpdate, ok := ocspStapler.cache.Get("noUpdate")
 	require.True(t, ok)
