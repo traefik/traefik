@@ -110,6 +110,8 @@ type Configuration struct {
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
 
 	OCSP *tls.OCSPConfig `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	TLS *TLSClientAuth `description:"TLS client auth configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Core configures Traefik core behavior.
@@ -128,6 +130,12 @@ func (c *Core) SetDefaults() {
 // SpiffeClientConfig defines the SPIFFE client configuration.
 type SpiffeClientConfig struct {
 	WorkloadAPIAddr string `description:"Defines the workload API address." json:"workloadAPIAddr,omitempty" toml:"workloadAPIAddr,omitempty" yaml:"workloadAPIAddr,omitempty"`
+}
+
+// TLSClientAuth defines global, client authentication settings.
+type TLSClientAuth struct {
+	CRLReloadInterval ptypes.Duration   `description:"Interval between files reload, setting it to 0 will turn off reload" json:"crlReloadInterval,omitempty" toml:"crlReloadInterval,omitempty" yaml:"crlReloadInterval,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CRLFiles          map[string]string `description:"CRLPaths to CRL files used globally for client certificate revocation checks. (key: CRL distribution point as listed in certificate)" json:"crlFiles,omitempty" toml:"crlFiles,omitempty" yaml:"crlFiles,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
