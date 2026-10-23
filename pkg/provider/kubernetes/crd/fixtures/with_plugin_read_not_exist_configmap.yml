@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-configmap
+  namespace: default
+
+spec:
+  plugin:
+    test-configmap:
+      instructions: urn:k8s:configmap:missing:instructions

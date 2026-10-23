@@ -9,6 +9,9 @@ import (
 // SecretURNPrefix is the prefix of the URN referencing the value of a key of a Secret.
 const SecretURNPrefix = "urn:k8s:secret:"
 
+// ConfigMapURNPrefix is the prefix of the URN referencing the value of a key of a ConfigMap.
+const ConfigMapURNPrefix = "urn:k8s:configmap:"
+
 // SecretURN returns the URN referencing the value of the given key of the given Secret.
 func SecretURN(secretName, key string) string {
 	return SecretURNPrefix + secretName + ":" + key
