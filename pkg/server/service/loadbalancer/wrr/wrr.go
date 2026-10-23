@@ -229,8 +229,8 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 
 	// The loop below only stops once it pops an available handler. Without one
 	// it would spin forever while holding the lock, so bail out early. This state
-	// is reachable when every up server is fenced (e.g. a draining server kept for
-	// sticky sessions) while the non-fenced servers are down.
+	// is reachable when every up server is fenced while the others are down, or
+	// when the only up server has a zero weight and is therefore not in the heap.
 	if !slices.ContainsFunc(b.handlers, func(h *namedHandler) bool { return b.isAvailable(h.name) }) {
 		return nil, errNoAvailableServer
 	}

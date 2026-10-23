@@ -233,9 +233,9 @@ func TestBalancerAllServersFenced(t *testing.T) {
 
 // TestBalancerAllHealthyServersFenced checks that the balancer returns without
 // looping forever when the only up servers are fenced.
-// This state is reachable during a rolling update with sticky sessions: the
-// health check marks the non-fenced servers down while the draining (fenced)
-// server is still up, leaving no server that is both up and non-fenced.
+// This state is reachable during a rolling update: the health check marks the
+// non-fenced servers down while the terminating (fenced) server is still up,
+// leaving no server that is both up and non-fenced.
 func TestBalancerAllHealthyServersFenced(t *testing.T) {
 	balancer := New(nil, false)
 
