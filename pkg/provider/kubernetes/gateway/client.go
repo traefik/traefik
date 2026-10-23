@@ -897,11 +897,33 @@ func listenersStatusEqual(listenerA, listenerB []gatev1.ListenerStatus) bool {
 }
 
 func conditionsEqual(conditionsA, conditionsB []metav1.Condition) bool {
-	return slices.EqualFunc(conditionsA, conditionsB, func(cA metav1.Condition, cB metav1.Condition) bool {
-		return cA.Type == cB.Type &&
-			cA.Reason == cB.Reason &&
-			cA.Status == cB.Status &&
-			cA.Message == cB.Message &&
-			cA.ObservedGeneration == cB.ObservedGeneration
-	})
+	if len(conditionsA) != len(conditionsB) {
+		return false
+	}
+
+	for _, cA := range conditionsA {
+		if !slices.ContainsFunc(conditionsB, func(cB metav1.Condition) bool {
+			return conditionEqual(cB, cA)
+		}) {
+			return false
+		}
+	}
+
+	for _, cB := range conditionsB {
+		if !slices.ContainsFunc(conditionsA, func(cA metav1.Condition) bool {
+			return conditionEqual(cA, cB)
+		}) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func conditionEqual(cA, cB metav1.Condition) bool {
+	return cA.Type == cB.Type &&
+		cA.Reason == cB.Reason &&
+		cA.Status == cB.Status &&
+		cA.Message == cB.Message &&
+		cA.ObservedGeneration == cB.ObservedGeneration
 }

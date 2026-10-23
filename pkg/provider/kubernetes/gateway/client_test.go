@@ -125,6 +125,30 @@ func Test_gatewayStatusEquals(t *testing.T) {
 			expected: false,
 		},
 		{
+			desc: "Gateway conditions same conditions in different order",
+			statusA: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{
+						Type: "foo",
+					},
+					{
+						Type: "bar",
+					},
+				},
+			},
+			statusB: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{
+					{
+						Type: "bar",
+					},
+					{
+						Type: "foo",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
 			desc: "Gateway listeners conditions length",
 			statusA: gatev1.GatewayStatus{
 				Listeners: []gatev1.ListenerStatus{
