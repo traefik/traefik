@@ -664,6 +664,52 @@ For more information on service-level middlewares, see [service middlewares](../
         prefix: /api
     ```
 
+#### Retries
+
+The `rules[].retry` field of an `HTTPRoute` configures when Traefik retries a request to the backend.
+Traefik applies it with the [Retry middleware](../http/middlewares/retry.md), after the route-level filters.
+
+| Field      | Description                                                                                                                                                       | Default |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| <a id="opt-codes" href="#opt-codes" title="#opt-codes">`codes`</a> | HTTP response status codes for which the request is retried. Requests failing with a network error (connection refused, reset, ...) are always retried.          |         |
+| <a id="opt-attempts" href="#opt-attempts" title="#opt-attempts">`attempts`</a> | Maximum number of retries, not counting the initial request.                                                                                                      | 1       |
+| <a id="opt-backoff" href="#opt-backoff" title="#opt-backoff">`backoff`</a> | Initial wait time between retries. Traefik uses an exponential backoff with jitter starting from this value, so a retry can happen slightly before it is reached. | 0s      |
+
+!!! info "Non-Idempotent Methods"
+
+    Requests using a non-idempotent method (`POST`, `PATCH`, `LOCK`) are only retried on network errors, not on the configured status codes.
+
+??? example "Retrying a Request on 5xx Status Codes"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+          retry:
+            codes:
+              - 502
+              - 503
+            attempts: 3
+            backoff: 100ms
+    ```
+
 ### GRPC
 
 The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 

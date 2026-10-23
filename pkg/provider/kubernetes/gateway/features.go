@@ -74,6 +74,8 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteRequestTimeoutFeature,
 		features.HTTPRouteBackendTimeoutFeature,
 		features.HTTPRouteBackendURLRewriteFeature,
+		features.HTTPRouteRetryCodesFeature,
+		features.HTTPRouteRetryConnectionErrorFeature,
 	)
 }
 

@@ -158,6 +158,15 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 		}
 
+		var retry *dynamic.Middleware
+		if routeRule.Retry != nil {
+			var err error
+			// The CRD validation guarantees a valid GEP-2257 duration string.
+			if retry, err = createRetry(routeRule.Retry); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Ignoring HTTPRoute retry: invalid backoff")
+			}
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
@@ -221,6 +230,13 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
+			}
+
+			if err == nil && retry != nil {
+				// The retry middleware comes last, so that only the call to the backend is retried.
+				retryName := routerName + "-retry"
+				routerConf.HTTP.Middlewares[retryName] = retry
+				router.Middlewares = append(router.Middlewares, retryName)
 			}
 
 			p.applyRouterTransform(ctx, &router, route)
@@ -1086,6 +1102,28 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 			AccessControlMaxAge:               new(int64(filter.MaxAge)),
 		},
 	}
+}
+
+func createRetry(retry *gatev1.HTTPRouteRetry) (*dynamic.Middleware, error) {
+	// The Gateway API attempts are the number of retries,
+	// whereas the Traefik ones also count the initial request, hence the +1.
+	r := &dynamic.Retry{
+		Attempts: ptr.Deref(retry.Attempts, defaultRetryAttempts) + 1,
+	}
+
+	for _, code := range retry.Codes {
+		r.Status = append(r.Status, strconv.Itoa(int(code)))
+	}
+
+	if retry.Backoff != nil {
+		backoff, err := time.ParseDuration(string(*retry.Backoff))
+		if err != nil {
+			return nil, fmt.Errorf("invalid retry backoff %q: %w", *retry.Backoff, err)
+		}
+		r.InitialInterval = ptypes.Duration(backoff)
+	}
+
+	return &dynamic.Middleware{Retry: r}, nil
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {

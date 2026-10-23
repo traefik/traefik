@@ -62,6 +62,9 @@ const (
 	appProtocolWS    = "kubernetes.io/ws"
 	appProtocolWSS   = "kubernetes.io/wss"
 
+	// defaultRetryAttempts is used when an HTTPRoute retry does not set attempts, which the spec leaves implementation-specific.
+	defaultRetryAttempts = 1
+
 	schemeHTTP  = "http"
 	schemeHTTPS = "https"
 	schemeH2C   = "h2c"
