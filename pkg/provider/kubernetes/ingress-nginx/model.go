@@ -97,8 +97,8 @@ type location struct {
 	// PathType is the Kubernetes PathType for this location.
 	PathType *netv1.PathType
 
-	// Aliases holds the additional hostnames (server-alias) that should be
-	// included in this location's host rule. Builder resolves conflicts
+	// Aliases holds the additional hostnames (server-alias) of this location's
+	// host, shared by every location of the host. Builder resolves conflicts
 	// (already-defined hosts, claims by other ingresses) before populating it.
 	Aliases []string
 
