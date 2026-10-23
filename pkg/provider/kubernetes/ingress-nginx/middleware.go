@@ -15,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
-	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -164,7 +163,11 @@ func (p *Provider) buildRedirect(loc *location) {
 
 	regex := ".*"
 	if loc.UseRegex {
-		regex = `^https?://[^/]+` + loc.Path
+		path := loc.Path
+		if loc.PathKeep != "" {
+			path = loc.PathKeep
+		}
+		regex = `^https?://[^/]+` + path
 	}
 
 	loc.Redirect = &dynamic.RedirectRegex{
@@ -307,9 +310,9 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 		return
 	}
 
-	regex := loc.Path
-	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
-		regex = makeTrailingGroupOptional(loc.Path)
+	regex := pathRegexp(loc)
+	if loc.PathKeep != "" {
+		regex = loc.PathKeep
 	}
 
 	xfp := ""
