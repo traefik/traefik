@@ -892,7 +892,12 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 
 	for name, pc := range pcMap {
 		for key, value := range pc {
-			if pc[key], err = loadReferencedValues(k8sClient, ns, dynamic.JSONPointer("plugin", name, key), value, refs); err != nil {
+			// A ConfigMap holds no credential, so its value is set in the configuration, where the API shows it.
+			if pc[key], err = loadConfigMapValues(k8sClient, ns, value); err != nil {
+				return nil, err
+			}
+
+			if err = loadSecretKeys(k8sClient, ns, dynamic.JSONPointer("plugin", name, key), pc[key], refs); err != nil {
 				return nil, err
 			}
 		}
@@ -901,37 +906,61 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 	return pcMap, nil
 }
 
-// loadReferencedValues records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN,
-// and returns value where every ConfigMap URN is replaced with its value.
-// The Secret URNs stay in the configuration so that the API does not show their values: the middleware builder replaces them.
-// A ConfigMap holds no credential, so its value is set in the configuration, where the API shows it.
-func loadReferencedValues(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) (any, error) {
-	var err error
+// loadSecretKeys records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN.
+// The URNs stay in the configuration: the middleware builder replaces them with their values.
+func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) error {
 	switch v := value.(type) {
 	case string:
-		switch {
-		case strings.HasPrefix(v, k8s.SecretURNPrefix):
-			secretValue, err := getSecretValue(k8sClient, ns, v)
-			if err != nil {
-				return nil, err
-			}
-
-			refs[pointer] = secretValue
-
-		case strings.HasPrefix(v, k8s.ConfigMapURNPrefix):
-			return getConfigMapValue(k8sClient, ns, v)
+		if !strings.HasPrefix(v, k8s.SecretURNPrefix) {
+			return nil
 		}
+
+		secretValue, err := getSecretValue(k8sClient, ns, v)
+		if err != nil {
+			return err
+		}
+
+		refs[pointer] = secretValue
 
 	case []any:
 		for i, item := range v {
-			if v[i], err = loadReferencedValues(k8sClient, ns, pointer+"/"+strconv.Itoa(i), item, refs); err != nil {
+			if err := loadSecretKeys(k8sClient, ns, pointer+"/"+strconv.Itoa(i), item, refs); err != nil {
+				return err
+			}
+		}
+
+	case map[string]any:
+		for key, item := range v {
+			if err := loadSecretKeys(k8sClient, ns, pointer+dynamic.JSONPointer(key), item, refs); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// loadConfigMapValues returns value where every ConfigMap URN is replaced with the value it references.
+func loadConfigMapValues(k8sClient Client, ns string, value any) (any, error) {
+	var err error
+	switch v := value.(type) {
+	case string:
+		if !strings.HasPrefix(v, k8s.ConfigMapURNPrefix) {
+			return v, nil
+		}
+
+		return getConfigMapValue(k8sClient, ns, v)
+
+	case []any:
+		for i, item := range v {
+			if v[i], err = loadConfigMapValues(k8sClient, ns, item); err != nil {
 				return nil, err
 			}
 		}
 
 	case map[string]any:
 		for key, item := range v {
-			if v[key], err = loadReferencedValues(k8sClient, ns, pointer+dynamic.JSONPointer(key), item, refs); err != nil {
+			if v[key], err = loadConfigMapValues(k8sClient, ns, item); err != nil {
 				return nil, err
 			}
 		}
