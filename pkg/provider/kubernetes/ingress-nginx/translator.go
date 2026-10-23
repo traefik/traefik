@@ -764,15 +764,14 @@ func buildRule(host string, loc *location) string {
 			}
 		}
 
-		switch pathType {
-		case netv1.PathTypeExact:
+		switch {
+		case loc.UseRegex:
+			// NGINX renders every location of a regex host as `~* "^<path>"`, Exact included.
+			rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
+		case pathType == netv1.PathTypeExact:
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
-		case netv1.PathTypePrefix:
-			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
-			} else {
-				rules = append(rules, buildPrefixRule(loc.Path))
-			}
+		case pathType == netv1.PathTypePrefix:
+			rules = append(rules, buildPrefixRule(loc.Path))
 		}
 	}
 

@@ -22,6 +22,8 @@ func TestExactPathRouting(t *testing.T) {
 		path         string
 		prefix       string
 		aliases      []string
+		useRegex     bool
+		subpaths     []string
 		prefixCanary *canaryConfig
 		exactCanary  *canaryConfig
 		cookie       string
@@ -93,6 +95,14 @@ func TestExactPathRouting(t *testing.T) {
 			expected:     "exact",
 		},
 		{
+			desc:     "use-regex",
+			path:     "/admin/report",
+			prefix:   "/admin",
+			useRegex: true,
+			subpaths: []string{"/admin/report/child", "/ADMIN/REPORT"},
+			expected: "exact",
+		},
+		{
 			desc:     "already higher priority",
 			path:     "/admin/" + strings.Repeat("a", 100),
 			prefix:   "/admin",
@@ -114,12 +124,12 @@ func TestExactPathRouting(t *testing.T) {
 							{
 								Path: test.prefix, PathType: new(netv1.PathTypePrefix),
 								Namespace: "default", IngressName: "prefix", BackendName: "prefix",
-								Aliases: test.aliases, Canary: test.prefixCanary,
+								Aliases: test.aliases, Canary: test.prefixCanary, UseRegex: test.useRegex,
 							},
 							{
 								Path: test.path, PathType: new(netv1.PathTypeExact),
 								Namespace: "default", IngressName: "exact", BackendName: "exact",
-								Aliases: test.aliases, Canary: test.exactCanary,
+								Aliases: test.aliases, Canary: test.exactCanary, UseRegex: test.useRegex,
 								BasicAuth: &dynamic.BasicAuth{
 									Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 								},
@@ -173,6 +183,14 @@ func TestExactPathRouting(t *testing.T) {
 					}
 					assert.Equal(t, expectedPrefixService, selected.Service)
 					assert.Empty(t, selected.Middlewares)
+
+					for _, subpath := range test.subpaths {
+						req = httptest.NewRequest(http.MethodGet, "http://example.com"+subpath, nil)
+						selected = nil
+						handler.ServeHTTP(httptest.NewRecorder(), req)
+						require.NotNil(t, selected)
+						assert.Equal(t, test.expected, selected.Service, subpath)
+					}
 
 					for _, alias := range test.aliases {
 						req = httptest.NewRequest(http.MethodGet, "http://"+alias+test.path, nil)
