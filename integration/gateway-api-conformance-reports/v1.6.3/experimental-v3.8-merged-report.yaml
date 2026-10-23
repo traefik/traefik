@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-13T08:54:03+02:00"
+date: "2026-10-23T10:20:59+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -27,6 +27,8 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -35,8 +37,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayStaticAddresses
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
@@ -51,14 +51,20 @@ profiles:
   extended:
     result: partial
     skippedTests:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayFrontendInvalidDefaultClientCertificateValidation
     - GatewayInfrastructureMetadata
+    - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
       Passed: 44
-      Skipped: 1
+      Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -86,8 +92,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayStaticAddresses
     - HTTPRouteBackendTimeout
     - HTTPRouteRequestMirror
@@ -98,7 +102,7 @@ profiles:
     - HTTPRouteRetryConnectionError
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
-    succeeded with 1 test skips.
+    succeeded with 5 test skips.
 - core:
     result: success
     statistics:
@@ -114,6 +118,8 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -123,8 +129,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayStaticAddresses
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
@@ -145,6 +149,8 @@ profiles:
       Passed: 13
       Skipped: 1
     supportedFeatures:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
@@ -155,8 +161,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
-    - GatewayFrontendClientCertificateValidation
-    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayStaticAddresses
   name: GATEWAY-TLS
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially

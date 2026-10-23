@@ -194,6 +194,10 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				tests.HTTPRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
 				tests.GatewayInfrastructureMetadata.ShortName,
+				tests.GatewayFrontendClientCertificateValidation.ShortName,
+				tests.GatewayFrontendClientCertificateValidationInsecureFallback.ShortName,
+				tests.GatewayFrontendInvalidDefaultClientCertificateValidation.ShortName,
+				tests.GatewayInvalidFrontendClientCertificateValidation.ShortName,
 			},
 		},
 	})
