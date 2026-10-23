@@ -158,6 +158,11 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 		}
 
+		var retry *dynamic.Middleware
+		if routeRule.Retry != nil {
+			retry = createRetry(ctx, routeRule.Retry)
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
@@ -221,6 +226,13 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
+			}
+
+			if err == nil && retry != nil {
+				// The retry middleware comes last, so that only the call to the backend is retried.
+				retryName := routerName + "-retry"
+				routerConf.HTTP.Middlewares[retryName] = retry
+				router.Middlewares = append(router.Middlewares, retryName)
 			}
 
 			p.applyRouterTransform(ctx, &router, route)
@@ -1085,6 +1097,31 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 			AccessControlMaxAge:               new(int64(filter.MaxAge)),
 		},
 	}
+}
+
+func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry) *dynamic.Middleware {
+	// The Gateway API attempts are the number of retries,
+	// whereas the Traefik ones also count the initial request, hence the +1.
+	r := &dynamic.Retry{
+		// TODO: Remove the ptr.Deref when bumping to Gateway API v1.7, where attempts is no longer a pointer and defaults to 1 in the CRD.
+		Attempts: ptr.Deref(retry.Attempts, 1) + 1,
+	}
+	r.SetDefaults()
+
+	for _, code := range retry.Codes {
+		r.Status = append(r.Status, strconv.Itoa(int(code)))
+	}
+
+	if retry.Backoff != nil {
+		// The CRD validation guarantees a valid GEP-2257 duration string.
+		if backoff, err := time.ParseDuration(string(*retry.Backoff)); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Ignoring HTTPRoute retry.backoff: invalid duration")
+		} else {
+			r.InitialInterval = ptypes.Duration(backoff)
+		}
+	}
+
+	return &dynamic.Middleware{Retry: r}
 }
 
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {

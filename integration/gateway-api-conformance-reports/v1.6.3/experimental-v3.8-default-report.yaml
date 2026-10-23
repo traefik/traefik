@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-23T14:22:24+02:00"
+date: "2026-10-23T16:35:55+02:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.6.3
 implementation:
@@ -48,7 +48,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 52
+      Passed: 53
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -80,6 +80,8 @@ profiles:
     - HTTPRouteQueryParamMatching
     - HTTPRouteRequestTimeout
     - HTTPRouteResponseHeaderModification
+    - HTTPRouteRetry
+    - HTTPRouteRetryConnectionError
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
@@ -87,9 +89,7 @@ profiles:
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
-    - HTTPRouteRetry
     - HTTPRouteRetryBackendTimeout
-    - HTTPRouteRetryConnectionError
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
