@@ -794,10 +794,9 @@ var (
 // mergeGatewayStatus returns the desired status, with the Gateway and listener conditions
 // of the current status that are not owned by Traefik.
 func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewayStatus {
-	status := desired
+	status := desired.DeepCopy()
 	status.Conditions = mergeConditions(current.Conditions, desired.Conditions, gatewayConditionTypes)
 
-	status.Listeners = slices.Clone(desired.Listeners)
 	for i, listener := range status.Listeners {
 		idx := slices.IndexFunc(current.Listeners, func(l gatev1.ListenerStatus) bool {
 			return l.Name == listener.Name
@@ -808,7 +807,7 @@ func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewaySta
 		status.Listeners[i].Conditions = mergeConditions(current.Listeners[idx].Conditions, listener.Conditions, listenerConditionTypes)
 	}
 
-	return status
+	return *status
 }
 
 func mergeConditions(current, desired []metav1.Condition, ownedTypes []string) []metav1.Condition {
