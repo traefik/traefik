@@ -40,7 +40,7 @@ import (
 // The default@internal tcpServersTransport can be configured in the static configuration.
 // More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/serverstransport/
 type ServersTransportTCPApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`

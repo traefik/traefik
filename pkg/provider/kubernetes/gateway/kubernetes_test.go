@@ -9026,9 +9026,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:80",
+										TLS:     true,
 									},
 									{
 										Address: "10.10.0.2:80",
+										TLS:     true,
 									},
 								},
 								ServersTransport: "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0",
@@ -9114,9 +9116,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:80",
+										TLS:     true,
 									},
 									{
 										Address: "10.10.0.2:80",
+										TLS:     true,
 									},
 								},
 								ServersTransport: "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0",
@@ -9201,9 +9205,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:80",
+										TLS:     true,
 									},
 									{
 										Address: "10.10.0.2:80",
+										TLS:     true,
 									},
 								},
 								ServersTransport: "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0",

@@ -28,6 +28,7 @@ import (
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	"sigs.k8s.io/gateway-api/conformance"
 	v1 "sigs.k8s.io/gateway-api/conformance/apis/v1"
 	"sigs.k8s.io/gateway-api/conformance/tests"
@@ -82,7 +83,7 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.7.0-rc.1.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -109,6 +110,8 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	require.NoError(s.T(), err)
 
 	require.NoError(s.T(), gatev1.Install(s.kubeClient.Scheme()))
+	// TODO: remove once on v1.7.0-rc.2, rc.1 conformance helpers still fetch v1alpha2 TCPRoutes (kubernetes-sigs/gateway-api#5364).
+	require.NoError(s.T(), gatev1alpha2.Install(s.kubeClient.Scheme()))
 	require.NoError(s.T(), apiextensionsv1.AddToScheme(s.kubeClient.Scheme()))
 }
 
@@ -192,6 +195,7 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 			// cannot satisfy in merged mode cause they enforce having an operator.
 			SkipTests: []string{
 				tests.HTTPRouteMultipleGateways.ShortName,
+				tests.GRPCRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
 				tests.GatewayInfrastructureMetadata.ShortName,
 				tests.GatewayFrontendClientCertificateValidation.ShortName,

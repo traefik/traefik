@@ -466,11 +466,13 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 	}
 
 	lb := &dynamic.TCPServersLoadBalancer{}
+	passthrough := listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.TCPServer{
-			// TODO determine whether the servers needs TLS, from the port?
 			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
+			// The ServersTransport TLS configuration is only used to dial TLS servers.
+			TLS: serversTransport != nil && serversTransport.TLS != nil && !passthrough,
 		})
 	}
 	return lb, serversTransport, nil
