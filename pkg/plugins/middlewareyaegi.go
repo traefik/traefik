@@ -13,6 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -160,6 +161,15 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	err = i.Use(ppSymbols())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load provider symbols: %w", err)
+	}
+
+	err = i.Use(map[string]map[string]reflect.Value{
+		"github.com/traefik/traefik/v3/pkg/middlewares/middlewares": {
+			"GetLogger": reflect.ValueOf(middlewares.GetLogger),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load logging symbols: %w", err)
 	}
 
 	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
