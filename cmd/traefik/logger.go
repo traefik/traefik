@@ -8,7 +8,6 @@ import (
 	stdlog "log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -22,6 +21,8 @@ func init() {
 	// hide the first logs before the setup of the logger.
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
+
+var defaultLogWriter io.Writer = os.Stdout
 
 func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) error {
 	// Validate that the experimental flag is set up at this point,
@@ -40,7 +41,10 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
-	logger := zerolog.New(w).With().Timestamp()
+	logger := zerolog.New(w).With()
+	if staticConfiguration.Log == nil || !staticConfiguration.Log.NoTimestamp {
+		logger = logger.Timestamp()
+	}
 	if logLevel <= zerolog.DebugLevel {
 		logger = logger.Caller()
 	}
@@ -61,14 +65,18 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
 
 	// configure default standard log.
-	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
+	flags := stdlog.Lshortfile
+	if staticConfiguration.Log == nil || !staticConfiguration.Log.NoTimestamp {
+		flags |= stdlog.LstdFlags
+	}
+	stdlog.SetFlags(flags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
 	return nil
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	var w io.Writer = os.Stdout
+	var w io.Writer = defaultLogWriter
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 		w = &lumberjack.Logger{
@@ -81,11 +89,9 @@ func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
 	}
 
 	if staticConfiguration.Log == nil || staticConfiguration.Log.Format != "json" {
-		w = zerolog.ConsoleWriter{
-			Out:        w,
-			TimeFormat: time.RFC3339,
-			NoColor:    staticConfiguration.Log != nil && (staticConfiguration.Log.NoColor || len(staticConfiguration.Log.FilePath) > 0),
-		}
+		noColor := staticConfiguration.Log != nil && (staticConfiguration.Log.NoColor || len(staticConfiguration.Log.FilePath) > 0)
+		noTimestamp := staticConfiguration.Log != nil && staticConfiguration.Log.NoTimestamp
+		w = logs.NewConsoleWriter(w, noColor, noTimestamp)
 	}
 
 	return w

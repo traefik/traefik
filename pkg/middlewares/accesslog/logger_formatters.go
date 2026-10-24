@@ -16,17 +16,21 @@ const (
 )
 
 // CommonLogFormatter provides formatting in the Traefik common log format.
-type CommonLogFormatter struct{}
+type CommonLogFormatter struct {
+	NoTimestamp bool
+}
 
 // Format formats the log entry in the Traefik common log format.
 func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 
 	timestamp := defaultValue
-	if v, ok := entry.Data[StartUTC]; ok {
-		timestamp = v.(time.Time).Format(commonLogTimeFormat)
-	} else if v, ok := entry.Data[StartLocal]; ok {
-		timestamp = v.(time.Time).Local().Format(commonLogTimeFormat)
+	if !f.NoTimestamp {
+		if v, ok := entry.Data[StartUTC]; ok {
+			timestamp = v.(time.Time).Format(commonLogTimeFormat)
+		} else if v, ok := entry.Data[StartLocal]; ok {
+			timestamp = v.(time.Time).Local().Format(commonLogTimeFormat)
+		}
 	}
 
 	var elapsedMillis int64
@@ -54,17 +58,21 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 // GenericCLFLogFormatter provides formatting in the generic CLF log format.
-type GenericCLFLogFormatter struct{}
+type GenericCLFLogFormatter struct {
+	NoTimestamp bool
+}
 
 // Format formats the log entry in the generic CLF log format.
 func (f *GenericCLFLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 
 	timestamp := defaultValue
-	if v, ok := entry.Data[StartUTC]; ok {
-		timestamp = v.(time.Time).Format(commonLogTimeFormat)
-	} else if v, ok := entry.Data[StartLocal]; ok {
-		timestamp = v.(time.Time).Local().Format(commonLogTimeFormat)
+	if !f.NoTimestamp {
+		if v, ok := entry.Data[StartUTC]; ok {
+			timestamp = v.(time.Time).Format(commonLogTimeFormat)
+		} else if v, ok := entry.Data[StartLocal]; ok {
+			timestamp = v.(time.Time).Local().Format(commonLogTimeFormat)
+		}
 	}
 
 	_, err := fmt.Fprintf(b, "%s - %s [%s] \"%s %s %s\" %v %v %s %s\n",
