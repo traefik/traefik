@@ -33,6 +33,10 @@ package v1alpha1
 // TODO: This has to be removed once the CAOptional option is removed.
 type ClientTLSWithCAOptionalApplyConfiguration struct {
 	ClientTLSApplyConfiguration `json:",inline"`
+	// CAConfigMap is the name of a ConfigMap in the Middleware namespace containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	// CAConfigMap and CASecret are mutually exclusive.
+	CAConfigMap *string `json:"caConfigMap,omitempty"`
 	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional *bool `json:"caOptional,omitempty"`
 }
@@ -64,6 +68,14 @@ func (b *ClientTLSWithCAOptionalApplyConfiguration) WithCertSecret(value string)
 // If called multiple times, the InsecureSkipVerify field is set to the value of the last call.
 func (b *ClientTLSWithCAOptionalApplyConfiguration) WithInsecureSkipVerify(value bool) *ClientTLSWithCAOptionalApplyConfiguration {
 	b.ClientTLSApplyConfiguration.InsecureSkipVerify = &value
+	return b
+}
+
+// WithCAConfigMap sets the CAConfigMap field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CAConfigMap field is set to the value of the last call.
+func (b *ClientTLSWithCAOptionalApplyConfiguration) WithCAConfigMap(value string) *ClientTLSWithCAOptionalApplyConfiguration {
+	b.CAConfigMap = &value
 	return b
 }
 

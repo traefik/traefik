@@ -65,3 +65,25 @@ spec:
     tls:
       certSecret: tlssecret
       caSecret: casecret
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-ca
+  namespace: default
+data:
+  ca.crt: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth-configmap
+  namespace: default
+spec:
+  forwardAuth:
+    address: https://auth.example.com
+    tls:
+      caConfigMap: auth-ca
+      certSecret: tlssecret

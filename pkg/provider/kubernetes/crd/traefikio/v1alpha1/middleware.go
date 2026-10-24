@@ -240,6 +240,11 @@ type ForwardAuth struct {
 type ClientTLSWithCAOptional struct {
 	ClientTLS `json:",inline"`
 
+	// CAConfigMap is the name of a ConfigMap in the Middleware namespace containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	// CAConfigMap and CASecret are mutually exclusive.
+	CAConfigMap string `json:"caConfigMap,omitempty"`
+
 	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional *bool `json:"caOptional,omitempty"`
 }
