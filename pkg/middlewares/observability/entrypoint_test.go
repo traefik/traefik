@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 func TestEntryPointMiddleware_tracing(t *testing.T) {
@@ -110,4 +112,27 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 			assert.Equal(t, test.expected.attributes, tracer.spans[0].attributes)
 		})
 	}
+}
+
+func TestEntryPointMiddleware_injectsTraceparent(t *testing.T) {
+	prevPropagator := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() { otel.SetTextMapPropagator(prevPropagator) })
+
+	req := httptest.NewRequest(http.MethodGet, "http://www.test.com/", nil)
+	rw := httptest.NewRecorder()
+
+	var gotTraceparent string
+	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		gotTraceparent = r.Header.Get("traceparent")
+	})
+
+	req = req.WithContext(WithObservability(req.Context(), Observability{TracingEnabled: true}))
+
+	handler := newEntryPoint(t.Context(), tracing.NewTracer(&mockTracer{}, nil, nil, nil), "test", next)
+	handler.ServeHTTP(rw, req)
+
+	// mockSpan returns TraceID{1}/SpanID{1}, which the W3C TraceContext
+	// propagator serializes as: 00-<traceid hex>-<spanid hex>-<flags>.
+	assert.Equal(t, "00-01000000000000000000000000000000-0100000000000000-00", gotTraceparent)
 }
