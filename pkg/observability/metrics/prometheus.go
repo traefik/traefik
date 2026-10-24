@@ -131,6 +131,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		tlsCertsNotAfterTimestamp.gv,
 		openConnections.gv,
 	}
+	promState.tlsCertsGaugeVec = tlsCertsNotAfterTimestamp.gv
 
 	reg := &standardRegistry{
 		epEnabled:                      config.AddEntryPointsLabels,
@@ -318,6 +319,12 @@ func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 	promState.SetDynamicConfig(dynCfg)
 }
 
+func ResetTLSCertificateMetrics() {
+	if promState.tlsCertsGaugeVec != nil {
+		promState.tlsCertsGaugeVec.Reset()
+	}
+}
+
 func newPrometheusState() *prometheusState {
 	return &prometheusState{
 		dynamicConfig: newDynamicConfig(),
@@ -331,7 +338,8 @@ type vector interface {
 }
 
 type prometheusState struct {
-	vectors []vector
+	vectors          []vector
+	tlsCertsGaugeVec *stdprometheus.GaugeVec
 
 	mtx             sync.Mutex
 	dynamicConfig   *dynamicConfig
