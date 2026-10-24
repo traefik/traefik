@@ -37,3 +37,21 @@ func GetTLSOptionsName(ctx context.Context) string {
 
 	return ""
 }
+
+type connCloserKey struct{}
+
+// AddConnCloserInContext stores a function able to forcefully close the underlying connection.
+// This is needed for transports, such as HTTP/3, where a "Connection: close" response header
+// has no effect, so terminating a stale connection requires driving the transport directly.
+func AddConnCloserInContext(ctx context.Context, closeConn func()) context.Context {
+	return context.WithValue(ctx, connCloserKey{}, closeConn)
+}
+
+// CloseConn forcefully closes the connection carried by the given context, if any.
+// It is a no-op for transports (such as plain TCP/TLS) that don't register a closer,
+// since setting the "Connection: close" response header is sufficient there.
+func CloseConn(ctx context.Context) {
+	if closeConn, ok := ctx.Value(connCloserKey{}).(func()); ok {
+		closeConn()
+	}
+}
