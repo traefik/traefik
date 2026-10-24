@@ -288,6 +288,38 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "Custom error page.")
 			},
 		},
+		{
+			desc:      "accept header looks like browser",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500"}, IfAcceptContains: "text/html"},
+			requestHeaders: map[string]string{
+				"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
+		{
+			desc:      "accept header looks like api client",
+			errorPage: &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500"}, IfAcceptContains: "text/html"},
+			requestHeaders: map[string]string{
+				"Accept": "application/json",
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "Custom error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.NotContains(t, recorder.Body.String(), "Custom error page.")
+			},
+		},
 	}
 
 	for _, test := range testCases {
