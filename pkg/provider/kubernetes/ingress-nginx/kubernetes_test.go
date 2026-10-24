@@ -24085,6 +24085,95 @@ func TestProvider_validateConfiguration(t *testing.T) {
 	}
 }
 
+func TestProvider_shouldProcess(t *testing.T) {
+	t.Parallel()
+
+	ingressClassName := "traefik"
+	testCases := []struct {
+		desc                     string
+		ingressClassName         *string
+		annotations              map[string]string
+		ignoreIngressClasses     bool
+		watchIngressWithoutClass bool
+		expected                 bool
+	}{
+		{
+			desc:                     "explicit non-matching class",
+			ingressClassName:         &ingressClassName,
+			watchIngressWithoutClass: true,
+		},
+		{
+			desc:                     "explicit non-matching class with matching annotation",
+			ingressClassName:         &ingressClassName,
+			annotations:              map[string]string{annotationIngressClass: "nginx"},
+			watchIngressWithoutClass: true,
+		},
+		{
+			desc:                     "ignored explicit class with watch without class enabled",
+			ingressClassName:         &ingressClassName,
+			ignoreIngressClasses:     true,
+			watchIngressWithoutClass: true,
+			expected:                 true,
+		},
+		{
+			desc:                 "ignored explicit class with watch without class disabled",
+			ingressClassName:     &ingressClassName,
+			ignoreIngressClasses: true,
+		},
+		{
+			desc:                 "ignored explicit class with matching annotation",
+			ingressClassName:     &ingressClassName,
+			annotations:          map[string]string{annotationIngressClass: "nginx"},
+			ignoreIngressClasses: true,
+			expected:             true,
+		},
+		{
+			desc:                     "ignored explicit class with non-matching annotation",
+			ingressClassName:         &ingressClassName,
+			annotations:              map[string]string{annotationIngressClass: "traefik"},
+			ignoreIngressClasses:     true,
+			watchIngressWithoutClass: true,
+		},
+		{
+			desc:                     "no class with watch without class enabled",
+			watchIngressWithoutClass: true,
+			expected:                 true,
+		},
+		{
+			desc: "no class with watch without class disabled",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			provider := &Provider{
+				WatchIngressWithoutClass: test.watchIngressWithoutClass,
+			}
+			provider.SetDefaults()
+
+			ingressClasses := filterIngressClass([]*netv1.IngressClass{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "traefik"},
+					Spec: netv1.IngressClassSpec{
+						Controller: "traefik.io/ingress-controller",
+					},
+				},
+			}, provider.IngressClassByName, provider.IngressClass, provider.ControllerClass)
+
+			ingress := &netv1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{Annotations: test.annotations},
+				Spec: netv1.IngressSpec{
+					IngressClassName: test.ingressClassName,
+				},
+			}
+
+			assert.Equal(t, test.expected, provider.shouldProcess(ingress, ingressClasses, test.ignoreIngressClasses))
+		})
+	}
+}
+
 func TestHeaderRegexp(t *testing.T) {
 	testCases := []struct {
 		desc     string
