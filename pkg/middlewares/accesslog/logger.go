@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -26,6 +27,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
+	otelsdk "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -65,13 +67,14 @@ type handlerParams struct {
 
 // Handler will write each request and its response to the access log.
 type Handler struct {
-	config         *otypes.AccessLog
-	logger         *logrus.Logger
-	file           io.WriteCloser
-	mu             sync.Mutex
-	httpCodeRanges types.HTTPCodeRanges
-	logHandlerChan chan handlerParams
-	wg             sync.WaitGroup
+	config             *otypes.AccessLog
+	logger             *logrus.Logger
+	file               io.WriteCloser
+	mu                 sync.Mutex
+	httpCodeRanges     types.HTTPCodeRanges
+	logHandlerChan     chan handlerParams
+	wg                 sync.WaitGroup
+	otelLoggerProvider *otelsdk.LoggerProvider
 }
 
 // NewHandler creates a new Handler.
@@ -111,12 +114,14 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 		logger.Hooks.Add(hook)
 	}
 
+	var otelLoggerProvider *otelsdk.LoggerProvider
 	if config.OTLP != nil {
-		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
+		provider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 		}
 
+		otelLoggerProvider = provider
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
 		if !config.DualOutput {
 			logger.Out = io.Discard
@@ -148,10 +153,11 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 	}
 
 	logHandler := &Handler{
-		config:         config,
-		logger:         logger,
-		file:           file,
-		logHandlerChan: logHandlerChan,
+		config:             config,
+		logger:             logger,
+		file:               file,
+		logHandlerChan:     logHandlerChan,
+		otelLoggerProvider: otelLoggerProvider,
 	}
 
 	if config.Filters != nil {
@@ -327,7 +333,19 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 func (h *Handler) Close() error {
 	close(h.logHandlerChan)
 	h.wg.Wait()
-	return h.file.Close()
+
+	var otelErr error
+	if h.otelLoggerProvider != nil {
+		// Batch processor keeps unexported records in memory.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if otelErr = h.otelLoggerProvider.Shutdown(ctx); otelErr != nil {
+			otelErr = fmt.Errorf("shutting down OpenTelemetry logger provider: %w", otelErr)
+		}
+	}
+
+	return errors.Join(otelErr, h.file.Close())
 }
 
 // Rotate closes and reopens the log file to allow for rotation by an external source.
