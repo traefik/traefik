@@ -4317,6 +4317,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -5797,6 +5798,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 					Options: map[string]tls.Options{
