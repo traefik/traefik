@@ -1275,6 +1275,10 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 	}
 
 	if auth.TLS != nil {
+		if auth.TLS.CASecret != "" && auth.TLS.CAConfigMap != "" {
+			return nil, errors.New("forward authentication TLS caSecret and caConfigMap are mutually exclusive")
+		}
+
 		forwardAuth.TLS = &dynamic.ClientTLS{
 			InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 		}
@@ -1285,6 +1289,14 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 				return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
 			}
 			forwardAuth.TLS.CA = caSecret
+		}
+
+		if len(auth.TLS.CAConfigMap) > 0 {
+			caConfigMap, err := loadCAConfigMap(namespace, auth.TLS.CAConfigMap, k8sClient)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load auth ca configMap: %w", err)
+			}
+			forwardAuth.TLS.CA = caConfigMap
 		}
 
 		if len(auth.TLS.CertSecret) > 0 {
