@@ -14157,9 +14157,10 @@ func Test_loadConfigurationFromGateways_TLSCertificatesHostname(t *testing.T) {
 	assert.Equal(t, []certHostname{
 		{commonName: "default-a.example.com", hostname: "a.example.com"},
 		{commonName: "default-b.example.com", hostname: "*.example.com"},
-		{icommonName: "default-b.example.com", hostname: "b.example.com"},
+		{commonName: "default-b.example.com", hostname: "b.example.com"},
 	}, actual)
 }
+
 func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *testing.T) {
 	testCases := []struct {
 		desc        string
