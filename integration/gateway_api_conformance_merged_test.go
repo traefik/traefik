@@ -82,7 +82,7 @@ func (s *GatewayAPIConformanceMergedSuite) SetupSuite() {
 	s.k3sContainer, err = k3s.Run(
 		ctx,
 		k3sImage,
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.7.0-rc.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/merged/02-traefik.yml"),
 		network.WithNetwork(nil, s.network),
@@ -192,6 +192,7 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 			// cannot satisfy in merged mode cause they enforce having an operator.
 			SkipTests: []string{
 				tests.HTTPRouteMultipleGateways.ShortName,
+				tests.GRPCRouteMultipleGateways.ShortName,
 				tests.TLSRouteHostnameIntersection.ShortName,
 				tests.GatewayInfrastructureMetadata.ShortName,
 				tests.GatewayFrontendClientCertificateValidation.ShortName,
