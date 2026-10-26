@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-26T10:40:18+01:00"
+date: "2026-10-26T16:50:54+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -31,6 +31,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -43,7 +44,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
@@ -68,11 +68,12 @@ profiles:
     - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 47
+      Passed: 49
       Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -106,7 +107,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
@@ -133,6 +133,7 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -146,7 +147,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
@@ -171,6 +171,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -185,7 +186,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses

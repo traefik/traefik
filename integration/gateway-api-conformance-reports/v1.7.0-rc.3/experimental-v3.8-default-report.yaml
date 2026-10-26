@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-26T10:33:25+01:00"
+date: "2026-10-26T16:48:00+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -28,6 +28,7 @@ profiles:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -40,7 +41,6 @@ profiles:
     - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-GRPC
@@ -55,12 +55,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 54
+      Passed: 56
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -94,7 +95,6 @@ profiles:
     - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - HTTPRouteRequestMirror
@@ -118,6 +118,7 @@ profiles:
       Skipped: 0
     supportedFeatures:
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -131,7 +132,6 @@ profiles:
     - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TCP
@@ -152,6 +152,7 @@ profiles:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
@@ -166,7 +167,6 @@ profiles:
     - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayBackendClientCertificate
     - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TLS

@@ -829,6 +829,7 @@ var (
 	gatewayConditionTypes = []string{
 		string(gatev1.GatewayConditionAccepted),
 		string(gatev1.GatewayConditionProgrammed),
+		string(gatev1.GatewayConditionResolvedRefs),
 	}
 	listenerConditionTypes = []string{
 		string(gatev1.ListenerConditionAccepted),

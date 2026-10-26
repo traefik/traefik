@@ -176,11 +176,6 @@ spec:
           from: Same
 ```
 
-!!! warning "Unusable reference"
-
-    When Traefik cannot use the reference, it still reaches the backends selected by a `BackendTLSPolicy`, but without presenting a client certificate.
-    The `Gateway` stays accepted, and its `ResolvedRefs` condition is `False` with the reason `InvalidClientCertificateRef` (unsupported group or kind, or a missing or invalid `Secret`) or `RefNotPermitted` (missing `ReferenceGrant`).
-
 ### ListenerSets
 
 Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.

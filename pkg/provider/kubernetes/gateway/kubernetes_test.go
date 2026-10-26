@@ -14176,6 +14176,13 @@ func Test_loadGatewayBackendTLS(t *testing.T) {
 			},
 		},
 		{
+			desc:    "Secret with an explicit core group",
+			certRef: &gatev1.SecretObjectReference{Group: new(gatev1.Group("")), Name: "client-cert"},
+			expectedCerts: tls.Certificates{
+				{CertFile: types.FileOrContent(listenerCert), KeyFile: types.FileOrContent(listenerKey)},
+			},
+		},
+		{
 			desc:    "Secret in another namespace with ReferenceGrant",
 			certRef: &gatev1.SecretObjectReference{Name: "client-cert", Namespace: new(gatev1.Namespace("bar"))},
 			expectedCerts: tls.Certificates{
