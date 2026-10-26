@@ -657,10 +657,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = populateRequestTLS(handler)
 
+	// The round trippers dedicated to a connection (Kerberos or NTLM) are only reachable from its context,
+	// which is kept until the ConnState hook reports the connection closed to release them.
+	var transportConnContexts connContexts
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
 		ctx = service.AddTransportOnContext(ctx)
+		transportConnContexts.add(ctx, c)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
@@ -686,9 +691,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		})
 	}
 
-	var connState func(c net.Conn, state http.ConnState)
-	if debugConnection {
-		connState = func(c net.Conn, state http.ConnState) {
+	connState := func(c net.Conn, state http.ConnState) {
+		// A hijacked connection never reports the closed state, and serves no further request.
+		if state == http.StateClosed || state == http.StateHijacked {
+			if ctx, ok := transportConnContexts.remove(c); ok {
+				service.ReleaseTransportOnContext(ctx)
+			}
+		}
+
+		if debugConnection {
 			clientConnectionStatesMu.Lock()
 			if clientConnectionStates[getConnKey(c)] != nil {
 				clientConnectionStates[getConnKey(c)].State = state.String()
