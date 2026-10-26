@@ -14219,7 +14219,9 @@ func Test_loadGatewayBackendTLS(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			gateway := &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-gateway", Namespace: "default", Generation: 1},
+				Name:       "my-gateway",
+				Namespace:  "default",
+				Generation: 1,
 			}
 			if test.certRef != nil {
 				gateway.Spec.TLS = &gatev1.GatewayTLSConfig{
