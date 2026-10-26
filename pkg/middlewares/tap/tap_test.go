@@ -39,7 +39,7 @@ func TestNew(t *testing.T) {
 		},
 		{
 			desc:        "unknown service",
-			config:      dynamic.Tap{Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "unknown"}}},
+			config:      dynamic.Tap{Response: &dynamic.TapResponse{Service: "unknown"}},
 			expectedErr: "building response destination: building tap service handler: service not found",
 		},
 		{
@@ -64,20 +64,20 @@ func TestNew(t *testing.T) {
 		{
 			desc: "response body recorded without maxRecordBodySize",
 			config: dynamic.Tap{
-				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RecordBody: true}},
+				Response: &dynamic.TapResponse{Service: "responses", RecordBody: true},
 			},
 			expectedErr: "response maxRecordBodySize must be defined when recordBody is set",
 		},
 		{
 			desc: "response body not recorded without maxRecordBodySize",
 			config: dynamic.Tap{
-				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RejectOnRecordError: true}},
+				Response: &dynamic.TapResponse{Service: "responses", RejectOnRecordError: true},
 			},
 		},
 		{
 			desc: "response body recorded with no limit on purpose",
 			config: dynamic.Tap{
-				Response: &dynamic.TapResponse{TapRequest: dynamic.TapRequest{Service: "responses", RecordBody: true, MaxRecordBodySize: new(int64(-1))}},
+				Response: &dynamic.TapResponse{Service: "responses", RecordBody: true, MaxRecordBodySize: new(int64(-1))},
 			},
 		},
 		{

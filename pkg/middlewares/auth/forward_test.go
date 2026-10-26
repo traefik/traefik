@@ -642,12 +642,12 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 
 func TestForwardAuthClientClosedRequest(t *testing.T) {
 	requestStarted := make(chan struct{})
-	requestCancelled := make(chan struct{})
 	responseComplete := make(chan struct{})
 
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		close(requestStarted)
-		<-requestCancelled
+		// Wait for the client to give up on the request, so the auth server never answers before the cancellation is observed.
+		<-r.Context().Done()
 	}))
 	t.Cleanup(authTs.Close)
 
@@ -673,11 +673,7 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 
 	<-requestStarted
 
-	// Cancel request and wait for cancellation to propagate
 	cancel()
-	<-ctx.Done()
-
-	close(requestCancelled)
 
 	<-responseComplete
 

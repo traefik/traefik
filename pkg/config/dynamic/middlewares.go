@@ -67,6 +67,11 @@ type Middleware struct {
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
+	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
+	// Only providers set it, and it must stay part of the configuration hash, so that a change of a referenced value reloads the middleware.
+	URNRefs map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false" loggable:"false"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -150,10 +155,15 @@ type Buffering struct {
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
-
-	// Only configurable via code, not via configuration files.
-	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+	// When true, MaxRequestBodyBytes is not enforced.
+	// Default: false.
+	DisableRequestBuffer bool `json:"disableRequestBuffer,omitempty" toml:"disableRequestBuffer,omitempty" yaml:"disableRequestBuffer,omitempty" export:"true"`
+	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+	// This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+	// When true, MaxResponseBodyBytes is not enforced.
+	// Default: false.
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"disableResponseBuffer,omitempty" yaml:"disableResponseBuffer,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

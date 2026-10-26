@@ -177,6 +177,7 @@ func TestFailoverStatusCode(t *testing.T) {
 		desc                 string
 		statusCode           []string
 		handlerStatusCode    int
+		flush                bool
 		expectedHandler      string
 		expectedStatusCode   int
 		expectedResponseBody string
@@ -185,6 +186,15 @@ func TestFailoverStatusCode(t *testing.T) {
 			desc:                 "main handler returns 503, failover triggered",
 			statusCode:           []string{"503"},
 			handlerStatusCode:    503,
+			expectedHandler:      "fallback",
+			expectedStatusCode:   200,
+			expectedResponseBody: "fallback response",
+		},
+		{
+			desc:                 "main handler returns 503 and flushes, failover triggered",
+			statusCode:           []string{"503"},
+			handlerStatusCode:    503,
+			flush:                true,
 			expectedHandler:      "fallback",
 			expectedStatusCode:   200,
 			expectedResponseBody: "fallback response",
@@ -261,6 +271,10 @@ func TestFailoverStatusCode(t *testing.T) {
 				rw.WriteHeader(test.handlerStatusCode)
 				_, err := rw.Write([]byte("main response"))
 				require.NoError(t, err)
+
+				if test.flush {
+					require.NoError(t, http.NewResponseController(rw).Flush())
+				}
 			}))
 
 			failover.SetFallbackHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -273,7 +287,7 @@ func TestFailoverStatusCode(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			failover.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 
-			assert.Equal(t, test.expectedHandler, recorder.Header().Get("server"))
+			assert.Equal(t, test.expectedHandler, recorder.Result().Header.Get("server"))
 			assert.Equal(t, test.expectedStatusCode, recorder.Code)
 			assert.Equal(t, test.expectedResponseBody, recorder.Body.String())
 		})

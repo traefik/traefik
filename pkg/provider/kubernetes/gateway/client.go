@@ -502,12 +502,12 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		if gatewayStatusEqual(currentGateway.Status, status) {
+		if gatewayStatusEqual(withoutForeignConditions(currentGateway.Status), status) {
 			return nil
 		}
 
 		currentGateway = currentGateway.DeepCopy()
-		currentGateway.Status = status
+		currentGateway.Status = mergeGatewayStatus(currentGateway.Status, status)
 
 		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -546,9 +546,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.HTTPRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().HTTPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -588,9 +586,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.GRPCRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().GRPCRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -630,9 +626,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.TCPRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -672,9 +666,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.TLSRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -829,6 +821,65 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 	}
 
 	return parentStatuses
+}
+
+// gatewayConditionTypes and listenerConditionTypes are the condition types Traefik writes,
+// conditions of any other type are owned by other controllers and must be preserved.
+var (
+	gatewayConditionTypes = []string{
+		string(gatev1.GatewayConditionAccepted),
+		string(gatev1.GatewayConditionProgrammed),
+	}
+	listenerConditionTypes = []string{
+		string(gatev1.ListenerConditionAccepted),
+		string(gatev1.ListenerConditionConflicted),
+		string(gatev1.ListenerConditionProgrammed),
+		string(gatev1.ListenerConditionResolvedRefs),
+	}
+)
+
+// withoutForeignConditions returns the status without the Gateway and listener conditions not owned by Traefik.
+func withoutForeignConditions(status gatev1.GatewayStatus) gatev1.GatewayStatus {
+	filtered := status.DeepCopy()
+	filtered.Conditions = slices.DeleteFunc(filtered.Conditions, func(condition metav1.Condition) bool {
+		return !slices.Contains(gatewayConditionTypes, condition.Type)
+	})
+
+	for i := range filtered.Listeners {
+		filtered.Listeners[i].Conditions = slices.DeleteFunc(filtered.Listeners[i].Conditions, func(condition metav1.Condition) bool {
+			return !slices.Contains(listenerConditionTypes, condition.Type)
+		})
+	}
+
+	return *filtered
+}
+
+// mergeGatewayStatus returns the desired status, with the Gateway and listener conditions
+// of the current status that are not owned by Traefik.
+func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewayStatus {
+	status := desired.DeepCopy()
+	for _, condition := range current.Conditions {
+		if !slices.Contains(gatewayConditionTypes, condition.Type) {
+			status.Conditions = append(status.Conditions, condition)
+		}
+	}
+
+	for i, listener := range status.Listeners {
+		idx := slices.IndexFunc(current.Listeners, func(l gatev1.ListenerStatus) bool {
+			return l.Name == listener.Name
+		})
+		if idx < 0 {
+			continue
+		}
+
+		for _, condition := range current.Listeners[idx].Conditions {
+			if !slices.Contains(listenerConditionTypes, condition.Type) {
+				status.Listeners[i].Conditions = append(status.Listeners[i].Conditions, condition)
+			}
+		}
+	}
+
+	return *status
 }
 
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {

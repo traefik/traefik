@@ -30,6 +30,9 @@ http:
         metrics: true
         tracing: true
         traceVerbosity: foobar
+      respondingTimeouts:
+        readTimeout: 42s
+        writeTimeout: 42s
     Router1:
       entryPoints:
         - foobar
@@ -58,6 +61,9 @@ http:
         metrics: true
         tracing: true
         traceVerbosity: foobar
+      respondingTimeouts:
+        readTimeout: 42s
+        writeTimeout: 42s
   services:
     Service01:
       failover:
@@ -161,6 +167,8 @@ http:
         maxResponseBodyBytes: 42
         memResponseBodyBytes: 42
         retryExpression: foobar
+        disableRequestBuffer: true
+        disableResponseBuffer: true
     Middleware04:
       chain:
         middlewares:

@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
-
-var _ middlewares.Stateful = &statusRecorder{}
 
 // statusRecorder is the http.ResponseWriter given to the tap services, discarding their response body.
 type statusRecorder struct {

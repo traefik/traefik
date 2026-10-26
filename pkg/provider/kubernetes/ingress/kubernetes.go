@@ -356,6 +356,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
+				rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
 
 				if rtConfig.Router.Observability != nil {
 					rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
@@ -789,6 +790,7 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
 		rt.TLS = rtConfig.Router.TLS
+		rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
 
 		if rtConfig.Router.Observability != nil {
 			rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
@@ -863,10 +865,8 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 			}
 
 			tlsConfigs[configKey] = &tls.CertAndStores{
-				Certificate: tls.Certificate{
-					CertFile: types.FileOrContent(cert),
-					KeyFile:  types.FileOrContent(key),
-				},
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(key),
 			}
 		}
 	}
