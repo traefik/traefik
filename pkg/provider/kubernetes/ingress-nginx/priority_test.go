@@ -314,20 +314,35 @@ func TestExactPathHostPrecedence(t *testing.T) {
 func TestExactPathRegexTie(t *testing.T) {
 	testCases := []struct {
 		desc       string
+		ownRegex   bool
 		exactFirst bool
-		expected   string
+		expected   map[string]string
 	}{
-		{desc: "exact defined first", exactFirst: true, expected: "exact"},
-		{desc: "prefix defined first", expected: "prefix"},
+		{
+			desc: "own use-regex, exact defined first", ownRegex: true, exactFirst: true,
+			expected: map[string]string{"/admin": "exact", "/admin/other": "exact"},
+		},
+		{
+			desc: "own use-regex, prefix defined first", ownRegex: true,
+			expected: map[string]string{"/admin": "prefix", "/admin/other": "prefix"},
+		},
+		{
+			desc: "host use-regex, exact defined first", exactFirst: true,
+			expected: map[string]string{"/admin": "exact", "/admin/other": "exact"},
+		},
+		{
+			desc:     "host use-regex, prefix defined first",
+			expected: map[string]string{"/admin": "exact", "/admin/other": "prefix"},
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			prefix := &location{
-				Path: "/admin", UseRegex: true, PathType: new(netv1.PathTypePrefix), IngressName: "prefix", BackendName: "prefix",
-				Config: IngressConfig{UseRegex: new(true)},
+			prefix := &location{Path: "/admin", UseRegex: true, PathType: new(netv1.PathTypePrefix), IngressName: "prefix", BackendName: "prefix"}
+			if test.ownRegex {
+				prefix.Config.UseRegex = new(true)
 			}
 			exact := &location{Path: "/admin", UseRegex: true, PathType: new(netv1.PathTypeExact), IngressName: "exact", BackendName: "exact"}
 			locations := []*location{prefix, exact}
@@ -356,11 +371,11 @@ func TestExactPathRegexTie(t *testing.T) {
 			handler, err := requestdecorator.WrapHandler(requestdecorator.New(nil))(mux)
 			require.NoError(t, err)
 
-			for _, path := range []string{"/admin", "/admin/other"} {
+			for path, expected := range test.expected {
 				selected = nil
 				handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://example.com"+path, nil))
 				require.NotNil(t, selected, path)
-				assert.Equal(t, test.expected, selected.Service, path)
+				assert.Equal(t, expected, selected.Service, path)
 			}
 		})
 	}

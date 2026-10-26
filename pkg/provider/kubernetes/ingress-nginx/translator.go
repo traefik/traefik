@@ -369,18 +369,18 @@ func buildExactPathExclusions(srv *server, loc *location, backends map[string]*b
 	return exclusions
 }
 
-// buildRegexTieExclusions resolves an Exact and a non-Exact location rendering the same regex,
-// which get equal priorities, in favor of the location NGINX defines first.
+// buildRegexTieExclusions keeps an Exact and a non-Exact location sharing a path in NGINX order.
+// ingress-nginx sorts locations before appending the Prefix slash, so locations sharing a path stay
+// in definition order, and NGINX serves a request from the first matching regex.
 func buildRegexTieExclusions(srv *server, loc *location, backends map[string]*backend) []string {
 	idx := slices.Index(srv.Locations, loc)
 	if idx < 0 {
 		return nil
 	}
 
-	path := buildRegexPath(srv, loc)
 	var exclusions []string
 	for _, other := range srv.Locations[:idx] {
-		if isExactLocation(other) == isExactLocation(loc) || buildRegexPath(srv, other) != path {
+		if other.Path != loc.Path || isExactLocation(other) == isExactLocation(loc) {
 			continue
 		}
 		if _, ok := backends[other.BackendName]; !ok {
