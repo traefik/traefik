@@ -428,7 +428,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy, listener.backendClientCertificates())
+			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy, listener.BackendClientCertificates)
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -464,13 +464,6 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 				}
 			}
 		}
-	}
-
-	// The load balancer without servers responds with a 503 status code.
-	if serversTransport != nil && listener.backendClientCertificateMissing() {
-		lb := &dynamic.ServersLoadBalancer{}
-		lb.SetDefaults()
-		return lb, nil, nil
 	}
 
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.

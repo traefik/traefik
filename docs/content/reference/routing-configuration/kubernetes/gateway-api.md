@@ -178,7 +178,7 @@ spec:
 
 !!! warning "Unusable reference"
 
-    When Traefik cannot use the reference, it does not reach the backends selected by a `BackendTLSPolicy` without the certificate, and they answer with a `503` status code.
+    When Traefik cannot use the reference, it still reaches the backends selected by a `BackendTLSPolicy`, but without presenting a client certificate.
     The `Gateway` stays accepted, and its `ResolvedRefs` condition is `False` with the reason `InvalidClientCertificateRef` (unsupported group or kind, or a missing or invalid `Secret`) or `RefNotPermitted` (missing `ReferenceGrant`).
 
 ### ListenerSets

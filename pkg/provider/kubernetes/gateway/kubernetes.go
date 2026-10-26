@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -174,37 +175,16 @@ type gatewayListener struct {
 	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
 	ListenerSet *gatev1.ListenerSet
 
-	// BackendTLS is the backend TLS configuration of the Gateway, nil when the Gateway does not define one.
-	BackendTLS *gatewayBackendTLS
+	// BackendClientCertificates are the client certificates the Gateway presents to the backends using TLS.
+	BackendClientCertificates tls.Certificates
 }
 
 type gatewayWithListeners struct {
-	gateway    *gatev1.Gateway
-	listeners  []gatewayListener
-	backendTLS *gatewayBackendTLS
-}
-
-type gatewayBackendTLS struct {
-	// certificate is nil when the client certificate reference cannot be resolved,
-	// in which case the backends using TLS must not be reached without it.
-	certificate *tls.Certificate
-	condition   metav1.Condition
-}
-
-// backendClientCertificates returns the client certificates presented to the backends using TLS.
-func (l gatewayListener) backendClientCertificates() tls.Certificates {
-	if l.BackendTLS == nil || l.BackendTLS.certificate == nil {
-		return nil
-	}
-
-	return tls.Certificates{*l.BackendTLS.certificate}
-}
-
-// backendClientCertificateMissing reports whether the Gateway client certificate cannot be resolved.
-// The backends using TLS must not be reached without it,
-// and the failure is reported in the Gateway status, not in the route one.
-func (l gatewayListener) backendClientCertificateMissing() bool {
-	return l.BackendTLS != nil && l.BackendTLS.certificate == nil
+	gateway   *gatev1.Gateway
+	listeners []gatewayListener
+	// errResolvedRefsCondition is the ResolvedRefs condition reporting an unresolved Gateway own reference,
+	// nil when they are all resolved.
+	errResolvedRefsCondition *metav1.Condition
 }
 
 // RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
@@ -501,15 +481,15 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 
 		// The backend TLS configuration is defined at the Gateway level,
 		// so the ListenerSet listeners use the one of their parent Gateway.
-		backendTLS := p.loadGatewayBackendTLS(gateway)
+		backendClientCertificates, errResolvedRefsCondition := p.loadGatewayBackendTLS(gateway)
 		for i := range listeners {
-			listeners[i].BackendTLS = backendTLS
+			listeners[i].BackendClientCertificates = backendClientCertificates
 		}
 
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
-			gateway:    gateway,
-			listeners:  listeners,
-			backendTLS: backendTLS,
+			gateway:                  gateway,
+			listeners:                listeners,
+			errResolvedRefsCondition: errResolvedRefsCondition,
 		})
 	}
 
@@ -543,23 +523,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 			return len(listener.Status.Conditions) == 0
 		})
 
-		gatewayStatus, errConditions := p.makeGatewayStatus(gwl.gateway, gwl.listeners, addresses, accepted)
-
-		// An invalid client certificate reference does not prevent the Gateway from being accepted.
-		// TODO: the ResolvedRefs condition should also be reported when the Gateway has no backend TLS configuration.
-		if gwl.backendTLS != nil {
-			condition := gwl.backendTLS.condition
-
-			// The specification makes the condition a summary of the listeners ResolvedRefs condition too.
-			if condition.Status == metav1.ConditionTrue && hasUnresolvedListenerRefs(gwl.listeners) {
-				condition.Status = metav1.ConditionFalse
-				condition.Reason = string(gatev1.GatewayReasonListenersNotResolved)
-				condition.Message = "At least one Listener has unresolved references"
-			}
-
-			gatewayStatus.Conditions = append(gatewayStatus.Conditions, condition)
-		}
-
+		gatewayStatus, errConditions := p.makeGatewayStatus(gwl, addresses, accepted)
 		if len(errConditions) > 0 {
 			messages := map[string]struct{}{}
 			for _, condition := range errConditions {
@@ -1225,15 +1189,15 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 	return caCert, nil
 }
 
-func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
+func (p *Provider) makeGatewayStatus(gwl gatewayWithListeners, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
 	// The spec requires the InsecureFrontendValidationMode condition when any validation allows an insecure fallback.
-	if hasInsecureFrontendValidationMode(gateway) {
+	if hasInsecureFrontendValidationMode(gwl.gateway) {
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1.GatewayConditionInsecureFrontendValidationMode),
 			Status:             metav1.ConditionTrue,
-			ObservedGeneration: gateway.Generation,
+			ObservedGeneration: gwl.gateway.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.GatewayReasonConfigurationChanged),
 			Message:            "FrontendValidationMode is set to AllowInsecureFallback",
@@ -1241,7 +1205,8 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	}
 
 	var errorConditions []metav1.Condition
-	for _, listener := range listeners {
+	var unresolvedListenerRefs bool
+	for _, listener := range gwl.listeners {
 		// The ListenerSet listeners are reported in their own ListenerSet status.
 		if listener.ListenerSet != nil {
 			continue
@@ -1252,7 +1217,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: gateway.Generation,
+					ObservedGeneration: gwl.gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonAccepted),
 					Message:            conditionNoErrorMessage,
@@ -1260,7 +1225,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionResolvedRefs),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: gateway.Generation,
+					ObservedGeneration: gwl.gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonResolvedRefs),
 					Message:            conditionNoErrorMessage,
@@ -1268,7 +1233,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionProgrammed),
 					Status:             metav1.ConditionTrue,
-					ObservedGeneration: gateway.Generation,
+					ObservedGeneration: gwl.gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.ListenerReasonProgrammed),
 					Message:            conditionNoErrorMessage,
@@ -1282,15 +1247,22 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 
 		errorConditions = append(errorConditions, listener.Status.Conditions...)
 		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
+
+		if meta.IsStatusConditionFalse(listener.Status.Conditions, string(gatev1.ListenerConditionResolvedRefs)) {
+			unresolvedListenerRefs = true
+		}
 	}
+
+	// The ResolvedRefs condition does not impact the Accepted and Programmed conditions.
+	gatewayStatus.Conditions = append(gatewayStatus.Conditions, makeGatewayResolvedRefsCondition(gwl, unresolvedListenerRefs))
 
 	// Traefik supports no infrastructure parameters, and the specification requires
 	// a parametersRef that cannot be resolved to be reported instead of ignored.
-	if gateway.Spec.Infrastructure != nil && gateway.Spec.Infrastructure.ParametersRef != nil {
+	if gwl.gateway.Spec.Infrastructure != nil && gwl.gateway.Spec.Infrastructure.ParametersRef != nil {
 		condition := metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionFalse,
-			ObservedGeneration: gateway.Generation,
+			ObservedGeneration: gwl.gateway.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.GatewayReasonInvalidParameters),
 			Message:            "Gateway infrastructure parametersRef is not supported",
@@ -1306,7 +1278,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			metav1.Condition{
 				Type:               string(gatev1.GatewayConditionAccepted),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: gwl.gateway.Generation,
 				Reason:             string(gatev1.GatewayReasonListenersNotValid),
 				Message:            "At least one Listener must be valid",
 				LastTransitionTime: metav1.Now(),
@@ -1315,7 +1287,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 			metav1.Condition{
 				Type:               string(gatev1.GatewayConditionProgrammed),
 				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
+				ObservedGeneration: gwl.gateway.Generation,
 				Reason:             string(gatev1.GatewayReasonInvalid),
 				Message:            "No Listener is valid",
 				LastTransitionTime: metav1.Now(),
@@ -1339,7 +1311,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
-			ObservedGeneration: gateway.Generation,
+			ObservedGeneration: gwl.gateway.Generation,
 			Reason:             string(acceptedConditionReason),
 			Message:            acceptedConditionMessage,
 			LastTransitionTime: metav1.Now(),
@@ -1348,7 +1320,7 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 		metav1.Condition{
 			Type:               string(gatev1.GatewayConditionProgrammed),
 			Status:             metav1.ConditionTrue,
-			ObservedGeneration: gateway.Generation,
+			ObservedGeneration: gwl.gateway.Generation,
 			Reason:             string(gatev1.GatewayReasonProgrammed),
 			Message:            programmedConditionMessage,
 			LastTransitionTime: metav1.Now(),
@@ -1356,6 +1328,35 @@ func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewa
 	)
 
 	return gatewayStatus, nil
+}
+
+// makeGatewayResolvedRefsCondition makes the Gateway ResolvedRefs condition,
+// which the specification makes a summary of the listeners ResolvedRefs condition too.
+func makeGatewayResolvedRefsCondition(gwl gatewayWithListeners, unresolvedListenerRefs bool) metav1.Condition {
+	// The Gateway own unresolved references take precedence over the listeners ones.
+	if gwl.errResolvedRefsCondition != nil {
+		return *gwl.errResolvedRefsCondition
+	}
+
+	if unresolvedListenerRefs {
+		return metav1.Condition{
+			Type:               string(gatev1.GatewayConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gwl.gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonListenersNotResolved),
+			Message:            "At least one Listener has unresolved references",
+		}
+	}
+
+	return metav1.Condition{
+		Type:               string(gatev1.GatewayConditionResolvedRefs),
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: gwl.gateway.Generation,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(gatev1.GatewayReasonResolvedRefs),
+		Message:            conditionNoErrorMessage,
+	}
 }
 
 func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
@@ -1444,68 +1445,53 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 }
 
 // loadGatewayBackendTLS resolves the client certificate the Gateway presents to the backends using TLS.
-// It returns nil when the Gateway does not define one.
-func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) *gatewayBackendTLS {
+// It returns no certificate when the Gateway does not define one,
+// and the ResolvedRefs condition to report when the reference cannot be resolved.
+func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) (tls.Certificates, *metav1.Condition) {
 	if gateway.Spec.TLS == nil || gateway.Spec.TLS.Backend == nil || gateway.Spec.TLS.Backend.ClientCertificateRef == nil {
-		return nil
+		return nil, nil
 	}
 
 	certRef := gateway.Spec.TLS.Backend.ClientCertificateRef
-	invalid := func(reason gatev1.GatewayConditionReason, message string) *gatewayBackendTLS {
-		return &gatewayBackendTLS{
-			condition: metav1.Condition{
-				Type:               string(gatev1.GatewayConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: gateway.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(reason),
-				Message:            message,
-			},
-		}
-	}
 
 	group := ptr.Deref(certRef.Group, "")
 	kind := ptr.Deref(certRef.Kind, kindSecret)
-	unsupportedGroup := group != "" && group != groupCore
-	unsupportedKind := kind != kindSecret
-	if unsupportedGroup || unsupportedKind {
-		return invalid(gatev1.GatewayReasonInvalidClientCertificateRef, fmt.Sprintf("Unsupported ClientCertificateRef group/kind: %s/%s", group, kind))
+	if (group != "" && group != groupCore) || kind != kindSecret {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.GatewayConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonInvalidClientCertificateRef),
+			Message:            fmt.Sprintf("Unsupported ClientCertificateRef group/kind: %s/%s", group, kind),
+		}
 	}
 
 	namespace := string(ptr.Deref(certRef.Namespace, gatev1.Namespace(gateway.Namespace)))
 	if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, kindSecret, string(certRef.Name), namespace); err != nil {
-		return invalid(gatev1.GatewayReasonRefNotPermitted, fmt.Sprintf("Cannot reference ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err))
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.GatewayConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.GatewayReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot reference ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err),
+		}
 	}
 
 	cert, err := p.getTLSCert(certRef.Name, namespace)
 	if err != nil {
-		return invalid(gatev1.GatewayReasonInvalidClientCertificateRef, fmt.Sprintf("Cannot load ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err))
-	}
-
-	return &gatewayBackendTLS{
-		certificate: &cert.Certificate,
-		condition: metav1.Condition{
+		return nil, &metav1.Condition{
 			Type:               string(gatev1.GatewayConditionResolvedRefs),
-			Status:             metav1.ConditionTrue,
+			Status:             metav1.ConditionFalse,
 			ObservedGeneration: gateway.Generation,
 			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.GatewayReasonResolvedRefs),
-			Message:            conditionNoErrorMessage,
-		},
-	}
-}
-
-func hasUnresolvedListenerRefs(listeners []gatewayListener) bool {
-	return slices.ContainsFunc(listeners, func(listener gatewayListener) bool {
-		// The ListenerSet listeners are reported in their own ListenerSet status.
-		if listener.ListenerSet != nil {
-			return false
+			Reason:             string(gatev1.GatewayReasonInvalidClientCertificateRef),
+			Message:            fmt.Sprintf("Cannot load ClientCertificateRef %s/%s: %s", namespace, certRef.Name, err),
 		}
+	}
 
-		return slices.ContainsFunc(listener.Status.Conditions, func(condition metav1.Condition) bool {
-			return condition.Type == string(gatev1.ListenerConditionResolvedRefs) && condition.Status == metav1.ConditionFalse
-		})
-	})
+	return tls.Certificates{cert.Certificate}, nil
 }
 
 func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {

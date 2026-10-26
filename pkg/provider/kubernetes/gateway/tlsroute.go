@@ -416,7 +416,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadTCPServersTransport(namespace, policy, listener.backendClientCertificates())
+			serversTransport, resolvedRefCondition = p.loadTCPServersTransport(namespace, policy, listener.BackendClientCertificates)
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -452,11 +452,6 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 				}
 			}
 		}
-	}
-
-	// The load balancer without servers closes the connections.
-	if serversTransport != nil && listener.backendClientCertificateMissing() {
-		return &dynamic.TCPServersLoadBalancer{Servers: []dynamic.TCPServer{}}, nil, nil
 	}
 
 	if svcPort.Protocol != corev1.ProtocolTCP {
