@@ -43,10 +43,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
 		cp := mc.Certs[k]
 		conf.TLS.Certificates = append(conf.TLS.Certificates, &tls.CertAndStores{
-			Certificate: tls.Certificate{
-				CertFile: types.FileOrContent(cp.Cert),
-				KeyFile:  types.FileOrContent(cp.Key),
-			},
+			CertFile: types.FileOrContent(cp.Cert),
+			KeyFile:  types.FileOrContent(cp.Key),
 		})
 	}
 
@@ -229,6 +227,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.Error && registered {
 				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
 				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
+				applyAppRootRedirect(loc, routerKey, rt, obs, conf)
 			}
 
 			// An ssl-passthrough host is served over TCP on the TLS entryPoints, so it gets no TLS router at all.
@@ -254,6 +253,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				if !loc.Error {
 					p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
 					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+					applyAppRootRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 				}
 			}
 
@@ -560,13 +560,13 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 
 	if loc.BasicAuth != nil {
 		name := routerKey + "-basic-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth, URNRefs: loc.AuthURNRefs}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.DigestAuth != nil {
 		name := routerKey + "-digest-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth, URNRefs: loc.AuthURNRefs}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -707,20 +707,56 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	}
 }
 
+// applyAppRootRedirect registers the extra router matching "/" for the app-root
+// middleware. The middleware itself is registered by applyMiddlewares.
+func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, obs *dynamic.RouterObservabilityConfig, conf *dynamic.Configuration) {
+	if loc.AppRoot == nil || loc.AppRootExtraRouterRule == "" {
+		return
+	}
+
+	// The redirect router does not carry the location middlewares (auth included),
+	// so it must never reach the backend.
+	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
+		EntryPoints:   rt.EntryPoints,
+		Rule:          loc.AppRootExtraRouterRule,
+		Priority:      rt.Priority,
+		RuleSyntax:    "default",
+		Middlewares:   []string{routerKey + "-app-root"},
+		Service:       unavailableServiceName,
+		TLS:           rt.TLS,
+		Observability: obs,
+	}
+}
+
+// buildAppRootRouterRule builds the rule of the extra "/" router carrying the app-root middleware.
+// A host-less rule lands on the ingress-nginx catch-all server, which redirects "/" too.
+func buildAppRootRouterRule(host string, aliases []string) string {
+	if host == "" {
+		return `Path("/")`
+	}
+	return fmt.Sprintf("%s && Path(%q)", buildHostRule(host, aliases), "/")
+}
+
+// buildHostRule builds the host part of a router rule, covering the hostname and
+// all the server-alias hostnames resolved for the location.
+func buildHostRule(host string, aliases []string) string {
+	hostRules := make([]string, 0, len(aliases)+1)
+	for _, h := range append([]string{host}, aliases...) {
+		hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
+	}
+
+	if len(hostRules) > 1 {
+		return "(" + strings.Join(hostRules, " || ") + ")"
+	}
+
+	return hostRules[0]
+}
+
 func buildRule(host string, loc *location) string {
 	var rules []string
 
 	if host != "" {
-		hosts := append([]string{host}, loc.Aliases...)
-		hostRules := make([]string, 0, len(hosts))
-		for _, h := range hosts {
-			hostRules = append(hostRules, fmt.Sprintf("Host(%q)", h))
-		}
-		if len(hostRules) > 1 {
-			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
-		} else {
-			rules = append(rules, hostRules[0])
-		}
+		rules = append(rules, buildHostRule(host, loc.Aliases))
 	}
 
 	if len(loc.Path) > 0 {

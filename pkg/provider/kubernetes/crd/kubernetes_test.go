@@ -788,10 +788,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -2371,6 +2369,126 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with responding timeouts",
+			paths: []string{"services.yml", "with_responding_timeouts.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{
+								ReadTimeout:  new(ptypes.Duration(5 * time.Second)),
+								WriteTimeout: new(ptypes.Duration(10 * time.Second)),
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "IngressRoute",
+										Namespace: "default",
+										Name:      "test.route",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with invalid responding timeouts",
+			paths: []string{"services.yml", "with_invalid_responding_timeouts.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                "Simple Ingress Route with middleware",
 			allowCrossNamespace: true,
 			paths:               []string{"services.yml", "with_middleware.yml"},
@@ -2600,12 +2718,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								Redis: &dynamic.Redis{
 									Endpoints: []string{"127.0.0.1:6379"},
-									Username:  "user",
-									Password:  "password",
+									Username:  "urn:k8s:secret:redissecret:username",
+									Password:  "urn:k8s:secret:redissecret:password",
 									TLS: &types.ClientTLS{
 										CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
-										Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
-										Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+										Cert: "urn:k8s:secret:tlssecret:tls.crt",
+										Key:  "urn:k8s:secret:tlssecret:tls.key",
 									},
 									DB:             0,
 									PoolSize:       42,
@@ -2614,6 +2732,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 									WriteTimeout:   new(ptypes.Duration(42 * time.Second)),
 									DialTimeout:    new(ptypes.Duration(42 * time.Second)),
 								},
+							},
+							URNRefs: map[string]string{
+								"/rateLimit/redis/username": "user",
+								"/rateLimit/redis/password": "password",
+								"/rateLimit/redis/tls/cert": "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+								"/rateLimit/redis/tls/key":  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
 							},
 						},
 					},
@@ -5825,10 +5949,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -7381,12 +7503,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-basicauth": {
 							BasicAuth: &dynamic.BasicAuth{
-								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								Users: dynamic.Users{"urn:k8s:secret:authsecret:users", "urn:k8s:secret:authsecret:users"},
+							},
+							URNRefs: map[string]string{
+								"/basicAuth/users/0": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"/basicAuth/users/1": "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							},
 						},
 						"default-digestauth": {
 							DigestAuth: &dynamic.DigestAuth{
-								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+								Users: dynamic.Users{"urn:k8s:secret:authsecret:users", "urn:k8s:secret:authsecret:users"},
+							},
+							URNRefs: map[string]string{
+								"/digestAuth/users/0": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+								"/digestAuth/users/1": "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							},
 						},
 						"default-forwardauth": {
@@ -7396,9 +7526,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								HeaderField: "X-Header-Field",
 								TLS: &dynamic.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
-									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
-									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+									Cert: "urn:k8s:secret:tlssecret:tls.crt",
+									Key:  "urn:k8s:secret:tlssecret:tls.key",
 								},
+							},
+							URNRefs: map[string]string{
+								"/forwardAuth/tls/cert": "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+								"/forwardAuth/tls/key":  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
 							},
 						},
 					},
@@ -7429,8 +7563,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
 									"user":   "admin",
-									"secret": "this_is_the_secret",
+									"secret": "urn:k8s:secret:name:key",
 								},
+							},
+							URNRefs: map[string]string{
+								"/plugin/test-secret/secret": "this_is_the_secret",
 							},
 						},
 					},
@@ -7464,11 +7601,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 										"secret_1": map[string]any{
 											"secret_2": map[string]any{
 												"user":   "admin",
-												"secret": "this_is_the_very_deep_secret",
+												"secret": "urn:k8s:secret:name:key",
 											},
 										},
 									},
 								},
+							},
+							URNRefs: map[string]string{
+								"/plugin/test-secret/secret_0/secret_1/secret_2/secret": "this_is_the_very_deep_secret",
 							},
 						},
 					},
@@ -7498,8 +7638,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
 								"test-secret": map[string]any{
-									"secret": []any{"secret_data1", "secret_data2"},
+									"secret": []any{"urn:k8s:secret:name:key1", "urn:k8s:secret:name:key2"},
 								},
+							},
+							URNRefs: map[string]string{
+								"/plugin/test-secret/secret/0": "secret_data1",
+								"/plugin/test-secret/secret/1": "secret_data2",
 							},
 						},
 					},
@@ -7532,14 +7676,18 @@ func TestLoadIngressRoutes(t *testing.T) {
 									"users": []any{
 										map[string]any{
 											"name":   "admin",
-											"secret": "admin_password",
+											"secret": "urn:k8s:secret:name:key1",
 										},
 										map[string]any{
 											"name":   "user",
-											"secret": "user_password",
+											"secret": "urn:k8s:secret:name:key2",
 										},
 									},
 								},
+							},
+							URNRefs: map[string]string{
+								"/plugin/test-secret/users/0/secret": "admin_password",
+								"/plugin/test-secret/users/1/secret": "user_password",
 							},
 						},
 					},
@@ -7552,6 +7700,195 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:                "Simple Ingress Route, with test middleware read config from secret that not found",
 			paths:               []string{"services.yml", "with_plugin_read_not_exist_secret.yml"},
 			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with tap middleware",
+			paths: []string{"services.yml", "with_tap.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-tap": {
+							Tap: &dynamic.Tap{
+								Request: &dynamic.TapRequest{
+									Service:             "default-tap-tap-request-service",
+									Path:                "/records/requests",
+									RecordBody:          true,
+									MaxRecordBodySize:   new(int64(1024)),
+									RejectOnRecordError: true,
+									Timeout:             ptypes.Duration(5 * time.Second),
+								},
+								Response: &dynamic.TapResponse{
+									Service:        "default-tap-tap-response-service",
+									Path:           "/",
+									Timeout:        ptypes.Duration(30 * time.Second),
+									RequestHeaders: []string{"X-Request-Id"},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-tap-tap-request-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-tap-tap-response-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with test middleware read config from configMap",
+			paths: []string{"services.yml", "with_plugin_read_configmap.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-test-configmap": {
+							Plugin: map[string]dynamic.PluginConf{
+								"test-configmap": map[string]any{
+									"instructions": "Series are selected by their OpenTelemetry name here.",
+									"notes":        "the_bytes_form",
+									"literal":      "urn:k8s:not-a-scheme:grounding:instructions",
+								},
+							},
+						},
+					},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with test middleware read config from configMap that does not exist",
+			paths: []string{"services.yml", "with_plugin_read_not_exist_configmap.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with test middleware read config from configMap without the key",
+			paths: []string{"services.yml", "with_plugin_read_configmap_missing_key.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with test middleware read config from a malformed configMap URN",
+			paths: []string{"services.yml", "with_plugin_read_malformed_configmap_urn.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -7991,11 +8328,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
-							Stores: []string{"default"},
+							CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							Stores:   []string{"default"},
 						},
 					},
 					Stores: map[string]tls.Store{
@@ -10237,6 +10572,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
+
+			for name, middleware := range conf.HTTP.Middlewares {
+				_, err := middleware.ResolveURNRefs()
+				assert.NoError(t, err, name)
+			}
 		})
 	}
 }
@@ -14634,11 +14974,13 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	// Testing for username/password components in basic-auth secret
-	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "basic-auth-secret"})
+	refs := k8s.URNRefs{}
+	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "basic-auth-secret"}, refs)
 	require.NoError(t, secretErr)
-	require.Len(t, basicAuth.Users, 1)
+	assert.Equal(t, dynamic.Users{"urn:k8s:secret:basic-auth-secret:password"}, basicAuth.Users)
+	require.Len(t, refs, 1)
 
-	components := strings.Split(basicAuth.Users[0], ":")
+	components := strings.Split(refs["/basicAuth/users/0"], ":")
 	require.Len(t, components, 2)
 
 	username := components[0]
@@ -14649,11 +14991,13 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "auth-secret"})
+	refs = k8s.URNRefs{}
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "auth-secret"}, refs)
 	require.NoError(t, secretErr)
-	require.Len(t, basicAuth.Users, 2)
+	assert.Equal(t, dynamic.Users{"urn:k8s:secret:auth-secret:users", "urn:k8s:secret:auth-secret:users"}, basicAuth.Users)
+	require.Len(t, refs, 2)
 
-	components = strings.Split(basicAuth.Users[1], ":")
+	components = strings.Split(refs["/basicAuth/users/1"], ":")
 	require.Len(t, components, 2)
 
 	username = components[0]

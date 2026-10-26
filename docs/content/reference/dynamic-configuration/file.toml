@@ -25,6 +25,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router0.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -48,6 +51,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router1.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -161,6 +167,8 @@
         maxResponseBodyBytes = 42
         memResponseBodyBytes = 42
         retryExpression = "foobar"
+        disableRequestBuffer = true
+        disableResponseBuffer = true
     [http.middlewares.Middleware04]
       [http.middlewares.Middleware04.chain]
         middlewares = ["foobar", "foobar"]

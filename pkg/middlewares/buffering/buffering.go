@@ -2,6 +2,7 @@ package buffering
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/rs/zerolog"
@@ -26,6 +27,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	logger.Debug().Msg("Creating middleware")
 	logger.Debug().Msgf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
 		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes, config.MaxResponseBodyBytes, config.RetryExpression)
+
+	// Retrying requires both the request body, to replay it, and the response, to evaluate the retry expression.
+	if config.RetryExpression != "" && (config.DisableRequestBuffer || config.DisableResponseBuffer) {
+		return nil, errors.New("retryExpression cannot be used when disableRequestBuffer or disableResponseBuffer is enabled")
+	}
 
 	options := []oxybuffer.Option{
 		oxybuffer.MemRequestBodyBytes(config.MemRequestBodyBytes),

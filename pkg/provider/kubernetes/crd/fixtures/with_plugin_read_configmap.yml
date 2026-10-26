@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grounding
+  namespace: default
+
+data:
+  instructions: |-
+    Series are selected by their OpenTelemetry name here.
+
+binaryData:
+  notes: dGhlX2J5dGVzX2Zvcm0=
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-configmap
+  namespace: default
+
+spec:
+  plugin:
+    test-configmap:
+      instructions: urn:k8s:configmap:grounding:instructions
+      notes: urn:k8s:configmap:grounding:notes
+      literal: urn:k8s:not-a-scheme:grounding:instructions

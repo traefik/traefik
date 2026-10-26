@@ -36,6 +36,8 @@ func extendedGatewayFeatures() sets.Set[features.Feature] {
 		features.GatewayHTTPListenerIsolationFeature,
 		features.GatewayHTTPSListenerDetectMisdirectedRequestsFeature,
 		features.ListenerSetFeature,
+		features.GatewayFrontendClientCertificateValidationFeature,
+		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature,
 	)
 }
 
@@ -68,6 +70,9 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteNamedRouteRule,
 		features.HTTPRouteParentRefPortFeature,
 		features.HTTPRouteCORS,
+		features.HTTPRouteRequestTimeoutFeature,
+		features.HTTPRouteBackendTimeoutFeature,
+		features.HTTPRouteBackendURLRewriteFeature,
 	)
 }
 
@@ -75,6 +80,7 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 func extendedGRPCRouteFeatures() sets.Set[features.Feature] {
 	return sets.New(
 		features.GRPCRouteNamedRouteRule,
+		features.GRPCRouteRequestHeaderModifier,
 	)
 }
 

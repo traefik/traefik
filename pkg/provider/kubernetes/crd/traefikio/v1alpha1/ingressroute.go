@@ -18,6 +18,7 @@ type IngressRouteSpec struct {
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// Routes defines the list of routes.
+	// +kubebuilder:validation:MaxItems=100000
 	Routes []Route `json:"routes"`
 	// TLS defines the TLS configuration.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#tls
@@ -56,6 +57,26 @@ type Route struct {
 	// Observability defines the observability configuration for a router.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
 	Observability *RouterObservabilityConfig `json:"observability,omitempty"`
+	// RespondingTimeouts defines the timeouts for responding to client requests.
+	RespondingTimeouts *RouterRespondingTimeouts `json:"respondingTimeouts,omitempty"`
+}
+
+// RouterRespondingTimeouts holds the timeouts for responding to client requests.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#opt-respondingTimeouts
+// +kubebuilder:validation:XValidation:rule="has(self.readTimeout) || has(self.writeTimeout)",message="RespondingTimeouts must define at least one of ReadTimeout or WriteTimeout."
+// +kubebuilder:validation:XValidation:rule="!has(self.readTimeout) || !has(self.writeTimeout) || [[self.readTimeout, self.writeTimeout].map(t, string(t).matches('^[0-9]+$') ? duration(string(t) + 's') : duration(string(t)))].all(d, d[0] == duration('0s') || d[1] == duration('0s') || d[0] <= d[1])",message="ReadTimeout must be lower than or equal to WriteTimeout when both are set and non-zero."
+type RouterRespondingTimeouts struct {
+	// ReadTimeout defines the maximum duration for reading the request body, from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	ReadTimeout *intstr.IntOrString `json:"readTimeout,omitempty"`
+	// WriteTimeout defines the maximum duration before timing out writes of the response, including the wait for the backend,
+	// from when the router receives the request.
+	// If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	WriteTimeout *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // RouterObservabilityConfig holds the observability configuration for a router.

@@ -15,6 +15,10 @@ const (
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
 	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
+	// TapDefaultPath is the tap records Path option default value.
+	TapDefaultPath = "/"
+	// TapDefaultTimeout is the tap records Timeout option default value.
+	TapDefaultTimeout = 10 * time.Second
 )
 
 // +k8s:deepcopy-gen=true
@@ -47,6 +51,7 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
+	Tap               *Tap               `json:"tap,omitempty" toml:"tap,omitempty" yaml:"tap,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 
@@ -62,6 +67,11 @@ type Middleware struct {
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
+	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
+	// Only providers set it, and it must stay part of the configuration hash, so that a change of a referenced value reloads the middleware.
+	URNRefs map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false" loggable:"false"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -145,10 +155,15 @@ type Buffering struct {
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
-
-	// Only configurable via code, not via configuration files.
-	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+	// When true, MaxRequestBodyBytes is not enforced.
+	// Default: false.
+	DisableRequestBuffer bool `json:"disableRequestBuffer,omitempty" toml:"disableRequestBuffer,omitempty" yaml:"disableRequestBuffer,omitempty" export:"true"`
+	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+	// This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+	// When true, MaxResponseBodyBytes is not enforced.
+	// Default: false.
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"disableResponseBuffer,omitempty" yaml:"disableResponseBuffer,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -804,6 +819,66 @@ type StripPrefix struct {
 type StripPrefixRegex struct {
 	// Regex defines the regular expression to match the path prefix from the request URL.
 	Regex []string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Tap holds the tap middleware configuration.
+// This middleware sends a copy of the requests and responses going through it to Traefik services.
+// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/tap/
+type Tap struct {
+	// Request defines where and how the request records are sent.
+	// When omitted, requests are not recorded.
+	Request *TapRequest `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
+	// Response defines where and how the response records are sent.
+	// When omitted, responses are not recorded.
+	Response *TapResponse `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapRequest holds the configuration of the request records sent by the tap middleware.
+type TapRequest struct {
+	// Service defines the name of the service the records are sent to.
+	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Path defines the path of the requests sending the records to the service.
+	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	// Timeout defines the maximum duration allowed to send a record.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	// RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
+	// the request record before the request reaches the backend,
+	// and the response record before the response reaches the client.
+	// When the record cannot be sent, the request is rejected with an Internal Server Error.
+	// This guarantees that no request is served without being recorded, at the cost of
+	// coupling the client latency and availability to the tap service.
+	RejectOnRecordError bool `json:"rejectOnRecordError,omitempty" toml:"rejectOnRecordError,omitempty" yaml:"rejectOnRecordError,omitempty" export:"true"`
+
+	// RecordBody defines whether the body is part of the records.
+	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
+	// MaxRecordBodySize defines the maximum number of body bytes in a record.
+	// A larger body is cut in the record, which is flagged as truncated.
+	// The recorded body is held in memory, so it bounds the memory used for the body.
+	// It has no default, and must be set when RecordBody is set.
+	// A negative value means no limit.
+	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty" toml:"maxRecordBodySize,omitempty" yaml:"maxRecordBodySize,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (t *TapRequest) SetDefaults() {
+	t.Path = TapDefaultPath
+	t.Timeout = ptypes.Duration(TapDefaultTimeout)
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapResponse holds the configuration of the response records sent by the tap middleware.
+// A response record is configured like a request record, with the request headers on top.
+type TapResponse struct {
+	TapRequest `json:",inline" yaml:",inline" export:"true"`
+
+	// RequestHeaders defines the request headers described in the records, along with the request line.
+	// It allows a response record to be understood, and correlated, without the matching request record.
+	RequestHeaders []string `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

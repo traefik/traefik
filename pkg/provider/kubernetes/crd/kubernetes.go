@@ -270,47 +270,42 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		logger := log.Ctx(ctx).With().Str(logs.MiddlewareName, id).Logger()
 		ctxMid := logger.WithContext(ctx)
 
-		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
+		refs := k8s.URNRefs{}
+
+		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth, refs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading basic auth middleware")
 			continue
 		}
 
-		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
+		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth, refs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading digest auth middleware")
 			continue
 		}
 
-		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
+		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth, refs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading forward auth middleware")
 			continue
 		}
 
-		errorPageName, errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, id+"-errorpage-service", middleware.Spec.Errors)
+		errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, id+"-errorpage-service", middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
 		}
-
-		if errorPage != nil {
-			errorPage.Service = errorPageName
-
-			if errorPageService != nil {
-				serviceName := id + "-errorpage-service"
-				errorPage.Service = serviceName
-				addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, errorPageService)
-			}
+		if errorPageService != nil {
+			addToConfig(log.Ctx(ctxMid), "service", errorPage.Service, conf.HTTP.Services, errorPageService)
 		}
 
-		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
+		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin, refs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading plugins middleware")
 			continue
 		}
 
-		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
+		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit, refs)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
 			continue
@@ -332,6 +327,15 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading chain middleware")
 			continue
+		}
+
+		tap, tapServices, err := p.createTapMiddleware(ctxMid, client, middleware.Namespace, id, middleware.Spec.Tap)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error while reading tap middleware")
+			continue
+		}
+		for serviceName, service := range tapServices {
+			addToConfig(log.Ctx(ctxMid), "service", serviceName, conf.HTTP.Services, service)
 		}
 
 		addToConfig(log.Ctx(ctxMid), "middleware", id, conf.HTTP.Middlewares, &dynamic.Middleware{
@@ -360,7 +364,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			GrpcWeb:           middleware.Spec.GrpcWeb,
+			Tap:               tap,
 			Plugin:            plugin,
+			URNRefs:           refs.OrNil(),
 		})
 	}
 
@@ -694,9 +700,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (string, *dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
-		return "", nil, nil, nil
+		return nil, nil, nil
 	}
 
 	cb := configBuilder{
@@ -708,17 +714,65 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 		nameBuilder:               p.nameBuilder,
 	}
 
-	balancerName, balancerServerHTTP, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec, serviceKey)
+	serviceName, service, err := cb.nameAndService(ctx, namespace, errorPage.Service.LoadBalancerSpec, serviceKey)
 	if err != nil {
-		return "", nil, nil, err
+		return nil, nil, err
 	}
 
-	return balancerName, &dynamic.ErrorPage{
+	errp := &dynamic.ErrorPage{
 		Status:              errorPage.Status,
 		StatusRewrites:      errorPage.StatusRewrites,
 		Query:               errorPage.Query,
 		ErrorRequestHeaders: errorPage.ErrorRequestHeaders,
-	}, balancerServerHTTP, nil
+		Service:             serviceName,
+	}
+	if service != nil {
+		errp.Service = serviceKey
+	}
+
+	return errp, service, nil
+}
+
+// createTapMiddleware returns the tap middleware configuration,
+// along with the services to register for the destinations referencing a Kubernetes Service.
+func (p *Provider) createTapMiddleware(ctx context.Context, client Client, namespace, id string, tap *traefikv1alpha1.Tap) (*dynamic.Tap, map[string]*dynamic.Service, error) {
+	if tap == nil {
+		return nil, nil, nil
+	}
+
+	var conf dynamic.Tap
+
+	services := make(map[string]*dynamic.Service)
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+		crossProviderNamespaces:   p.CrossProviderNamespaces,
+		nameBuilder:               p.nameBuilder,
+	}
+
+	if tap.Request != nil {
+		var err error
+		conf.Request, err = createTapRecord(ctx, cb, namespace, id+"-tap-request-service", *tap.Request, services)
+		if err != nil {
+			return nil, nil, fmt.Errorf("creating tap request record: %w", err)
+		}
+	}
+
+	if tap.Response != nil {
+		record, err := createTapRecord(ctx, cb, namespace, id+"-tap-response-service", tap.Response.TapRequest, services)
+		if err != nil {
+			return nil, nil, fmt.Errorf("creating tap response record: %w", err)
+		}
+
+		conf.Response = &dynamic.TapResponse{
+			TapRequest:     *record,
+			RequestHeaders: tap.Response.RequestHeaders,
+		}
+	}
+
+	return &conf, services, nil
 }
 
 func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace string, chain *traefikv1alpha1.Chain) (*dynamic.Chain, error) {
@@ -739,6 +793,41 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	}
 
 	return &dynamic.Chain{Middlewares: mds}, nil
+}
+
+func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKey string, record traefikv1alpha1.TapRequest, services map[string]*dynamic.Service) (*dynamic.TapRequest, error) {
+	serviceName, service, err := cb.nameAndService(ctx, namespace, record.Service.LoadBalancerSpec, serviceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &dynamic.TapRequest{}
+	conf.SetDefaults()
+
+	conf.RecordBody = record.RecordBody
+	conf.RejectOnRecordError = record.RejectOnRecordError
+
+	conf.Service = serviceName
+	if service != nil {
+		conf.Service = serviceKey
+		services[serviceKey] = service
+	}
+
+	if record.Path != "" {
+		conf.Path = record.Path
+	}
+
+	if record.MaxRecordBodySize != nil {
+		conf.MaxRecordBodySize = record.MaxRecordBodySize
+	}
+
+	if record.Timeout != nil {
+		if err := conf.Timeout.Set(record.Timeout.String()); err != nil {
+			return nil, fmt.Errorf("setting timeout value: %w", err)
+		}
+	}
+
+	return conf, nil
 }
 
 // getServicePort always returns a valid port, an error otherwise.
@@ -786,7 +875,7 @@ func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort)
 	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
-func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON, refs k8s.URNRefs) (map[string]dynamic.PluginConf, error) {
 	if plugins == nil {
 		return nil, nil
 	}
@@ -801,9 +890,14 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 		return nil, err
 	}
 
-	for _, pc := range pcMap {
-		for key := range pc {
-			if pc[key], err = loadSecretKeys(k8sClient, ns, pc[key]); err != nil {
+	for name, pc := range pcMap {
+		for key, value := range pc {
+			// A ConfigMap holds no credential, so its value is set in the configuration, where the API shows it.
+			if pc[key], err = loadConfigMapValues(k8sClient, ns, value); err != nil {
+				return nil, err
+			}
+
+			if err = loadSecretKeys(k8sClient, ns, dynamic.JSONPointer("plugin", name, key), pc[key], refs); err != nil {
 				return nil, err
 			}
 		}
@@ -812,41 +906,102 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 	return pcMap, nil
 }
 
-func loadSecretKeys(k8sClient Client, ns string, i any) (any, error) {
-	var err error
-	switch iv := i.(type) {
+// loadSecretKeys records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN.
+// The URNs stay in the configuration: the middleware builder replaces them with their values.
+func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) error {
+	switch v := value.(type) {
 	case string:
-		if !strings.HasPrefix(iv, "urn:k8s:secret:") {
-			return iv, nil
+		if !strings.HasPrefix(v, k8s.SecretURNPrefix) {
+			return nil
 		}
 
-		return getSecretValue(k8sClient, ns, iv)
+		secretValue, err := getSecretValue(k8sClient, ns, v)
+		if err != nil {
+			return err
+		}
+
+		refs[pointer] = secretValue
 
 	case []any:
-		for i := range iv {
-			if iv[i], err = loadSecretKeys(k8sClient, ns, iv[i]); err != nil {
+		for i, item := range v {
+			if err := loadSecretKeys(k8sClient, ns, pointer+"/"+strconv.Itoa(i), item, refs); err != nil {
+				return err
+			}
+		}
+
+	case map[string]any:
+		for key, item := range v {
+			if err := loadSecretKeys(k8sClient, ns, pointer+dynamic.JSONPointer(key), item, refs); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// loadConfigMapValues returns value where every ConfigMap URN is replaced with the value it references.
+func loadConfigMapValues(k8sClient Client, ns string, value any) (any, error) {
+	var err error
+	switch v := value.(type) {
+	case string:
+		if !strings.HasPrefix(v, k8s.ConfigMapURNPrefix) {
+			return v, nil
+		}
+
+		return getConfigMapValue(k8sClient, ns, v)
+
+	case []any:
+		for i, item := range v {
+			if v[i], err = loadConfigMapValues(k8sClient, ns, item); err != nil {
 				return nil, err
 			}
 		}
 
 	case map[string]any:
-		for k := range iv {
-			if iv[k], err = loadSecretKeys(k8sClient, ns, iv[k]); err != nil {
+		for key, item := range v {
+			if v[key], err = loadConfigMapValues(k8sClient, ns, item); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	return i, nil
+	return value, nil
+}
+
+// getConfigMapValue reads one key of a ConfigMap, from Data or BinaryData alike: a reference names a key, not a shape.
+func getConfigMapValue(c Client, ns, urn string) (string, error) {
+	name, key, err := parseURN(urn)
+	if err != nil {
+		return "", err
+	}
+
+	configMap, ok, err := c.GetConfigMap(ns, name)
+	if err != nil {
+		return "", err
+	}
+
+	if !ok {
+		return "", fmt.Errorf("configMap %s/%s is not found", ns, name)
+	}
+
+	if value, ok := configMap.Data[key]; ok {
+		return value, nil
+	}
+
+	if value, ok := configMap.BinaryData[key]; ok {
+		return string(value), nil
+	}
+
+	return "", fmt.Errorf("key %q not found in configMap %s/%s", key, ns, name)
 }
 
 func getSecretValue(c Client, ns, urn string) (string, error) {
-	parts := strings.Split(urn, ":")
-	if len(parts) != 5 {
-		return "", fmt.Errorf("malformed secret URN %q", urn)
+	secretName, secretKey, err := parseURN(urn)
+	if err != nil {
+		return "", err
 	}
 
-	secretName := parts[3]
 	secret, ok, err := c.GetSecret(ns, secretName)
 	if err != nil {
 		return "", err
@@ -856,13 +1011,23 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 		return "", fmt.Errorf("secret %s/%s is not found", ns, secretName)
 	}
 
-	secretKey := parts[4]
 	secretValue, ok := secret.Data[secretKey]
 	if !ok {
 		return "", fmt.Errorf("key %q not found in secret %s/%s", secretKey, ns, secretName)
 	}
 
 	return string(secretValue), nil
+}
+
+// parseURN returns the name and the key of a urn:k8s:<kind>:<name>:<key> reference.
+// The URN has no namespace on purpose: the object is read from the namespace of the Middleware, so a Middleware cannot read another namespace.
+func parseURN(urn string) (name, key string, err error) {
+	parts := strings.Split(urn, ":")
+	if len(parts) != 5 || parts[3] == "" || parts[4] == "" {
+		return "", "", fmt.Errorf("malformed URN %q", urn)
+	}
+
+	return parts[3], parts[4], nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
@@ -929,7 +1094,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit, refs k8s.URNRefs) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -987,8 +1152,8 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 				if err != nil {
 					return nil, fmt.Errorf("failed to load auth secret: %w", err)
 				}
-				rl.Redis.TLS.Cert = authSecretCert
-				rl.Redis.TLS.Key = authSecretKey
+				rl.Redis.TLS.Cert = refs.Add("/rateLimit/redis/tls/cert", rateLimit.Redis.TLS.CertSecret, "tls.crt", authSecretCert)
+				rl.Redis.TLS.Key = refs.Add("/rateLimit/redis/tls/key", rateLimit.Redis.TLS.CertSecret, "tls.key", authSecretKey)
 			}
 		}
 
@@ -1014,11 +1179,12 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 		}
 
 		if rateLimit.Redis.Secret != "" {
-			var err error
-			rl.Redis.Username, rl.Redis.Password, err = loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
+			username, password, err := loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
 			if err != nil {
 				return nil, err
 			}
+			rl.Redis.Username = refs.Add("/rateLimit/redis/username", rateLimit.Redis.Secret, "username", username)
+			rl.Redis.Password = refs.Add("/rateLimit/redis/password", rateLimit.Redis.Secret, "password", password)
 		}
 	}
 
@@ -1077,7 +1243,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth, refs k8s.URNRefs) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
@@ -1126,8 +1292,8 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 			if err != nil {
 				return nil, fmt.Errorf("failed to load auth secret: %w", err)
 			}
-			forwardAuth.TLS.Cert = authSecretCert
-			forwardAuth.TLS.Key = authSecretKey
+			forwardAuth.TLS.Cert = refs.Add("/forwardAuth/tls/cert", auth.TLS.CertSecret, "tls.crt", authSecretCert)
+			forwardAuth.TLS.Key = refs.Add("/forwardAuth/tls/key", auth.TLS.CertSecret, "tls.key", authSecretKey)
 		}
 
 		forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
@@ -1205,7 +1371,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth, refs k8s.URNRefs) (*dynamic.BasicAuth, error) {
 	if basicAuth == nil {
 		return nil, nil
 	}
@@ -1232,27 +1398,28 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 		}
 
 		return &dynamic.BasicAuth{
-			Users:        credentials,
+			// The user is computed from both keys: the password key is the one that must not be exposed.
+			Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, "password", credentials),
 			Realm:        basicAuth.Realm,
 			RemoveHeader: basicAuth.RemoveHeader,
 			HeaderField:  basicAuth.HeaderField,
 		}, nil
 	}
 
-	credentials, err := loadAuthCredentials(secret)
+	key, credentials, err := loadAuthCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load basic auth credentials: %w", err)
 	}
 
 	return &dynamic.BasicAuth{
-		Users:        credentials,
+		Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, key, credentials),
 		Realm:        basicAuth.Realm,
 		RemoveHeader: basicAuth.RemoveHeader,
 		HeaderField:  basicAuth.HeaderField,
 	}, nil
 }
 
-func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth, refs k8s.URNRefs) (*dynamic.DigestAuth, error) {
 	if digestAuth == nil {
 		return nil, nil
 	}
@@ -1272,13 +1439,13 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, digestAuth.Secret)
 	}
 
-	credentials, err := loadAuthCredentials(secret)
+	key, credentials, err := loadAuthCredentials(secret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load digest auth credentials: %w", err)
 	}
 
 	return &dynamic.DigestAuth{
-		Users:        credentials,
+		Users:        refs.AddUsers("/digestAuth/users", digestAuth.Secret, key, credentials),
 		Realm:        digestAuth.Realm,
 		RemoveHeader: digestAuth.RemoveHeader,
 		HeaderField:  digestAuth.HeaderField,
@@ -1291,11 +1458,13 @@ func createBufferingMiddleware(buffering *traefikv1alpha1.Buffering) *dynamic.Bu
 	}
 
 	return &dynamic.Buffering{
-		MemRequestBodyBytes:  buffering.MemRequestBodyBytes,
-		MaxRequestBodyBytes:  buffering.MaxRequestBodyBytes,
-		MemResponseBodyBytes: buffering.MemResponseBodyBytes,
-		MaxResponseBodyBytes: buffering.MaxResponseBodyBytes,
-		RetryExpression:      buffering.RetryExpression,
+		MemRequestBodyBytes:   buffering.MemRequestBodyBytes,
+		MaxRequestBodyBytes:   buffering.MaxRequestBodyBytes,
+		MemResponseBodyBytes:  buffering.MemResponseBodyBytes,
+		MaxResponseBodyBytes:  buffering.MaxResponseBodyBytes,
+		RetryExpression:       buffering.RetryExpression,
+		DisableRequestBuffer:  buffering.DisableRequestBuffer,
+		DisableResponseBuffer: buffering.DisableResponseBuffer,
 	}
 }
 
@@ -1313,14 +1482,18 @@ func loadBasicAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return []string{fmt.Sprintf("%s:{SHA}%s", username, passwordSum)}, nil
 }
 
-func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
+// loadAuthCredentials returns the key of the single entry of the secret, and the credentials it holds, one per line.
+func loadAuthCredentials(secret *corev1.Secret) (string, []string, error) {
 	if len(secret.Data) != 1 {
-		return nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), secret.Namespace, secret.Name)
+		return "", nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), secret.Namespace, secret.Name)
 	}
 
-	var firstSecret []byte
-	for _, v := range secret.Data {
-		firstSecret = v
+	var (
+		key         string
+		firstSecret []byte
+	)
+	for k, v := range secret.Data {
+		key, firstSecret = k, v
 		break
 	}
 
@@ -1332,13 +1505,13 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading secret for %s/%s: %w", secret.Namespace, secret.Name, err)
+		return "", nil, fmt.Errorf("error reading secret for %s/%s: %w", secret.Namespace, secret.Name, err)
 	}
 	if len(credentials) == 0 {
-		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", secret.Namespace, secret.Name)
+		return "", nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", secret.Namespace, secret.Name)
 	}
 
-	return credentials, nil
+	return key, credentials, nil
 }
 
 func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
@@ -1568,10 +1741,8 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores,
 	}
 
 	return &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: types.FileOrContent(cert),
-			KeyFile:  types.FileOrContent(key),
-		},
+		CertFile: types.FileOrContent(cert),
+		KeyFile:  types.FileOrContent(key),
 	}, nil
 }
 

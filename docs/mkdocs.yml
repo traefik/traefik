@@ -341,6 +341,7 @@ nav:
               - 'Retry': 'reference/routing-configuration/http/middlewares/retry.md'
               - 'StripPrefix': 'reference/routing-configuration/http/middlewares/stripprefix.md'
               - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
+              - 'Tap': 'reference/routing-configuration/http/middlewares/tap.md'
               - '<span class="nav-link-with-icon">WAF <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/waf.md'
           - 'TCP' :
               - 'Routing' :
@@ -404,7 +405,9 @@ nav:
       - 'Security': 'contributing/submitting-security-issues.md'
       - 'Security Decisions': 'contributing/security-decisions.md'
       - 'Building and Testing': 'contributing/building-testing.md'
-      - 'Documentation': 'contributing/documentation.md'
+      - 'Documentation':
+          - 'Building Documentation': 'contributing/documentation.md'
+          - 'Style Guide': 'contributing/documentation-style-guide.md'
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'

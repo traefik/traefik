@@ -7,8 +7,12 @@ description: "Security is a key part of Traefik Proxy. Read the technical docume
 
 ## Security Advisories
 
-We strongly advise you to join our mailing list to be aware of the latest announcements from our security team.
-You can subscribe by sending an email to security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
+We publish our security announcements as [GitHub security advisories](https://github.com/traefik/traefik/security/advisories).
+Check this page to stay aware of the latest announcements from our security team.
+
+Each advisory is published together with the releases that fix the vulnerability.
+To be notified when they are out, watch the [Traefik repository](https://github.com/traefik/traefik) on GitHub,
+and select **Custom** > **Releases**.
 
 ## CVE
 
