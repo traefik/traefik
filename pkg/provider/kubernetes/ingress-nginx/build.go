@@ -249,7 +249,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				weight := min(max(ptr.Deref(canaryIngress.config.CanaryWeight, 0), 0), weightTotal)
 
 				// Resolve canary backend.
-				canaryBackendName := canaryIngress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port)
+				canaryBackendName := makeKey(canaryIngress.Namespace, pa.Backend.Service.Name, portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[canaryBackendName]; !exists {
 					mc.Backends[canaryBackendName] = &backend{
 						Name:        canaryBackendName,
@@ -323,7 +323,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				ptBackendName := ing.Namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
+				ptBackendName := makeKey(ing.Namespace, ingBackend.Service.Name, portString(ingBackend.Service.Port))
 				if _, exists := mc.Backends[ptBackendName]; !exists {
 					mc.Backends[ptBackendName] = &backend{
 						Name:        ptBackendName,
@@ -337,7 +337,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
-					RouterKey:   ing.Namespace + "-" + ing.Name + "-" + provider.Normalize(rule.Host),
+					RouterKey:   makeKey(ing.Namespace, ing.Name, provider.Normalize(rule.Host)),
 				})
 				markProcessedIngress(ing.Ingress)
 			}
@@ -400,7 +400,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpoints = nil
 				}
 
-				backendName := ing.Namespace + "-" + ing.Name + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port)
+				backendName := makeKey(ing.Namespace, ing.Name, pa.Backend.Service.Name, portString(pa.Backend.Service.Port))
 				if _, exists := mc.Backends[backendName]; !exists {
 					mc.Backends[backendName] = &backend{
 						Name:        backendName,
@@ -574,7 +574,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				continue
 			}
 
-			ingDefaultBackendName := ing.Namespace + "-" + ing.Name + "-default-backend"
+			ingDefaultBackendName := makeKey(ing.Namespace, ing.Name) + "-default-backend"
 			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
 				mc.Backends[ingDefaultBackendName] = &backend{
 					Name:        ingDefaultBackendName,
@@ -679,7 +679,7 @@ func inheritServerAppRoot(loc *location, appRoot string) {
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
 	nst := namedServersTransport{
-		name: namespace + "-" + name,
+		name: makeKey(namespace, name),
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
@@ -837,7 +837,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		return nil, err
 	}
 
-	name := namespace + "-" + ingBackend.Service.Name + "-" + portString(ingBackend.Service.Port)
+	name := makeKey(namespace, ingBackend.Service.Name, portString(ingBackend.Service.Port))
 	return &backend{
 		Name:        name,
 		Namespace:   namespace,
@@ -938,7 +938,7 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 	pascalCaseWordBoundaryRegexp := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 	clientAuthType := clientAuthTypeFromString(cfg.AuthTLSVerifyClient)
 	clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundaryRegexp.ReplaceAllString(clientAuthType, "$1-$2"))
-	optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
+	optName := makeKey(secretNamespace, secretName) + "-" + clientAuthTypeKey
 
 	if opt, exists := tlsOptionsCache[optName]; exists {
 		return optName, opt, nil
@@ -1134,7 +1134,7 @@ func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map
 func (p *Provider) resolveHTTPErrorBackend(namespace string, cfg IngressConfig) string {
 	// Per-ingress annotation only — produces a real backend key stored in mc.Backends.
 	if defaultBackend := ptr.Deref(cfg.DefaultBackend, ""); defaultBackend != "" {
-		return fmt.Sprintf("default-backend-%s-%s", namespace, defaultBackend)
+		return "default-backend-" + makeKey(namespace, defaultBackend)
 	}
 
 	// Provider-level default backend is handled by buildCustomHTTPErrors directly
@@ -1208,6 +1208,18 @@ func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (core
 	}
 
 	return corev1.ServicePort{}, false
+}
+
+// makeKey builds a generated name from its components, each followed by its length.
+// Kubernetes namespaces and names may contain dashes, so joining them with dashes alone is ambiguous:
+// team/dev-web and team-dev/web would both give team-dev-web.
+func makeKey(components ...string) string {
+	parts := make([]string, 0, 2*len(components))
+	for _, c := range components {
+		parts = append(parts, c, strconv.Itoa(len(c)))
+	}
+
+	return strings.Join(parts, "-")
 }
 
 func portString(port netv1.ServiceBackendPort) string {
