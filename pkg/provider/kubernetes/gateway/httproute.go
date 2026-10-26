@@ -612,7 +612,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy)
+			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy, listener.BackendClientCertificates)
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -678,9 +678,10 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 	return lb, serversTransport, nil
 }
 
-func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
+func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.ServersTransport, metav1.Condition) {
 	st := &dynamic.ServersTransport{
-		ServerName: string(policy.Spec.Validation.Hostname),
+		ServerName:   string(policy.Spec.Validation.Hostname),
+		Certificates: clientCertificates,
 	}
 
 	if len(policy.Spec.Validation.SubjectAltNames) > 0 {

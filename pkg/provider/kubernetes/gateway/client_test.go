@@ -398,6 +398,7 @@ func Test_listenerSetStatusEqual(t *testing.T) {
 func Test_mergeGatewayStatus(t *testing.T) {
 	accepted := metav1.Condition{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue}
 	staleAccepted := metav1.Condition{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionFalse}
+	staleResolvedRefs := metav1.Condition{Type: string(gatev1.GatewayConditionResolvedRefs), Status: metav1.ConditionFalse}
 	listenerAccepted := metav1.Condition{Type: string(gatev1.ListenerConditionAccepted), Status: metav1.ConditionTrue}
 	staleConflicted := metav1.Condition{Type: string(gatev1.ListenerConditionConflicted), Status: metav1.ConditionTrue}
 	foreign := metav1.Condition{Type: "example.com/Foreign", Status: metav1.ConditionTrue}
@@ -428,6 +429,13 @@ func Test_mergeGatewayStatus(t *testing.T) {
 				Conditions: []metav1.Condition{accepted, foreign},
 				Listeners:  desired.Listeners,
 			},
+		},
+		{
+			desc: "drops owned Gateway condition no longer desired",
+			current: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{staleAccepted, staleResolvedRefs},
+			},
+			expected: desired,
 		},
 		{
 			desc: "keeps foreign listener condition",
