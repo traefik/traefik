@@ -72,6 +72,7 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 		features.HTTPRouteCORS,
 		features.HTTPRouteRequestTimeoutFeature,
 		features.HTTPRouteBackendTimeoutFeature,
+		features.HTTPRouteBackendURLRewriteFeature,
 	)
 }
 
@@ -79,6 +80,7 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 func extendedGRPCRouteFeatures() sets.Set[features.Feature] {
 	return sets.New(
 		features.GRPCRouteNamedRouteRule,
+		features.GRPCRouteRequestHeaderModifier,
 	)
 }
 
