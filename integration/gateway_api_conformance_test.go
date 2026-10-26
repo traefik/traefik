@@ -12,12 +12,14 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -62,7 +64,7 @@ const (
 //
 // The operator owns the infrastructure part of the specification, which a
 // single statically deployed instance cannot satisfy: a per-Gateway
-// status.addresses, GatewayStaticAddresses, GatewayInfrastructurePropagation,
+// status.addresses, GatewayStaticAddresses, GatewayInfrastructure,
 // and the tests needing two Gateways reachable at two distinct addresses.
 type GatewayAPIConformanceSuite struct {
 	BaseSuite
@@ -111,7 +113,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		// which a single node cannot do for the several port 80 Services the
 		// operator provisions. nodeLoadBalancer assigns their addresses.
 		testcontainers.WithCmdArgs("--disable=servicelb"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.2.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.7.0-rc.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/01-operator.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/02-gatewayclass.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/03-bootstrap-gateway.yml"),
@@ -119,7 +121,13 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	)
 	require.NoError(s.T(), err)
 
-	require.NoError(s.T(), s.k3sContainer.LoadImages(ctx, traefikConformanceImage, operatorImage))
+	// With the containerd image store, a pulled multi-platform image only holds
+	// the host platform content: saving all of its platforms makes the import
+	// into the node fail, and LoadImages does not report it.
+	require.NoError(s.T(), s.k3sContainer.LoadImagesWithOpts(ctx,
+		[]string{traefikConformanceImage, operatorImage},
+		testcontainers.SaveDockerImageWithPlatforms(specs.Platform{OS: "linux", Architecture: runtime.GOARCH}),
+	))
 
 	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", operatorNamespace, operatorDeployment, "--for=condition=Available", "--timeout=120s"})
 	if err != nil || exitCode > 0 {
@@ -230,9 +238,12 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 			},
 			// Here we are concatenating the features supported by the Traefik Gateway API implementation with the
 			// features supported by the Traefik Gateway API operator.
+			// TCPRoute is only supported with the experimental channel enabled,
+			// which is why it is not part of the provider supported features.
 			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
+				features.SupportTCPRoute,
 				features.GatewayEmptyAddressFeature.Name,
-				features.GatewayInfrastructurePropagationFeature.Name,
+				features.GatewayInfrastructureFeature.Name,
 				features.GatewayStaticAddressesFeature.Name,
 			}),
 		},

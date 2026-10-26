@@ -10,7 +10,7 @@ There is no dedicated CRD, a `Service` is part of:
 - [`IngressRoute`](./ingressroute.md)
 - [`TraefikService`](./traefikservice.md)
 
-Note that, before creating `IngressRoute` or `TraefikService` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Note that, before creating `IngressRoute` or `TraefikService` objects, you need to apply the [Traefik Kubernetes CRDs](../../../../install-configuration/providers/kubernetes/kubernetes-crd.md#requirements) to your Kubernetes cluster.
 
 This registers the Traefik-specific resources.
 

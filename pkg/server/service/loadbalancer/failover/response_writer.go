@@ -1,9 +1,6 @@
 package failover
 
 import (
-	"bufio"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -62,16 +59,22 @@ func (r *responseWriter) WriteHeader(statusCode int) {
 	}
 }
 
-func (r *responseWriter) Flush() {
-	if flusher, ok := r.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
+// FlushError sends any buffered data to the client.
+func (r *responseWriter) FlushError() error {
+	if !r.written {
+		r.WriteHeader(http.StatusOK)
 	}
+
+	// The response is discarded for the fallback,
+	// and flushing it would commit an implicit 200 to the client.
+	if r.needFallback {
+		return nil
+	}
+
+	return http.NewResponseController(r.ResponseWriter).Flush()
 }
 
-func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", r.ResponseWriter)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseWriter) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
 }

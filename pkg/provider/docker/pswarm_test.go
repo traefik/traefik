@@ -152,23 +152,21 @@ func TestSwarmProvider_listServices(t *testing.T) {
 			dockerVersion: "1.30",
 			networks: []networktypes.Summary{
 				{
-					Network: networktypes.Network{
-						Name:       "network_name",
-						ID:         "yk6l57rfwizjzxxzftn4amaot",
-						Created:    time.Now(),
-						Scope:      "swarm",
-						Driver:     "overlay",
-						EnableIPv6: false,
-						Internal:   true,
-						Ingress:    false,
-						ConfigOnly: false,
-						Options: map[string]string{
-							"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
-							"com.docker.networktypes.enable_ipv6":                 "false",
-						},
-						Labels: map[string]string{
-							"com.docker.stack.namespace": "test",
-						},
+					Name:       "network_name",
+					ID:         "yk6l57rfwizjzxxzftn4amaot",
+					Created:    time.Now(),
+					Scope:      "swarm",
+					Driver:     "overlay",
+					EnableIPv6: false,
+					Internal:   true,
+					Ingress:    false,
+					ConfigOnly: false,
+					Options: map[string]string{
+						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+						"com.docker.networktypes.enable_ipv6":                 "false",
+					},
+					Labels: map[string]string{
+						"com.docker.stack.namespace": "test",
 					},
 				},
 			},
@@ -209,23 +207,21 @@ func TestSwarmProvider_listServices(t *testing.T) {
 			dockerVersion: "1.30",
 			networks: []networktypes.Summary{
 				{
-					Network: networktypes.Network{
-						Name:       "network_name",
-						ID:         "yk6l57rfwizjzxxzftn4amaot",
-						Created:    time.Now(),
-						Scope:      "swarm",
-						Driver:     "overlay",
-						EnableIPv6: false,
-						Internal:   true,
-						Ingress:    false,
-						ConfigOnly: false,
-						Options: map[string]string{
-							"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
-							"com.docker.networktypes.enable_ipv6":                 "false",
-						},
-						Labels: map[string]string{
-							"com.docker.stack.namespace": "test",
-						},
+					Name:       "network_name",
+					ID:         "yk6l57rfwizjzxxzftn4amaot",
+					Created:    time.Now(),
+					Scope:      "swarm",
+					Driver:     "overlay",
+					EnableIPv6: false,
+					Internal:   true,
+					Ingress:    false,
+					ConfigOnly: false,
+					Options: map[string]string{
+						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+						"com.docker.networktypes.enable_ipv6":                 "false",
+					},
+					Labels: map[string]string{
+						"com.docker.stack.namespace": "test",
 					},
 				},
 			},

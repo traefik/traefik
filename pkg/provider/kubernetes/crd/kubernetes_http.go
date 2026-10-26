@@ -168,6 +168,14 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				r.Observability.TraceVerbosity = route.Observability.TraceVerbosity
 			}
 
+			if route.RespondingTimeouts != nil {
+				r.RespondingTimeouts, err = buildRouterRespondingTimeouts(*route.RespondingTimeouts)
+				if err != nil {
+					logger.Error().Err(err).Msg("Invalid responding timeouts")
+					continue
+				}
+			}
+
 			if ingressRoute.Spec.TLS != nil {
 				r.TLS = &dynamic.RouterTLSConfig{
 					CertResolver: ingressRoute.Spec.TLS.CertResolver,
@@ -207,6 +215,35 @@ func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dyna
 		Namespace: ingressRoute.Namespace,
 		Name:      ingressRoute.Name,
 	}
+}
+
+// buildRouterRespondingTimeouts returns the router responding timeouts, or nil when none is set.
+func buildRouterRespondingTimeouts(timeouts traefikv1alpha1.RouterRespondingTimeouts) (*dynamic.RouterRespondingTimeouts, error) {
+	if timeouts.ReadTimeout == nil && timeouts.WriteTimeout == nil {
+		return nil, nil
+	}
+
+	var result dynamic.RouterRespondingTimeouts
+
+	if timeouts.ReadTimeout != nil {
+		var readTimeout ptypes.Duration
+		if err := readTimeout.Set(timeouts.ReadTimeout.String()); err != nil {
+			return nil, fmt.Errorf("parsing readTimeout: %w", err)
+		}
+
+		result.ReadTimeout = &readTimeout
+	}
+
+	if timeouts.WriteTimeout != nil {
+		var writeTimeout ptypes.Duration
+		if err := writeTimeout.Set(timeouts.WriteTimeout.String()); err != nil {
+			return nil, fmt.Errorf("parsing writeTimeout: %w", err)
+		}
+
+		result.WriteTimeout = &writeTimeout
+	}
+
+	return &result, nil
 }
 
 func makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewares []traefikv1alpha1.MiddlewareRef, crossProviderNamespaces []string, allowCrossNamespace bool, nb nameBuilder) ([]string, error) {

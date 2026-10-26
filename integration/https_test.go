@@ -1468,10 +1468,8 @@ func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName
 			TLS: &dynamic.TLSConfiguration{
 				Certificates: []*traefiktls.CertAndStores{
 					{
-						Certificate: traefiktls.Certificate{
-							CertFile: types.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-							KeyFile:  types.FileOrContent("fixtures/https/" + certFileName + ".key"),
-						},
+						CertFile: types.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+						KeyFile:  types.FileOrContent("fixtures/https/" + certFileName + ".key"),
 					},
 				},
 			},

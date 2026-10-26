@@ -1,11 +1,9 @@
 package customerrors
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"maps"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,12 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
 	"k8s.io/utils/ptr"
-)
-
-// Compile time validation that the response recorder implements http interfaces correctly.
-var (
-	_ middlewares.Stateful = &codeModifier{}
-	_ middlewares.Stateful = &codeCatcher{}
 )
 
 const (
@@ -293,16 +285,8 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	cc.headersSent = true
 }
 
-// Hijack hijacks the connection.
-func (cc *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hj, ok := cc.responseWriter.(http.Hijacker); ok {
-		return hj.Hijack()
-	}
-	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", cc.responseWriter)
-}
-
-// Flush sends any buffered data to the client.
-func (cc *codeCatcher) Flush() {
+// FlushError sends any buffered data to the client.
+func (cc *codeCatcher) FlushError() error {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.
 	cc.WriteHeader(cc.code)
@@ -313,12 +297,15 @@ func (cc *codeCatcher) Flush() {
 	// (e.g., To prevent superfluous WriteHeader on request with a
 	// `Transfer-Encoding: chunked` header).
 	if cc.caughtFilteredCode {
-		return
+		return nil
 	}
 
-	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
+	return http.NewResponseController(cc.responseWriter).Flush()
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (cc *codeCatcher) Unwrap() http.ResponseWriter {
+	return cc.responseWriter
 }
 
 func (cc *codeCatcher) getCode() int {
@@ -398,20 +385,14 @@ func (r *codeModifier) WriteHeader(code int) {
 	r.headerSent = true
 }
 
-// Hijack hijacks the connection.
-func (r *codeModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := r.responseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
-	}
-	return hijacker.Hijack()
-}
-
-// Flush sends any buffered data to the client.
-func (r *codeModifier) Flush() {
+// FlushError sends any buffered data to the client.
+func (r *codeModifier) FlushError() error {
 	r.WriteHeader(r.code)
 
-	if flusher, ok := r.responseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
+	return http.NewResponseController(r.responseWriter).Flush()
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *codeModifier) Unwrap() http.ResponseWriter {
+	return r.responseWriter
 }

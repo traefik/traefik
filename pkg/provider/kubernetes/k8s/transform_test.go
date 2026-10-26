@@ -12,15 +12,13 @@ import (
 
 func TestStripManagedFields(t *testing.T) {
 	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "whoami",
-			ManagedFields: []metav1.ManagedFieldsEntry{
-				{
-					Manager:    "kubectl",
-					Operation:  metav1.ManagedFieldsOperationApply,
-					APIVersion: "v1",
-					Time:       &metav1.Time{Time: time.Now()},
-				},
+		Name: "whoami",
+		ManagedFields: []metav1.ManagedFieldsEntry{
+			{
+				Manager:    "kubectl",
+				Operation:  metav1.ManagedFieldsOperationApply,
+				APIVersion: "v1",
+				Time:       &metav1.Time{Time: time.Now()},
 			},
 		},
 	}

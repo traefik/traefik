@@ -51,7 +51,9 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]any, middlewareNa
 }
 
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	h, applyCtx, err := b.buildMiddleware(ctx, next, cfg, middlewareName)
+	h, applyCtx, err := wrapExternalWith(next, func(next http.Handler) (http.Handler, func(ctx context.Context) context.Context, error) {
+		return b.buildMiddleware(ctx, next, cfg, middlewareName)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("building Wasm middleware: %w", err)
 	}

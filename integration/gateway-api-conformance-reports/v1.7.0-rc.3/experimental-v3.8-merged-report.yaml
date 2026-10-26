@@ -1,0 +1,199 @@
+apiVersion: gateway.networking.k8s.io/v1
+date: "2026-10-26T10:40:18+01:00"
+gatewayAPIChannel: experimental
+gatewayAPIVersion: v1.7.0-rc.3
+implementation:
+  contact:
+  - '@traefik/maintainers'
+  organization: traefik
+  project: traefik
+  url: https://traefik.io/
+  version: v3.8
+kind: ConformanceReport
+mode: merged
+profiles:
+- core:
+    result: partial
+    skippedTests:
+    - GRPCRouteMultipleGateways
+    statistics:
+      Failed: 0
+      Passed: 16
+      Skipped: 1
+  extended:
+    result: partial
+    skippedTests:
+    - GatewayInfrastructureMetadata
+    statistics:
+      Failed: 0
+      Passed: 9
+      Skipped: 1
+    supportedFeatures:
+    - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructure
+    - GatewayPort8080
+    - ListenerSet
+    unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressEmpty
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
+    - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
+    - GatewayStaticAddresses
+  name: GATEWAY-GRPC
+  summary: Core tests partially succeeded with 1 test skips. Extended tests partially
+    succeeded with 1 test skips.
+- core:
+    result: partial
+    skippedTests:
+    - HTTPRouteMultipleGateways
+    statistics:
+      Failed: 0
+      Passed: 39
+      Skipped: 1
+  extended:
+    result: partial
+    skippedTests:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayFrontendInvalidDefaultClientCertificateValidation
+    - GatewayInfrastructureMetadata
+    - GatewayInvalidFrontendClientCertificateValidation
+    statistics:
+      Failed: 0
+      Passed: 47
+      Skipped: 5
+    supportedFeatures:
+    - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructure
+    - GatewayPort8080
+    - HTTPRoute303RedirectStatusCode
+    - HTTPRoute307RedirectStatusCode
+    - HTTPRoute308RedirectStatusCode
+    - HTTPRouteBackendProtocolH2C
+    - HTTPRouteBackendProtocolWebSocket
+    - HTTPRouteBackendRequestHeaderModification
+    - HTTPRouteBackendTimeout
+    - HTTPRouteBackendURLRewrite
+    - HTTPRouteCORS
+    - HTTPRouteDestinationPortMatching
+    - HTTPRouteHostRewrite
+    - HTTPRouteMethodMatching
+    - HTTPRouteNamedRouteRule
+    - HTTPRouteParentRefPort
+    - HTTPRoutePathRedirect
+    - HTTPRoutePathRewrite
+    - HTTPRoutePortRedirect
+    - HTTPRouteQueryParamMatching
+    - HTTPRouteRequestTimeout
+    - HTTPRouteResponseHeaderModification
+    - HTTPRouteSchemeRedirect
+    - ListenerSet
+    unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressEmpty
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
+    - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
+    - GatewayStaticAddresses
+    - HTTPRouteRequestMirror
+    - HTTPRouteRequestMultipleMirrors
+    - HTTPRouteRequestPercentageMirror
+    - HTTPRouteRetryCodes
+    - HTTPRouteRetryConnectionError
+  name: GATEWAY-HTTP
+  summary: Core tests partially succeeded with 1 test skips. Extended tests partially
+    succeeded with 5 test skips.
+- core:
+    result: success
+    statistics:
+      Failed: 0
+      Passed: 20
+      Skipped: 0
+  extended:
+    result: partial
+    skippedTests:
+    - GatewayInfrastructureMetadata
+    statistics:
+      Failed: 0
+      Passed: 8
+      Skipped: 1
+    supportedFeatures:
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructure
+    - GatewayPort8080
+    - ListenerSet
+    - TCPRoute
+    unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressEmpty
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
+    - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
+    - GatewayStaticAddresses
+  name: GATEWAY-TCP
+  summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
+- core:
+    result: partial
+    skippedTests:
+    - TLSRouteHostnameIntersection
+    statistics:
+      Failed: 0
+      Passed: 20
+      Skipped: 1
+  extended:
+    result: partial
+    skippedTests:
+    - GatewayInfrastructureMetadata
+    statistics:
+      Failed: 0
+      Passed: 14
+      Skipped: 1
+    supportedFeatures:
+    - BackendTLSPolicy
+    - BackendTLSPolicySANValidation
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructure
+    - GatewayPort8080
+    - ListenerSet
+    - TLSRouteModeMixed
+    - TLSRouteModeTerminate
+    unsupportedFeatures:
+    - ClusterTrustBundle
+    - GatewayAddressEmpty
+    - GatewayAddressRoutability
+    - GatewayAddressRoutabilityCluster
+    - GatewayBackendClientCertificate
+    - GatewayListenerFilters
+    - GatewayRouteHostnameIntersectionPrecedence
+    - GatewayStaticAddresses
+  name: GATEWAY-TLS
+  summary: Core tests partially succeeded with 1 test skips. Extended tests partially
+    succeeded with 1 test skips.
+succeededProvisionalTests:
+- BackendTLSPolicyPreserveForeignStatus
+- GatewayPreserveForeignConditions
+- HTTPRouteBackendURLRewrite
+- HTTPRoutePreserveForeignStatus
