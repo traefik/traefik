@@ -201,7 +201,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
-				routerKey = makeKey(loc.Namespace, loc.IngressName) + "-default-backend"
+				routerKey = makeKey(loc.Namespace, loc.IngressName) + fmt.Sprintf("-rule-%d-default-backend", loc.RuleIndex)
 			} else {
 				routerKey = makeKey(loc.Namespace, loc.IngressName) + fmt.Sprintf("-rule-%d-path-%d", loc.RuleIndex, loc.LocationIndex)
 			}

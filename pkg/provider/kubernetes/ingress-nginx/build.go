@@ -16,7 +16,6 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -337,7 +336,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
 					BackendName: ptBackendName,
 					Hostname:    rule.Host,
-					RouterKey:   makeKey(ing.Namespace, ing.Name, provider.Normalize(rule.Host)),
+					RouterKey:   makeKey(ing.Namespace, ing.Name, rule.Host),
 				})
 				markProcessedIngress(ing.Ingress)
 			}
@@ -586,7 +585,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			}
 
 			seenHosts := map[string]struct{}{}
-			for _, rule := range ing.Spec.Rules {
+			for ri, rule := range ing.Spec.Rules {
 				if _, ok := seenHosts[rule.Host]; ok {
 					continue
 				}
@@ -608,6 +607,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					IngressName:             ing.Name,
 					ServiceName:             db.Service.Name,
 					ServicePort:             portString(db.Service.Port),
+					RuleIndex:               ri,
 					IsIngressDefaultBackend: true,
 					SSLPassthrough:          sslPassthrough,
 				}
