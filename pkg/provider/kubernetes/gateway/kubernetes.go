@@ -593,17 +593,10 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	ownerKind, ownerNamespace := kindGateway, gateway.Namespace
 
 	if listenerSet != nil {
-		// A ListenerEntry mirrors a Gateway Listener, without the Gateway-only filters.
+		// A ListenerEntry mirrors a Gateway Listener field for field.
 		listeners = make([]gatev1.Listener, 0, len(listenerSet.Spec.Listeners))
 		for _, entry := range listenerSet.Spec.Listeners {
-			listeners = append(listeners, gatev1.Listener{
-				Name:          entry.Name,
-				Hostname:      entry.Hostname,
-				Port:          entry.Port,
-				Protocol:      entry.Protocol,
-				TLS:           entry.TLS,
-				AllowedRoutes: entry.AllowedRoutes,
-			})
+			listeners = append(listeners, gatev1.Listener(entry))
 		}
 		generation = listenerSet.Generation
 		ownerKind, ownerNamespace = kindListenerSet, listenerSet.Namespace
