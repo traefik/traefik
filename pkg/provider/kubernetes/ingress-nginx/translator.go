@@ -200,7 +200,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 			}
 
-			rule := buildRule(srv.Hostname, loc)
+			rule := buildRule(srv, loc)
 			exclusions := buildExactPathExclusions(srv, loc, mc.Backends)
 			routerRule, priority := excludeExactPaths(rule, exclusions)
 
@@ -329,11 +329,14 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 // buildExactPathExclusions prevents a literal Prefix location from shadowing an
 // Exact location on the same server, regardless of their rule lengths.
 func buildExactPathExclusions(srv *server, loc *location, backends map[string]*backend) []string {
-	if loc.UseRegex || ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact {
+	if loc.UseRegex {
+		return buildRegexTieExclusions(srv, loc, backends)
+	}
+	if isExactLocation(loc) {
 		return nil
 	}
 
-	rule := buildRule(srv.Hostname, loc)
+	rule := buildRule(srv, loc)
 	priority := httpmuxer.GetRulePriority(rule)
 	if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
 		priority = max(priority, httpmuxer.GetRulePriority(appendCanaryRule(rule, loc.Canary)))
@@ -356,12 +359,34 @@ func buildExactPathExclusions(srv *server, loc *location, backends map[string]*b
 			continue
 		}
 
-		exactRule := buildRule(srv.Hostname, other)
+		exactRule := buildRule(srv, other)
 		if priority < httpmuxer.GetRulePriority(exactRule) {
 			continue
 		}
 
 		exclusions = append(exclusions, "("+exactRule+")")
+	}
+	return exclusions
+}
+
+// buildRegexTieExclusions resolves an Exact and a non-Exact location rendering the same regex,
+// which get equal priorities, in favor of the location NGINX defines first.
+func buildRegexTieExclusions(srv *server, loc *location, backends map[string]*backend) []string {
+	idx := slices.Index(srv.Locations, loc)
+	if idx < 0 {
+		return nil
+	}
+
+	path := buildRegexPath(srv, loc)
+	var exclusions []string
+	for _, other := range srv.Locations[:idx] {
+		if isExactLocation(other) == isExactLocation(loc) || buildRegexPath(srv, other) != path {
+			continue
+		}
+		if _, ok := backends[other.BackendName]; !ok {
+			continue
+		}
+		exclusions = append(exclusions, "("+buildRule(srv, other)+")")
 	}
 	return exclusions
 }
@@ -746,36 +771,51 @@ func buildHostRule(host string, aliases []string) string {
 	return hostRules[0]
 }
 
-func buildRule(host string, loc *location) string {
+func buildRule(srv *server, loc *location) string {
 	var rules []string
 
-	if host != "" {
-		rules = append(rules, buildHostRule(host, loc.Aliases))
+	if srv.Hostname != "" {
+		rules = append(rules, buildHostRule(srv.Hostname, loc.Aliases))
 	}
 
 	if len(loc.Path) > 0 {
-		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
-
-		regexPath := loc.Path
-		if pathType == netv1.PathTypeImplementationSpecific {
-			pathType = netv1.PathTypePrefix
-			if hasAbsoluteRewriteTarget(loc) {
-				regexPath = makeTrailingGroupOptional(loc.Path)
-			}
-		}
-
 		switch {
 		case loc.UseRegex:
 			// NGINX renders every location of a regex host as `~* "^<path>"`, Exact included.
-			rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
-		case pathType == netv1.PathTypeExact:
+			rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+buildRegexPath(srv, loc)))
+		case ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact:
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
-		case pathType == netv1.PathTypePrefix:
+		default:
 			rules = append(rules, buildPrefixRule(loc.Path))
 		}
 	}
 
 	return strings.Join(rules, " && ")
+}
+
+// buildRegexPath returns the path NGINX renders for a location of a regex host.
+func buildRegexPath(srv *server, loc *location) string {
+	switch ptr.Deref(loc.PathType, netv1.PathTypePrefix) {
+	case netv1.PathTypeImplementationSpecific:
+		if hasAbsoluteRewriteTarget(loc) {
+			return makeTrailingGroupOptional(loc.Path)
+		}
+	case netv1.PathTypePrefix:
+		// ingress-nginx appends a slash to a Prefix path that an Exact location already uses,
+		// unless the Prefix location itself enables use-regex or rewrites.
+		rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+		ownRegex := ptr.Deref(loc.Config.UseRegex, false) || (rewrite != "" && rewrite != loc.Path)
+		if !ownRegex && !strings.HasSuffix(loc.Path, "/") && slices.ContainsFunc(srv.Locations, func(other *location) bool {
+			return other.Path == loc.Path && isExactLocation(other)
+		}) {
+			return loc.Path + "/"
+		}
+	}
+	return loc.Path
+}
+
+func isExactLocation(loc *location) bool {
+	return ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.

@@ -103,6 +103,14 @@ func TestExactPathRouting(t *testing.T) {
 			expected: "exact",
 		},
 		{
+			desc:     "use-regex same path",
+			path:     "/admin",
+			prefix:   "/admin",
+			useRegex: true,
+			subpaths: []string{"/ADMIN", "/admin-other"},
+			expected: "exact",
+		},
+		{
 			desc:     "already higher priority",
 			path:     "/admin/" + strings.Repeat("a", 100),
 			prefix:   "/admin",
@@ -190,6 +198,8 @@ func TestExactPathRouting(t *testing.T) {
 						handler.ServeHTTP(httptest.NewRecorder(), req)
 						require.NotNil(t, selected)
 						assert.Equal(t, test.expected, selected.Service, subpath)
+						require.Len(t, selected.Middlewares, 1, subpath)
+						assert.NotNil(t, conf.HTTP.Middlewares[selected.Middlewares[0]].BasicAuth, subpath)
 					}
 
 					for _, alias := range test.aliases {
@@ -299,4 +309,59 @@ func TestExactPathHostPrecedence(t *testing.T) {
 	assert.Equal(t, "named", selected.Service)
 	require.Len(t, selected.Middlewares, 1)
 	assert.NotNil(t, conf.HTTP.Middlewares[selected.Middlewares[0]].BasicAuth)
+}
+
+func TestExactPathRegexTie(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		exactFirst bool
+		expected   string
+	}{
+		{desc: "exact defined first", exactFirst: true, expected: "exact"},
+		{desc: "prefix defined first", expected: "prefix"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			prefix := &location{
+				Path: "/admin", UseRegex: true, PathType: new(netv1.PathTypePrefix), IngressName: "prefix", BackendName: "prefix",
+				Config: IngressConfig{UseRegex: new(true)},
+			}
+			exact := &location{Path: "/admin", UseRegex: true, PathType: new(netv1.PathTypeExact), IngressName: "exact", BackendName: "exact"}
+			locations := []*location{prefix, exact}
+			if test.exactFirst {
+				locations = []*location{exact, prefix}
+			}
+
+			p := Provider{NonTLSEntryPoints: []string{"web"}}
+			conf := p.translate(t.Context(), &model{
+				Backends: map[string]*backend{"prefix": {}, "exact": {}},
+				Servers:  map[string]*server{"example.com": {Hostname: "example.com", Locations: locations}},
+			})
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+			mux := httpmuxer.NewMuxer(parser, nil)
+			var selected *dynamic.Router
+			for _, name := range slices.Sorted(maps.Keys(conf.HTTP.Routers)) {
+				router := conf.HTTP.Routers[name]
+				priority := router.Priority
+				if priority == 0 {
+					priority = httpmuxer.GetRulePriority(router.Rule)
+				}
+				require.NoError(t, mux.AddRoute(router.Rule, router.RuleSyntax, priority, "kubernetesingressnginx", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { selected = router })))
+			}
+			handler, err := requestdecorator.WrapHandler(requestdecorator.New(nil))(mux)
+			require.NoError(t, err)
+
+			for _, path := range []string{"/admin", "/admin/other"} {
+				selected = nil
+				handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://example.com"+path, nil))
+				require.NotNil(t, selected, path)
+				assert.Equal(t, test.expected, selected.Service, path)
+			}
+		})
+	}
 }
