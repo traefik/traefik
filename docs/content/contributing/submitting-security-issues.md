@@ -17,7 +17,7 @@ and select **Custom** > **Releases**.
 ## CVE
 
 Reported vulnerabilities can be found on
-[cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=traefik).
+[cve.mitre.org](https://www.cve.org/CVERecord/SearchResults?query=traefik).
 
 CVEs are only created for vulnerabilities affecting **Generally Available (GA) versions** of Traefik.
 Vulnerabilities discovered in non-GA versions (release candidates, betas, early access, or development branches)

@@ -179,7 +179,7 @@ tls:
 
 ### Cipher Suites
 
-See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
+See [cipherSuites](https://pkg.go.dev/crypto/tls#pkg-constants) for more information.
 
 ```yaml tab="Structured (YAML)"
 # Dynamic configuration
@@ -205,7 +205,7 @@ tls:
 
     Cipher suites defined for TLS 1.2 and below cannot be used in TLS 1.3, and vice versa. (<https://tools.ietf.org/html/rfc8446>)  
     With TLS 1.3, the cipher suites are not configurable (all supported cipher suites are safe in this case).
-    <https://golang.org/doc/go1.12#tls_1_3>
+    <https://go.dev/doc/go1.12#tls_1_3>
 
 ### Curve Preferences
 

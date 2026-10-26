@@ -17,7 +17,7 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 
 - **[Traefik AI Gateway](https://traefik.io/solutions/ai-gateway/)** transforms any AI endpoint into a managed API with unified access to multiple LLMs, centralized credential management, semantic caching, local inferencing, and comprehensive AI governance features.
 
-- **[Traefik MCP Gateway](https://traefik.io/solutions/mcp-gateway/)** provides secure, governed access to Model Context Protocol (MCP) servers for AI agents with task-based access control (TBAC), session-smart routing, and comprehensive audit capabilities for enterprise AI workflows.
+- **[Traefik MCP Gateway](https://traefik.io/solutions/mcp-gateway)** provides secure, governed access to Model Context Protocol (MCP) servers for AI agents with task-based access control (TBAC), session-smart routing, and comprehensive audit capabilities for enterprise AI workflows.
 
 ## Features Matrix
 

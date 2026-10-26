@@ -65,8 +65,8 @@ spec:
 
 | Field    | Description   | Default | Required        |
 |:---------|-----------------------|:--------|:----------------------------|
-| <a id="opt-policy" href="#opt-policy" title="#opt-policy">`policy`</a> | Path or the content of a [policy file](https://www.openpolicyagent.org/docs/v0.66.0/kubernetes-primer/#writing-policies). | ""      | No (one of `policy` or `bundlePath` must be set) |
-| <a id="opt-bundlePath" href="#opt-bundlePath" title="#opt-bundlePath">`bundlePath`</a> | The `bundlePath` option should contain the path to an OPA [bundle](https://www.openpolicyagent.org/docs/v0.66.0/management-bundles/). | ""      | No (one of `policy` or `bundlePath` must be set) |
+| <a id="opt-policy" href="#opt-policy" title="#opt-policy">`policy`</a> | Path or the content of a [policy file](https://www.openpolicyagent.org/docs/policy-language). | ""      | No (one of `policy` or `bundlePath` must be set) |
+| <a id="opt-bundlePath" href="#opt-bundlePath" title="#opt-bundlePath">`bundlePath`</a> | The `bundlePath` option should contain the path to an OPA [bundle](https://www.openpolicyagent.org/docs/management-bundles). | ""      | No (one of `policy` or `bundlePath` must be set) |
 | <a id="opt-allow" href="#opt-allow" title="#opt-allow">`allow`</a> | The `allow` option sets the expression to evaluate that determines if the request should be authorized. | ""      | No (one of `allow` or `forwardHeaders` must be set) |
 | <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | The `forwardHeaders` option sets the HTTP headers to add to requests and populates them with the result of the given expression. | {}      | No (one of `allow` or `forwardHeaders` must be set) |   
 

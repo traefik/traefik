@@ -83,7 +83,7 @@ We strongly advise you to follow a progressive migration strategy ([Kubernetes r
 **Required Preparations**
 
 !!! danger "Critical Requirements"
-    - ✅ **Real-time monitoring solution** for ingress traffic ([monitoring guide](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Traefik metrics with Prometheus"))
+    - ✅ **Real-time monitoring solution** for ingress traffic ([monitoring guide](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus "Link to the blog on capturing Traefik metrics with Prometheus"))
     - ✅ **Rollback plan** ready for immediate execution
     - ✅ **Team availability** during migration window
 

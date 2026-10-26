@@ -51,7 +51,7 @@ services:
 | <a id="opt-providers-docker-httpClientTimeout" href="#opt-providers-docker-httpClientTimeout" title="#opt-providers-docker-httpClientTimeout">`providers.docker.httpClientTimeout`</a> | Defines the client timeout for HTTP connections. Accepts a duration string (e.g., `30s`, `1m30s`) or an integer value in seconds. If its value is 0, no timeout is set. |  0   | No   |
 | <a id="opt-providers-docker-watch" href="#opt-providers-docker-watch" title="#opt-providers-docker-watch">`providers.docker.watch`</a> | Instructs Traefik to watch Docker events or not. |  true   | No   |
 | <a id="opt-providers-docker-constraints" href="#opt-providers-docker-constraints" title="#opt-providers-docker-constraints">`providers.docker.constraints`</a> | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
-| <a id="opt-providers-docker-allowEmptyServices" href="#opt-providers-docker-allowEmptyServices" title="#opt-providers-docker-allowEmptyServices">`providers.docker.allowEmptyServices`</a> |  Instructs the provider to create any [servers load balancer](../../../reference/routing-configuration/http/load-balancing/service.md#service-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
+| <a id="opt-providers-docker-allowEmptyServices" href="#opt-providers-docker-allowEmptyServices" title="#opt-providers-docker-allowEmptyServices">`providers.docker.allowEmptyServices`</a> |  Instructs the provider to create any [servers load balancer](../../../reference/routing-configuration/http/load-balancing/service.md#service-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/reference/dockerfile#healthcheck) of the corresponding containers. |  false   | No   |
 | <a id="opt-providers-docker-tls-ca" href="#opt-providers-docker-tls-ca" title="#opt-providers-docker-tls-ca">`providers.docker.tls.ca`</a> | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.  |  ""   | No   |
 | <a id="opt-providers-docker-tls-cert" href="#opt-providers-docker-tls-cert" title="#opt-providers-docker-tls-cert">`providers.docker.tls.cert`</a> | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required. |   ""  | Yes   |
 | <a id="opt-providers-docker-tls-key" href="#opt-providers-docker-tls-key" title="#opt-providers-docker-tls-key">`providers.docker.tls.key`</a> | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required. |  ""   | Yes   |
@@ -230,7 +230,7 @@ providers:
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://pkg.go.dev/text/template/),
+It must be a valid [Go template](https://pkg.go.dev/text/template),
 and can use [sprig template functions](https://masterminds.github.io/sprig/).
 The container name can be accessed with the `ContainerName` identifier.
 The service name can be accessed with the `Name` identifier.
@@ -329,16 +329,16 @@ providers:
 ## Routing Configuration
 
 When using Docker as a [provider](./overview.md),
-Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
+Traefik uses [container labels](https://docs.docker.com/reference/cli/docker/container/run/#label) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../../../reference/routing-configuration/other-providers/docker.md) section.
 
 ### Routing Configuration with Labels
 
-By default, Traefik watches for [container level labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
+By default, Traefik watches for [container level labels](https://docs.docker.com/engine/manage-resources/labels/) on a standalone Docker Engine.
 
 When using Docker Compose, labels are specified by the directive
-[`labels`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels) from the
+[`labels`](https://docs.docker.com/reference/compose-file/legacy-versions/) from the
 ["services" objects](https://docs.docker.com/compose/compose-file/compose-file-v3/#service-configuration-reference).
 
 !!! tip "Not Only Docker"
@@ -364,7 +364,7 @@ Port detection for private communication works as follows:
 
 ### Host networking
 
-When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
+When exposing containers that are configured with [host networking](https://docs.docker.com/engine/network/drivers/host/),
 the IP address of the host is resolved as follows:
 
 - try a lookup of `host.docker.internal`
@@ -417,7 +417,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
     ??? info "More Resources and Examples"
 
         - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
-        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.traefik.io/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
+        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://traefik.io/blog/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
         - [A thread on Hacker News about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
