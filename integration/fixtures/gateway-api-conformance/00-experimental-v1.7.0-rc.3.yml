@@ -23,8 +23,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   labels:
     gateway.networking.k8s.io/policy: Direct
@@ -1459,8 +1459,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: gatewayclasses.gateway.networking.k8s.io
 spec:
@@ -1975,8 +1975,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: gateways.gateway.networking.k8s.io
 spec:
@@ -6190,8 +6190,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: grpcroutes.gateway.networking.k8s.io
 spec:
@@ -8538,8 +8538,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: httproutes.gateway.networking.k8s.io
 spec:
@@ -12248,6 +12248,11 @@ spec:
                       description: |-
                         Retry defines the configuration for when to retry an HTTP request.
 
+                        A request is retried when attempts is greater than 0 and the backend did
+                        not process it. This is the case when the connection could not be
+                        established, or when the backend explicitly rejected the request, either
+                        before processing it or with one of the configured status codes.
+
                         Support: Extended
                       properties:
                         attempts:
@@ -12260,8 +12265,10 @@ spec:
                             If the maximum number of retries has been attempted without a successful
                             response from the backend, the Gateway MUST return an error.
 
+                            An explicit zero value MUST disable retries.
+
                             Support: Extended
-                          minimum: 1
+                          minimum: 0
                           type: integer
                         backoff:
                           description: |-
@@ -16578,6 +16585,11 @@ spec:
                       description: |-
                         Retry defines the configuration for when to retry an HTTP request.
 
+                        A request is retried when attempts is greater than 0 and the backend did
+                        not process it. This is the case when the connection could not be
+                        established, or when the backend explicitly rejected the request, either
+                        before processing it or with one of the configured status codes.
+
                         Support: Extended
                       properties:
                         attempts:
@@ -16590,8 +16602,10 @@ spec:
                             If the maximum number of retries has been attempted without a successful
                             response from the backend, the Gateway MUST return an error.
 
+                            An explicit zero value MUST disable retries.
+
                             Support: Extended
-                          minimum: 1
+                          minimum: 0
                           type: integer
                         backoff:
                           description: |-
@@ -17221,8 +17235,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: listenersets.gateway.networking.k8s.io
 spec:
@@ -17472,6 +17486,377 @@ spec:
                               type: object
                               x-kubernetes-map-type: atomic
                           type: object
+                      type: object
+                    filters:
+                      description: |-
+                        Filters groups the pre-routing filter lists that run on every
+                        request accepted on this Listener, before route matching is
+                        performed. Filters is only valid when Protocol is `HTTP` or
+                        `HTTPS`; this constraint is enforced by CEL validation on the
+                        enclosing Listener struct.
+
+                        Support: Extended
+                      properties:
+                        requests:
+                          description: |-
+                            Implementations MUST execute the filters in the exact order they
+                            appear here and MUST NOT reorder them. If an implementation can
+                            not implement the filters in the order they are specified, the
+                            implementation MUST set the "Accepted" Listener condition to "false"
+                            with the "InvalidListenerFilterOrder" reason.
+
+                            Requests only apply to connections with a visible HTTP stream
+                            and metadata (Protocol=HTTP, or Protocol=HTTPS with TLS
+                            terminated at the Gateway).
+
+                            Requests may mutate inputs that route matching consumes
+                            (path, request headers, method, computed metadata), with the
+                            explicit exception of the `Host` and `:authority` headers. If a
+                            ListenerFilter attempts to modify either header, implementations
+                            MUST NOT allow that modification to take effect. Implementations
+                            SHOULD satisfy this by ignoring the mutation and continuing to
+                            process the request with the original value; they MAY instead
+                            fail the request with a 5xx response. Implementations MUST
+                            evaluate route matching exactly once after the last
+                            ListenerFilter has run.
+
+                            Requests MUST NOT be interpreted as changing which Listener
+                            handles the request. Listener selection is decided from inputs
+                            the client committed to before any pre-routing filter runs: TLS
+                            SNI (for HTTPS) or the request's initial Host header (for HTTP).
+                            Because filters cannot modify Host or :authority, the input to
+                            cleartext-HTTP Listener selection cannot change; Listener
+                            selection therefore does not need to be re-evaluated after
+                            pre-routing filters run, and MUST NOT be.
+                          items:
+                            description: |-
+                              ListenerFilter is one element of a ListenerFilters.Requests list.
+                              Unlike HTTPRouteFilter, which runs after a route is selected and whose
+                              ordering is a SHOULD, ListenerFilter runs before route selection and
+                              its ordering within the containing list is a MUST.
+
+                              Only a subset of HTTPRouteFilter variants are permitted:
+                              ExternalAuth (to establish identity that route matching can consume) and
+                              ExtensionRef (the escape hatch for custom pre-routing behavior, for
+                              example body-based routing or JWT-claim projection). The other
+                              HTTPRouteFilter variants are excluded because they either cannot influence
+                              route selection or can already be expressed post-routing with equal
+                              expressiveness. See the GEP text for details.
+                            properties:
+                              extensionRef:
+                                description: |-
+                                  LocalObjectReference identifies an API object within the namespace of the
+                                  referrer.
+                                  The API object must be valid in the cluster; the Group and Kind must
+                                  be registered in the cluster for this reference to be valid.
+
+                                  References to objects with invalid Group and Kind are not valid, and must
+                                  be rejected by the implementation, with appropriate Conditions set
+                                  on the containing object.
+                                properties:
+                                  group:
+                                    description: |-
+                                      Group is the group of the referent. For example, "gateway.networking.k8s.io".
+                                      When unspecified or empty string, core API group is inferred.
+                                    maxLength: 253
+                                    pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                    type: string
+                                  kind:
+                                    description: Kind is kind of the referent. For
+                                      example "HTTPRoute" or "Service".
+                                    maxLength: 63
+                                    minLength: 1
+                                    pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                    type: string
+                                  name:
+                                    description: Name is the name of the referent.
+                                    maxLength: 253
+                                    minLength: 1
+                                    type: string
+                                required:
+                                - group
+                                - kind
+                                - name
+                                type: object
+                              externalAuth:
+                                description: |-
+                                  HTTPExternalAuthFilter defines a filter that modifies requests by sending
+                                  request details to an external authorization server.
+
+                                  Support: Extended
+                                  Feature Name: HTTPRouteExternalAuth
+                                properties:
+                                  backendRef:
+                                    description: |-
+                                      BackendRef is a reference to a backend to send authorization
+                                      requests to.
+
+                                      The backend must speak the selected protocol (GRPC or HTTP) on the
+                                      referenced port.
+
+                                      If the backend service requires TLS, use BackendTLSPolicy to tell the
+                                      implementation to supply the TLS details to be used to connect to that
+                                      backend.
+                                    properties:
+                                      group:
+                                        default: ""
+                                        description: |-
+                                          Group is the group of the referent. For example, "gateway.networking.k8s.io".
+                                          When unspecified or empty string, core API group is inferred.
+                                        maxLength: 253
+                                        pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                        type: string
+                                      kind:
+                                        default: Service
+                                        description: |-
+                                          Kind is the Kubernetes resource kind of the referent. For example
+                                          "Service".
+
+                                          Defaults to "Service" when not specified.
+
+                                          ExternalName services can refer to CNAME DNS records that may live
+                                          outside of the cluster and as such are difficult to reason about in
+                                          terms of conformance. They also may not be safe to forward to (see
+                                          CVE-2021-25740 for more information). Implementations SHOULD NOT
+                                          support ExternalName Services.
+
+                                          Support: Core (Services with a type other than ExternalName)
+
+                                          Support: Implementation-specific (Services with type ExternalName)
+                                        maxLength: 63
+                                        minLength: 1
+                                        pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                        type: string
+                                      name:
+                                        description: Name is the name of the referent.
+                                        maxLength: 253
+                                        minLength: 1
+                                        type: string
+                                      namespace:
+                                        description: |-
+                                          Namespace is the namespace of the backend. When unspecified, the local
+                                          namespace is inferred.
+
+                                          Note that when a namespace different than the local namespace is specified,
+                                          a ReferenceGrant object is required in the referent namespace to allow that
+                                          namespace's owner to accept the reference. See the ReferenceGrant
+                                          documentation for details.
+
+                                          Support: Core
+                                        maxLength: 63
+                                        minLength: 1
+                                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                        type: string
+                                      port:
+                                        description: |-
+                                          Port specifies the destination port number to use for this resource.
+                                          Port is required when the referent is a Kubernetes Service. In this
+                                          case, the port number is the service port number, not the target port.
+                                          For other resources, destination port might be derived from the referent
+                                          resource or this field.
+                                        format: int32
+                                        maximum: 65535
+                                        minimum: 1
+                                        type: integer
+                                    required:
+                                    - name
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: Must have port for Service reference
+                                      rule: '(size(self.group) == 0 && self.kind ==
+                                        ''Service'') ? has(self.port) : true'
+                                    - message: Must not have port for Backend reference
+                                      rule: '(self.group == ''gateway.networking.x-k8s.io''
+                                        && self.kind == ''XBackend'') ? !has(self.port)
+                                        : true'
+                                  forwardBody:
+                                    description: |-
+                                      ForwardBody controls if requests to the authorization server should include
+                                      the body of the client request; and if so, how big that body is allowed
+                                      to be.
+
+                                      It is expected that implementations will buffer the request body up to
+                                      `forwardBody.maxSize` bytes. Bodies over that size must be rejected with a
+                                      4xx series error (413 or 403 are common examples), and fail processing
+                                      of the filter.
+
+                                      If unset, or `forwardBody.maxSize` is set to `0`, then the body will not
+                                      be forwarded.
+
+                                      Feature Name: HTTPRouteExternalAuthForwardBody
+                                    properties:
+                                      maxSize:
+                                        description: |-
+                                          MaxSize specifies how large in bytes the largest body that will be buffered
+                                          and sent to the authorization server. If the body size is larger than
+                                          `maxSize`, then the body sent to the authorization server must be
+                                          truncated to `maxSize` bytes.
+
+                                          Experimental note: This behavior needs to be checked against
+                                          various dataplanes; it may need to be changed.
+                                          See https://github.com/kubernetes-sigs/gateway-api/pull/4001#discussion_r2291405746
+                                          for more.
+
+                                          If 0, the body will not be sent to the authorization server.
+                                        format: int32
+                                        minimum: 0
+                                        type: integer
+                                    type: object
+                                  grpc:
+                                    description: |-
+                                      GRPCAuthConfig contains configuration for communication with ext_authz
+                                      protocol-speaking backends.
+
+                                      If unset, implementations must assume the default behavior for each
+                                      included field is intended.
+                                    properties:
+                                      allowedHeaders:
+                                        description: |-
+                                          AllowedRequestHeaders specifies what headers from the client request
+                                          will be sent to the authorization server.
+
+                                          If this list is empty, then all headers must be sent.
+
+                                          If the list has entries, only those entries must be sent.
+                                        items:
+                                          type: string
+                                        maxItems: 64
+                                        type: array
+                                        x-kubernetes-list-type: set
+                                    type: object
+                                  http:
+                                    description: |-
+                                      HTTPAuthConfig contains configuration for communication with HTTP-speaking
+                                      backends.
+
+                                      If unset, implementations must assume the default behavior for each
+                                      included field is intended.
+                                    properties:
+                                      allowedHeaders:
+                                        description: |-
+                                          AllowedRequestHeaders specifies what additional headers from the client request
+                                          will be sent to the authorization server.
+
+                                          The following headers must always be sent to the authorization server,
+                                          regardless of this setting:
+
+                                          * `Host`
+                                          * `Method`
+                                          * `Path`
+                                          * `Content-Length`
+                                          * `Authorization`
+
+                                          If this list is empty, then only those headers must be sent.
+
+                                          Note that `Content-Length` has a special behavior, in that the length
+                                          sent must be correct for the actual request to the external authorization
+                                          server - that is, it must reflect the actual number of bytes sent in the
+                                          body of the request to the authorization server.
+
+                                          So if the `forwardBody` stanza is unset, or `forwardBody.maxSize` is set
+                                          to `0`, then `Content-Length` must be `0`. If `forwardBody.maxSize` is set
+                                          to anything other than `0`, then the `Content-Length` of the authorization
+                                          request must be set to the actual number of bytes forwarded.
+                                        items:
+                                          type: string
+                                        maxItems: 64
+                                        type: array
+                                        x-kubernetes-list-type: set
+                                      allowedResponseHeaders:
+                                        description: |-
+                                          AllowedResponseHeaders specifies what headers from the authorization response
+                                          will be copied into the request to the backend.
+
+                                          If this list is empty, then all headers from the authorization server
+                                          except Authority or Host must be copied.
+                                        items:
+                                          type: string
+                                        maxItems: 64
+                                        type: array
+                                        x-kubernetes-list-type: set
+                                      path:
+                                        description: |-
+                                          Path sets the prefix that paths from the client request will have added
+                                          when forwarded to the authorization server.
+
+                                          When empty or unspecified, no prefix is added.
+
+                                          Valid values are the same as the "value" regex for path values in the `match`
+                                          stanza, and the validation regex will screen out invalid paths in the same way.
+                                          Even with the validation, implementations MUST sanitize this input before using it
+                                          directly.
+                                        maxLength: 1024
+                                        pattern: ^(?:[-A-Za-z0-9/._~!$&'()*+,;=:@]|[%][0-9a-fA-F]{2})+$
+                                        type: string
+                                    type: object
+                                  protocol:
+                                    description: |-
+                                      ExternalAuthProtocol describes which protocol to use when communicating with an
+                                      ext_authz authorization server.
+
+                                      When this is set to GRPC, each backend must use the Envoy ext_authz protocol
+                                      on the port specified in `backendRefs`. Requests and responses are defined
+                                      in the protobufs explained at:
+                                      https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/auth/v3/external_auth.proto
+
+                                      When this is set to HTTP, each backend must respond with a `200` status
+                                      code in on a successful authorization. Any other code is considered
+                                      an authorization failure.
+
+                                      Feature Names:
+                                      GRPC Support - HTTPRouteExternalAuthGRPC
+                                      HTTP Support - HTTPRouteExternalAuthHTTP
+                                    enum:
+                                    - HTTP
+                                    - GRPC
+                                    type: string
+                                required:
+                                - backendRef
+                                - protocol
+                                type: object
+                                x-kubernetes-validations:
+                                - message: grpc must be specified when protocol is
+                                    set to 'GRPC'
+                                  rule: 'self.protocol == ''GRPC'' ? has(self.grpc)
+                                    : true'
+                                - message: protocol must be 'GRPC' when grpc is set
+                                  rule: 'has(self.grpc) ? self.protocol == ''GRPC''
+                                    : true'
+                                - message: http must be specified when protocol is
+                                    set to 'HTTP'
+                                  rule: 'self.protocol == ''HTTP'' ? has(self.http)
+                                    : true'
+                                - message: protocol must be 'HTTP' when http is set
+                                  rule: 'has(self.http) ? self.protocol == ''HTTP''
+                                    : true'
+                              type:
+                                description: |-
+                                  Type identifies which variant of the discriminated union below is
+                                  populated. Uses the same union-discriminator pattern as
+                                  HTTPRouteFilter and GRPCRouteFilter.
+                                enum:
+                                - ExternalAuth
+                                - ExtensionRef
+                                type: string
+                            required:
+                            - type
+                            type: object
+                            x-kubernetes-validations:
+                            - message: filter.externalAuth must be nil if the filter.type
+                                is not ExternalAuth
+                              rule: '!(has(self.externalAuth) && self.type != ''ExternalAuth'')'
+                            - message: filter.externalAuth must be specified for ExternalAuth
+                                filter.type
+                              rule: '!(!has(self.externalAuth) && self.type == ''ExternalAuth'')'
+                            - message: filter.extensionRef must be nil if the filter.type
+                                is not ExtensionRef
+                              rule: '!(has(self.extensionRef) && self.type != ''ExtensionRef'')'
+                            - message: filter.extensionRef must be specified for ExtensionRef
+                                filter.type
+                              rule: '!(!has(self.extensionRef) && self.type == ''ExtensionRef'')'
+                          maxItems: 16
+                          type: array
+                          x-kubernetes-list-type: atomic
                       type: object
                     hostname:
                       description: |-
@@ -17999,8 +18384,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: referencegrants.gateway.networking.k8s.io
 spec:
@@ -18354,8 +18739,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: tcproutes.gateway.networking.k8s.io
 spec:
@@ -19828,8 +20213,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: tlsroutes.gateway.networking.k8s.io
 spec:
@@ -22258,8 +22643,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: udproutes.gateway.networking.k8s.io
 spec:
@@ -23732,7 +24117,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicy
 metadata:
   annotations:
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: standard
   name: "safe-upgrades.gateway.networking.k8s.io"
 spec:
@@ -23766,7 +24151,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingAdmissionPolicyBinding
 metadata:
   annotations:
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: standard
   name: safe-upgrades.gateway.networking.k8s.io
 spec:
@@ -23786,8 +24171,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: xbackends.gateway.networking.x-k8s.io
 spec:
@@ -23869,6 +24254,11 @@ spec:
                     maxProperties: 64
                     minProperties: 1
                     type: object
+                    x-kubernetes-validations:
+                    - message: Label keys must be in the form of an optional DNS subdomain
+                        prefix not longer than 253 characters followed by a required
+                        name segment of up to 63 characters.
+                      rule: self.all(key, !format.qualifiedName().validate(key).hasValue())
                 required:
                 - matchLabels
                 type: object
@@ -24649,8 +25039,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   labels:
     gateway.networking.k8s.io/policy: Direct
@@ -25288,8 +25678,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   name: xmeshes.gateway.networking.x-k8s.io
 spec:
@@ -25534,8 +25924,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/4530
-    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.1
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/5371
+    gateway.networking.k8s.io/bundle-version: v1.7.0-rc.3
     gateway.networking.k8s.io/channel: experimental
   labels:
     gateway.networking.k8s.io/policy: Direct
