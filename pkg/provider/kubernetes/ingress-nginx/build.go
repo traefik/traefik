@@ -160,7 +160,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			allHosts[rule.Host] = true
 
 			if len(ptr.Deref(cfg.ServerAlias, nil)) > 0 {
-				if owner, ok := serverAliasOwners[rule.Host]; ok {
+				if owner, ok := serverAliasOwners[rule.Host]; ok && (owner.Namespace != entry.Namespace || owner.Name != entry.Name) {
 					logger.Warn().
 						Str("host", rule.Host).
 						Msgf("Skipping server-alias because it is already configured for this host by %s/%s", owner.Namespace, owner.Name)
