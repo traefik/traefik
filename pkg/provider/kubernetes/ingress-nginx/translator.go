@@ -339,6 +339,7 @@ func buildShadowingExclusions(srv *server, loc *location, backends map[string]*b
 	}
 
 	rule := buildRule(srv, loc)
+	// The canary routers share these exclusions, and their longer rules can outrank an Exact path the main router does not.
 	priority := httpmuxer.GetRulePriority(rule)
 	if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
 		priority = max(priority, httpmuxer.GetRulePriority(appendCanaryRule(rule, loc.Canary)))
