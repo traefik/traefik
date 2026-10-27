@@ -819,7 +819,7 @@ the mirrored requests are sent along with the main request,
 and the body is streamed to the mirrors while the main service reads it.
 A mirror falling more than 1 MiB behind the main service is aborted, so that it never slows the main request down,
 and a mirrored request is aborted when the main service does not read the whole body.
-The `streaming` option has no effect when `mirrorBody` is false, and `maxBodySize` has no effect when `streaming` option is set.
+The `streaming` option has no effect when `mirrorBody` is false, and cannot be used with `maxBodySize` otherwise.
 
 !!! warning "Default behavior of `percent`"
 
