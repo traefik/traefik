@@ -201,8 +201,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			rule := buildRule(srv, loc)
-			exclusions := buildExactPathExclusions(srv, loc, mc.Backends)
-			routerRule, priority := excludeExactPaths(rule, exclusions)
+			exclusions := buildShadowingExclusions(srv, loc, mc.Backends)
+			routerRule, priority := excludeRules(rule, exclusions)
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -262,7 +262,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
-				canaryRule, canaryPriority := excludeExactPaths(appendCanaryRule(rule, loc.Canary), exclusions)
+				canaryRule, canaryPriority := excludeRules(appendCanaryRule(rule, loc.Canary), exclusions)
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
@@ -292,7 +292,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
-				nonCanaryRule, nonCanaryPriority := excludeExactPaths(appendNonCanaryRule(rule, loc.Canary), exclusions)
+				nonCanaryRule, nonCanaryPriority := excludeRules(appendNonCanaryRule(rule, loc.Canary), exclusions)
 				nonCanaryKey := routerKey + "-non-canary"
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
@@ -326,9 +326,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	return conf
 }
 
-// buildExactPathExclusions prevents a literal Prefix location from shadowing an
-// Exact location on the same server, regardless of their rule lengths.
-func buildExactPathExclusions(srv *server, loc *location, backends map[string]*backend) []string {
+// buildShadowingExclusions returns the rules of the locations NGINX serves before loc
+// that Traefik would otherwise rank below it.
+// On a literal host, these are the Exact locations that loc outranks by rule length.
+// On a regex host, these are the locations sharing loc's path and defined before it.
+func buildShadowingExclusions(srv *server, loc *location, backends map[string]*backend) []string {
 	if loc.UseRegex {
 		return buildRegexTieExclusions(srv, loc, backends)
 	}
@@ -348,7 +350,7 @@ func buildExactPathExclusions(srv *server, loc *location, backends map[string]*b
 	prefix := strings.TrimSuffix(loc.Path, "/")
 	var exclusions []string
 	for _, other := range srv.Locations {
-		if other.UseRegex || ptr.Deref(other.PathType, netv1.PathTypePrefix) != netv1.PathTypeExact {
+		if other.UseRegex || !isExactLocation(other) {
 			continue
 		}
 		if prefix != "" && other.Path != prefix && !strings.HasPrefix(other.Path, prefix+"/") {
@@ -391,7 +393,7 @@ func buildRegexTieExclusions(srv *server, loc *location, backends map[string]*ba
 	return exclusions
 }
 
-func excludeExactPaths(rule string, exclusions []string) (string, int) {
+func excludeRules(rule string, exclusions []string) (string, int) {
 	if len(exclusions) == 0 {
 		return rule, 0
 	}
@@ -783,7 +785,7 @@ func buildRule(srv *server, loc *location) string {
 		case loc.UseRegex:
 			// NGINX renders every location of a regex host as `~* "^<path>"`, Exact included.
 			rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+buildRegexPath(srv, loc)))
-		case ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact:
+		case isExactLocation(loc):
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
 		default:
 			rules = append(rules, buildPrefixRule(loc.Path))
@@ -803,15 +805,24 @@ func buildRegexPath(srv *server, loc *location) string {
 	case netv1.PathTypePrefix:
 		// ingress-nginx appends a slash to a Prefix path that an Exact location already uses,
 		// unless the Prefix location itself enables use-regex or rewrites.
-		rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
-		ownRegex := ptr.Deref(loc.Config.UseRegex, false) || (rewrite != "" && rewrite != loc.Path)
-		if !ownRegex && !strings.HasSuffix(loc.Path, "/") && slices.ContainsFunc(srv.Locations, func(other *location) bool {
-			return other.Path == loc.Path && isExactLocation(other)
-		}) {
+		if !hasOwnRegex(loc) && !strings.HasSuffix(loc.Path, "/") && hasExactLocationAt(srv, loc.Path) {
 			return loc.Path + "/"
 		}
 	}
 	return loc.Path
+}
+
+// hasOwnRegex reports whether the location itself enables use-regex or rewrites,
+// instead of only inheriting regex matching from another location of its host.
+func hasOwnRegex(loc *location) bool {
+	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+	return ptr.Deref(loc.Config.UseRegex, false) || (rewrite != "" && rewrite != loc.Path)
+}
+
+func hasExactLocationAt(srv *server, path string) bool {
+	return slices.ContainsFunc(srv.Locations, func(other *location) bool {
+		return other.Path == path && isExactLocation(other)
+	})
 }
 
 func isExactLocation(loc *location) bool {
