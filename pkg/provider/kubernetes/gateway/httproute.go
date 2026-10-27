@@ -512,28 +512,15 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 			})
 
 		case gatev1.HTTPRouteFilterRequestMirror:
-			if filter.RequestMirror == nil {
-				return nil, fmt.Errorf("invalid filter %s: missing configuration", filter.Type)
-			}
-
-			mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.RequestMirror.BackendRef}
-			serviceName, condition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
-			if condition != nil {
-				// As per the spec, an invalid mirror backend reference is dropped without failing the request.
-				log.Ctx(ctx).Error().Msgf("Dropping RequestMirror filter: %s", condition.Message)
+			middleware, err := p.loadRequestMirror(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, filter.RequestMirror, pathMatch, statusReport)
+			if err != nil {
+				// As per the spec, an invalid mirror is dropped without failing the request.
+				log.Ctx(ctx).Error().Err(err).Msg("Dropping RequestMirror filter")
 				continue
 			}
-
-			numerator, denominator := mirrorFraction(filter.RequestMirror)
 			middlewares = append(middlewares, namedMiddleware{
 				name,
-				&dynamic.Middleware{
-					RequestMirror: &dynamic.RequestMirror{
-						Service:     serviceName,
-						Numerator:   numerator,
-						Denominator: denominator,
-					},
-				},
+				middleware,
 			})
 
 		default:
@@ -554,6 +541,29 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 	}
 
 	return middlewareNames, nil
+}
+
+// loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
+func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
+	if filter == nil {
+		return nil, errors.New("missing configuration")
+	}
+
+	mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.BackendRef}
+	serviceName, condition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
+	if condition != nil {
+		return nil, errors.New(condition.Message)
+	}
+
+	numerator, denominator := mirrorFraction(filter)
+
+	return &dynamic.Middleware{
+		RequestMirror: &dynamic.RequestMirror{
+			Service:     serviceName,
+			Numerator:   numerator,
+			Denominator: denominator,
+		},
+	}, nil
 }
 
 // mirrorFraction returns the fraction of requests to mirror, as a numerator and a denominator.
