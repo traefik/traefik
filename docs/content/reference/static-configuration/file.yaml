@@ -226,6 +226,7 @@ providers:
         name: foobar
         namespace: foobar
     nativeLBByDefault: true
+    retryMaxRequestBodyBytes: 42
   rest:
     insecure: true
   consulCatalog:

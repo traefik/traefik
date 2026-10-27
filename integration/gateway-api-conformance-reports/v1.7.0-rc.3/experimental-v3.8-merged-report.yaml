@@ -68,7 +68,7 @@ profiles:
     - GatewayInvalidFrontendClientCertificateValidation
     statistics:
       Failed: 0
-      Passed: 49
+      Passed: 53
       Skipped: 5
     supportedFeatures:
     - BackendTLSPolicy
@@ -100,6 +100,8 @@ profiles:
     - HTTPRouteQueryParamMatching
     - HTTPRouteRequestTimeout
     - HTTPRouteResponseHeaderModification
+    - HTTPRouteRetryCodes
+    - HTTPRouteRetryConnectionError
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
@@ -113,8 +115,6 @@ profiles:
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
-    - HTTPRouteRetryCodes
-    - HTTPRouteRetryConnectionError
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
     succeeded with 5 test skips.
@@ -197,3 +197,5 @@ succeededProvisionalTests:
 - GatewayPreserveForeignConditions
 - HTTPRouteBackendURLRewrite
 - HTTPRoutePreserveForeignStatus
+- HTTPRouteRetryWithBackendTimeout
+- HTTPRouteRetryWithRequestTimeout
