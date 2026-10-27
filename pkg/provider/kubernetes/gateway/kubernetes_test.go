@@ -4525,27 +4525,31 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr",
-							Rule:        `Host("foo.com") && Path("/bar")`,
-							Priority:    100008,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4560,12 +4564,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
-								ServersTransport: "default-whoami-http-80",
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
 							},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-whoami-http-80": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
 							ServerName: "whoami",
 							RootCAs: []types.FileOrContent{
 								"CA-FROM-CLUSTER-TRUST-BUNDLE",
@@ -4573,7 +4577,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4596,21 +4602,25 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3": {
+						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr",
-							Rule:        `Host("foo.com") && Path("/bar")`,
-							Priority:    100008,
-							RuleSyntax:  "default",
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-af329269dd38031b03e3-wrr": {
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-http-80",
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
 										Weight: new(1),
 										Status: new(500),
 									},
@@ -4620,7 +4630,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
