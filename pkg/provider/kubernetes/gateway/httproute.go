@@ -757,7 +757,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
 		isConfigMapOrSecret := (caCertRef.Group == "" || caCertRef.Group == groupCore) && (caCertRef.Kind == kindConfigMap || caCertRef.Kind == kindSecret)
-		isClusterTrustBundle := caCertRef.Group == groupCertificates && caCertRef.Kind == kindClusterTrustBundle && p.ExperimentalChannel
+		isClusterTrustBundle := caCertRef.Group == groupCertificates && caCertRef.Kind == kindClusterTrustBundle
 
 		if !isClusterTrustBundle && !isConfigMapOrSecret {
 			return nil, metav1.Condition{
@@ -766,7 +766,19 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps, Secrets, and ClusterTrustBundles (with experimentalChannel enabled) are supported",
+				Message:            "Only ConfigMaps, Secrets, and ClusterTrustBundles are supported",
+			}
+		}
+
+		// GEP-5075 requires the InvalidKind reason when the cluster does not serve the ClusterTrustBundle API.
+		if isClusterTrustBundle && !p.client.clusterTrustBundleAvailable {
+			return nil, metav1.Condition{
+				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+				Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1beta1 API",
 			}
 		}
 
@@ -811,6 +823,18 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 					Message:            fmt.Sprintf("getting ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
 				}
 			}
+
+			if ctb.Spec.TrustBundle == "" {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("ClusterTrustBundle %s has an empty trustBundle", string(caCertRef.Name)),
+				}
+			}
+
 			caCRT = ctb.Spec.TrustBundle
 		}
 

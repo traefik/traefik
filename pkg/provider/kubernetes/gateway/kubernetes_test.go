@@ -227,7 +227,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		entryPoints              map[string]Entrypoint
 		nativeLB                 bool
 		retryMaxRequestBodyBytes int64
-		experimentalChannel      bool
+		clusterTrustBundleAPI    bool
 	}{
 		{
 			desc: "Empty",
@@ -4506,9 +4506,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle",
-			paths:               []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
-			experimentalChannel: true,
+			desc:                  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle",
+			paths:                 []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI: true,
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -4583,9 +4583,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle rejected without experimentalChannel",
-			paths:               []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
-			experimentalChannel: false,
+			desc:  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle when the API is not served",
+			paths: []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -5483,7 +5482,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			if test.experimentalChannel {
+			if test.clusterTrustBundleAPI {
 				kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
 					GroupVersion: "certificates.k8s.io/v1beta1",
 					APIResources: []metav1.APIResource{
@@ -5494,7 +5493,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
-			client.experimentalChannel = test.experimentalChannel
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -5508,7 +5506,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				EntryPoints:              test.entryPoints,
 				NativeLBByDefault:        test.nativeLB,
 				RetryMaxRequestBodyBytes: test.retryMaxRequestBodyBytes,
-				ExperimentalChannel:      test.experimentalChannel,
 				client:                   client,
 			}
 
