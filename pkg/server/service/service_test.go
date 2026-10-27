@@ -608,7 +608,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 
-func TestGetMirrorServiceHandler_streaming(t *testing.T) {
+func TestGetMirrorServiceHandler_streamBody(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		mirrorBody  *bool
@@ -650,7 +650,7 @@ func TestGetMirrorServiceHandler_streaming(t *testing.T) {
 							Service:     "main@file",
 							MirrorBody:  test.mirrorBody,
 							MaxBodySize: test.maxBodySize,
-							Streaming:   true,
+							StreamBody:  true,
 						},
 					},
 				},

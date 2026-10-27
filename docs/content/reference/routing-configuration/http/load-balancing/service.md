@@ -814,12 +814,12 @@ http:
 
 The `mirroring` service type mirrors requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.
 
-To avoid buffering the request body, set the `streaming` option to true:
+To avoid buffering the request body, set the `streamBody` option to true:
 the mirrored requests are sent along with the main request,
 and the body is streamed to the mirrors while the main service reads it.
 A mirror falling more than 1 MiB behind the main service is aborted, so that it never slows the main request down,
 and a mirrored request is aborted when the main service does not read the whole body.
-The `streaming` option has no effect when `mirrorBody` is false, and cannot be used with `maxBodySize` otherwise.
+The `streamBody` option has no effect when `mirrorBody` is false, and cannot be used with `maxBodySize`.
 
 !!! warning "Default behavior of `percent`"
 

@@ -258,7 +258,7 @@ type Mirroring struct {
 	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	MirrorBody  *bool           `json:"mirrorBody,omitempty" toml:"mirrorBody,omitempty" yaml:"mirrorBody,omitempty" export:"true"`
 	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
-	Streaming   bool            `json:"streaming,omitempty" toml:"streaming,omitempty" yaml:"streaming,omitempty" export:"true"`
+	StreamBody  bool            `json:"streamBody,omitempty" toml:"streamBody,omitempty" yaml:"streamBody,omitempty" export:"true"`
 	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty" export:"true"`
 	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }

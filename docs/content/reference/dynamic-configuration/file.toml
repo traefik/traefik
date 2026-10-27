@@ -120,7 +120,7 @@
         service = "foobar"
         mirrorBody = true
         maxBodySize = 42
-        streaming = true
+        streamBody = true
 
         [[http.services.Service04.mirroring.mirrors]]
           name = "foobar"
