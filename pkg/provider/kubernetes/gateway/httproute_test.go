@@ -324,35 +324,53 @@ func Test_createCORS(t *testing.T) {
 	}
 }
 
-func Test_mirrorPercent(t *testing.T) {
+func Test_mirrorFraction(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		filter   gatev1.HTTPRequestMirrorFilter
-		expected int
+		desc                string
+		filter              gatev1.HTTPRequestMirrorFilter
+		expectedNumerator   int64
+		expectedDenominator int64
 	}{
 		{
-			desc:     "no percent nor fraction",
-			expected: 100,
+			desc:                "no percent nor fraction",
+			expectedNumerator:   1,
+			expectedDenominator: 1,
 		},
 		{
-			desc:     "percent",
-			filter:   gatev1.HTTPRequestMirrorFilter{Percent: new(int32(20))},
-			expected: 20,
+			desc:                "percent",
+			filter:              gatev1.HTTPRequestMirrorFilter{Percent: new(int32(20))},
+			expectedNumerator:   20,
+			expectedDenominator: 100,
 		},
 		{
-			desc:     "fraction",
-			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 25, Denominator: new(int32(50))}},
-			expected: 50,
+			desc:                "fraction",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 25, Denominator: new(int32(50))}},
+			expectedNumerator:   25,
+			expectedDenominator: 50,
 		},
 		{
-			desc:     "fraction with default denominator",
-			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 42}},
-			expected: 42,
+			desc:                "fraction with default denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 42}},
+			expectedNumerator:   42,
+			expectedDenominator: 100,
 		},
 		{
-			desc:     "fraction rounded to the nearest percent",
-			filter:   gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 2, Denominator: new(int32(3))}},
-			expected: 67,
+			desc:                "fraction below one percent",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 5, Denominator: new(int32(1000))}},
+			expectedNumerator:   5,
+			expectedDenominator: 1000,
+		},
+		{
+			desc:                "numerator greater than denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 3, Denominator: new(int32(2))}},
+			expectedNumerator:   2,
+			expectedDenominator: 2,
+		},
+		{
+			desc:                "invalid denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 1, Denominator: new(int32(0))}},
+			expectedNumerator:   0,
+			expectedDenominator: 1,
 		},
 	}
 
@@ -360,7 +378,9 @@ func Test_mirrorPercent(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, test.expected, mirrorPercent(&test.filter))
+			numerator, denominator := mirrorFraction(&test.filter)
+			assert.Equal(t, test.expectedNumerator, numerator)
+			assert.Equal(t, test.expectedDenominator, denominator)
 		})
 	}
 }

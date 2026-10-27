@@ -298,14 +298,21 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.HealthCheck)
+
+	// The body is never buffered when streaming, so there is no body size to bound.
+	if config.Streaming && mirrorBody && maxBodySize >= 0 {
+		return nil, errors.New("maxBodySize cannot be used with streaming")
+	}
+
+	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.Streaming, config.HealthCheck)
+
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		err = handler.AddMirror(mirrorHandler, int64(mirrorConfig.Percent), 100)
 		if err != nil {
 			return nil, err
 		}

@@ -124,6 +124,7 @@ http:
         service: foobar
         mirrorBody: true
         maxBodySize: 42
+        streaming: true
         mirrors:
           - name: foobar
             percent: 42

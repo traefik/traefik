@@ -30,12 +30,18 @@ type Mirroring struct {
 	maxBodySize      int64
 	wantsHealthCheck bool
 
+	// streaming sends the mirrored requests along with the main one, and streams the body to them while the main handler reads it.
+	streaming bool
+
 	lock  sync.RWMutex
 	total uint64
 }
 
 // New returns a new instance of *Mirroring.
-func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, hc *dynamic.HealthCheck) *Mirroring {
+// When streaming, the request body is streamed to the mirrors instead of being buffered before calling the main handler,
+// and maxBodySize is ignored.
+// A mirror reading the body slower than the main handler is then aborted, so that it never slows the main request down.
+func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, streaming bool, hc *dynamic.HealthCheck) *Mirroring {
 	return &Mirroring{
 		routinePool:      pool,
 		handler:          handler,
@@ -43,13 +49,16 @@ func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int
 		mirrorBody:       mirrorBody,
 		maxBodySize:      maxBodySize,
 		wantsHealthCheck: hc != nil,
+		// Without a mirrored body, there is nothing to stream.
+		streaming: streaming && mirrorBody,
 	}
 }
 
 type mirrorHandler struct {
 	http.Handler
 
-	percent int
+	numerator   uint64
+	denominator uint64
 
 	lock  sync.RWMutex
 	count uint64
@@ -63,6 +72,11 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	mirrors := m.getActiveMirrors()
 	if len(mirrors) == 0 {
 		m.handler.ServeHTTP(rw, req)
+		return
+	}
+
+	if m.streaming {
+		m.serveStreaming(rw, req, mirrors)
 		return
 	}
 
@@ -103,35 +117,40 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// prepare request, update body from buffer
 			r := rr.Clone(req.Context())
 
-			// In ServeHTTP, we rely on the presence of the accessLog datatable found in the request's context
-			// to know whether we should mutate said datatable (and contribute some fields to the log).
-			// In this instance, we do not want the mirrors mutating (i.e. changing the service name in)
-			// the logs related to the mirrored server.
-			// Especially since it would result in unguarded concurrent reads/writes on the datatable.
-			// Therefore, we reset any potential datatable key in the new context that we pass around.
-			ctx := context.WithValue(r.Context(), accesslog.DataTableKey, nil)
-
-			// For the same reason, the mirrored services must not publish their metadata
-			// into the state container seeded for the mirrored request, as the access log
-			// middleware still reads it to emit the log of the main handler.
-			// Therefore, we seed a new, throwaway container for the mirrors.
-			ctx = observability.WithServiceObservabilityState(ctx)
-
-			// When a request served by m.handler is successful, req.Context will be canceled,
-			// which would trigger a cancellation of the ongoing mirrored requests.
-			// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
-			// so they can terminate by themselves.
-			handler.ServeHTTP(m.rw, r.WithContext(contextStopPropagation{ctx}))
+			handler.ServeHTTP(m.rw, r.WithContext(mirrorContext(r.Context())))
 		}
 	})
 }
 
-// AddMirror adds an httpHandler to mirror to.
-func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
-	if percent < 0 || percent > 100 {
-		return errors.New("percent must be between 0 and 100")
+// mirrorContext returns the context of a mirrored request.
+func mirrorContext(ctx context.Context) context.Context {
+	// In ServeHTTP, we rely on the presence of the accessLog datatable found in the request's context
+	// to know whether we should mutate said datatable (and contribute some fields to the log).
+	// In this instance, we do not want the mirrors mutating (i.e. changing the service name in)
+	// the logs related to the mirrored server.
+	// Especially since it would result in unguarded concurrent reads/writes on the datatable.
+	// Therefore, we reset any potential datatable key in the new context that we pass around.
+	ctx = context.WithValue(ctx, accesslog.DataTableKey, nil)
+
+	// For the same reason, the mirrored services must not publish their metadata
+	// into the state container seeded for the mirrored request, as the access log
+	// middleware still reads it to emit the log of the main handler.
+	// Therefore, we seed a new, throwaway container for the mirrors.
+	ctx = observability.WithServiceObservabilityState(ctx)
+
+	// When a request served by m.handler is successful, req.Context will be canceled,
+	// which would trigger a cancellation of the ongoing mirrored requests.
+	// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
+	// so they can terminate by themselves.
+	return contextStopPropagation{ctx}
+}
+
+// AddMirror adds an httpHandler to mirror numerator out of denominator requests to.
+func (m *Mirroring) AddMirror(handler http.Handler, numerator, denominator int64) error {
+	if denominator <= 0 || numerator < 0 || numerator > denominator {
+		return fmt.Errorf("invalid fraction %d/%d: the denominator must be positive, and the numerator between 0 and the denominator", numerator, denominator)
 	}
-	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, percent: percent})
+	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, numerator: uint64(numerator), denominator: uint64(denominator)})
 	return nil
 }
 
@@ -160,6 +179,48 @@ func (m *Mirroring) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
+// serveStreaming sends the mirrored requests before calling the main handler,
+// and streams them the request body while the main handler reads it.
+func (m *Mirroring) serveStreaming(rw http.ResponseWriter, req *http.Request, mirrors []http.Handler) {
+	hasBody := req.Body != nil && req.Body != http.NoBody
+
+	var bodies []*streamedBody
+	for _, handler := range mirrors {
+		// The mirrored requests are cloned before calling the main handler,
+		// so that the handlers it chains to do not alter them.
+		mirrorReq := req.Clone(mirrorContext(req.Context()))
+
+		// The body is streamed while the main handler reads it,
+		// so the mirrored request must not wait for an interim response before sending it.
+		mirrorReq.Header.Del("Expect")
+
+		if hasBody {
+			body := newStreamedBody()
+			mirrorReq.Body = body
+			mirrorReq.GetBody = nil
+			bodies = append(bodies, body)
+		}
+
+		m.routinePool.GoCtx(func(_ context.Context) {
+			handler.ServeHTTP(m.rw, mirrorReq)
+		})
+	}
+
+	if len(bodies) > 0 {
+		req.Body = &teeBody{ReadCloser: req.Body, mirrors: bodies}
+
+		// When the main handler stops reading the body before its end,
+		// the mirrored requests are aborted instead of being sent with a truncated body.
+		defer func() {
+			for _, body := range bodies {
+				body.closeWithError(errBodyNotFullyRead)
+			}
+		}()
+	}
+
+	m.handler.ServeHTTP(rw, req)
+}
+
 func (m *Mirroring) inc() uint64 {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -173,7 +234,7 @@ func (m *Mirroring) getActiveMirrors() []http.Handler {
 	var mirrors []http.Handler
 	for _, handler := range m.mirrorHandlers {
 		handler.lock.Lock()
-		if handler.count*100 < total*uint64(handler.percent) {
+		if handler.count*handler.denominator < total*handler.numerator {
 			handler.count++
 			handler.lock.Unlock()
 			mirrors = append(mirrors, handler)

@@ -62,6 +62,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
 		"traefik/http/services/Service02/mirroring/mirrorBody":                                       "true",
 		"traefik/http/services/Service02/mirroring/maxBodySize":                                      "42",
+		"traefik/http/services/Service02/mirroring/streaming":                                        "true",
 		"traefik/http/services/Service02/mirroring/mirrors/0/name":                                   "foobar",
 		"traefik/http/services/Service02/mirroring/mirrors/0/percent":                                "42",
 		"traefik/http/services/Service02/mirroring/mirrors/1/name":                                   "foobar",
@@ -706,6 +707,7 @@ func Test_buildConfiguration(t *testing.T) {
 						Service:     "foobar",
 						MirrorBody:  new(true),
 						MaxBodySize: new(int64(42)),
+						Streaming:   true,
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",

@@ -455,14 +455,6 @@ There are three types of filters:
     - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
-!!! info "RequestMirror Filter"
-
-    The `RequestMirror` filter mirrors the request as it is when the filter runs:
-    the filters declared after it in the list do not apply to the mirrored request.
-
-    The mirroring has a percent granularity, so a `fraction` is rounded to the nearest percent
-    (for example, `numerator: 1` and `denominator: 3` mirrors 33% of the requests).
-
 !!! info "ExtensionRef Filters"
 
     To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 

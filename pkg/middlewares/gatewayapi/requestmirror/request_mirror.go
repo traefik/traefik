@@ -17,9 +17,11 @@ type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
+// requestMirror sends a copy of the requests to a mirror service, and ignores its responses.
 type requestMirror struct {
-	name    string
-	handler http.Handler
+	http.Handler
+
+	name string
 }
 
 // NewRequestMirror creates a request mirror middleware.
@@ -32,24 +34,16 @@ func NewRequestMirror(ctx context.Context, next http.Handler, conf dynamic.Reque
 		return nil, fmt.Errorf("building mirror service %q: %w", conf.Service, err)
 	}
 
-	// Mirroring sends a distinct clone of the request to next and to the mirror,
-	// so the filters declared after this one, as per the Gateway API filter ordering,
-	// do not alter the mirrored request.
-	m := mirror.New(next, pool, true, dynamic.MirroringDefaultMaxBodySize, nil)
-	if err := m.AddMirror(mirrorHandler, conf.Percent); err != nil {
-		return nil, err
+	// The body is streamed rather than buffered, as the Gateway API does not allow to bound the buffered body size,
+	// and the mirrored request is cloned before calling next, as the filters declared after this one must not alter it.
+	handler := mirror.New(next, pool, true, -1, true, nil)
+	if err := handler.AddMirror(mirrorHandler, conf.Numerator, conf.Denominator); err != nil {
+		return nil, fmt.Errorf("adding mirror service %q: %w", conf.Service, err)
 	}
 
-	return &requestMirror{
-		name:    name,
-		handler: m,
-	}, nil
+	return &requestMirror{Handler: handler, name: name}, nil
 }
 
 func (r *requestMirror) GetTracingInformation() (string, string) {
 	return r.name, typeName
-}
-
-func (r *requestMirror) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	r.handler.ServeHTTP(rw, req)
 }

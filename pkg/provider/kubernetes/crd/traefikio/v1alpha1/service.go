@@ -64,6 +64,12 @@ type Mirroring struct {
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// Streaming defines whether the request body is streamed to the mirrors while the main service reads it,
+	// instead of being buffered in memory before reaching the main service.
+	// A mirror reading the body too slowly is aborted, so that it never slows the main request down.
+	// It has no effect when MirrorBody is false, and cannot be used with MaxBodySize otherwise.
+	// Default value is false.
+	Streaming bool `json:"streaming,omitempty"`
 	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
 	Mirrors []MirrorService `json:"mirrors,omitempty"`
 }

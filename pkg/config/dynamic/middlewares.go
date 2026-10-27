@@ -982,9 +982,11 @@ type URLRewrite struct {
 // +k8s:deepcopy-gen=true
 
 // RequestMirror holds the request mirror middleware configuration.
+// Numerator out of Denominator requests are mirrored to Service.
 type RequestMirror struct {
-	Service string `json:"service,omitempty"`
-	Percent int    `json:"percent,omitempty"`
+	Service     string `json:"service,omitempty"`
+	Numerator   int64  `json:"numerator,omitempty"`
+	Denominator int64  `json:"denominator,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

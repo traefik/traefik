@@ -4984,6 +4984,14 @@ spec:
                     - leasttime
                     - RoundRobin
                     type: string
+                  streaming:
+                    description: |-
+                      Streaming defines whether the request body is streamed to the mirrors while the main service reads it,
+                      instead of being buffered in memory before reaching the main service.
+                      A mirror reading the body too slowly is aborted, so that it never slows the main request down.
+                      It has no effect when MirrorBody is false, and cannot be used with MaxBodySize otherwise.
+                      Default value is false.
+                    type: boolean
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object

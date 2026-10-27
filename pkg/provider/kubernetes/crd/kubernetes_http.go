@@ -444,6 +444,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 			Mirrors:     mirrorServices,
 			MirrorBody:  mirroring.MirrorBody,
 			MaxBodySize: mirroring.MaxBodySize,
+			Streaming:   mirroring.Streaming,
 		},
 	})
 

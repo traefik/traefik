@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"math"
 	"net"
 	"net/http"
 	"regexp"
@@ -525,12 +524,14 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 				continue
 			}
 
+			numerator, denominator := mirrorFraction(filter.RequestMirror)
 			middlewares = append(middlewares, namedMiddleware{
 				name,
 				&dynamic.Middleware{
 					RequestMirror: &dynamic.RequestMirror{
-						Service: serviceName,
-						Percent: mirrorPercent(filter.RequestMirror),
+						Service:     serviceName,
+						Numerator:   numerator,
+						Denominator: denominator,
 					},
 				},
 			})
@@ -555,23 +556,22 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 	return middlewareNames, nil
 }
 
-// mirrorPercent returns the percentage of requests to mirror.
-// As Traefik mirroring has a percent granularity, a fraction is rounded to the nearest percent.
-func mirrorPercent(filter *gatev1.HTTPRequestMirrorFilter) int {
+// mirrorFraction returns the fraction of requests to mirror, as a numerator and a denominator.
+// When neither the percent nor the fraction is set, all the requests are mirrored.
+func mirrorFraction(filter *gatev1.HTTPRequestMirrorFilter) (int64, int64) {
 	switch {
 	case filter.Percent != nil:
-		return int(*filter.Percent)
+		return min(max(int64(*filter.Percent), 0), 100), 100
 
 	case filter.Fraction != nil:
-		denominator := ptr.Deref(filter.Fraction.Denominator, 100)
+		denominator := int64(ptr.Deref(filter.Fraction.Denominator, 100))
 		if denominator <= 0 {
-			return 0
+			return 0, 1
 		}
-		percent := math.Round(float64(filter.Fraction.Numerator) * 100 / float64(denominator))
-		return min(int(percent), 100)
+		return min(max(int64(filter.Fraction.Numerator), 0), denominator), denominator
 
 	default:
-		return 100
+		return 1, 1
 	}
 }
 

@@ -3506,8 +3506,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-0": {
 							RequestMirror: &dynamic.RequestMirror{
-								Service: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-0-svc-default-whoami2-0",
-								Percent: 100,
+								Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-0-svc-default-whoami2-0",
+								Numerator:   1,
+								Denominator: 1,
 							},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestheadermodifier-1": {
@@ -3518,14 +3519,16 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-2": {
 							RequestMirror: &dynamic.RequestMirror{
-								Service: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-2-svc-default-whoami2-0",
-								Percent: 20,
+								Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-2-svc-default-whoami2-0",
+								Numerator:   20,
+								Denominator: 100,
 							},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-3": {
 							RequestMirror: &dynamic.RequestMirror{
-								Service: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-3-svc-default-whoami2-0",
-								Percent: 33,
+								Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-3-svc-default-whoami2-0",
+								Numerator:   1,
+								Denominator: 3,
 							},
 						},
 					},
