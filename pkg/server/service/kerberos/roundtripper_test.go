@@ -161,3 +161,10 @@ func TestRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
 
 	assert.EqualValues(t, 1, newCalls.Load())
 }
+
+func TestReleaseTransportOnContextWithoutTransport(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ReleaseTransportOnContext(t.Context())
+		ReleaseTransportOnContext(AddTransportOnContext(t.Context()))
+	})
+}

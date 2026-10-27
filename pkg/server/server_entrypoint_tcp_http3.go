@@ -86,6 +86,11 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 			// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
 			ctx = fast.AddConnPoolsOnContext(ctx)
 
+			// The dedicated round trippers have to be released with the connection, whose context is canceled on close.
+			context.AfterFunc(c.Context(), func() {
+				kerberos.ReleaseTransportOnContext(ctx)
+			})
+
 			tlsOptionsName, err := h3.getTLSOptionsName(c)
 			if err != nil {
 				log.Error().Msgf("Error getting TLS options name for client: %v", err)
