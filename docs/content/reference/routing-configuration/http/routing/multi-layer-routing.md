@@ -87,14 +87,14 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
 
         # Child router for admin users
         api-admin:
-          rule: "HeadersRegexp(`X-User-Role`, `admin`)"
+          rule: "HeaderRegexp(`X-User-Role`, `admin`)"
           service: admin-service
           parentRefs:
             - api-parent
 
         # Child router for regular users
         api-user:
-          rule: "HeadersRegexp(`X-User-Role`, `user`)"
+          rule: "HeaderRegexp(`X-User-Role`, `user`)"
           service: user-service
           parentRefs:
             - api-parent
@@ -132,13 +132,13 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
 
       # Child router for admin users
       [http.routers.api-admin]
-        rule = "HeadersRegexp(`X-User-Role`, `admin`)"
+        rule = "HeaderRegexp(`X-User-Role`, `admin`)"
         service = "admin-service"
         parentRefs = ["api-parent"]
 
       # Child router for regular users
       [http.routers.api-user]
-        rule = "HeadersRegexp(`X-User-Role`, `user`)"
+        rule = "HeaderRegexp(`X-User-Role`, `user`)"
         service = "user-service"
         parentRefs = ["api-parent"]
 
@@ -164,10 +164,10 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     | `traefik/http/routers/api-parent/middlewares/0`                        | `auth-middleware`               |
     | `traefik/http/routers/api-parent/entrypoints/0`                        | `websecure`                     |
     | `traefik/http/routers/api-parent/tls`                                  | `true`                          |
-    | `traefik/http/routers/api-admin/rule`                                  | `HeadersRegexp(\`X-User-Role\`, \`admin\`)` |
+    | `traefik/http/routers/api-admin/rule`                                  | `HeaderRegexp(\`X-User-Role\`, \`admin\`)` |
     | `traefik/http/routers/api-admin/service`                               | `admin-service`                 |
     | `traefik/http/routers/api-admin/parentrefs/0`                          | `api-parent`                    |
-    | `traefik/http/routers/api-user/rule`                                   | `HeadersRegexp(\`X-User-Role\`, \`user\`)` |
+    | `traefik/http/routers/api-user/rule`                                   | `HeaderRegexp(\`X-User-Role\`, \`user\`)` |
     | `traefik/http/routers/api-user/service`                                | `user-service`                  |
     | `traefik/http/routers/api-user/parentrefs/0`                           | `api-parent`                    |
     | `traefik/http/middlewares/auth-middleware/forwardauth/address`         | `http://auth-service:8080/auth` |
@@ -185,4 +185,4 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     4. If `X-User-Role: admin`, `api-admin` router matches and forwards to `admin-service`
     5. If `X-User-Role: user`, `api-user` router matches and forwards to `user-service`
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

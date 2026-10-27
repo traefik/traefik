@@ -3,6 +3,7 @@ package accesslog
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -81,7 +82,7 @@ func (f *GenericCLFLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), err
 }
 
-func toLog(fields logrus.Fields, key, defaultValue string, quoted bool) interface{} {
+func toLog(fields logrus.Fields, key, defaultValue string, quoted bool) any {
 	if v, ok := fields[key]; ok {
 		if v == nil {
 			return defaultValue
@@ -108,7 +109,7 @@ func toLogEntry(s, defaultValue string, quote bool) string {
 	}
 
 	if quote {
-		return `"` + s + `"`
+		return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
 	}
 	return s
 }

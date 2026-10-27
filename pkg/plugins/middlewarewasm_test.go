@@ -27,12 +27,12 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 	testCases := []struct {
 		desc        string
-		getSettings func(t *testing.T) (Settings, map[string]interface{})
+		getSettings func(t *testing.T) (Settings, map[string]any)
 		expected    string
 	}{
 		{
 			desc: "mounts path",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				tempDir := t.TempDir()
@@ -40,17 +40,13 @@ func TestSettingsWithoutSocket(t *testing.T) {
 				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
 				require.NoError(t, err)
 
-				return Settings{Mounts: []string{
-						tempDir,
-					}}, map[string]interface{}{
-						"file": filePath,
-					}
+				return Settings{Mounts: []string{tempDir}}, map[string]any{"file": filePath}
 			},
 			expected: "content_test",
 		},
 		{
 			desc: "mounts src to dest",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				tempDir := t.TempDir()
@@ -58,21 +54,17 @@ func TestSettingsWithoutSocket(t *testing.T) {
 				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
 				require.NoError(t, err)
 
-				return Settings{Mounts: []string{
-						tempDir + ":/tmp",
-					}}, map[string]interface{}{
-						"file": "/tmp/hello.txt",
-					}
+				return Settings{Mounts: []string{tempDir + ":/tmp"}}, map[string]any{"file": "/tmp/hello.txt"}
 			},
 			expected: "content_test",
 		},
 		{
 			desc: "one env",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				envs := []string{"PLUGIN_TEST"}
-				return Settings{Envs: envs}, map[string]interface{}{
+				return Settings{Envs: envs}, map[string]any{
 					"envs": envs,
 				}
 			},
@@ -80,11 +72,11 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		},
 		{
 			desc: "two env",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				envs := []string{"PLUGIN_TEST", "PLUGIN_TEST_B"}
-				return Settings{Envs: envs}, map[string]interface{}{
+				return Settings{Envs: envs}, map[string]any{
 					"envs": envs,
 				}
 			},

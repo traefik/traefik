@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,25 +27,54 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
 
 // TLSStoreInformer provides access to a shared informer and lister for
-// TLSStores.
+// TLSStores. Prefer using the type-safe variant (see [TypedTLSStoreInformer]).
 type TLSStoreInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TLSStoreLister
+	Lister() traefikiov1alpha1.TLSStoreLister
 }
+
+// TypedTLSStoreInformer provides access to a shared informer and lister for
+// TLSStores, including the type-safe TypedInformer variant.
+// It is a superset of TLSStoreInformer.
+type TypedTLSStoreInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() TLSStoreIndexInformer
+	Lister() traefikiov1alpha1.TLSStoreLister
+}
+
+// TLSStoreIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type TLSStoreIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSStore]
+
+// TLSStoreHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for TLSStore.
+type TLSStoreHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.TLSStore]
+
+// TLSStoreDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for TLSStore.
+type TLSStoreDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.TLSStore]
+
+// TLSStoreFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for TLSStore.
+type TLSStoreFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.TLSStore]
+
+// TLSStoreIndexers is a specialization of [cache.TypedIndexers] for TLSStore.
+type TLSStoreIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.TLSStore]
+
+// DeletedTLSStore is a specialization of [cache.DeletedObject] for TLSStore.
+type DeletedTLSStore = cache.DeletedObject[*crdtraefikiov1alpha1.TLSStore]
 
 type tLSStoreInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -56,43 +85,132 @@ type tLSStoreInformer struct {
 // NewTLSStoreInformer constructs a new informer for TLSStore type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTLSStoreInformer]).
 func NewTLSStoreInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredTLSStoreInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewTLSStoreInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedTLSStoreInformer constructs a new informer for TLSStore type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTLSStoreInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TLSStoreIndexers) TLSStoreIndexInformer {
+	return NewTypedTLSStoreInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredTLSStoreInformer constructs a new informer for TLSStore type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredTLSStoreInformer]).
 func NewFilteredTLSStoreInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewTypedTLSStoreInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredTLSStoreInformer constructs a new informer for TLSStore type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredTLSStoreInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TLSStoreIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) TLSStoreIndexInformer {
+	return NewTypedTLSStoreInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
+}
+
+// NewTLSStoreInformerWithOptions constructs a new informer for TLSStore type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTLSStoreInformerWithOptions]).
+func NewTLSStoreInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedTLSStoreInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedTLSStoreInformerWithOptions constructs a new informer for TLSStore type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTLSStoreInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) TLSStoreIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "tlsstores"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSStore](cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().TLSStores(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().TLSStores(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().TLSStores(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().TLSStores(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().TLSStores(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().TLSStores(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.TLSStore{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&traefikiov1alpha1.TLSStore{},
-		resyncPeriod,
-		indexers,
-	)
+	))
 }
 
 func (f *tLSStoreInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredTLSStoreInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTypedTLSStoreInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *tLSStoreInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.TLSStore{}, f.defaultInformer)
+	return f.TypedInformer()
 }
 
-func (f *tLSStoreInformer) Lister() v1alpha1.TLSStoreLister {
-	return v1alpha1.NewTLSStoreLister(f.Informer().GetIndexer())
+func (f *tLSStoreInformer) TypedInformer() TLSStoreIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSStore](f.factory.InformerFor(&crdtraefikiov1alpha1.TLSStore{}, f.defaultInformer))
+}
+
+func (f *tLSStoreInformer) Lister() traefikiov1alpha1.TLSStoreLister {
+	return traefikiov1alpha1.NewTLSStoreLister(f.Informer().GetIndexer())
+}
+
+// ToTypedTLSStoreInformer converts an untyped informer into a TypedTLSStoreInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TLSStore. If that is not the case, calling type-safe methods of the returned
+// TypedTLSStoreInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedTLSStoreInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedTLSStoreInformer(informer TLSStoreInformer) TypedTLSStoreInformer {
+	if informer, ok := informer.(TypedTLSStoreInformer); ok {
+		return informer
+	}
+	return &tLSStoreTypedInformerAdapter{informer}
+}
+
+type tLSStoreTypedInformerAdapter struct {
+	TLSStoreInformer
+}
+
+func (a *tLSStoreTypedInformerAdapter) TypedInformer() TLSStoreIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSStore](a.Informer())
+}
+
+// ToTLSStoreIndexInformer converts an untyped informer into a TLSStoreIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TLSStore. If that is not the case, calling type-safe methods of the returned
+// TLSStoreIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a TLSStoreIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTLSStoreIndexInformer(informer cache.SharedIndexInformer) TLSStoreIndexInformer {
+	if informer, ok := informer.(TLSStoreIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TLSStore](informer)
 }

@@ -401,6 +401,12 @@
             "xxxx",
             "xxxx"
           ],
+          "propagation": {
+            "disableChecks": true,
+            "disableANSChecks": true,
+            "requireAllRNS": true,
+            "delayBeforeChecks": "42ns"
+          },
           "delayBeforeCheck": "42ns",
           "disablePropagationCheck": true
         },

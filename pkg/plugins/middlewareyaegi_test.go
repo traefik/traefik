@@ -138,7 +138,7 @@ func verifyMiddlewareWorks(t *testing.T, builder *yaegiMiddlewareBuilder) {
 	t.Helper()
 	// Create a middleware instance - this will call the plugin's New() function
 	// which uses unsafe/syscall, proving they work
-	middleware, err := builder.newMiddleware(map[string]interface{}{
+	middleware, err := builder.newMiddleware(map[string]any{
 		"message": "test",
 	}, "test-middleware")
 	require.NoError(t, err, "Should be able to create middleware that uses unsafe/syscall")

@@ -8,6 +8,7 @@
 	],
 	"name": "baz@myprovider",
 	"provider": "myprovider",
+	"priorityStr": "0",
 	"rule": "Host(`foo.baz`)",
 	"service": "foo-service@myprovider",
 	"tls": {

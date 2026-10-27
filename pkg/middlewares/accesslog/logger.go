@@ -74,22 +74,8 @@ type Handler struct {
 	wg             sync.WaitGroup
 }
 
-// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
-func (h *Handler) AliceConstructor() alice.Constructor {
-	return func(next http.Handler) (http.Handler, error) {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if h == nil {
-				next.ServeHTTP(rw, req)
-				return
-			}
-
-			h.ServeHTTP(rw, req, next)
-		}), nil
-	}
-}
-
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.Hook) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -121,6 +107,10 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		Level:     logrus.InfoLevel,
 	}
 
+	for _, hook := range hooks {
+		logger.Hooks.Add(hook)
+	}
+
 	if config.OTLP != nil {
 		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
@@ -128,7 +118,9 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -171,40 +163,28 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 	}
 
 	if config.BufferingSize > 0 {
-		logHandler.wg.Add(1)
-		go func() {
-			defer logHandler.wg.Done()
+		logHandler.wg.Go(func() {
 			for handlerParams := range logHandler.logHandlerChan {
 				logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
 			}
-		}()
+		})
 	}
 
 	return logHandler, nil
 }
 
-func openAccessLogFile(filePath string) (*os.File, error) {
-	dir := filepath.Dir(filePath)
+// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
+func (h *Handler) AliceConstructor() alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if h == nil {
+				next.ServeHTTP(rw, req)
+				return
+			}
 
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+			h.ServeHTTP(rw, req, next)
+		}), nil
 	}
-
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
-	}
-
-	return file, nil
-}
-
-// GetLogData gets the request context object that contains logging data.
-// This creates data as the request passes through the middleware chain.
-func GetLogData(req *http.Request) *LogData {
-	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
-		return ld
-	}
-	return nil
 }
 
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
@@ -228,11 +208,29 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
+	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
+		// Dispatch on the source resource kind so each kind maps to its own
+		// stable access-log field names. A single generic struct backs every
+		// Kubernetes provider; only the kind differs.
+		if k := metadata.Ingress; k != nil {
+			switch k.Kind {
+			case "Ingress":
+				logDataTable.Core[KubernetesIngressNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressName] = k.Name
+			case "IngressRoute":
+				logDataTable.Core[KubernetesIngressRouteNamespace] = k.Namespace
+				logDataTable.Core[KubernetesIngressRouteName] = k.Name
+			}
+		}
+	}
+
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
 		if spanContext.HasTraceID() && spanContext.HasSpanID() {
 			logDataTable.Core[TraceID] = spanContext.TraceID().String()
 			logDataTable.Core[SpanID] = spanContext.SpanID().String()
+			logDataTable.Core[OTelTraceID] = spanContext.TraceID().String()
+			logDataTable.Core[OTelSpanID] = spanContext.SpanID().String()
 		}
 	}
 
@@ -243,12 +241,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestAddr] = req.Host
 		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 	}
+
+	queryParameters := ""
+	if h.config.Fields.KeepQueryParameters() {
+		queryParameters = req.URL.RawQuery
+	}
+
 	// copy the URL without the scheme, hostname etc
 	urlCopy := &url.URL{
 		Path:       req.URL.Path,
 		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
-		ForceQuery: req.URL.ForceQuery,
+		RawQuery:   queryParameters,
+		ForceQuery: req.URL.ForceQuery && h.config.Fields.KeepQueryParameters(),
 		Fragment:   req.URL.Fragment,
 	}
 	urlCopyString := urlCopy.String()
@@ -288,6 +292,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		logDataTable.DownstreamResponse.status = capt.StatusCode()
 		logDataTable.DownstreamResponse.size = capt.ResponseSize()
 		logDataTable.Request.size = capt.RequestSize()
+
+		// Service-level observability metadata is written by the leaf service
+		// handler while the chain runs (the state container is shared by
+		// pointer via the request context). Read it once here so the fields
+		// reflect the backend the load balancer actually dispatched to.
+		if state := observability.GetServiceObservabilityState(reqWithDataTable.Context()); state != nil && state.Metadata != nil {
+			if k := state.Metadata.Kubernetes; k != nil {
+				core[KubernetesServiceName] = k.Name
+				core[KubernetesServiceNamespace] = k.Namespace
+				core[KubernetesServicePort] = k.Port
+			}
+		}
 
 		if _, ok := core[ClientUsername]; !ok {
 			core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
@@ -333,23 +349,6 @@ func (h *Handler) Rotate() error {
 	defer h.mu.Unlock()
 	h.logger.Out = h.file
 	return nil
-}
-
-func silentSplitHostPort(value string) (host, port string) {
-	host, port, err := net.SplitHostPort(value)
-	if err != nil {
-		return value, "-"
-	}
-	return host, port
-}
-
-func usernameIfPresent(theURL *url.URL) string {
-	if theURL.User != nil {
-		if name := theURL.User.Username(); name != "" {
-			return name
-		}
-	}
-	return "-"
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time.
@@ -409,6 +408,16 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	if h.config.OTLP != nil {
 		// If the logger is configured to use OpenTelemetry,
 		// we compute the log body with the formatter.
+		// The formatter reads the entry level and time, which logrus only sets when the log method is called.
+		// Setting them here avoids formatting a body with the zero values, and makes logrus reuse
+		// this timestamp, so the OTLP body and the regular output carry the same level and time.
+		entry.Level = logrus.InfoLevel
+
+		entry.Time = time.Now()
+		if t, ok := core[StartUTC].(time.Time); ok {
+			entry.Time = t
+		}
+
 		mBytes, err := h.logger.Formatter.Format(entry)
 		if err != nil {
 			message = fmt.Sprintf("Failed to format access log entry: %v", err)
@@ -458,8 +467,49 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 	return false
 }
 
-var requestCounter uint64 // Request ID
+// GetLogData gets the request context object that contains logging data.
+// This creates data as the request passes through the middleware chain.
+func GetLogData(req *http.Request) *LogData {
+	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+		return ld
+	}
+	return nil
+}
+
+func openAccessLogFile(filePath string) (*os.File, error) {
+	dir := filepath.Dir(filePath)
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
+	}
+
+	return file, nil
+}
+
+func silentSplitHostPort(value string) (host, port string) {
+	host, port, err := net.SplitHostPort(value)
+	if err != nil {
+		return value, "-"
+	}
+	return host, port
+}
+
+func usernameIfPresent(theURL *url.URL) string {
+	if theURL.User != nil {
+		if name := theURL.User.Username(); name != "" {
+			return name
+		}
+	}
+	return "-"
+}
+
+var requestCounter atomic.Uint64 // Request ID
 
 func nextRequestCount() uint64 {
-	return atomic.AddUint64(&requestCounter, 1)
+	return requestCounter.Add(1)
 }

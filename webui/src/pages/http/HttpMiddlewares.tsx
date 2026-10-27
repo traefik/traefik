@@ -1,8 +1,7 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
 import { ProviderIconWithTooltip } from 'components/icons/providers'
@@ -14,6 +13,7 @@ import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 import { parseMiddlewareType } from 'libs/parsers'
 
 export const makeRowRender = (): RenderRowType => {
@@ -99,9 +99,7 @@ export const HttpMiddlewares = () => {
 
   return (
     <>
-      <Helmet>
-        <title>HTTP Middlewares - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title="HTTP Middlewares" />
       <TableFilter />
       <HttpMiddlewaresRender
         error={error}

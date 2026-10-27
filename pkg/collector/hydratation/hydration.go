@@ -18,7 +18,7 @@ const (
 )
 
 // Hydrate hydrates a configuration.
-func Hydrate(element interface{}) error {
+func Hydrate(element any) error {
 	field := reflect.ValueOf(element)
 	return fill(field)
 }
@@ -29,7 +29,7 @@ func fill(field reflect.Value) error {
 		if err := setStruct(field); err != nil {
 			return err
 		}
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if err := setPointer(field); err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func fill(field reflect.Value) error {
 	return nil
 }
 
-func setTyped(field reflect.Value, i interface{}) {
+func setTyped(field reflect.Value, i any) {
 	baseValue := reflect.ValueOf(i)
 	if field.Kind().String() == field.Type().String() {
 		field.Set(baseValue)
@@ -112,7 +112,7 @@ func setMap(field reflect.Value) error {
 
 func makeKeyName(typ reflect.Type) string {
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return typ.Elem().Name()
 	case reflect.String,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,

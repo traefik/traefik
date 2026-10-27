@@ -23,6 +23,7 @@ type redisLimiter struct {
 	logger   *zerolog.Logger
 	ttl      int
 	client   Rediser
+	script   *redis.Script
 }
 
 func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay time.Duration, ttl int, config dynamic.RateLimit, logger *zerolog.Logger) (limiter, error) {
@@ -49,7 +50,7 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 	}
 
 	if config.Redis.WriteTimeout != nil {
-		if *config.Redis.ReadTimeout > 0 {
+		if *config.Redis.WriteTimeout > 0 {
 			options.WriteTimeout = time.Duration(*config.Redis.WriteTimeout)
 		} else {
 			options.WriteTimeout = -1
@@ -64,6 +65,11 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 		}
 	}
 
+	script, err := LoadTokenBucketScript()
+	if err != nil {
+		return nil, fmt.Errorf("loading bucket script: %w", err)
+	}
+
 	return &redisLimiter{
 		rate:     rate,
 		burst:    burst,
@@ -72,6 +78,7 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 		logger:   logger,
 		ttl:      ttl,
 		client:   redis.NewUniversalClient(options),
+		script:   script,
 	}, nil
 }
 
@@ -91,19 +98,19 @@ func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (bool, *t
 		return true, nil, nil
 	}
 
-	params := []interface{}{
+	params := []any{
 		float64(r.rate / 1000000),
 		r.burst,
 		r.ttl,
 		time.Now().UnixMicro(),
 		r.maxDelay.Microseconds(),
 	}
-	v, err := AllowTokenBucketScript.Run(ctx, r.client, []string{redisPrefix + key}, params...).Result()
+	v, err := r.script.Run(ctx, r.client, []string{redisPrefix + key}, params...).Result()
 	if err != nil {
 		return false, nil, fmt.Errorf("running script: %w", err)
 	}
 
-	values := v.([]interface{})
+	values := v.([]any)
 	ok, err := strconv.ParseBool(values[0].(string))
 	if err != nil {
 		return false, nil, fmt.Errorf("parsing ok value from redis rate lua script: %w", err)

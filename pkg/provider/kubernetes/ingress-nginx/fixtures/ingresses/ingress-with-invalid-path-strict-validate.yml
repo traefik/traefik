@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-invalid-path
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: invalid-path.localhost
+      http:
+        paths:
+          - path: /valid
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+          - path: /invalid(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

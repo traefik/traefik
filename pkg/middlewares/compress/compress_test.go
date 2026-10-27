@@ -93,9 +93,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     gzipName,
 		},
 		{
-			desc:            "multi accept header list, prefer gzip",
+			desc:            "multi accept header list, prefer best",
 			acceptEncHeader: "gzip, br, zstd",
-			expEncoding:     gzipName,
+			expEncoding:     "gzip",
 		},
 	}
 
@@ -501,7 +501,7 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 		rw.Header().Add(contentEncodingHeader, gzipName)
 		rw.Header().Add(varyHeader, acceptEncodingHeader)
 		rw.WriteHeader(http.StatusUnauthorized)
-		rw.(http.Flusher).Flush()
+		assert.NoError(t, http.NewResponseController(rw).Flush())
 		_, err := rw.Write([]byte("short"))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

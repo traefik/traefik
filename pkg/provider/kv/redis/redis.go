@@ -11,6 +11,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+// ProviderName is the Redis provider name.
+const ProviderName = "redis"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -60,10 +63,20 @@ func (p *Provider) Init() error {
 	}
 
 	if p.Sentinel != nil {
-		switch {
-		case p.Sentinel.LatencyStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.ReplicaStrategy):
-		case p.Sentinel.RandomStrategy && !(p.Sentinel.LatencyStrategy || p.Sentinel.ReplicaStrategy):
-		case p.Sentinel.ReplicaStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.LatencyStrategy):
+		count := 0
+		if p.Sentinel.LatencyStrategy {
+			count++
+		}
+
+		if p.Sentinel.ReplicaStrategy {
+			count++
+		}
+
+		if p.Sentinel.RandomStrategy {
+			count++
+		}
+
+		if count > 1 {
 			return errors.New("latencyStrategy, randomStrategy and replicaStrategy options are mutually exclusive, please use only one of those options")
 		}
 
@@ -80,5 +93,5 @@ func (p *Provider) Init() error {
 		}
 	}
 
-	return p.Provider.Init(redis.StoreName, "redis", config)
+	return p.Provider.Init(redis.StoreName, ProviderName, config)
 }

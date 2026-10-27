@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/server/recursion"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/leasttime"
@@ -47,6 +48,10 @@ type ServiceBuilder interface {
 	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 }
 
+type middlewareChainBuilder interface {
+	BuildMiddlewareChain(ctx context.Context, middlewares []string) *alice.Chain
+}
+
 // Manager The service manager.
 type Manager struct {
 	routinePool      *safe.Pool
@@ -55,10 +60,11 @@ type Manager struct {
 	proxyBuilder     ProxyBuilder
 	serviceBuilders  []ServiceBuilder
 
-	services       map[string]http.Handler
-	configs        map[string]*runtime.ServiceInfo
-	healthCheckers map[string]*healthcheck.ServiceHealthChecker
-	rand           *rand.Rand // For the initial shuffling of load-balancers.
+	services               map[string]http.Handler
+	configs                map[string]*runtime.ServiceInfo
+	healthCheckers         map[string]*healthcheck.ServiceHealthChecker
+	rand                   *rand.Rand // For the initial shuffling of load-balancers.
+	middlewareChainBuilder middlewareChainBuilder
 }
 
 // NewManager creates a new Manager.
@@ -74,6 +80,11 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
+}
+
+// SetMiddlewareChainBuilder sets the MiddlewareChainBuilder.
+func (m *Manager) SetMiddlewareChainBuilder(middlewareChainBuilder middlewareChainBuilder) {
+	m.middlewareChainBuilder = middlewareChainBuilder
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -112,6 +123,10 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
+		name := value.Type().Field(i).Name
+		if name == "Middlewares" || name == "Observability" {
+			continue
+		}
 		if !value.Field(i).IsNil() {
 			count++
 		}
@@ -120,6 +135,12 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 		conf.AddError(err, true)
 		return nil, err
+	}
+
+	var errRecursion error
+	if ctx, errRecursion = recursion.CheckRecursion(ctx, "service", serviceName); errRecursion != nil {
+		conf.AddError(errRecursion, true)
+		return nil, errRecursion
 	}
 
 	var lb http.Handler
@@ -166,30 +187,69 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, sErr
 	}
 
-	m.services[serviceName] = lb
+	// We keep the originalLB and if it is StatusUpdater to allow wrapping to keep the state.
+	originalLB, isStatusUpdater := lb.(healthcheck.StatusUpdater)
 
-	return lb, nil
+	if len(conf.Middlewares) > 0 {
+		if m.middlewareChainBuilder == nil {
+			// This should happen only in tests.
+			return nil, errors.New("chain builder not defined")
+		}
+		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
+		var err error
+		lb, err = chain.Then(lb)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	}
+
+	// Publish the service-level observability metadata to the per-request state
+	// container when this service is reached. No-op for services without metadata
+	// (Weighted/Mirroring/etc.), a published value for leaves with a backend
+	// identity (e.g. the Kubernetes Service name/namespace/port).
+	lb = observability.NewServiceMetadataHandler(conf.Observability, lb)
+
+	if isStatusUpdater {
+		lb = &statusUpdaterHandler{Handler: lb, statusUpdater: originalLB}
+	}
+
+	m.services[serviceName] = lb
+	return m.services[serviceName], nil
+}
+
+// LaunchHealthCheck launches the health checks.
+func (m *Manager) LaunchHealthCheck(ctx context.Context) {
+	for serviceName, hc := range m.healthCheckers {
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
+	}
 }
 
 func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
-	f := failover.New(config.HealthCheck)
-
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}
 
-	f.SetHandler(serviceHandler)
-
-	updater, ok := serviceHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	updater, implementUpdater := serviceHandler.(healthcheck.StatusUpdater)
+	isErrorDefined := config.Errors != nil && len(config.Errors.Status) > 0
+	if !implementUpdater && !isErrorDefined {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Service, serviceName, serviceHandler)
 	}
 
-	if err := updater.RegisterStatusUpdater(func(up bool) {
-		f.SetHandlerStatus(ctx, up)
-	}); err != nil {
-		return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+	f, err := failover.New(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating failover service %v: %w", serviceName, err)
+	}
+	f.SetHandler(serviceHandler)
+
+	if implementUpdater {
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			f.SetHandlerStatus(ctx, up)
+		}); err != nil && !isErrorDefined {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+		}
 	}
 
 	fallbackHandler, err := m.BuildHTTP(ctx, config.Fallback)
@@ -204,8 +264,8 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 		return f, nil
 	}
 
-	fallbackUpdater, ok := fallbackHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	fallbackUpdater, implementUpdater := fallbackHandler.(healthcheck.StatusUpdater)
+	if !implementUpdater {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, fallbackHandler)
 	}
 
@@ -311,7 +371,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 	svcHandler, err := m.BuildHTTP(ctx, service.Name)
 	if err != nil {
-		return nil, fmt.Errorf("building HTTP service: %w", err)
+		return nil, fmt.Errorf("building HTTP service %q: %w", service.Name, err)
 	}
 
 	if service.Headers != nil {
@@ -329,7 +389,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
-	balancer := hrw.New(config.HealthCheck != nil)
+	balancer := hrw.New(config.HealthCheck != nil, "")
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
@@ -358,13 +418,6 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	return balancer, nil
-}
-
-type serverBalancer interface {
-	http.Handler
-	healthcheck.StatusSetter
-
-	AddServer(name string, handler http.Handler, server dynamic.Server)
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
@@ -402,7 +455,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyHRW:
-		lb = hrw.New(service.HealthCheck != nil)
+		lb = hrw.New(service.HealthCheck != nil, service.NginxUpstreamHashBy)
 	case dynamic.BalancerStrategyLeastTime:
 		lb = leasttime.New(service.Sticky, service.HealthCheck != nil)
 	default:
@@ -494,12 +547,23 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	return lb, nil
 }
 
-// LaunchHealthCheck launches the health checks.
-func (m *Manager) LaunchHealthCheck(ctx context.Context) {
-	for serviceName, hc := range m.healthCheckers {
-		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
-		go hc.Launch(logger.WithContext(ctx))
-	}
+type serverBalancer interface {
+	http.Handler
+	healthcheck.StatusSetter
+
+	AddServer(name string, handler http.Handler, server dynamic.Server)
+}
+
+// statusUpdaterHandler wraps an http.Handler while preserving the
+// healthcheck.StatusUpdater interface from the original handler.
+type statusUpdaterHandler struct {
+	http.Handler
+
+	statusUpdater healthcheck.StatusUpdater
+}
+
+func (s *statusUpdaterHandler) RegisterStatusUpdater(fn func(up bool)) error {
+	return s.statusUpdater.RegisterStatusUpdater(fn)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {

@@ -19,6 +19,32 @@ type TransportManager interface {
 	GetTLSConfig(name string) (*tls.Config, error)
 }
 
+// connWithTimeouts wraps a net.Conn, applying a fresh read/write deadline before each successive Read/Write call.
+type connWithTimeouts struct {
+	net.Conn
+
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+}
+
+func (c *connWithTimeouts) Read(b []byte) (n int, err error) {
+	if c.readTimeout > 0 {
+		_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+		defer c.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	return c.Conn.Read(b)
+}
+
+func (c *connWithTimeouts) Write(b []byte) (n int, err error) {
+	if c.writeTimeout > 0 {
+		_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	return c.Conn.Write(b)
+}
+
 // ProxyBuilder handles the connection pools for the FastProxy proxies.
 type ProxyBuilder struct {
 	debug            bool
@@ -101,11 +127,13 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport,
 
 	idleConnTimeout := 90 * time.Second
 	dialTimeout := 30 * time.Second
-	var responseHeaderTimeout time.Duration
+	var responseHeaderTimeout, readTimeout, writeTimeout time.Duration
 	if config.ForwardingTimeouts != nil {
 		idleConnTimeout = time.Duration(config.ForwardingTimeouts.IdleConnTimeout)
 		dialTimeout = time.Duration(config.ForwardingTimeouts.DialTimeout)
 		responseHeaderTimeout = time.Duration(config.ForwardingTimeouts.ResponseHeaderTimeout)
+		readTimeout = time.Duration(config.ForwardingTimeouts.ReadTimeout)
+		writeTimeout = time.Duration(config.ForwardingTimeouts.WriteTimeout)
 	}
 
 	proxyDialer := newDialer(dialerConfig{
@@ -117,7 +145,20 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport,
 	}, tlsConfig)
 
 	connPool := newConnPool(config.MaxIdleConnsPerHost, idleConnTimeout, responseHeaderTimeout, func() (net.Conn, error) {
-		return proxyDialer.Dial("tcp", addrFromURL(targetURL))
+		co, err := proxyDialer.Dial("tcp", addrFromURL(targetURL))
+		if err != nil {
+			return nil, err
+		}
+
+		if readTimeout <= 0 && writeTimeout <= 0 {
+			return co, nil
+		}
+
+		return &connWithTimeouts{
+			Conn:         co,
+			readTimeout:  readTimeout,
+			writeTimeout: writeTimeout,
+		}, nil
 	})
 
 	r.pools[cfgName][targetURL.String()] = connPool

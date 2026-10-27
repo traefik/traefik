@@ -17,7 +17,7 @@ For more information about the changes in Traefik v2, please refer to the [v2 do
 
     We created a tool to help during the migration: [traefik-migration-tool](https://github.com/traefik/traefik-migration-tool)
 
-    This tool allows to:
+    This tool lets you:
 
     - convert `Ingress` to Traefik `IngressRoute` resources.
     - convert `acme.json` file from v1 to v2 format.

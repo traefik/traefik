@@ -2,9 +2,11 @@ package ingress
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -19,23 +21,25 @@ func Test_parseRouterConfig(t *testing.T) {
 		{
 			desc: "router annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":                                     "bar",
-				"traefik.ingress.kubernetes.io/foo":                             "bar",
-				"traefik.ingress.kubernetes.io/router.pathmatcher":              "foobar",
-				"traefik.ingress.kubernetes.io/router.entrypoints":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.middlewares":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.priority":                 "42",
-				"traefik.ingress.kubernetes.io/router.rulesyntax":               "foobar",
-				"traefik.ingress.kubernetes.io/router.tls":                      "true",
-				"traefik.ingress.kubernetes.io/router.tls.certresolver":         "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.options":              "foobar",
-				"traefik.ingress.kubernetes.io/router.observability.accessLogs": "true",
-				"traefik.ingress.kubernetes.io/router.observability.metrics":    "true",
-				"traefik.ingress.kubernetes.io/router.observability.tracing":    "true",
+				"ingress.kubernetes.io/foo":                                            "bar",
+				"traefik.ingress.kubernetes.io/foo":                                    "bar",
+				"traefik.ingress.kubernetes.io/router.pathmatcher":                     "foobar",
+				"traefik.ingress.kubernetes.io/router.entrypoints":                     "foobar,foobar",
+				"traefik.ingress.kubernetes.io/router.middlewares":                     "foobar,foobar",
+				"traefik.ingress.kubernetes.io/router.priority":                        "42",
+				"traefik.ingress.kubernetes.io/router.rulesyntax":                      "foobar",
+				"traefik.ingress.kubernetes.io/router.tls":                             "true",
+				"traefik.ingress.kubernetes.io/router.tls.certresolver":                "foobar",
+				"traefik.ingress.kubernetes.io/router.tls.domains.0.main":              "foobar",
+				"traefik.ingress.kubernetes.io/router.tls.domains.0.sans":              "foobar,foobar",
+				"traefik.ingress.kubernetes.io/router.tls.domains.1.main":              "foobar",
+				"traefik.ingress.kubernetes.io/router.tls.domains.1.sans":              "foobar,foobar",
+				"traefik.ingress.kubernetes.io/router.tls.options":                     "foobar",
+				"traefik.ingress.kubernetes.io/router.observability.accessLogs":        "true",
+				"traefik.ingress.kubernetes.io/router.observability.metrics":           "true",
+				"traefik.ingress.kubernetes.io/router.observability.tracing":           "true",
+				"traefik.ingress.kubernetes.io/router.respondingtimeouts.readtimeout":  "5s",
+				"traefik.ingress.kubernetes.io/router.respondingtimeouts.writetimeout": "10s",
 			},
 			expected: &RouterConfig{
 				Router: &RouterIng{
@@ -59,10 +63,14 @@ func Test_parseRouterConfig(t *testing.T) {
 						Options: "foobar",
 					},
 					Observability: &dynamic.RouterObservabilityConfig{
-						AccessLogs:     pointer(true),
-						Tracing:        pointer(true),
-						Metrics:        pointer(true),
+						AccessLogs:     new(true),
+						Tracing:        new(true),
+						Metrics:        new(true),
 						TraceVerbosity: otypes.MinimalVerbosity,
+					},
+					RespondingTimeouts: &dynamic.RouterRespondingTimeouts{
+						ReadTimeout:  new(ptypes.Duration(5 * time.Second)),
+						WriteTimeout: new(ptypes.Duration(10 * time.Second)),
 					},
 				},
 			},
@@ -135,13 +143,13 @@ func Test_parseServiceConfig(t *testing.T) {
 							HTTPOnly: true,
 							SameSite: "none",
 							Domain:   "foo.com",
-							Path:     pointer("foobar"),
+							Path:     new("foobar"),
 						},
 					},
 					ServersScheme:    "protocol",
 					ServersTransport: "foobar@file",
-					PassHostHeader:   pointer(true),
-					NativeLB:         pointer(true),
+					PassHostHeader:   new(true),
+					NativeLB:         new(true),
 				},
 			},
 		},
@@ -154,10 +162,22 @@ func Test_parseServiceConfig(t *testing.T) {
 				Service: &ServiceIng{
 					Sticky: &dynamic.Sticky{
 						Cookie: &dynamic.Cookie{
-							Path: pointer("/"),
+							Path: new("/"),
 						},
 					},
-					PassHostHeader: pointer(true),
+					PassHostHeader: new(true),
+				},
+			},
+		},
+		{
+			desc: "service middlewares annotation",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.middlewares": "middleware1,middleware2",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Middlewares:    []string{"middleware1", "middleware2"},
+					PassHostHeader: new(true),
 				},
 			},
 		},

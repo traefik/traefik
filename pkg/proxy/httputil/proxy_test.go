@@ -5,7 +5,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"net/url"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func Test_directorBuilder(t *testing.T) {
+func Test_rewriteRequestBuilder(t *testing.T) {
 	tests := []struct {
 		name            string
 		target          *url.URL
@@ -25,6 +28,7 @@ func Test_directorBuilder(t *testing.T) {
 		expectedPath    string
 		expectedRawPath string
 		expectedQuery   string
+		notAppendXFF    bool
 	}{
 		{
 			name:           "Basic proxy",
@@ -36,6 +40,18 @@ func Test_directorBuilder(t *testing.T) {
 			expectedHost:   "example.com",
 			expectedPath:   "/test",
 			expectedQuery:  "param=value",
+		},
+		{
+			name:           "Basic proxy - notAppendXFF",
+			target:         testhelpers.MustParseURL("http://example.com"),
+			passHostHeader: false,
+			preservePath:   false,
+			incomingURL:    "http://localhost/test?param=value",
+			expectedScheme: "http",
+			expectedHost:   "example.com",
+			expectedPath:   "/test",
+			expectedQuery:  "param=value",
+			notAppendXFF:   true,
 		},
 		{
 			name:           "HTTPS target",
@@ -79,27 +95,122 @@ func Test_directorBuilder(t *testing.T) {
 			expectedPath:   "/test",
 			expectedQuery:  "param1=value1&param2=value2",
 		},
+		{
+			name:           "Opaque incoming URL",
+			target:         testhelpers.MustParseURL("http://example.com"),
+			passHostHeader: false,
+			preservePath:   false,
+			incomingURL:    "http:evil.example.com/admin",
+			expectedScheme: "http",
+			expectedHost:   "example.com",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			director := directorBuilder(test.target, test.passHostHeader, test.preservePath)
+			rewriteRequest := rewriteRequestBuilder(test.target, test.passHostHeader, test.preservePath)
 
-			req := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
-			director(req)
+			ctx := t.Context()
+			if test.notAppendXFF {
+				ctx = SetNotAppendXFF(ctx)
+			}
 
-			assert.Equal(t, test.expectedScheme, req.URL.Scheme)
-			assert.Equal(t, test.expectedHost, req.Host)
-			assert.Equal(t, test.expectedPath, req.URL.Path)
-			assert.Equal(t, test.expectedRawPath, req.URL.RawPath)
-			assert.Equal(t, test.expectedQuery, req.URL.RawQuery)
-			assert.Empty(t, req.RequestURI)
-			assert.Equal(t, "HTTP/1.1", req.Proto)
-			assert.Equal(t, 1, req.ProtoMajor)
-			assert.Equal(t, 1, req.ProtoMinor)
-			assert.False(t, !test.passHostHeader && req.Host != req.URL.Host)
+			reqIn := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
+			reqIn = reqIn.WithContext(ctx)
+			reqIn.Header.Add("X-Forwarded-For", "1.2.3.4")
+			reqIn.RemoteAddr = "127.0.0.1:1234"
+
+			reqOut := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
+			pr := &httputil.ProxyRequest{
+				In:  reqIn,
+				Out: reqOut,
+			}
+			rewriteRequest(pr)
+
+			if test.notAppendXFF {
+				assert.Equal(t, "1.2.3.4", reqOut.Header.Get("X-Forwarded-For"))
+			} else {
+				// When not disabled, X-Forwarded-For should have RemoteAddr appended
+				assert.Equal(t, "1.2.3.4, 127.0.0.1", reqOut.Header.Get("X-Forwarded-For"))
+			}
+			assert.Equal(t, test.expectedScheme, reqOut.URL.Scheme)
+			assert.Equal(t, test.expectedHost, reqOut.Host)
+			assert.Equal(t, test.expectedPath, reqOut.URL.Path)
+			assert.Equal(t, test.expectedRawPath, reqOut.URL.RawPath)
+			assert.Equal(t, test.expectedQuery, reqOut.URL.RawQuery)
+			assert.Empty(t, reqOut.URL.Opaque)
+			assert.Empty(t, reqOut.RequestURI)
+			assert.Equal(t, "HTTP/1.1", reqOut.Proto)
+			assert.Equal(t, 1, reqOut.ProtoMajor)
+			assert.Equal(t, 1, reqOut.ProtoMinor)
+			assert.False(t, !test.passHostHeader && reqOut.Host != reqOut.URL.Host)
+		})
+	}
+}
+
+func TestProxy_ConnectRejected(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		http2 bool
+	}{
+		{
+			desc: "HTTP/1.1",
+		},
+		{
+			desc:  "HTTP/2",
+			http2: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var backendCalled atomic.Bool
+			backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				backendCalled.Store(true)
+			}))
+			t.Cleanup(backend.Close)
+
+			backendURL, err := url.Parse(backend.URL)
+			require.NoError(t, err)
+
+			proxy := buildSingleHostProxy(backendURL, true, false, 0, http.DefaultTransport, newBufferPool())
+
+			serverProtocols := new(http.Protocols)
+			serverProtocols.SetHTTP1(true)
+			serverProtocols.SetUnencryptedHTTP2(true)
+
+			srv := httptest.NewUnstartedServer(proxy)
+			srv.Config.Protocols = serverProtocols
+			srv.Start()
+			t.Cleanup(srv.Close)
+
+			clientProtocols := new(http.Protocols)
+			if test.http2 {
+				clientProtocols.SetUnencryptedHTTP2(true)
+			} else {
+				clientProtocols.SetHTTP1(true)
+			}
+			transport := &http.Transport{Protocols: clientProtocols}
+			t.Cleanup(transport.CloseIdleConnections)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, srv.URL, strings.NewReader("foo"))
+			require.NoError(t, err)
+
+			res, err := transport.RoundTrip(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			if test.http2 {
+				assert.Equal(t, 2, res.ProtoMajor)
+			} else {
+				assert.Equal(t, 1, res.ProtoMajor)
+			}
+			assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+			assert.False(t, backendCalled.Load())
 		})
 	}
 }

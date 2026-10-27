@@ -1,0 +1,53 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    entrypoints = ["web"]
+    service = "failover-service"
+    rule = "Path(`/whoami`)"
+
+[http.services]
+  # Failover service with health check
+  [http.services.failover-service]
+    [http.services.failover-service.failover]
+      service = "main-service"
+      fallback = "fallback-service"
+      [http.services.failover-service.failover.healthCheck]
+
+  # Main service with health check enabled
+  [http.services.main-service]
+    [http.services.main-service.loadBalancer]
+      [http.services.main-service.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "1s"
+        timeout = "0.9s"
+      [[http.services.main-service.loadBalancer.servers]]
+        url = "http://{{ .MainServer }}:80"
+
+  # Fallback service with health check enabled
+  [http.services.fallback-service]
+    [http.services.fallback-service.loadBalancer]
+      [http.services.fallback-service.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "1s"
+        timeout = "0.9s"
+      [[http.services.fallback-service.loadBalancer.servers]]
+        url = "http://{{ .FallbackServer }}:80"

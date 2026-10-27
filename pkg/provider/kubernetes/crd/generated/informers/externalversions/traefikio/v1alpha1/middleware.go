@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,25 +27,54 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
 
 // MiddlewareInformer provides access to a shared informer and lister for
-// Middlewares.
+// Middlewares. Prefer using the type-safe variant (see [TypedMiddlewareInformer]).
 type MiddlewareInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MiddlewareLister
+	Lister() traefikiov1alpha1.MiddlewareLister
 }
+
+// TypedMiddlewareInformer provides access to a shared informer and lister for
+// Middlewares, including the type-safe TypedInformer variant.
+// It is a superset of MiddlewareInformer.
+type TypedMiddlewareInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() MiddlewareIndexInformer
+	Lister() traefikiov1alpha1.MiddlewareLister
+}
+
+// MiddlewareIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type MiddlewareIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.Middleware]
+
+// MiddlewareHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for Middleware.
+type MiddlewareHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.Middleware]
+
+// MiddlewareDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for Middleware.
+type MiddlewareDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.Middleware]
+
+// MiddlewareFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for Middleware.
+type MiddlewareFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.Middleware]
+
+// MiddlewareIndexers is a specialization of [cache.TypedIndexers] for Middleware.
+type MiddlewareIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.Middleware]
+
+// DeletedMiddleware is a specialization of [cache.DeletedObject] for Middleware.
+type DeletedMiddleware = cache.DeletedObject[*crdtraefikiov1alpha1.Middleware]
 
 type middlewareInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -56,43 +85,132 @@ type middlewareInformer struct {
 // NewMiddlewareInformer constructs a new informer for Middleware type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMiddlewareInformer]).
 func NewMiddlewareInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredMiddlewareInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewMiddlewareInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedMiddlewareInformer constructs a new informer for Middleware type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMiddlewareInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MiddlewareIndexers) MiddlewareIndexInformer {
+	return NewTypedMiddlewareInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredMiddlewareInformer constructs a new informer for Middleware type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredMiddlewareInformer]).
 func NewFilteredMiddlewareInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewTypedMiddlewareInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredMiddlewareInformer constructs a new informer for Middleware type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredMiddlewareInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MiddlewareIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) MiddlewareIndexInformer {
+	return NewTypedMiddlewareInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
+}
+
+// NewMiddlewareInformerWithOptions constructs a new informer for Middleware type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMiddlewareInformerWithOptions]).
+func NewMiddlewareInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedMiddlewareInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedMiddlewareInformerWithOptions constructs a new informer for Middleware type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMiddlewareInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) MiddlewareIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewares"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.Middleware](cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().Middlewares(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().Middlewares(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().Middlewares(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().Middlewares(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().Middlewares(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().Middlewares(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.Middleware{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&traefikiov1alpha1.Middleware{},
-		resyncPeriod,
-		indexers,
-	)
+	))
 }
 
 func (f *middlewareInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredMiddlewareInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTypedMiddlewareInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *middlewareInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.Middleware{}, f.defaultInformer)
+	return f.TypedInformer()
 }
 
-func (f *middlewareInformer) Lister() v1alpha1.MiddlewareLister {
-	return v1alpha1.NewMiddlewareLister(f.Informer().GetIndexer())
+func (f *middlewareInformer) TypedInformer() MiddlewareIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.Middleware](f.factory.InformerFor(&crdtraefikiov1alpha1.Middleware{}, f.defaultInformer))
+}
+
+func (f *middlewareInformer) Lister() traefikiov1alpha1.MiddlewareLister {
+	return traefikiov1alpha1.NewMiddlewareLister(f.Informer().GetIndexer())
+}
+
+// ToTypedMiddlewareInformer converts an untyped informer into a TypedMiddlewareInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *Middleware. If that is not the case, calling type-safe methods of the returned
+// TypedMiddlewareInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedMiddlewareInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedMiddlewareInformer(informer MiddlewareInformer) TypedMiddlewareInformer {
+	if informer, ok := informer.(TypedMiddlewareInformer); ok {
+		return informer
+	}
+	return &middlewareTypedInformerAdapter{informer}
+}
+
+type middlewareTypedInformerAdapter struct {
+	MiddlewareInformer
+}
+
+func (a *middlewareTypedInformerAdapter) TypedInformer() MiddlewareIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.Middleware](a.Informer())
+}
+
+// ToMiddlewareIndexInformer converts an untyped informer into a MiddlewareIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *Middleware. If that is not the case, calling type-safe methods of the returned
+// MiddlewareIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a MiddlewareIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToMiddlewareIndexInformer(informer cache.SharedIndexInformer) MiddlewareIndexInformer {
+	if informer, ok := informer.(MiddlewareIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.Middleware](informer)
 }

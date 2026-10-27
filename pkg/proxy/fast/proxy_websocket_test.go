@@ -35,7 +35,7 @@ func TestWebSocketUpgradeCase(t *testing.T) {
 		require.NoError(t, err)
 
 		// Force answer with "Connection: upgrade" in lowercase.
-		_, err = c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\n"))
+		_, err = c.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: upgrade\r\nSec-WebSocket-Accept: " + computeAcceptKey(challengeKey) + "\r\n\r\n"))
 		require.NoError(t, err)
 	}))
 	defer srv.Close()

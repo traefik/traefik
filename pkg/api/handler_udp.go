@@ -15,6 +15,7 @@ import (
 
 type udpRouterRepresentation struct {
 	*runtime.UDPRouterInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
@@ -29,6 +30,7 @@ func newUDPRouterRepresentation(name string, rt *runtime.UDPRouterInfo) udpRoute
 
 type udpServiceRepresentation struct {
 	*runtime.UDPServiceInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -43,7 +45,7 @@ func newUDPServiceRepresentation(name string, si *runtime.UDPServiceInfo) udpSer
 	}
 }
 
-func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]udpRouterRepresentation, 0, len(h.runtimeConfiguration.UDPRouters))
 
 	query := request.URL.Query()
@@ -74,7 +76,7 @@ func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getUDPRouter(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getUDPRouter(rw http.ResponseWriter, request *http.Request) {
 	scapedRouterID := mux.Vars(request)["routerID"]
 
 	routerID, err := url.PathUnescape(scapedRouterID)
@@ -100,7 +102,7 @@ func (h Handler) getUDPRouter(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]udpServiceRepresentation, 0, len(h.runtimeConfiguration.UDPServices))
 
 	query := request.URL.Query()
@@ -131,7 +133,7 @@ func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (h Handler) getUDPService(rw http.ResponseWriter, request *http.Request) {
+func (h *Handler) getUDPService(rw http.ResponseWriter, request *http.Request) {
 	scapedServiceID := mux.Vars(request)["serviceID"]
 
 	serviceID, err := url.PathUnescape(scapedServiceID)

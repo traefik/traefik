@@ -2,10 +2,11 @@ package dashboard
 
 import (
 	"fmt"
+	"html/template"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"strings"
-	"text/template"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
@@ -79,7 +80,23 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	router.Methods(http.MethodGet).
 		Path(basePath).
 		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			prefix := strings.TrimSuffix(req.Header.Get("X-Forwarded-Prefix"), "/")
+			xfPrefix := req.Header.Get("X-Forwarded-Prefix")
+
+			// X-Forwarded-Prefix is a trusted header: the upstream hop is
+			// responsible for setting a valid, sanitized value and stripping
+			// any value coming from an untrusted client.
+			//
+			// The check below only rejects an obviously absolute URL (carrying a Host or
+			// Scheme). It is intentionally not an exhaustive validator: values a browser
+			// may later re-interpret as cross-origin (e.g. backslash sequences like
+			// "\\foo.com", normalised to "//foo.com" per the WHATWG URL spec) are the
+			// trusted upstream's responsibility.
+			if u, err := url.Parse(xfPrefix); err != nil || u.Host != "" || u.Scheme != "" {
+				log.Error().Msgf("X-Forwarded-Prefix contains an invalid value: %s, defaulting to empty prefix", xfPrefix)
+				xfPrefix = ""
+			}
+
+			prefix := strings.TrimSuffix(xfPrefix, "/")
 			http.Redirect(resp, req, prefix+dashboardPath, http.StatusFound)
 		})
 

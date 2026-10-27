@@ -17,6 +17,7 @@ const (
 // If operation() takes more than MinJobInterval, Reset() is called in NextBackOff().
 type BackOff struct {
 	*backoff.ExponentialBackOff
+
 	MinJobInterval time.Duration
 }
 

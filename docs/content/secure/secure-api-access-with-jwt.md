@@ -9,7 +9,7 @@ description: 'Traefik Hub API Gateway - Learn how to configure the JWT Authentic
     This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
 
 JSON Web Token (JWT) (defined in the [RFC 7519](https://tools.ietf.org/html/rfc7519)) allows
-Traefik Hub API Gateway to secure the API access using a token signed using either a private signing secret or a plublic/private key.
+Traefik Hub API Gateway to secure the API access using a token signed using either a private signing secret or a public/private key.
 
 Traefik Hub API Gateway provides many kinds of sources to perform the token validation:
 
@@ -201,4 +201,4 @@ spec:
     For example, the metadata recovered from the Identity Provider can be used to restrict the access to the applications.
     To do so, you can use the `claims` option, more information in the [dedicated section](../reference/routing-configuration/http/middlewares/jwt.md#claims).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

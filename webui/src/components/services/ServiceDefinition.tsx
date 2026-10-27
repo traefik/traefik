@@ -1,4 +1,4 @@
-import { Badge } from '@traefiklabs/faency'
+import { Badge } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 
 import ProviderIcon from 'components/icons/providers'

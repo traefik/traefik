@@ -1,0 +1,41 @@
+#migration-doc-banner {
+  display: block;
+  position: relative;
+  padding: 0.6em 1.2em;
+  border: 1px solid #00b3ce;
+  border-radius: 8px;
+  background-color: #00b3ce1a;
+  color: #00b3ce;
+  font-size: 0.85em;
+  margin-bottom: 1em;
+}
+
+#migration-doc-banner a {
+  color: #00b3ce;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+#migration-doc-banner p {
+  margin: 0;
+}
+
+#migration-doc-banner-close {
+  position: absolute;
+  top: 0.4em;
+  right: 0.6em;
+  background: none;
+  border: none;
+  color: #00b3ce;
+  font-size: 1.5em;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Breakpoint for the collapsed sidebar */
+@media (min-width: 1220px) {
+  #migration-doc-banner {
+    margin-top: -24px;
+  }
+}

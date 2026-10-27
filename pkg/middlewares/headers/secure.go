@@ -6,6 +6,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/unrolled/secure"
+	"k8s.io/utils/ptr"
 )
 
 type secureHeader struct {
@@ -33,7 +34,7 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 		AllowedHosts:                    cfg.AllowedHosts,
 		HostsProxyHeaders:               cfg.HostsProxyHeaders,
 		SSLProxyHeaders:                 cfg.SSLProxyHeaders,
-		STSSeconds:                      cfg.STSSeconds,
+		STSSeconds:                      ptr.Deref(cfg.STSSeconds, 0),
 		PermissionsPolicy:               cfg.PermissionsPolicy,
 		SecureContextKey:                contextKey,
 	}

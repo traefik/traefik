@@ -1,0 +1,37 @@
+name: Close Organization Fork PR
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.head.repo.fork == true && github.event.pull_request.head.repo.owner.type == 'Organization' }}
+    steps:
+      - name: Close PR from organization fork
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "## Pull Request Closed
+
+          Thank you for your contribution to Traefik!
+
+          Unfortunately, we are unable to accept pull requests originating from an organization fork. \
+          We rely on an automated bot to handle rebases and merges, and this workflow is not supported \
+          for pull requests coming from organization forks due to GitHub's permission model.
+
+          **Please re-open this pull request from a personal fork instead.**
+
+          Steps to do so:
+          1. Fork the repository under your personal GitHub account.
+          2. Push your changes to that personal fork.
+          3. Open a new pull request from your personal fork.
+
+          We apologize for the inconvenience and look forward to your contribution!"
+
+          gh pr close "${{ github.event.pull_request.number }}"

@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-auth-tls-verify-client
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - auth-tls-verify-client.localhost
+    - secretName: whoami-tls
+  rules:
+    - host: auth-tls-verify-client.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

@@ -27,7 +27,7 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		{
 			desc: "STSSeconds",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
+				STSSeconds:     new(int64(1)),
 				ForceSTSHeader: true,
 			},
 			expected: http.Header{"Strict-Transport-Security": []string{"max-age=1"}},
@@ -35,7 +35,7 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		{
 			desc: "STSSeconds and STSPreload",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
+				STSSeconds:     new(int64(1)),
 				ForceSTSHeader: true,
 				STSPreload:     true,
 			},

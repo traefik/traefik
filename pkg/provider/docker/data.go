@@ -1,8 +1,8 @@
 package docker
 
 import (
-	containertypes "github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
 )
 
 // dockerData holds the need data to the provider.
@@ -10,10 +10,10 @@ type dockerData struct {
 	ID              string
 	ServiceName     string
 	Name            string
-	Status          string
+	Status          containertypes.ContainerState
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
-	Health          string
+	Health          containertypes.HealthStatus
 	NodeIP          string // Only filled in Swarm mode.
 	ExtraConf       configuration
 }
@@ -21,7 +21,7 @@ type dockerData struct {
 // NetworkSettings holds the networks data to the provider.
 type networkSettings struct {
 	NetworkMode containertypes.NetworkMode
-	Ports       nat.PortMap
+	Ports       networktypes.PortMap
 	Networks    map[string]*networkData
 }
 

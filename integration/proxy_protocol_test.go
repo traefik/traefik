@@ -3,6 +3,7 @@ package integration
 import (
 	"bufio"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 
 type ProxyProtocolSuite struct {
 	BaseSuite
+
 	whoamiIP string
 }
 
@@ -124,15 +126,16 @@ func proxyProtoRequest(address string, version byte) (string, error) {
 	}
 
 	// Read the response from the server
-	var content string
+	var content strings.Builder
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
-		content += scanner.Text() + "\n"
+		content.WriteString(scanner.Text())
+		content.WriteString("\n")
 	}
 
 	if scanner.Err() != nil {
 		return "", err
 	}
 
-	return content, nil
+	return content.String(), nil
 }

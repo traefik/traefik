@@ -72,9 +72,9 @@ func TestClientIPMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -147,9 +147,9 @@ func TestMethodMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -256,6 +256,49 @@ func TestHostMatcher(t *testing.T) {
 				"https://🦭.com": http.StatusNotFound,
 			},
 		},
+		{
+			desc: "wildcard matcher",
+			rule: "Host(`*.example.com`)",
+			expected: map[string]int{
+				"https://test.example.com":      http.StatusOK,
+				"https://other.example.com":     http.StatusOK,
+				"https://foo.test.example.com":  http.StatusNotFound,
+				"https://example.com":           http.StatusNotFound,
+				"https://test.otherexample.com": http.StatusNotFound,
+			},
+		},
+		{
+			desc:          "bare double wildcard",
+			rule:          "Host(`**`)",
+			expectedError: true,
+		},
+		{
+			desc:          "wildcard not as a prefix",
+			rule:          "Host(`*.*.example.com`)",
+			expectedError: true,
+		},
+		{
+			desc: "double wildcard matcher",
+			rule: "Host(`**.example.com`)",
+			expected: map[string]int{
+				"https://test.example.com":      http.StatusOK,
+				"https://foo.test.example.com":  http.StatusOK,
+				"https://example.com":           http.StatusNotFound,
+				"https://test.otherexample.com": http.StatusNotFound,
+			},
+		},
+
+		{
+			desc: "* match everything",
+			rule: "Host(`*`)",
+			expected: map[string]int{
+				"https://test.example.com":      http.StatusOK,
+				"https://other.example.com":     http.StatusOK,
+				"https://example.com":           http.StatusOK,
+				"https://test.otherexample.com": http.StatusOK,
+				"https://localhost":             http.StatusOK,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -266,9 +309,9 @@ func TestHostMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -367,9 +410,9 @@ func TestHostRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -442,9 +485,9 @@ func TestPathMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -536,9 +579,9 @@ func TestPathRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -609,9 +652,9 @@ func TestPathPrefixMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -697,9 +740,9 @@ func TestHeaderMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -806,9 +849,9 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -896,9 +939,9 @@ func TestQueryMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -1011,9 +1054,9 @@ func TestQueryRegexpMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "", 0, handler)
+			err = muxer.AddRoute(test.rule, "", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return

@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
-
-func pointer[T any](v T) *T { return &v }
 
 func TestHasEntrypoint(t *testing.T) {
 	tests := []struct {
@@ -41,6 +42,157 @@ func TestHasEntrypoint(t *testing.T) {
 	}
 }
 
+func TestHasTCPEntryPoint(t *testing.T) {
+	tests := []struct {
+		desc        string
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint",
+			want: true,
+		},
+		{
+			desc: "entryPoint without an explicit protocol",
+			entryPoints: map[string]*EntryPoint{
+				"web": {Address: ":80"},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP-only entryPoint",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+			},
+			want: false,
+		},
+		{
+			desc: "UDP and TCP entryPoints",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {Address: ":53/udp"},
+				"web": {Address: ":80/tcp"},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			assert.Equal(t, test.want, cfg.HasTCPEntryPoint())
+		})
+	}
+}
+
+func TestHasDeniedEncodedCharacters(t *testing.T) {
+	allowAll := &EncodedCharacters{}
+	allowAll.SetDefaults()
+
+	denySlash := &EncodedCharacters{}
+	denySlash.SetDefaults()
+	denySlash.AllowEncodedSlash = false
+
+	denyHash := &EncodedCharacters{}
+	denyHash.SetDefaults()
+	denyHash.AllowEncodedHash = false
+
+	tests := []struct {
+		desc        string
+		api         *API
+		entryPoints map[string]*EntryPoint
+		want        bool
+	}{
+		{
+			desc: "empty configuration creates a default TCP entryPoint without encoded characters configuration",
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint allowing all encoded characters",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "TCP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "one TCP entryPoint among others disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+				"websecure": {
+					Address: ":443/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denyHash},
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "UDP entryPoint disallowing an encoded character",
+			entryPoints: map[string]*EntryPoint{
+				"dns": {
+					Address: ":53/udp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: allowAll},
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "insecure API adds an internal TCP entryPoint without encoded characters configuration",
+			api:  &API{Insecure: true},
+			entryPoints: map[string]*EntryPoint{
+				"web": {
+					Address: ":80/tcp",
+					HTTP:    HTTPConfig{EncodedCharacters: denySlash},
+				},
+			},
+			want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				API:         test.api,
+				EntryPoints: test.entryPoints,
+				Providers:   &Providers{},
+			}
+			cfg.SetEffectiveConfiguration()
+
+			if test.api != nil && test.api.Insecure {
+				assert.Contains(t, cfg.EntryPoints, DefaultInternalEntryPointName)
+			}
+			assert.Equal(t, test.want, cfg.HasDeniedEncodedCharacters())
+		})
+	}
+}
+
 func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -50,7 +202,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "empty",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 			expected: &Configuration{
 				EntryPoints: EntryPoints{"http": &EntryPoint{
@@ -70,8 +222,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -83,13 +236,13 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 			},
 		},
 		{
 			desc: "ACME simple",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -118,8 +271,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -131,7 +285,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -147,7 +301,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DelayBeforeCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -177,8 +331,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -190,7 +345,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -198,7 +353,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:         "bar",
 								DelayBeforeCheck: 123,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DelayBeforeChecks: 123,
 								},
 							},
@@ -210,7 +365,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		{
 			desc: "ACME deprecation DisablePropagationCheck",
 			conf: &Configuration{
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -240,8 +395,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   pointer(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -253,7 +409,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						Timeout: 3000000000,
 					},
 				}},
-				Providers: &Providers{},
+				Providers: &Providers{Precedence: providerNames},
 				CertificatesResolvers: map[string]CertificateResolver{
 					"foo": {
 						ACME: &acme.Configuration{
@@ -261,12 +417,163 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							DNSChallenge: &acme.DNSChallenge{
 								Provider:                "bar",
 								DisablePropagationCheck: true,
-								Propagation: &acme.Propagation{
+								Propagation: acme.Propagation{
 									DisableChecks: true,
 								},
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc: "Ingress NGINX provider, no asDefault, all non-TLS non-internal entrypoints included",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"admin", "web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80"},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Ingress NGINX provider, asDefault set, only marked entrypoint included",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesIngressNGINX: &ingressnginx.Provider{
+						NonTLSEntryPoints: []string{"web"},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"web":       {Address: ":80", AsDefault: true},
+					"admin":     {Address: ":8081"},
+					"traefik":   {Address: ":8080"},
+					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, missing, created with defaults",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						Transport: &EntryPointsTransport{
+							LifeCycle: &LifeCycle{
+								GraceTimeOut: 10000000000,
+							},
+							RespondingTimeouts: &RespondingTimeouts{
+								ReadTimeout: 60000000000,
+								IdleTimeout: 180000000000,
+							},
+						},
+						ForwardedHeaders: &ForwardedHeaders{},
+						HTTP: HTTPConfig{
+							SanitizePath:        new(true),
+							MaxHeaderBytes:      1048576,
+							MaxHeaderValueCount: 500,
+						},
+						HTTP2: &HTTP2Config{
+							MaxConcurrentStreams:      250,
+							MaxDecoderHeaderTableSize: 4096,
+							MaxEncoderHeaderTableSize: 4096,
+						},
+						UDP: &UDPConfig{
+							Timeout: 3000000000,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no address, default address set and options kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						HTTP:    HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, address set, address kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no internal service enabled, default address set",
+			conf: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8080"},
 				},
 			},
 		},
@@ -278,7 +585,252 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 
 			test.conf.SetEffectiveConfiguration()
 
+			// NonTLSEntryPoints is built from a map iteration, so its order isn't deterministic.
+			if p := test.conf.Providers.KubernetesIngressNGINX; p != nil {
+				assert.ElementsMatch(t, test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints, p.NonTLSEntryPoints)
+				p.NonTLSEntryPoints = nil
+				test.expected.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nil
+			}
+
 			assert.Equal(t, test.expected, test.conf)
+		})
+	}
+}
+
+func TestSetEffectiveConfiguration_DisableNonTLSRouters(t *testing.T) {
+	conf := &Configuration{
+		EntryPoints: EntryPoints{
+			"web": {
+				Address: ":80",
+				HTTP:    HTTPConfig{},
+			},
+			"websecure": {
+				Address: ":443",
+				HTTP: HTTPConfig{
+					TLS: &TLSConfig{},
+				},
+			},
+		},
+		Providers: &Providers{
+			Precedence: providerNames,
+			KubernetesIngressNGINX: &ingressnginx.Provider{
+				DisableNonTLSRouters: true,
+			},
+		},
+	}
+
+	conf.SetEffectiveConfiguration()
+
+	assert.Empty(t, conf.Providers.KubernetesIngressNGINX.NonTLSEntryPoints)
+}
+
+func TestValidateConfiguration_BasePath(t *testing.T) {
+	tests := []struct {
+		desc      string
+		basePath  string
+		expectErr bool
+	}{
+		{
+			desc:      "valid simple path",
+			basePath:  "/api",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with segments",
+			basePath:  "/my/base/path",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with allowed special chars",
+			basePath:  "/valid/path-123",
+			expectErr: false,
+		},
+		{
+			desc:      "relative path",
+			basePath:  "api/path",
+			expectErr: true,
+		},
+		{
+			desc:      "XSS payload",
+			basePath:  `/api/"></script><script>alert("XSS")</script>`,
+			expectErr: true,
+		},
+		{
+			desc:      "path with spaces",
+			basePath:  "/path with spaces",
+			expectErr: true,
+		},
+		{
+			desc:      "path with angle brackets",
+			basePath:  "/path/<evil>",
+			expectErr: true,
+		},
+		{
+			desc:      "path with query string",
+			basePath:  "/api?foo=bar",
+			expectErr: true,
+		},
+		{
+			desc:      "path with fragment",
+			basePath:  "/api#section",
+			expectErr: true,
+		},
+		{
+			desc:      "valid root path",
+			basePath:  "/",
+			expectErr: false,
+		},
+		{
+			desc:      "path with quote",
+			basePath:  "/api/'onclick=alert(1)",
+			expectErr: true,
+		},
+		{
+			desc:      "path with encoded character",
+			basePath:  "/api%2Ftoto",
+			expectErr: true,
+		},
+		{
+			desc:      "valid path with colons",
+			basePath:  "/k8s/clusters/c-abcd0/api/v1/namespaces/my-ns/services/http:traefik:8080/proxy",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with tilde",
+			basePath:  "/~user/dashboard",
+			expectErr: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				API: &API{BasePath: test.basePath},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProvidersPrecedence(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		cfg           *Configuration
+		expectedError bool
+		expected      []string
+	}{
+		{
+			desc: "No precedence",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: providerNames,
+				},
+			},
+			expected: providerNames,
+		},
+		{
+			desc: "Precedence with non existing provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"unknown"},
+				},
+			},
+			expectedError: true,
+		},
+		{
+			desc: "Precedence with upper case provider",
+			cfg: &Configuration{
+				Providers: &Providers{
+					Precedence: []string{"DOCKER"},
+				},
+			},
+			expected: []string{"docker"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.cfg.SetEffectiveConfiguration()
+			err := test.cfg.ValidateConfiguration()
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, test.expected, test.cfg.Providers.Precedence)
+			}
+		})
+	}
+}
+
+func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		underscore  string
+		alias       string
+		expectError bool
+	}{
+		{
+			desc: "no strategy configured",
+		},
+		{
+			desc:  "only the new option configured",
+			alias: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured",
+			underscore: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:       "only the deprecated option configured, set to keep",
+			underscore: AliasHeadersStrategyKeep,
+		},
+		{
+			desc:       "both options configured with the same value",
+			underscore: AliasHeadersStrategyDelete,
+			alias:      AliasHeadersStrategyDelete,
+		},
+		{
+			desc:        "both options configured with different values",
+			underscore:  AliasHeadersStrategyDelete,
+			alias:       AliasHeadersStrategyReject,
+			expectError: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					"web": &EntryPoint{
+						Address: ":80",
+						HTTP: HTTPConfig{
+							AliasHeadersStrategy:      test.alias,
+							UnderscoreHeadersStrategy: test.underscore,
+						},
+					},
+				},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
 		})
 	}
 }

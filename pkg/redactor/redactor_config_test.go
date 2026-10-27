@@ -24,7 +24,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v3/pkg/provider/kv"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
@@ -59,9 +58,9 @@ func init() {
 					},
 				},
 				Observability: &dynamic.RouterObservabilityConfig{
-					AccessLogs: pointer(true),
-					Tracing:    pointer(true),
-					Metrics:    pointer(true),
+					AccessLogs: new(true),
+					Tracing:    new(true),
+					Metrics:    new(true),
 				},
 			},
 		},
@@ -83,12 +82,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: pointer(true),
+						FollowRedirects: new(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: pointer(true),
+					PassHostHeader: new(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -105,7 +104,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -121,7 +120,7 @@ func init() {
 			"baz": {
 				Mirroring: &dynamic.Mirroring{
 					Service:     "foo",
-					MaxBodySize: pointer[int64](42),
+					MaxBodySize: new(int64(42)),
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
@@ -149,6 +148,8 @@ func init() {
 					IdleConnTimeout:       42,
 					ReadIdleTimeout:       42,
 					PingTimeout:           42,
+					ReadTimeout:           42,
+					WriteTimeout:          42,
 				},
 			},
 		},
@@ -204,12 +205,12 @@ func init() {
 					AccessControlAllowOriginList:      []string{"foo"},
 					AccessControlAllowOriginListRegex: []string{"foo"},
 					AccessControlExposeHeaders:        []string{"foo"},
-					AccessControlMaxAge:               42,
+					AccessControlMaxAge:               new(int64(42)),
 					AddVaryHeader:                     true,
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					STSSeconds:                        42,
+					STSSeconds:                        new(int64(42)),
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
 					ForceSTSHeader:                    true,
@@ -275,10 +276,11 @@ func init() {
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
 					},
-					TrustForwardHeader:       true,
+					TrustForwardHeader:       new(true),
 					AuthResponseHeaders:      []string{"foo"},
 					AuthResponseHeadersRegex: "foo",
 					AuthRequestHeaders:       []string{"foo"},
+					MaxResponseBodySize:      new(int64(42)),
 				},
 				InFlightReq: &dynamic.InFlightReq{
 					Amount: 42,
@@ -385,7 +387,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -432,7 +434,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: pointer(42),
+							Weight: new(42),
 						},
 					},
 				},
@@ -455,11 +457,9 @@ func init() {
 		},
 		Certificates: []*traefiktls.CertAndStores{
 			{
-				Certificate: traefiktls.Certificate{
-					CertFile: "cert.pem",
-					KeyFile:  "key.pem",
-				},
-				Stores: []string{"foo"},
+				CertFile: "cert.pem",
+				KeyFile:  "key.pem",
+				Stores:   []string{"foo"},
 			},
 		},
 		Stores: map[string]traefiktls.Store{
@@ -603,46 +603,38 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Docker = &docker.Provider{
-		Shared: docker.Shared{
-			ExposedByDefault:   true,
-			Constraints:        `Label("foo", "bar")`,
-			AllowEmptyServices: true,
-			Network:            "MyNetwork",
-			UseBindPortIP:      true,
-			Watch:              true,
-			DefaultRule:        "PathPrefix(`/`)",
+		ExposedByDefault:   true,
+		Constraints:        `Label("foo", "bar")`,
+		AllowEmptyServices: true,
+		Network:            "MyNetwork",
+		UseBindPortIP:      true,
+		Watch:              true,
+		DefaultRule:        "PathPrefix(`/`)",
+		Endpoint:           "MyEndPoint", TLS: &types.ClientTLS{
+			CA:                 "myCa",
+			Cert:               "mycert.pem",
+			Key:                "mycert.key",
+			InsecureSkipVerify: true,
 		},
-		ClientConfig: docker.ClientConfig{
-			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
-			HTTPClientTimeout: 42,
-		},
+		HTTPClientTimeout: 42,
 	}
 
 	config.Providers.Swarm = &docker.SwarmProvider{
-		Shared: docker.Shared{
-			ExposedByDefault:   true,
-			Constraints:        `Label("foo", "bar")`,
-			AllowEmptyServices: true,
-			Network:            "MyNetwork",
-			UseBindPortIP:      true,
-			Watch:              true,
-			DefaultRule:        "PathPrefix(`/`)",
+		ExposedByDefault:   true,
+		Constraints:        `Label("foo", "bar")`,
+		AllowEmptyServices: true,
+		Network:            "MyNetwork",
+		UseBindPortIP:      true,
+		Watch:              true,
+		DefaultRule:        "PathPrefix(`/`)",
+		Endpoint:           "MyEndPoint", TLS: &types.ClientTLS{
+			CA:                 "myCa",
+			Cert:               "mycert.pem",
+			Key:                "mycert.key",
+			InsecureSkipVerify: true,
 		},
-		ClientConfig: docker.ClientConfig{
-			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
-			HTTPClientTimeout: 42,
-		},
-		RefreshSeconds: 42,
+		HTTPClientTimeout: 42,
+		RefreshSeconds:    42,
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
@@ -684,34 +676,32 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.ConsulCatalog = &consulcatalog.ProviderBuilder{
-		Configuration: consulcatalog.Configuration{
-			Constraints: `Label("foo", "bar")`,
-			Endpoint: &consulcatalog.EndpointConfig{
-				Address:    "MyAddress",
-				Scheme:     "MyScheme",
-				DataCenter: "MyDatacenter",
-				Token:      "MyToken",
-				TLS: &types.ClientTLS{
-					CA:                 "myCa",
-					Cert:               "mycert.pem",
-					Key:                "mycert.key",
-					InsecureSkipVerify: true,
-				},
-				HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
-					Username: "MyUsername",
-					Password: "MyPassword",
-				},
-				EndpointWaitTime: 42,
+		Constraints: `Label("foo", "bar")`,
+		Endpoint: &consulcatalog.EndpointConfig{
+			Address:    "MyAddress",
+			Scheme:     "MyScheme",
+			DataCenter: "MyDatacenter",
+			Token:      "MyToken",
+			TLS: &types.ClientTLS{
+				CA:                 "myCa",
+				Cert:               "mycert.pem",
+				Key:                "mycert.key",
+				InsecureSkipVerify: true,
 			},
-			Prefix:            "MyPrefix",
-			RefreshInterval:   42,
-			RequireConsistent: true,
-			Stale:             true,
-			Cache:             true,
-			ExposedByDefault:  true,
-			DefaultRule:       "PathPrefix(`/`)",
+			HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
+				Username: "MyUsername",
+				Password: "MyPassword",
+			},
+			EndpointWaitTime: 42,
 		},
-		Namespaces: []string{"ns1", "ns2"},
+		Prefix:            "MyPrefix",
+		RefreshInterval:   42,
+		RequireConsistent: true,
+		Stale:             true,
+		Cache:             true,
+		ExposedByDefault:  true,
+		DefaultRule:       "PathPrefix(`/`)",
+		Namespaces:        []string{"ns1", "ns2"},
 	}
 
 	config.Providers.Ecs = &ecs.Provider{
@@ -728,11 +718,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Consul = &consul.ProviderBuilder{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Token: "secret",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Token:     "secret",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			Cert:               "mycert.pem",
@@ -743,12 +731,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Etcd = &etcd.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			Cert:               "mycert.pem",
@@ -758,21 +744,17 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.ZooKeeper = &zk.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 	}
 
 	config.Providers.Redis = &redis.Provider{
-		Provider: kv.Provider{
-			RootKey:   "RootKey",
-			Endpoints: nil,
-		},
-		Username: "username",
-		Password: "password",
+		RootKey:   "RootKey",
+		Endpoints: nil,
+		Username:  "username",
+		Password:  "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			Cert:               "mycert.pem",
@@ -945,6 +927,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 					DelayBeforeCheck:        42,
 					Resolvers:               []string{"resolver1", "resolver2"},
 					DisablePropagationCheck: true,
+					Propagation: acme.Propagation{
+						DisableChecks:     true,
+						DisableANSChecks:  true,
+						RequireAllRNS:     true,
+						DelayBeforeChecks: 42,
+					},
 				},
 				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",
@@ -1004,5 +992,3 @@ func TestDo_staticConfiguration(t *testing.T) {
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.JSONEq(t, expected, cleanJSON)
 }
-
-func pointer[T any](v T) *T { return &v }

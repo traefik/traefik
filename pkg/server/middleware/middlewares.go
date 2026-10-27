@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"slices"
-	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -20,12 +18,18 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/compress"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/customerrors"
+	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/approot"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -37,13 +41,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tap"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
-)
-
-type middlewareStackType int
-
-const (
-	middlewareStackKey middlewareStackType = iota
+	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
 
 // Builder the middleware builder.
@@ -62,8 +62,8 @@ func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder servi
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
 }
 
-// BuildChain creates a middleware chain.
-func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
+// BuildMiddlewareChain creates a middleware chain.
+func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, name := range middlewares {
 		middlewareName := provider.GetQualifiedName(ctx, name)
@@ -75,7 +75,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 			}
 
 			var err error
-			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
+			if constructorContext, err = recursion.CheckRecursion(constructorContext, "middleware", middlewareName); err != nil {
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
@@ -98,22 +98,16 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 	return &chain
 }
 
-func checkRecursion(ctx context.Context, middlewareName string) (context.Context, error) {
-	currentStack, ok := ctx.Value(middlewareStackKey).([]string)
-	if !ok {
-		currentStack = []string{}
-	}
-	if slices.Contains(currentStack, middlewareName) {
-		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
-	}
-	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
-}
-
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
-	config := b.configs[middlewareName]
-	if config == nil || config.Middleware == nil {
+	info := b.configs[middlewareName]
+	if info == nil || info.Middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
+	config, err := info.Middleware.ResolveURNRefs()
+	if err != nil {
+		return nil, fmt.Errorf("resolving middleware %q configuration: %w", middlewareName, err)
 	}
 
 	var middleware alice.Constructor
@@ -189,6 +183,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return contenttype.New(ctx, next, *config.ContentType, middlewareName)
+		}
+	}
+
+	// EncodedCharacters
+	if config.EncodedCharacters != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return encodedcharacters.NewEncodedCharacters(ctx, next, *config.EncodedCharacters, middlewareName), nil
 		}
 	}
 
@@ -285,6 +289,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// AuthTLSPassCertificateToUpstream
+	if config.AuthTLSPassCertificateToUpstream != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return authtlspasscertificatetoupstream.NewAuthTLSPassCertificateToUpstream(ctx, next, *config.AuthTLSPassCertificateToUpstream, middlewareName)
+		}
+	}
+
 	// RateLimit
 	if config.RateLimit != nil {
 		if middleware != nil {
@@ -335,6 +349,36 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// RewriteTarget
+	if config.RewriteTarget != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return rewritetarget.New(ctx, next, *config.RewriteTarget, middlewareName)
+		}
+	}
+
+	// AppRoot
+	if config.AppRoot != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return approot.New(ctx, next, *config.AppRoot, middlewareName)
+		}
+	}
+
+	// UpstreamVHost
+	if config.UpstreamVHost != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return upstreamvhost.New(ctx, next, *config.UpstreamVHost, middlewareName)
+		}
+	}
+
 	// Retry
 	if config.Retry != nil {
 		if middleware != nil {
@@ -366,6 +410,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// Tap
+	if config.Tap != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return tap.New(ctx, next, *config.Tap, b.serviceBuilder, middlewareName)
+		}
+	}
+
 	// Plugin
 	if config.Plugin != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
 		if middleware != nil {
@@ -377,13 +431,19 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, fmt.Errorf("plugin: %w", err)
 		}
 
+		// Unlike the other middlewares, the decoding of a plugin configuration puts the invalid values in its errors.
 		plug, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
 		if err != nil {
-			return nil, fmt.Errorf("plugin: %w", err)
+			return nil, info.RedactURNRefs(fmt.Errorf("plugin: %w", err))
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return newTraceablePlugin(ctx, middlewareName, plug, next)
+			handler, err := newTraceablePlugin(ctx, middlewareName, plug, next)
+			if err != nil {
+				return nil, info.RedactURNRefs(err)
+			}
+
+			return handler, nil
 		}
 	}
 
@@ -421,6 +481,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
+		}
+	}
+
+	// ingress-nginx middlewares.
+	if config.Snippet != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return snippet.New(ctx, next, config.Snippet, middlewareName)
 		}
 	}
 

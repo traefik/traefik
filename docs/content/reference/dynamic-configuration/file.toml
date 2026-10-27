@@ -25,6 +25,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router0.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -48,6 +51,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router1.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -161,6 +167,8 @@
         maxResponseBodyBytes = 42
         memResponseBodyBytes = 42
         retryExpression = "foobar"
+        disableRequestBuffer = true
+        disableResponseBuffer = true
     [http.middlewares.Middleware04]
       [http.middlewares.Middleware04.chain]
         middlewares = ["foobar", "foobar"]
@@ -193,6 +201,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        errorRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.errors.statusRewrites]
           name0 = 42
           name1 = 42
@@ -208,6 +217,7 @@
         headerField = "foobar"
         forwardBody = true
         maxBodySize = 42
+        maxResponseBodySize = 42
         preserveLocationHeader = true
         preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]
@@ -379,6 +389,9 @@
       serverName = "foobar"
       insecureSkipVerify = true
       rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
@@ -396,6 +409,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport0.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
@@ -403,6 +418,9 @@
       serverName = "foobar"
       insecureSkipVerify = true
       rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
@@ -420,6 +438,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport1.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"sync"
 
@@ -49,8 +50,9 @@ func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoi
 
 // TCPRouterInfo holds information about a currently running TCP router.
 type TCPRouterInfo struct {
-	*dynamic.TCPRouter          // dynamic configuration
-	Err                []string `json:"error,omitempty"` // initialization error
+	*dynamic.TCPRouter // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
@@ -61,10 +63,8 @@ type TCPRouterInfo struct {
 // AddError adds err to r.Err, if it does not already exist.
 // If critical is set, r is marked as disabled.
 func (r *TCPRouterInfo) AddError(err error, critical bool) {
-	for _, value := range r.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(r.Err, err.Error()) {
+		return
 	}
 
 	r.Err = append(r.Err, err.Error())
@@ -81,8 +81,9 @@ func (r *TCPRouterInfo) AddError(err error, critical bool) {
 
 // TCPServiceInfo holds information about a currently running TCP service.
 type TCPServiceInfo struct {
-	*dynamic.TCPService          // dynamic configuration
-	Err                 []string `json:"error,omitempty"` // initialization error
+	*dynamic.TCPService // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
@@ -96,10 +97,8 @@ type TCPServiceInfo struct {
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, s is marked as disabled.
 func (s *TCPServiceInfo) AddError(err error, critical bool) {
-	for _, value := range s.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(s.Err, err.Error()) {
+		return
 	}
 
 	s.Err = append(s.Err, err.Error())
@@ -135,15 +134,14 @@ func (s *TCPServiceInfo) GetAllStatus() map[string]string {
 	}
 
 	allStatus := make(map[string]string, len(s.serverStatus))
-	for k, v := range s.serverStatus {
-		allStatus[k] = v
-	}
+	maps.Copy(allStatus, s.serverStatus)
 	return allStatus
 }
 
 // TCPMiddlewareInfo holds information about a currently running middleware.
 type TCPMiddlewareInfo struct {
 	*dynamic.TCPMiddleware // dynamic configuration
+
 	// Err contains all the errors that occurred during service creation.
 	Err    []string `json:"error,omitempty"`
 	Status string   `json:"status,omitempty"`
@@ -153,10 +151,8 @@ type TCPMiddlewareInfo struct {
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, m is marked as disabled.
 func (m *TCPMiddlewareInfo) AddError(err error, critical bool) {
-	for _, value := range m.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(m.Err, err.Error()) {
+		return
 	}
 
 	m.Err = append(m.Err, err.Error())

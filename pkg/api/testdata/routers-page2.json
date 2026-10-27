@@ -5,6 +5,7 @@
 		],
 		"name": "baz@myprovider",
 		"provider": "myprovider",
+		"priorityStr": "0",
 		"rule": "Host(`toto.bar`)",
 		"service": "foo-service@myprovider",
 		"status": "enabled",

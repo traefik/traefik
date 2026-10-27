@@ -61,7 +61,12 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 		return nil, fmt.Errorf("ping: missing %s entry point", ep)
 	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			Proxy: nil,
+		},
+	}
 	protocol := "http"
 
 	// TODO Handle TLS on ping etc...

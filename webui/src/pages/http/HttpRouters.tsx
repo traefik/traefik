@@ -1,8 +1,7 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefik-labs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
 import { ProviderIconWithTooltip } from 'components/icons/providers'
@@ -17,6 +16,7 @@ import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
@@ -62,7 +62,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
         <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.priority} isTruncated />
+        <TooltipText text={row.priorityStr ?? row.priority} isTruncated />
       </AriaTd>
     </ClickableRow>
   )
@@ -132,9 +132,7 @@ export const HttpRouters = () => {
 
   return (
     <>
-      <Helmet>
-        <title>HTTP Routers - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title="HTTP Routers" />
       <TableFilter />
       <HttpRoutersRender
         error={error}

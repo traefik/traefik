@@ -11,12 +11,14 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 )
 
 var errNoAvailableServer = errors.New("no available server")
 
 type namedHandler struct {
 	http.Handler
+
 	name   string
 	weight float64
 }
@@ -29,7 +31,8 @@ type namedHandler struct {
 type Balancer struct {
 	wantsHealthCheck bool
 
-	strategy ip.RemoteAddrStrategy
+	strategy            ip.RemoteAddrStrategy
+	nginxUpstreamHashBy string
 
 	handlersMu sync.RWMutex
 	// References all the handlers by name and also by the hashed value of the name.
@@ -48,12 +51,13 @@ type Balancer struct {
 }
 
 // New creates a new load balancer.
-func New(wantHealthCheck bool) *Balancer {
+func New(wantHealthCheck bool, nginxUpstreamHashBy string) *Balancer {
 	balancer := &Balancer{
-		status:           make(map[string]struct{}),
-		fenced:           make(map[string]struct{}),
-		wantsHealthCheck: wantHealthCheck,
-		strategy:         ip.RemoteAddrStrategy{},
+		status:              make(map[string]struct{}),
+		fenced:              make(map[string]struct{}),
+		wantsHealthCheck:    wantHealthCheck,
+		strategy:            ip.RemoteAddrStrategy{},
+		nginxUpstreamHashBy: nginxUpstreamHashBy,
 	}
 
 	return balancer
@@ -123,43 +127,17 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
-func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
-	b.handlersMu.RLock()
-	var healthy []*namedHandler
-	for _, h := range b.handlers {
-		if _, ok := b.status[h.name]; ok {
-			if _, fenced := b.fenced[h.name]; !fenced {
-				healthy = append(healthy, h)
-			}
-		}
-	}
-	b.handlersMu.RUnlock()
-
-	if len(healthy) == 0 {
-		return nil, errNoAvailableServer
-	}
-
-	var handler *namedHandler
-	score := 0.0
-	for _, h := range healthy {
-		s := getNodeScore(h, ip)
-		if s > score {
-			handler = h
-			score = s
-		}
-	}
-
-	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
-
-	return handler, nil
-}
-
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// give ip fetched to b.nextServer
-	clientIP := b.strategy.GetIP(req)
-	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
+	key := b.strategy.GetIP(req)
+	log.Debug().Msgf("ServeHTTP() clientIP=%s", key)
 
-	server, err := b.nextServer(clientIP)
+	// For supporting consistent hashing using custom variables or text
+	if b.nginxUpstreamHashBy != "" {
+		key = ingressnginx.ReplaceVariables(b.nginxUpstreamHashBy, req, nil, nil)
+	}
+
+	server, err := b.nextServer(key)
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
@@ -198,4 +176,35 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		b.fenced[name] = struct{}{}
 	}
 	b.handlersMu.Unlock()
+}
+
+func (b *Balancer) nextServer(key string) (*namedHandler, error) {
+	b.handlersMu.RLock()
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
+			}
+		}
+	}
+	b.handlersMu.RUnlock()
+
+	if len(healthy) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	score := 0.0
+	for _, h := range healthy {
+		s := getNodeScore(h, key)
+		if s > score {
+			handler = h
+			score = s
+		}
+	}
+
+	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
+
+	return handler, nil
 }

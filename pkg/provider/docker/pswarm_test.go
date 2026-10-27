@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,15 +46,21 @@ func TestListTasks(t *testing.T) {
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.5"}),
 					taskStatus(taskState(swarmtypes.TaskStateFailed)),
 				),
+				swarmTask("id6",
+					taskSlot(6),
+					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.6/24"}),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
+				),
 			},
 			isGlobalSVC: false,
 			expectedTasks: []string{
 				"container.1",
 				"container.4",
+				"container.6",
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -281,7 +287,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -306,7 +312,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "foo"},
 				},
 			},
 		},
@@ -344,7 +350,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "vlan",
+					Network: networktypes.Network{Name: "vlan"},
 				},
 			},
 		},
@@ -372,7 +378,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			},
 			networks: map[string]*networktypes.Summary{
 				"1": {
-					Name: "foo",
+					Network: networktypes.Network{Name: "vlan"},
 				},
 			},
 		},

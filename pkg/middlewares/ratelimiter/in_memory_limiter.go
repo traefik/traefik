@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mailgun/ttlmap"
 	"github.com/rs/zerolog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
 	"golang.org/x/time/rate"
 )
 
@@ -21,19 +21,19 @@ type inMemoryRateLimiter struct {
 	// each ratelimiter is "garbage collected" when it is considered expired.
 	// It is considered expired after it hasn't been used for ttl seconds.
 	ttl     int
-	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
+	buckets *ttlmap.Map[*rate.Limiter] // actual buckets, keyed by source.
 
 	logger *zerolog.Logger
 }
 
-func newInMemoryRateLimiter(rate rate.Limit, burst int64, maxDelay time.Duration, ttl int, logger *zerolog.Logger) (*inMemoryRateLimiter, error) {
-	buckets, err := ttlmap.NewConcurrent(maxSources)
+func newInMemoryRateLimiter(rl rate.Limit, burst int64, maxDelay time.Duration, ttl int, logger *zerolog.Logger) (*inMemoryRateLimiter, error) {
+	buckets, err := ttlmap.New[*rate.Limiter](maxSources)
 	if err != nil {
 		return nil, fmt.Errorf("creating ttlmap: %w", err)
 	}
 
 	return &inMemoryRateLimiter{
-		rate:     rate,
+		rate:     rl,
 		burst:    burst,
 		maxDelay: maxDelay,
 		ttl:      ttl,
@@ -44,10 +44,8 @@ func newInMemoryRateLimiter(rate rate.Limit, burst int64, maxDelay time.Duration
 
 func (i *inMemoryRateLimiter) Allow(_ context.Context, source string) (*time.Duration, error) {
 	// Get bucket which contains limiter information.
-	var bucket *rate.Limiter
-	if rlSource, exists := i.buckets.Get(source); exists {
-		bucket = rlSource.(*rate.Limiter)
-	} else {
+	bucket, exists := i.buckets.Get(source)
+	if !exists {
 		bucket = rate.NewLimiter(i.rate, int(i.burst))
 	}
 

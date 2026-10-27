@@ -1,0 +1,29 @@
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: errorpage-wrr
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami
+        port: 80
+        weight: 1
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: errorpage
+  namespace: default
+
+spec:
+  errors:
+    status:
+      - "404"
+      - "500"
+    query: query
+    service:
+      name: errorpage-wrr
+      kind: TraefikService

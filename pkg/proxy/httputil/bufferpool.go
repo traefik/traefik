@@ -13,7 +13,7 @@ func newBufferPool() *bufferPool {
 		pool: sync.Pool{},
 	}
 
-	b.pool.New = func() interface{} {
+	b.pool.New = func() any {
 		return make([]byte, bufferSize)
 	}
 

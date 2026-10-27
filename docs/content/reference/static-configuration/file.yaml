@@ -3,6 +3,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+core:
+  strictTLSOptions: true
 serversTransport:
   insecureSkipVerify: true
   rootCAs:
@@ -13,6 +15,8 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readTimeout: 42s
+    writeTimeout: 42s
   spiffe:
     ids:
       - foobar
@@ -61,6 +65,7 @@ entryPoints:
       connection:
         - foobar
         - foobar
+      addXForwardedSchemeHeaders: true
     http:
       redirections:
         entryPoint:
@@ -83,9 +88,20 @@ entryPoints:
             sans:
               - foobar
               - foobar
+      encodedCharacters:
+        allowEncodedSlash: true
+        allowEncodedBackSlash: true
+        allowEncodedNullCharacter: true
+        allowEncodedSemicolon: true
+        allowEncodedPercent: true
+        allowEncodedQuestionMark: true
+        allowEncodedHash: true
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
+      maxHeaderValueCount: 42
+      aliasHeadersStrategy: foobar
+      underscoreHeadersStrategy: foobar
     http2:
       maxConcurrentStreams: 42
     http3:
@@ -191,6 +207,8 @@ providers:
     allowEmptyServices: true
     nativeLBByDefault: true
     disableClusterScopeResources: true
+    defaultTLSResourcesNamespace: foobar
+    safeNaming: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
@@ -346,6 +364,7 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+    maxResponseBodySize: 42
   plugin:
     PluginConf0:
       name0: foobar

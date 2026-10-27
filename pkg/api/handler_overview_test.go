@@ -232,6 +232,7 @@ func TestHandler_Overview(t *testing.T) {
 				Global: &static.Global{},
 				API:    &static.API{},
 				Providers: &static.Providers{
+					Precedence:        []string{"foo"},
 					Docker:            &docker.Provider{},
 					Swarm:             &docker.SwarmProvider{},
 					File:              &file.Provider{},
@@ -239,7 +240,7 @@ func TestHandler_Overview(t *testing.T) {
 					KubernetesCRD:     &crd.Provider{},
 					Rest:              &rest.Provider{},
 					Plugin: map[string]static.PluginConf{
-						"test": map[string]interface{}{},
+						"test": map[string]any{},
 					},
 				},
 			},
@@ -292,7 +293,7 @@ func TestHandler_Overview(t *testing.T) {
 			require.NoError(t, err)
 
 			if *updateExpected {
-				var results interface{}
+				var results any
 				err := json.Unmarshal(contents, &results)
 				require.NoError(t, err)
 

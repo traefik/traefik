@@ -84,15 +84,13 @@ func RegisterPrometheus(ctx context.Context, config *otypes.Prometheus) Registry
 	standardRegistry := initStandardRegistry(config)
 
 	if err := promRegistry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
-		var arErr stdprometheus.AlreadyRegisteredError
-		if !errors.As(err, &arErr) {
+		if _, ok := errors.AsType[stdprometheus.AlreadyRegisteredError](err); !ok {
 			log.Ctx(ctx).Warn().Msg("ProcessCollector is already registered")
 		}
 	}
 
 	if err := promRegistry.Register(collectors.NewGoCollector()); err != nil {
-		var arErr stdprometheus.AlreadyRegisteredError
-		if !errors.As(err, &arErr) {
+		if _, ok := errors.AsType[stdprometheus.AlreadyRegisteredError](err); !ok {
 			log.Ctx(ctx).Warn().Msg("GoCollector is already registered")
 		}
 	}
@@ -280,8 +278,7 @@ func registerPromState(ctx context.Context) bool {
 
 	logger := log.Ctx(ctx)
 
-	var arErr stdprometheus.AlreadyRegisteredError
-	if errors.As(err, &arErr) {
+	if _, ok := errors.AsType[stdprometheus.AlreadyRegisteredError](err); ok {
 		logger.Debug().Msg("Prometheus collector already registered.")
 		return true
 	}

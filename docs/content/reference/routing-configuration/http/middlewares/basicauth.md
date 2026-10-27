@@ -77,7 +77,7 @@ Use `htpasswd` to generate the passwords.
 
 ### users & usersFile
 
-- If both `users` and `usersFile` are provided, they are merged. The contents of `usersFile` have precedence over the values in users.
+- If both `users` and `usersFile` are provided, they are merged. The values in `users` have precedence over the contents of `usersFile`.
 - Because referencing a file path isn’t feasible on Kubernetes, the `users` & `usersFile` field isn’t used in Kubernetes IngressRoute. Instead, use the `secret` field.
 
 #### Kubernetes Secrets
@@ -92,4 +92,4 @@ The option `users` supports Kubernetes secrets.
     Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
     You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

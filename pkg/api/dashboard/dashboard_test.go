@@ -9,7 +9,9 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ContentSecurityPolicy(t *testing.T) {
@@ -56,6 +58,52 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 
 			assert.Equal(t, test.expected, rw.Code)
 			assert.Equal(t, "frame-src 'self' https://traefik.io https://*.traefik.io;", rw.Result().Header.Get("Content-Security-Policy"))
+		})
+	}
+}
+
+func Test_XForwardedPrefix(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		prefix   string
+		expected string
+	}{
+		{
+			desc:     "location in X-Forwarded-Prefix",
+			prefix:   "//foobar/test",
+			expected: "/dashboard/",
+		},
+		{
+			desc:     "scheme in X-Forwarded-Prefix",
+			prefix:   "http://foobar",
+			expected: "/dashboard/",
+		},
+		{
+			desc:     "path in X-Forwarded-Prefix",
+			prefix:   "foobar",
+			expected: "/foobar/dashboard/",
+		},
+	}
+
+	router := mux.NewRouter()
+	err := Append(router, "/", fstest.MapFS{"index.html": &fstest.MapFile{
+		Mode:    0o755,
+		ModTime: time.Now(),
+	}})
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req.Header.Set("X-Forwarded-Prefix", test.prefix)
+			rw := httptest.NewRecorder()
+
+			router.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusFound, rw.Code)
+			assert.Equal(t, test.expected, rw.Result().Header.Get("Location"))
 		})
 	}
 }

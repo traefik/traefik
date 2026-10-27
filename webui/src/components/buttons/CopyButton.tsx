@@ -1,4 +1,4 @@
-import { Flex, Button, CSS, AccessibleIcon } from '@traefiklabs/faency'
+import { Flex, Button, CSS, AccessibleIcon } from '@traefik-labs/faency'
 import React, { useState } from 'react'
 import { FiCheck, FiCopy } from 'react-icons/fi'
 

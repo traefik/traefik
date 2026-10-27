@@ -1,4 +1,4 @@
-import { Card, Flex, Skeleton } from '@traefiklabs/faency'
+import { Card, Flex, Skeleton } from '@traefik-labs/faency'
 import { FiAlertTriangle } from 'react-icons/fi'
 
 import { SectionTitle } from './DetailsCard'

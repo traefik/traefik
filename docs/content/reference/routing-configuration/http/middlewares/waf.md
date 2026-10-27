@@ -61,4 +61,4 @@ spec:
 | <a id="opt-directives" href="#opt-directives" title="#opt-directives">`directives`</a> | List of WAF rules to enforce. |  | Yes |
 | <a id="opt-crsEnabled" href="#opt-crsEnabled" title="#opt-crsEnabled">`crsEnabled`</a> | Enable [CRS rulesets](https://github.com/corazawaf/coraza-coreruleset/tree/main/rules/%40owasp_crs).<br /> Once the ruleset is enabled, it can be used in the middleware. | false |  False |
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

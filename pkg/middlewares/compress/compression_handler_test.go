@@ -268,7 +268,7 @@ func Test_FlushBeforeWrite(t *testing.T) {
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 
 				_, err := rw.Write(bigTestBody)
 				require.NoError(t, err)
@@ -336,7 +336,7 @@ func Test_FlushAfterWrite(t *testing.T) {
 				_, err := rw.Write(bigTestBody[0:1])
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 				for _, b := range bigTestBody[1:] {
 					_, err := rw.Write([]byte{b})
 					require.NoError(t, err)
@@ -374,25 +374,18 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		desc           string
 		cfg            Config
 		algo           string
-		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
-			desc: "brotli",
-			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo: brotliName,
-			readerBuilder: func(reader io.Reader) (io.Reader, error) {
-				return brotli.NewReader(reader), nil
-			},
+			desc:           "brotli",
+			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo:           brotliName,
 			acceptEncoding: "br",
 		},
 		{
-			desc: "zstd",
-			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo: zstdName,
-			readerBuilder: func(reader io.Reader) (io.Reader, error) {
-				return zstd.NewReader(reader)
-			},
+			desc:           "zstd",
+			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo:           zstdName,
 			acceptEncoding: "zstd",
 		},
 	}
@@ -405,7 +398,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 				_, err := rw.Write(nil)
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -423,13 +416,7 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Empty(t, res.Header.Get(contentEncoding))
-
-			reader, err := test.readerBuilder(res.Body)
-			require.NoError(t, err)
-
-			got, err := io.ReadAll(reader)
-			require.NoError(t, err)
-			assert.Empty(t, got)
+			assert.Equal(t, http.NoBody, res.Body)
 		})
 	}
 }
@@ -469,7 +456,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 					_, err := rw.Write(bigTestBody[i : i+1])
 					require.NoError(t, err)
 				}
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -536,7 +523,7 @@ func Test_FlushForceCompress(t *testing.T) {
 				_, err := rw.Write(smallTestBody)
 				require.NoError(t, err)
 
-				rw.(http.Flusher).Flush()
+				assert.NoError(t, http.NewResponseController(rw).Flush())
 			})
 
 			srv := httptest.NewServer(mustNewCompressionHandler(t, test.cfg, test.algo, next))
@@ -874,16 +861,13 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
-					toWrite := 100
-					if toWrite > len(tb) {
-						toWrite = len(tb)
-					}
+					toWrite := min(100, len(tb))
 
 					_, err := rw.Write(tb[:toWrite])
 					require.NoError(t, err)
 
 					// Flush between each write
-					rw.(http.Flusher).Flush()
+					assert.NoError(t, http.NewResponseController(rw).Flush())
 					tb = tb[toWrite:]
 				}
 			})
@@ -998,16 +982,13 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
-					toWrite := 100
-					if toWrite > len(tb) {
-						toWrite = len(tb)
-					}
+					toWrite := min(100, len(tb))
 
 					_, err := rw.Write(tb[:toWrite])
 					require.NoError(t, err)
 
 					// Flush between each write
-					rw.(http.Flusher).Flush()
+					assert.NoError(t, http.NewResponseController(rw).Flush())
 					tb = tb[toWrite:]
 				}
 			})

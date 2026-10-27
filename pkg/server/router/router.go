@@ -19,6 +19,8 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/respondingtimeout"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -28,8 +30,8 @@ import (
 
 const maxUserPriority = math.MaxInt - 1000
 
-type middlewareBuilder interface {
-	BuildChain(ctx context.Context, names []string) *alice.Chain
+type middlewareChainBuilder interface {
+	BuildMiddlewareChain(ctx context.Context, names []string) *alice.Chain
 }
 
 type serviceManager interface {
@@ -39,34 +41,134 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers     map[string]http.Handler
-	serviceManager     serviceManager
-	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareBuilder
-	conf               *runtime.Configuration
-	tlsManager         *tls.Manager
-	parser             httpmuxer.SyntaxParser
+	routerHandlers      map[string]http.Handler
+	serviceManager      serviceManager
+	observabilityMgr    *middleware.ObservabilityMgr
+	middlewaresBuilder  middlewareChainBuilder
+	conf                *runtime.Configuration
+	tlsManager          *tls.Manager
+	parser              httpmuxer.SyntaxParser
+	providersPrecedence []string
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager, parser httpmuxer.SyntaxParser) *Manager {
+func NewManager(conf *runtime.Configuration,
+	serviceManager serviceManager,
+	middlewaresBuilder middlewareChainBuilder,
+	observabilityMgr *middleware.ObservabilityMgr,
+	tlsManager *tls.Manager,
+	parser httpmuxer.SyntaxParser,
+	providersPrecedence []string,
+) *Manager {
 	return &Manager{
-		routerHandlers:     make(map[string]http.Handler),
-		serviceManager:     serviceManager,
-		observabilityMgr:   observabilityMgr,
-		middlewaresBuilder: middlewaresBuilder,
-		conf:               conf,
-		tlsManager:         tlsManager,
-		parser:             parser,
+		routerHandlers:      make(map[string]http.Handler),
+		serviceManager:      serviceManager,
+		observabilityMgr:    observabilityMgr,
+		middlewaresBuilder:  middlewaresBuilder,
+		conf:                conf,
+		tlsManager:          tlsManager,
+		parser:              parser,
+		providersPrecedence: providersPrecedence,
 	}
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+// ParseRouterTree sets up router tree and validates router configuration.
+// This function performs the following operations in order:
+//
+// 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
+// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the tree
+// 3. Cycle detection: Detects circular dependencies and removes cyclic links
+// 4. Reachability check: Marks routers unreachable from any root as disabled
+// 5. Dead-end detection: Marks routers with no service and no children as disabled
+// 6. Validation: Checks for configuration errors
+//
+// Router status is set during this process:
+// - Enabled: Reachable routers with valid configuration
+// - Disabled: Unreachable, dead-end, or routers with critical errors
+// - Warning: Routers with non-critical errors (like cycles)
+//
+// The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
+func (m *Manager) ParseRouterTree() {
+	if m.conf == nil || m.conf.Routers == nil {
+		return
 	}
 
-	return make(map[string]map[string]*runtime.RouterInfo)
+	// Populate ChildRefs based on ParentRefs and find root routers.
+	var rootRouters []string
+	for routerName, router := range m.conf.Routers {
+		if len(router.ParentRefs) == 0 {
+			rootRouters = append(rootRouters, routerName)
+			continue
+		}
+
+		for _, parentName := range router.ParentRefs {
+			if parentRouter, exists := m.conf.Routers[parentName]; exists {
+				// Add this router as a child of its parent
+				if !slices.Contains(parentRouter.ChildRefs, routerName) {
+					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
+				}
+			} else {
+				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
+			}
+		}
+
+		// Check for non-root router with TLS config.
+		if router.TLS != nil {
+			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
+			continue
+		}
+
+		// Check for non-root router with Observability config.
+		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
+		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
+			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
+			continue
+		}
+
+		// Check for non-root router with Entrypoint config.
+		if len(router.EntryPoints) > 0 {
+			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
+			continue
+		}
+
+		// Responding timeouts are set on one level only: the deadlines of a child router would silently replace its parent ones.
+		if router.RespondingTimeouts != nil && m.hasAncestorWithRespondingTimeouts(router, map[string]bool{routerName: true}) {
+			router.AddError(errors.New("router cannot have RespondingTimeouts configuration when a parent router has one"), true)
+			continue
+		}
+	}
+	sort.Strings(rootRouters)
+
+	// Root-first traversal with cycle detection.
+	visited := make(map[string]bool)
+	currentPath := make(map[string]bool)
+	var path []string
+
+	for _, rootName := range rootRouters {
+		if !visited[rootName] {
+			m.traverse(rootName, visited, currentPath, path)
+		}
+	}
+
+	for routerName, router := range m.conf.Routers {
+		// Set status for all routers based on reachability.
+		if !visited[routerName] {
+			router.AddError(errors.New("router is not reachable"), true)
+			continue
+		}
+
+		// Detect dead-end routers (no service + no children) - AFTER cycle handling.
+		if router.Service == "" && len(router.ChildRefs) == 0 {
+			router.AddError(errors.New("router has no service and no child routers"), true)
+			continue
+		}
+
+		// Check for router with service that is referenced as a parent.
+		if router.Service != "" && len(router.ChildRefs) > 0 {
+			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
+			continue
+		}
+	}
 }
 
 // BuildHandlers Builds handler for all entry points.
@@ -126,8 +228,16 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
+}
+
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
-	muxer := httpmuxer.NewMuxer(m.parser)
+	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
 	if err != nil {
@@ -157,7 +267,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
+		handler, err := m.buildRouterHandler(ctxRouter, entryPointName, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -176,7 +286,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -191,12 +301,16 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 	return chain.Then(muxer)
 }
 
-func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil
 	}
 
 	if routerConfig.TLS != nil {
+		if routerConfig.TLS.ConflictingOptions {
+			return nil, errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host")
+		}
+
 		// Don't build the router if the TLSOptions configuration is invalid.
 		tlsOptionsName := tls.DefaultTLSConfigName
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
@@ -207,16 +321,16 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 		}
 	}
 
-	handler, err := m.buildHTTPHandler(ctx, routerConfig, routerName)
+	handler, err := m.buildHTTPHandler(ctx, routerConfig, entryPointName, routerName)
 	if err != nil {
 		return nil, err
 	}
 
 	m.routerHandlers[routerName] = handler
-	return m.routerHandlers[routerName], nil
+	return handler, nil
 }
 
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, entryPointName, routerName string) (http.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -239,7 +353,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	switch {
 	case len(router.ChildRefs) > 0:
 		// This router routes to child routers - create a muxer for them
-		nextHandler, err = m.buildChildRoutersMuxer(ctx, router.ChildRefs)
+		nextHandler, err = m.buildChildRoutersMuxer(ctx, entryPointName, router.ChildRefs)
 		if err != nil {
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
@@ -266,101 +380,51 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName), nil
 	})
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+	// Here we are adding deny handlers for encoded path characters and fragment.
+	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
+	if len(router.ParentRefs) == 0 && router.DeniedEncodedPathCharacters != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
+		})
+	}
+
+	if router.TLS != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
+		})
+	}
+
+	// Appended below observability so that the 504 is observed, and above the user middlewares so that the
+	// deadline bounds them all, retry attempts included.
+	if router.RespondingTimeouts != nil {
+		chain = chain.Append(respondingtimeout.WrapHandler(*router.RespondingTimeouts))
+	}
+
+	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
 }
 
-// ParseRouterTree sets up router tree and validates router configuration.
-// This function performs the following operations in order:
-//
-// 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
-// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the tree
-// 3. Cycle detection: Detects circular dependencies and removes cyclic links
-// 4. Reachability check: Marks routers unreachable from any root as disabled
-// 5. Dead-end detection: Marks routers with no service and no children as disabled
-// 6. Validation: Checks for configuration errors
-//
-// Router status is set during this process:
-// - Enabled: Reachable routers with valid configuration
-// - Disabled: Unreachable, dead-end, or routers with critical errors
-// - Warning: Routers with non-critical errors (like cycles)
-//
-// The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
-func (m *Manager) ParseRouterTree() {
-	if m.conf == nil || m.conf.Routers == nil {
-		return
-	}
+// hasAncestorWithRespondingTimeouts reports whether a router up the tree has responding timeouts.
+// The visited routers guard against cycles, which are reported by the traversal.
+func (m *Manager) hasAncestorWithRespondingTimeouts(router *runtime.RouterInfo, visited map[string]bool) bool {
+	for _, parentName := range router.ParentRefs {
+		if visited[parentName] {
+			continue
+		}
+		visited[parentName] = true
 
-	// Populate ChildRefs based on ParentRefs and find root routers.
-	var rootRouters []string
-	for routerName, router := range m.conf.Routers {
-		if len(router.ParentRefs) == 0 {
-			rootRouters = append(rootRouters, routerName)
+		parent, ok := m.conf.Routers[parentName]
+		if !ok {
 			continue
 		}
 
-		for _, parentName := range router.ParentRefs {
-			if parentRouter, exists := m.conf.Routers[parentName]; exists {
-				// Add this router as a child of its parent
-				if !slices.Contains(parentRouter.ChildRefs, routerName) {
-					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
-				}
-			} else {
-				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
-			}
-		}
-
-		// Check for non-root router with TLS config.
-		if router.TLS != nil {
-			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
-			continue
-		}
-
-		// Check for non-root router with Observability config.
-		if router.Observability != nil {
-			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
-			continue
-		}
-
-		// Check for non-root router with Entrypoint config.
-		if len(router.EntryPoints) > 0 {
-			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
-			continue
-		}
-	}
-	sort.Strings(rootRouters)
-
-	// Root-first traversal with cycle detection.
-	visited := make(map[string]bool)
-	currentPath := make(map[string]bool)
-	var path []string
-
-	for _, rootName := range rootRouters {
-		if !visited[rootName] {
-			m.traverse(rootName, visited, currentPath, path)
+		if parent.RespondingTimeouts != nil || m.hasAncestorWithRespondingTimeouts(parent, visited) {
+			return true
 		}
 	}
 
-	for routerName, router := range m.conf.Routers {
-		// Set status for all routers based on reachability.
-		if !visited[routerName] {
-			router.AddError(errors.New("router is not reachable"), true)
-			continue
-		}
-
-		// Detect dead-end routers (no service + no children) - AFTER cycle handling.
-		if router.Service == "" && len(router.ChildRefs) == 0 {
-			router.AddError(errors.New("router has no service and no child routers"), true)
-			continue
-		}
-
-		// Check for router with service that is referenced as a parent.
-		if router.Service != "" && len(router.ChildRefs) > 0 {
-			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
-			continue
-		}
-	}
+	return false
 }
 
 // traverse performs a depth-first traversal starting from root routers,
@@ -441,8 +505,8 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 }
 
 // buildChildRoutersMuxer creates a muxer for child routers.
-func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string) (http.Handler, error) {
-	childMuxer := httpmuxer.NewMuxer(m.parser)
+func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
+	childMuxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
@@ -468,7 +532,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 		}
 
 		// Build the child router handler.
-		childHandler, err := m.buildRouterHandler(ctxChild, childName, childRouter)
+		childHandler, err := m.buildRouterHandler(ctxChild, entryPointName, childName, childRouter)
 		if err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -476,7 +540,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 		}
 
 		// Add the child router to the muxer.
-		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, childHandler); err != nil {
+		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName(childName), childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -491,4 +555,12 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 	}
 
 	return childMuxer, nil
+}
+
+func providerName(routerName string) string {
+	parts := strings.Split(routerName, "@")
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return ""
 }

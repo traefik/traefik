@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 )
 
 var httpFuncs = matcherBuilderFuncs{
@@ -68,34 +68,48 @@ func method(tree *matchersTree, methods ...string) error {
 	return nil
 }
 
-func host(tree *matchersTree, hosts ...string) error {
-	host := hosts[0]
+// wildcardHost is the shape of a wildcard host expression, the bare catch-all aside.
+var wildcardHost = regexp.MustCompile(`^\*\*?\.[^*]+$`)
 
-	if !IsASCII(host) {
-		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", host)
+func host(tree *matchersTree, hosts ...string) error {
+	hostExpr := hosts[0]
+
+	if hostExpr == "*" {
+		// On the TCP side, * matches every serverName (empty or not),
+		// so we keep the same behavior in Host for consistency.
+		tree.matcher = func(req *http.Request) bool { return true }
+		return nil
 	}
 
-	host = strings.ToLower(host)
+	if !muxer.IsASCII(hostExpr) {
+		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
+	}
+
+	if strings.Contains(hostExpr, "*") && !wildcardHost.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value %q for Host matcher, a wildcard is either the catch-all \"*\" or a \"*.\" or \"**.\" prefix", hostExpr)
+	}
+
+	hostExpr = strings.ToLower(hostExpr)
 
 	tree.matcher = func(req *http.Request) bool {
-		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		reqHost := requestdecorator.GetCanonicalHost(req.Context())
 		if len(reqHost) == 0 {
 			return false
 		}
 
-		if reqHost == host {
+		if muxer.DomainMatchHostExpression(reqHost, hostExpr) {
 			return true
 		}
 
 		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
 		if len(flatH) > 0 {
-			return strings.EqualFold(flatH, host)
+			return muxer.DomainMatchHostExpression(flatH, hostExpr)
 		}
 
 		// Check for match on trailing period on host
-		if last := len(host) - 1; last >= 0 && host[last] == '.' {
-			h := host[:last]
-			if reqHost == h {
+		if last := len(hostExpr) - 1; last >= 0 && hostExpr[last] == '.' {
+			h := hostExpr[:last]
+			if muxer.DomainMatchHostExpression(reqHost, h) {
 				return true
 			}
 		}
@@ -103,7 +117,7 @@ func host(tree *matchersTree, hosts ...string) error {
 		// Check for match on trailing period on request
 		if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
 			h := reqHost[:last]
-			if h == host {
+			if muxer.DomainMatchHostExpression(h, hostExpr) {
 				return true
 			}
 		}
@@ -117,7 +131,7 @@ func host(tree *matchersTree, hosts ...string) error {
 func hostRegexp(tree *matchersTree, hosts ...string) error {
 	host := hosts[0]
 
-	if !IsASCII(host) {
+	if !muxer.IsASCII(host) {
 		return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
 	}
 
@@ -127,7 +141,7 @@ func hostRegexp(tree *matchersTree, hosts ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(requestdecorator.GetCanonizedHost(req.Context())) ||
+		return re.MatchString(requestdecorator.GetCanonicalHost(req.Context())) ||
 			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
 	}
 
@@ -184,13 +198,7 @@ func header(tree *matchersTree, headers ...string) error {
 	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if headerValue == value {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(req.Header[key], value)
 	}
 
 	return nil
@@ -205,13 +213,7 @@ func headerRegexp(tree *matchersTree, headers ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if re.MatchString(headerValue) {
-				return true
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(req.Header[key], re.MatchString)
 	}
 
 	return nil
@@ -263,15 +265,4 @@ func queryRegexp(tree *matchersTree, queries ...string) error {
 	}
 
 	return nil
-}
-
-// IsASCII checks if the given string contains only ASCII characters.
-func IsASCII(s string) bool {
-	for i := range len(s) {
-		if s[i] >= utf8.RuneSelf {
-			return false
-		}
-	}
-
-	return true
 }

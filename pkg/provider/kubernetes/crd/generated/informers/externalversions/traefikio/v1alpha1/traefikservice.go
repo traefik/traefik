@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,25 +27,54 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
 
 // TraefikServiceInformer provides access to a shared informer and lister for
-// TraefikServices.
+// TraefikServices. Prefer using the type-safe variant (see [TypedTraefikServiceInformer]).
 type TraefikServiceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TraefikServiceLister
+	Lister() traefikiov1alpha1.TraefikServiceLister
 }
+
+// TypedTraefikServiceInformer provides access to a shared informer and lister for
+// TraefikServices, including the type-safe TypedInformer variant.
+// It is a superset of TraefikServiceInformer.
+type TypedTraefikServiceInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() TraefikServiceIndexInformer
+	Lister() traefikiov1alpha1.TraefikServiceLister
+}
+
+// TraefikServiceIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type TraefikServiceIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.TraefikService]
+
+// TraefikServiceHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for TraefikService.
+type TraefikServiceHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.TraefikService]
+
+// TraefikServiceDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for TraefikService.
+type TraefikServiceDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.TraefikService]
+
+// TraefikServiceFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for TraefikService.
+type TraefikServiceFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.TraefikService]
+
+// TraefikServiceIndexers is a specialization of [cache.TypedIndexers] for TraefikService.
+type TraefikServiceIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.TraefikService]
+
+// DeletedTraefikService is a specialization of [cache.DeletedObject] for TraefikService.
+type DeletedTraefikService = cache.DeletedObject[*crdtraefikiov1alpha1.TraefikService]
 
 type traefikServiceInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -56,43 +85,132 @@ type traefikServiceInformer struct {
 // NewTraefikServiceInformer constructs a new informer for TraefikService type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTraefikServiceInformer]).
 func NewTraefikServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredTraefikServiceInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewTraefikServiceInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedTraefikServiceInformer constructs a new informer for TraefikService type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTraefikServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TraefikServiceIndexers) TraefikServiceIndexInformer {
+	return NewTypedTraefikServiceInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredTraefikServiceInformer constructs a new informer for TraefikService type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredTraefikServiceInformer]).
 func NewFilteredTraefikServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
-		&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+	return NewTypedTraefikServiceInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredTraefikServiceInformer constructs a new informer for TraefikService type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredTraefikServiceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers TraefikServiceIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) TraefikServiceIndexInformer {
+	return NewTypedTraefikServiceInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
+}
+
+// NewTraefikServiceInformerWithOptions constructs a new informer for TraefikService type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedTraefikServiceInformerWithOptions]).
+func NewTraefikServiceInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedTraefikServiceInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedTraefikServiceInformerWithOptions constructs a new informer for TraefikService type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedTraefikServiceInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) TraefikServiceIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "traefikservices"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TraefikService](cache.NewSharedIndexInformerWithOptions(
+		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.Background(), opts)
 			},
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(ctx, opts)
+			},
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&opts)
+				}
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(ctx, opts)
+			},
+		}, client),
+		&crdtraefikiov1alpha1.TraefikService{},
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
 		},
-		&traefikiov1alpha1.TraefikService{},
-		resyncPeriod,
-		indexers,
-	)
+	))
 }
 
 func (f *traefikServiceInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredTraefikServiceInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTypedTraefikServiceInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *traefikServiceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.TraefikService{}, f.defaultInformer)
+	return f.TypedInformer()
 }
 
-func (f *traefikServiceInformer) Lister() v1alpha1.TraefikServiceLister {
-	return v1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
+func (f *traefikServiceInformer) TypedInformer() TraefikServiceIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TraefikService](f.factory.InformerFor(&crdtraefikiov1alpha1.TraefikService{}, f.defaultInformer))
+}
+
+func (f *traefikServiceInformer) Lister() traefikiov1alpha1.TraefikServiceLister {
+	return traefikiov1alpha1.NewTraefikServiceLister(f.Informer().GetIndexer())
+}
+
+// ToTypedTraefikServiceInformer converts an untyped informer into a TypedTraefikServiceInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TraefikService. If that is not the case, calling type-safe methods of the returned
+// TypedTraefikServiceInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedTraefikServiceInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedTraefikServiceInformer(informer TraefikServiceInformer) TypedTraefikServiceInformer {
+	if informer, ok := informer.(TypedTraefikServiceInformer); ok {
+		return informer
+	}
+	return &traefikServiceTypedInformerAdapter{informer}
+}
+
+type traefikServiceTypedInformerAdapter struct {
+	TraefikServiceInformer
+}
+
+func (a *traefikServiceTypedInformerAdapter) TypedInformer() TraefikServiceIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TraefikService](a.Informer())
+}
+
+// ToTraefikServiceIndexInformer converts an untyped informer into a TraefikServiceIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *TraefikService. If that is not the case, calling type-safe methods of the returned
+// TraefikServiceIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a TraefikServiceIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTraefikServiceIndexInformer(informer cache.SharedIndexInformer) TraefikServiceIndexInformer {
+	if informer, ok := informer.(TraefikServiceIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.TraefikService](informer)
 }

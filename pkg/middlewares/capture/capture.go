@@ -24,15 +24,10 @@
 package capture
 
 import (
-	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"net"
 	"net/http"
-
-	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 type key string
@@ -96,20 +91,6 @@ func (c *Capture) Reset(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.ResponseWriter, *http.Request) {
-	ctx := context.WithValue(req.Context(), capturedData, c)
-	newReq := req.WithContext(ctx)
-
-	if newReq.Body != nil {
-		readCounter := &readCounter{source: newReq.Body}
-		c.rr = readCounter
-		newReq.Body = readCounter
-	}
-	c.crw = &captureResponseWriter{rw: rw}
-
-	return c.crw, newReq
-}
-
 func (c *Capture) ResponseSize() int64 {
 	return c.crw.Size()
 }
@@ -125,6 +106,20 @@ func (c *Capture) RequestSize() int64 {
 		return 0
 	}
 	return c.rr.size
+}
+
+func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.ResponseWriter, *http.Request) {
+	ctx := context.WithValue(req.Context(), capturedData, c)
+	newReq := req.WithContext(ctx)
+
+	if newReq.Body != nil {
+		readCounter := &readCounter{source: newReq.Body}
+		c.rr = readCounter
+		newReq.Body = readCounter
+	}
+	c.crw = &captureResponseWriter{rw: rw}
+
+	return c.crw, newReq
 }
 
 type readCounter struct {
@@ -143,8 +138,6 @@ func (r *readCounter) Read(p []byte) (int, error) {
 func (r *readCounter) Close() error {
 	return r.source.Close()
 }
-
-var _ middlewares.Stateful = &captureResponseWriter{}
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks response status and size.
@@ -182,16 +175,7 @@ func (crw *captureResponseWriter) WriteHeader(s int) {
 	crw.status = s
 }
 
-func (crw *captureResponseWriter) Flush() {
-	if f, ok := crw.rw.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := crw.rw.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (crw *captureResponseWriter) Unwrap() http.ResponseWriter {
+	return crw.rw
 }

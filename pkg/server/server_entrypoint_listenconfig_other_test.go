@@ -3,7 +3,6 @@
 package server
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"

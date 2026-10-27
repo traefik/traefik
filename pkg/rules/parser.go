@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/vulcand/predicate"
@@ -28,7 +29,7 @@ type Tree struct {
 
 // NewParser constructs a parser for the given matchers.
 func NewParser(matchers []string) (predicate.Parser, error) {
-	parserFuncs := make(map[string]interface{})
+	parserFuncs := make(map[string]any)
 
 	for _, matcherName := range matchers {
 		fn := func(value ...string) TreeBuilder {
@@ -98,16 +99,21 @@ func notFunc(elem TreeBuilder) TreeBuilder {
 	}
 }
 
-// ParseMatchers returns the subset of matchers in the Tree matching the given matchers.
-func (tree *Tree) ParseMatchers(matchers []string) []string {
+// ParsePositiveMatchers returns the subset of matchers in the Tree matching the given matchers,
+// skipping the negated ones. A negated matcher excludes its values from what the rule matches,
+// they are therefore not part of the values the rule can match.
+func (tree *Tree) ParsePositiveMatchers(matchers []string) []string {
 	switch tree.Matcher {
 	case and, or:
-		return append(tree.RuleLeft.ParseMatchers(matchers), tree.RuleRight.ParseMatchers(matchers)...)
+		return append(tree.RuleLeft.ParsePositiveMatchers(matchers), tree.RuleRight.ParsePositiveMatchers(matchers)...)
 	default:
-		for _, matcher := range matchers {
-			if tree.Matcher == matcher {
-				return lower(tree.Value)
-			}
+		// Negation is pushed down to the leaves by invert.
+		if tree.Not {
+			return nil
+		}
+
+		if slices.Contains(matchers, tree.Matcher) {
+			return lower(tree.Value)
 		}
 
 		return nil

@@ -2,6 +2,7 @@ package buffering
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/rs/zerolog"
@@ -27,8 +28,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	logger.Debug().Msgf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
 		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes, config.MaxResponseBodyBytes, config.RetryExpression)
 
-	oxyBuffer, err := oxybuffer.New(
-		next,
+	// Retrying requires both the request body, to replay it, and the response, to evaluate the retry expression.
+	if config.RetryExpression != "" && (config.DisableRequestBuffer || config.DisableResponseBuffer) {
+		return nil, errors.New("retryExpression cannot be used when disableRequestBuffer or disableResponseBuffer is enabled")
+	}
+
+	options := []oxybuffer.Option{
 		oxybuffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
 		oxybuffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 		oxybuffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
@@ -36,6 +41,19 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 		oxybuffer.Logger(logs.NewOxyWrapper(*logger)),
 		oxybuffer.Verbose(logger.GetLevel() == zerolog.TraceLevel),
 		oxybuffer.Cond(len(config.RetryExpression) > 0, oxybuffer.Retry(config.RetryExpression)),
+	}
+
+	if config.DisableRequestBuffer {
+		options = append(options, oxybuffer.DisableRequestBuffer())
+	}
+
+	if config.DisableResponseBuffer {
+		options = append(options, oxybuffer.DisableResponseBuffer())
+	}
+
+	oxyBuffer, err := oxybuffer.New(
+		next,
+		options...,
 	)
 	if err != nil {
 		return nil, err

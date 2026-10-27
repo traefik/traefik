@@ -49,7 +49,7 @@ As a maintainer, you are granted a vote for the following:
 - [Proposals](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
 
 Maintainers are also added to the maintainer's Discord server where happens the [issue triage](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)
-and appear on the [Maintainers](maintainers.md) page.
+and appear on the [Maintainers](./maintainers.md) page.
 
 As a maintainer, you should: 
 

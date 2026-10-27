@@ -63,7 +63,7 @@ func parseAcceptableEncodings(acceptEncoding []string, supportedEncodings map[st
 	var encodings []Encoding
 
 	for _, line := range acceptEncoding {
-		for _, item := range strings.Split(strings.ReplaceAll(line, " ", ""), ",") {
+		for item := range strings.SplitSeq(strings.ReplaceAll(line, " ", ""), ",") {
 			parsed := strings.SplitN(item, ";", 2)
 			if len(parsed) == 0 {
 				continue

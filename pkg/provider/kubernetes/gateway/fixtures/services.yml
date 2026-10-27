@@ -624,3 +624,129 @@ endpoints:
       - 10.10.0.31
     conditions:
       ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-nil-port-name
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-nil-port-name-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-nil-port-name
+
+addressType: IPv4
+ports:
+  - port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-nil-port-value
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-nil-port-value-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-nil-port-value
+
+addressType: IPv4
+ports:
+  - name: web
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-nil-port-name
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      protocol: TCP
+      port: 9000
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoamitcp-nil-port-name-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-nil-port-name
+
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-nil-port-value
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      protocol: TCP
+      port: 9000
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoamitcp-nil-port-value-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-nil-port-value
+
+addressType: IPv4
+ports:
+  - name: myapp
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true

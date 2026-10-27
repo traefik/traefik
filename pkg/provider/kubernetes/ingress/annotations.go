@@ -22,13 +22,14 @@ type RouterConfig struct {
 
 // RouterIng is the router's configuration from annotations.
 type RouterIng struct {
-	PathMatcher   string                             `json:"pathMatcher,omitempty"`
-	EntryPoints   []string                           `json:"entryPoints,omitempty"`
-	Middlewares   []string                           `json:"middlewares,omitempty"`
-	Priority      int                                `json:"priority,omitempty"`
-	RuleSyntax    string                             `json:"ruleSyntax,omitempty"`
-	TLS           *dynamic.RouterTLSConfig           `json:"tls,omitempty" label:"allowEmpty"`
-	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty" label:"allowEmpty"`
+	PathMatcher        string                             `json:"pathMatcher,omitempty"`
+	EntryPoints        []string                           `json:"entryPoints,omitempty"`
+	Middlewares        []string                           `json:"middlewares,omitempty"`
+	Priority           int                                `json:"priority,omitempty"`
+	RuleSyntax         string                             `json:"ruleSyntax,omitempty"`
+	TLS                *dynamic.RouterTLSConfig           `json:"tls,omitempty" label:"allowEmpty"`
+	Observability      *dynamic.RouterObservabilityConfig `json:"observability,omitempty" label:"allowEmpty"`
+	RespondingTimeouts *dynamic.RouterRespondingTimeouts  `json:"respondingTimeouts,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -46,6 +47,7 @@ type ServiceIng struct {
 	ServersScheme    string          `json:"serversScheme,omitempty"`
 	ServersTransport string          `json:"serversTransport,omitempty"`
 	PassHostHeader   *bool           `json:"passHostHeader"`
+	Middlewares      []string        `json:"middlewares,omitempty"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 	NativeLB         *bool           `json:"nativeLB,omitempty"`
 	NodePortLB       bool            `json:"nodePortLB,omitempty"`

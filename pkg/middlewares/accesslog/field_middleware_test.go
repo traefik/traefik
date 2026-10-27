@@ -12,7 +12,7 @@ import (
 func TestConcatFieldHandler_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		existingValue  interface{}
+		existingValue  any
 		newValue       string
 		expectedResult string
 	}{
