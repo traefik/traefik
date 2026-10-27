@@ -2882,8 +2882,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute, retry",
-			paths: []string{"services.yml", "httproute/with_retry.yml"},
+			desc:                     "Simple HTTPRoute, retry",
+			paths:                    []string{"services.yml", "httproute/with_retry.yml"},
+			retryMaxRequestBodyBytes: dynamic.RetryDefaultMaxRequestBodyBytes,
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -3053,8 +3054,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute, retry with defaults",
-			paths: []string{"services.yml", "httproute/with_retry_empty.yml"},
+			desc:                     "Simple HTTPRoute, retry with defaults",
+			paths:                    []string{"services.yml", "httproute/with_retry_empty.yml"},
+			retryMaxRequestBodyBytes: dynamic.RetryDefaultMaxRequestBodyBytes,
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},

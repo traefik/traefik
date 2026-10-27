@@ -99,7 +99,7 @@ type Provider struct {
 	StatusAddress            *StatusAddress   `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 	NativeLBByDefault        bool             `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
 	CrossProviderNamespaces  []string         `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
-	RetryMaxRequestBodyBytes int64            `description:"Defines the maximum request body size (in bytes) buffered for HTTPRoute retries. Defaults to 2MB. If negative, the limit is disabled." json:"retryMaxRequestBodyBytes,omitempty" toml:"retryMaxRequestBodyBytes,omitempty" yaml:"retryMaxRequestBodyBytes,omitempty" export:"true"`
+	RetryMaxRequestBodyBytes int64            `description:"Defines the maximum request body size (in bytes) buffered for HTTPRoute retries. If negative, the limit is disabled." json:"retryMaxRequestBodyBytes,omitempty" toml:"retryMaxRequestBodyBytes,omitempty" yaml:"retryMaxRequestBodyBytes,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -115,6 +115,7 @@ type Provider struct {
 func (p *Provider) SetDefaults() {
 	p.QPS = 50    // the default value for the QPS is 10x the default Kubernetes client QPS value.
 	p.Burst = 100 // the default value for the Burst is 10x the default Kubernetes client Burst value.
+	p.RetryMaxRequestBodyBytes = dynamic.RetryDefaultMaxRequestBodyBytes
 }
 
 // Entrypoint defines the available entry points.
