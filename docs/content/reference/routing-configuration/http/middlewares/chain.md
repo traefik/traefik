@@ -141,8 +141,7 @@ metadata:
   name: auth-users
 spec:
   basicAuth:
-    users:
-    - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
+    secret: auth-users-secret
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
