@@ -120,9 +120,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 	}
 
 	status := gatev1.HTTPRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
+		Parents: parentStatuses,
 	}
 	if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
 		logger.Warn().
@@ -997,11 +995,8 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := schemeHTTP
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
-			protocol = schemeHTTPS
-		}
-		return protocol, nil
+		// Without an appProtocol the backend is assumed to serve plain HTTP.
+		return schemeHTTP, nil
 	}
 
 	switch ap := strings.ToLower(*portSpec.AppProtocol); ap {

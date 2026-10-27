@@ -185,6 +185,16 @@ func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
 }
 
+// IsMetadataOnly returns whether the observability configuration only holds metadata,
+// without any access logs, metrics or tracing settings.
+func (r *RouterObservabilityConfig) IsMetadataOnly() bool {
+	return r.Metadata != nil &&
+		r.AccessLogs == nil &&
+		r.Metrics == nil &&
+		r.Tracing == nil &&
+		r.TraceVerbosity == ""
+}
+
 // +k8s:deepcopy-gen=true
 
 // ObservabilityMetadata holds the observability metadata configuration.

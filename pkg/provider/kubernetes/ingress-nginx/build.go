@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"regexp"
 	"slices"
@@ -16,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
@@ -76,6 +78,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	allHosts := make(map[string]bool)
 	hostsWithUseRegex := make(map[string]bool)
+	hostsWithRootPath := make(map[string]bool)
 	claimedAliases := make(map[string]string)
 
 	// Provider-level default backend.
@@ -104,6 +107,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	ingressPaths := make(map[string]pathEntry)
 
 	serverSnippets := make(map[string]string) // host → first server-snippet seen
+	serverAppRoots := make(map[string]string)
 
 	// Sort ingresses by creation timestamp (ascending). Ties are broken by
 	// descending namespace/name lexicographic order, matching ingress-nginx
@@ -153,6 +157,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		for _, rule := range ingress.Spec.Rules {
 			allHosts[rule.Host] = true
 
+			// The ingress default backend becomes a host-only catch-all location, which matches "/" as well.
+			if ingress.Spec.DefaultBackend != nil && ingress.Spec.DefaultBackend.Service != nil {
+				hostsWithRootPath[rule.Host] = true
+			}
+
 			if ptr.Deref(cfg.UseRegex, false) || ptr.Deref(cfg.RewriteTarget, "") != "" {
 				hostsWithUseRegex[rule.Host] = true
 			}
@@ -163,11 +172,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 			}
 
+			if appRoot := ptr.Deref(cfg.AppRoot, ""); strings.HasPrefix(appRoot, "/") && serverAppRoots[rule.Host] == "" {
+				serverAppRoots[rule.Host] = appRoot
+			}
+
 			if rule.HTTP != nil {
 				for _, pa := range rule.HTTP.Paths {
 					if pa.Backend.Service == nil {
 						continue
 					}
+
+					// An empty path produces a host-only rule, which matches "/" as well.
+					if pa.Path == "/" || pa.Path == "" {
+						hostsWithRootPath[rule.Host] = true
+					}
+
 					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
 					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
 				}
@@ -260,6 +279,10 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// Third pass: build Servers and Locations from regular ingresses.
 	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
 
+	// The app-root "/" router is synthesized at most once per host, on the first
+	// location that needs it, to avoid emitting several routers with the same rule.
+	hostsWithAppRootRouter := make(map[string]bool)
+
 	for _, ing := range regularIngresses {
 		logger := log.Ctx(ctx).With().
 			Str("ingress", ing.Name).
@@ -338,33 +361,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 
 		// Resolve TLS option (auth-tls-secret).
-		var tlsOptionName string
-		var tlsOption *tls.Options
+		var (
+			tlsOptionName string
+			tlsOption     *tls.Options
+		)
 		if ing.config.AuthTLSSecret != nil {
-			// The option name must be a pure function of what determines the TLSOption's content, so that multiple Ingresses
-			// sharing one mTLS policy on the same host resolve to the same TLS option.
-			// The namespace and the secret name are suffixed by their own length so that the key unambiguously
-			// encodes the pair.
-			pascalCaseWordBoundary := regexp.MustCompile(`([a-z0-9])([A-Z])`)
-			clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundary.ReplaceAllString(clientAuthTypeFromString(ing.config.AuthTLSVerifyClient), "$1-$2"))
-			secretNamespace, secretName, _ := strings.Cut(*ing.config.AuthTLSSecret, "/")
-			optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
-
-			if cached, exists := tlsOptionCache[optName]; exists {
-				tlsOptionName = optName
-				tlsOption = cached
-			} else {
-				tlsOpt, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config)
-				if err != nil {
-					logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
-					// Skipping the ingress entirely matches ingress-nginx behavior:
-					// when the configured client-auth secret cannot be resolved, no
-					// router/middleware/service should be exposed for the ingress.
-					continue
-				}
-				tlsOptionName = optName
-				tlsOption = tlsOpt
-				tlsOptionCache[optName] = tlsOption
+			tlsOptionName, tlsOption, err = p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionCache)
+			if err != nil {
+				logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+				// Skipping the ingress entirely matches ingress-nginx behavior:
+				// when the configured client-auth secret cannot be resolved, no
+				// router/middleware/service should be exposed for the ingress.
+				continue
 			}
 		}
 
@@ -431,7 +439,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				// Pre-resolve basic auth.
 				if ing.config.AuthType != nil {
-					basic, digest, err := p.resolveBasicAuth(ing.Namespace, ing.config)
+					basic, digest, authURNRefs, err := p.resolveBasicAuth(ing.Namespace, ing.config)
 					if err != nil {
 						logger.Error().
 							Err(err).
@@ -443,6 +451,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 					loc.BasicAuth = basic
 					loc.DigestAuth = digest
+					loc.AuthURNRefs = authURNRefs
 				}
 
 				// Pre-resolve custom headers ConfigMap.
@@ -491,6 +500,17 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpointCount = len(backend.Endpoints)
 				}
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				if loc.Path == "/" || loc.Path == "" {
+					inheritServerAppRoot(loc, serverAppRoots[rule.Host])
+				}
+
+				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
+				// even when the Ingress declares no "/" path. In Traefik a request has to match
+				// a router before any middleware runs, hence the extra router.
+				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
+					hostsWithAppRootRouter[rule.Host] = true
+				}
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)
@@ -589,6 +609,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServiceName:             db.Service.Name,
 					ServicePort:             portString(db.Service.Port),
 					IsIngressDefaultBackend: true,
+					SSLPassthrough:          sslPassthrough,
 				}
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
@@ -607,6 +628,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					endpointCount = len(backend.Endpoints)
 				}
 				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				inheritServerAppRoot(loc, serverAppRoots[rule.Host])
 
 				srv.Locations = append(srv.Locations, loc)
 				markProcessedIngress(ing.Ingress)
@@ -614,7 +636,45 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 	}
 
+	applyServerClientAuth(ctx, mc.Servers)
+
 	return mc
+}
+
+// applyServerClientAuth applies the client-auth TLS option (auth-tls-secret) of the first location declaring one for a host to every location of that host.
+// ingress-nginx enforces client certificate authentication for the whole server block, configured by the first Ingress declaring it for the host.
+// It also keeps every router serving the host on the same TLS option.
+func applyServerClientAuth(ctx context.Context, servers map[string]*server) {
+	for _, srv := range servers {
+		idx := slices.IndexFunc(srv.Locations, func(loc *location) bool { return loc.TLSOption != nil })
+		if idx < 0 {
+			continue
+		}
+
+		owner := srv.Locations[idx]
+		ignoredIngresses := make(map[string]struct{})
+		for _, loc := range srv.Locations {
+			ingressKey := loc.Namespace + "/" + loc.IngressName
+			if _, ignored := ignoredIngresses[ingressKey]; !ignored && loc.TLSOption != nil && loc.TLSOptionName != owner.TLSOptionName {
+				ignoredIngresses[ingressKey] = struct{}{}
+				log.Ctx(ctx).Warn().
+					Str("ingress", loc.IngressName).
+					Str("namespace", loc.Namespace).
+					Msgf("Host %q is already configured for client certificate authentication by Ingress %s/%s, ignoring auth-tls annotations", srv.Hostname, owner.Namespace, owner.IngressName)
+			}
+
+			loc.TLSOptionName = owner.TLSOptionName
+			loc.TLSOption = owner.TLSOption
+		}
+	}
+}
+
+// ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
+func inheritServerAppRoot(loc *location, appRoot string) {
+	if loc.AppRoot != nil || appRoot == "" {
+		return
+	}
+	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
@@ -856,37 +916,52 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 	return nil
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig) (*tls.Options, error) {
+// buildClientAuthTLSOption resolves the TLS option name and content for the auth-tls-secret annotation.
+// The option name only depends on the secret and the client auth type, so that Ingresses sharing one mTLS policy
+// resolve to the same TLS option. The cross-namespace check depends on the Ingress namespace, which the name
+// leaves out. It must run before the cache lookup, so that a cached option does not bypass it.
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig, tlsOptionsCache map[string]*tls.Options) (string, *tls.Options, error) {
 	if cfg.AuthTLSSecret == nil {
-		return nil, errors.New("auth-tls-secret is nil")
+		return "", nil, errors.New("auth-tls-secret is nil")
 	}
 
-	parts := strings.SplitN(*cfg.AuthTLSSecret, "/", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return nil, errors.New("auth-tls-secret must be in namespace/name format")
+	secretNamespace, secretName, found := strings.Cut(*cfg.AuthTLSSecret, "/")
+	if !found || secretNamespace == "" || secretName == "" {
+		return "", nil, errors.New("auth-tls-secret must be in namespace/name format")
 	}
 
-	secretNamespace, secretName := parts[0], parts[1]
 	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+		return "", nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+	}
+
+	// The namespace and the secret name are suffixed by their own length so that the name unambiguously encodes the pair.
+	pascalCaseWordBoundaryRegexp := regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	clientAuthType := clientAuthTypeFromString(cfg.AuthTLSVerifyClient)
+	clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundaryRegexp.ReplaceAllString(clientAuthType, "$1-$2"))
+	optName := secretNamespace + "-" + strconv.Itoa(len(secretNamespace)) + "-" + secretName + "-" + strconv.Itoa(len(secretName)) + "-" + clientAuthTypeKey
+
+	if opt, exists := tlsOptionsCache[optName]; exists {
+		return optName, opt, nil
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("reading client certificate: %w", err)
+		return "", nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.ca == nil {
-		return nil, errors.New("secret does not contain a CA certificate")
+		return "", nil, errors.New("secret does not contain a CA certificate")
 	}
 
 	opt := &tls.Options{}
 	opt.SetDefaults()
 	opt.ClientAuth = tls.ClientAuth{
 		CAFiles:        []types.FileOrContent{types.FileOrContent(blocks.ca)},
-		ClientAuthType: clientAuthTypeFromString(cfg.AuthTLSVerifyClient),
+		ClientAuthType: clientAuthType,
 	}
-	return opt, nil
+	tlsOptionsCache[optName] = opt
+
+	return optName, opt, nil
 }
 
 // applyDefaultBackendAuth pre-resolves the access-control annotations that are
@@ -897,12 +972,13 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 // then skips the ingress, as ingress-nginx does.
 func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, loc *location) error {
 	if cfg.AuthType != nil {
-		basic, digest, err := p.resolveBasicAuth(namespace, cfg)
+		basic, digest, authURNRefs, err := p.resolveBasicAuth(namespace, cfg)
 		if err != nil {
 			return err
 		}
 		loc.BasicAuth = basic
 		loc.DigestAuth = digest
+		loc.AuthURNRefs = authURNRefs
 	}
 
 	if cfg.CustomHeaders != nil {
@@ -956,24 +1032,26 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 	}
 }
 
-func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, error) {
+// resolveBasicAuth returns the basic or digest auth configuration, and the URN references of its users.
+// The users hold the URNs of their Secret keys, and the returned URN references hold their values.
+func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, map[string]string, error) {
 	if cfg.AuthType == nil {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	authType := *cfg.AuthType
 	if authType != "basic" && authType != "digest" {
-		return nil, nil, fmt.Errorf("invalid auth-type %q", authType)
+		return nil, nil, nil, fmt.Errorf("invalid auth-type %q", authType)
 	}
 
 	authSecret := ptr.Deref(cfg.AuthSecret, "")
 	if authSecret == "" {
-		return nil, nil, errors.New("auth-secret must not be empty")
+		return nil, nil, nil, errors.New("auth-secret must not be empty")
 	}
 
 	parts := strings.Split(authSecret, "/")
 	if len(parts) > 2 {
-		return nil, nil, fmt.Errorf("invalid auth secret format %q", authSecret)
+		return nil, nil, nil, fmt.Errorf("invalid auth secret format %q", authSecret)
 	}
 
 	secretName := parts[0]
@@ -984,29 +1062,41 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 	}
 
 	if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
-		return nil, nil, fmt.Errorf("cross-namespace auth secret not allowed: %s/%s", secretNamespace, secretName)
+		return nil, nil, nil, fmt.Errorf("cross-namespace auth secret not allowed: %s/%s", secretNamespace, secretName)
 	}
 
 	secret, err := p.k8sClient.GetSecret(secretNamespace, secretName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting secret %s: %w", authSecret, err)
+		return nil, nil, nil, fmt.Errorf("getting secret %s: %w", authSecret, err)
 	}
 
 	authSecretType := ptr.Deref(cfg.AuthSecretType, "auth-file")
 	if authSecretType != "auth-file" && authSecretType != "auth-map" {
-		return nil, nil, fmt.Errorf("invalid auth-secret-type %q", authSecretType)
+		return nil, nil, nil, fmt.Errorf("invalid auth-secret-type %q", authSecretType)
 	}
 
 	users, err := basicAuthUsers(secret, authSecretType)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting users from secret: %w", err)
+		return nil, nil, nil, fmt.Errorf("getting users from secret: %w", err)
+	}
+
+	middlewareType := "basicAuth"
+	if authType == "digest" {
+		middlewareType = "digestAuth"
+	}
+
+	// With an auth-map Secret, each user comes from its own key, so each user has its own URN and URNRefs.AddUsers, which takes one key, does not fit.
+	refs := k8s.URNRefs{}
+	userURNs := make(dynamic.Users, len(users))
+	for i, user := range users {
+		userURNs[i] = refs.Add(dynamic.JSONPointer(middlewareType, "users", strconv.Itoa(i)), authSecret, user.key, user.value)
 	}
 
 	realm := ptr.Deref(cfg.AuthRealm, "")
 	if authType == "digest" {
-		return nil, &dynamic.DigestAuth{Users: dynamic.Users(users), Realm: realm}, nil
+		return nil, &dynamic.DigestAuth{Users: userURNs, Realm: realm}, refs.OrNil(), nil
 	}
-	return &dynamic.BasicAuth{Users: dynamic.Users(users), Realm: realm}, nil, nil
+	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
 }
 
 func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
@@ -1158,14 +1248,21 @@ func clientAuthTypeFromString(verifyClient *string) string {
 	}
 }
 
-func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]string, error) {
-	var users []string
+// secretUser is a user read from a Secret, with the key of the Secret holding it.
+type secretUser struct {
+	key   string
+	value string
+}
+
+func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]secretUser, error) {
+	var users []secretUser
 	if authSecretType == "auth-map" {
 		if len(secret.Data) == 0 {
 			return nil, fmt.Errorf("secret %s/%s contains no user credentials", secret.Namespace, secret.Name)
 		}
-		for user, pass := range secret.Data {
-			users = append(users, user+":"+string(pass))
+		// Sorted, so that an unchanged Secret gives the same configuration and does not trigger a reload.
+		for _, user := range slices.Sorted(maps.Keys(secret.Data)) {
+			users = append(users, secretUser{key: user, value: user + ":" + string(secret.Data[user])})
 		}
 		return users, nil
 	}
@@ -1178,7 +1275,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]string, err
 	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
-			users = append(users, line)
+			users = append(users, secretUser{key: "auth", value: line})
 		}
 	}
 

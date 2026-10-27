@@ -77,6 +77,8 @@ Prefer modern standard-library packages (`slices`, `maps`, `cmp`, ...) over hand
 
 - **Logging.** The project uses `github.com/rs/zerolog` exclusively — do not import `log`, `slog`, or `logrus`. Inside a middleware, get a logger via `middlewares.GetLogger(ctx, name, typeName)` (see [`pkg/middlewares/middleware.go`](./pkg/middlewares/middleware.go)) where `typeName` is a package-level `const` like `const typeNameForward = "ForwardAuth"`. Elsewhere, extract the logger from the context with `log.Ctx(ctx)` and attach it to a new context with `.WithContext(ctx)`.
 - **Context propagation.** `context.Context` is always the first argument, named `ctx`. Avoid `context.Background()` in request paths; propagate from the caller. Define custom context keys as unexported struct types (`type myKey struct{}`) to prevent collisions.
+- **ResponseWriter wrappers implement `Unwrap`.** Any type wrapping an `http.ResponseWriter` must expose it with `Unwrap() http.ResponseWriter`. `http.ResponseController` walks the chain through `Unwrap` to reach the connection (read/write deadlines, full duplex, ...); a wrapper without it breaks the chain for every handler below it, and the failure is silent (`http.ErrNotSupported`). Do not add `Flush`/`Hijack` methods that only forward to the wrapped writer, do not implement the deprecated `http.CloseNotifier` (use `req.Context().Done()`), and do not assert `http.Flusher`/`http.Hijacker` on a ResponseWriter: call `http.NewResponseController(rw).Flush()`/`.Hijack()`, and return its error as is (callers check it with `errors.Is(err, http.ErrNotSupported)`). A wrapper that must act on flush or hijack implements `FlushError() error` or `Hijack()` and calls the wrapped writer through `http.ResponseController`. A wrapper that holds back the status code (retry, failover, error pages) must not flush before writing it: flushing commits an implicit `200`.
+- **Third-party handlers are used directly, plugins are wrapped.** A library must flush and hijack through `http.ResponseController` and give the next handler a writer with `Unwrap`; if it does not, fix it upstream. Yaegi/WASM plugins, whose code is unknown, may assert `http.Flusher`/`http.Hijacker` on the writer they receive and may give the next handler a writer without `Unwrap`, which is their right (e.g. a buffering writer must not be flushed past). The plugin builders wrap them with `wrapExternal` (or `wrapExternalWith` when the build function also returns a value), see [`pkg/plugins/external.go`](./pkg/plugins/external.go): deadlines, full duplex and hijacking fall back to the writer given to the plugin when the plugin's writer does not support them; flushing never falls back.
 
 ## Testing conventions
 
@@ -89,6 +91,7 @@ Prefer modern standard-library packages (`slices`, `maps`, `cmp`, ...) over hand
 ## Documentation
 
 User-facing features need matching documentation updates under `docs/content/`. Integrate new pages into the existing structure rather than creating parallel sections. Preview locally with `make docs-serve`.
+Follow the [documentation style guide](./docs/content/contributing/documentation-style-guide.md) when writing or editing pages under `docs/content/`.
 
 ## Contributing etiquette
 

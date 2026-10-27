@@ -130,6 +130,9 @@ type location struct {
 	// DigestAuth holds the resolved digest-auth middleware (nil unless auth-type=digest).
 	DigestAuth *dynamic.DigestAuth
 
+	// AuthURNRefs holds the values of the users of BasicAuth or DigestAuth, which only hold their URNs.
+	AuthURNRefs map[string]string
+
 	// ResolvedCustomHeaders holds the pre-fetched custom response headers.
 	// Populated in Phase 1 from the custom-headers ConfigMap.
 	ResolvedCustomHeaders map[string]string
@@ -181,6 +184,9 @@ type location struct {
 
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
+
+	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
+	AppRootExtraRouterRule string
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
