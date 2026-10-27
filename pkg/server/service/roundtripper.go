@@ -222,12 +222,36 @@ func (s *stickyRoundTrippers) stick(owner *KerberosRoundTripper) http.RoundTripp
 	return roundTripper
 }
 
+// release closes the idle backend connections of the dedicated round trippers, as nothing else does once their
+// client connection is closed: they would stay open until their idle timeout, and as each client connection has its
+// own pool, maxIdleConnsPerHost does not bound them.
+func (s *stickyRoundTrippers) release() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, roundTripper := range s.roundTrippers {
+		if closer, ok := roundTripper.(interface{ CloseIdleConnections() }); ok {
+			closer.CloseIdleConnections()
+		}
+	}
+
+	s.roundTrippers = nil
+}
+
 type transportKeyType string
 
 var transportKey transportKeyType = "transport"
 
 func AddTransportOnContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, transportKey, &stickyRoundTrippers{})
+}
+
+// ReleaseTransportOnContext releases the round trippers dedicated to the client connection of the given context.
+// It must be called once that connection is closed.
+func ReleaseTransportOnContext(ctx context.Context) {
+	if connRoundTrippers, ok := ctx.Value(transportKey).(*stickyRoundTrippers); ok {
+		connRoundTrippers.release()
+	}
 }
 
 func (k *KerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {

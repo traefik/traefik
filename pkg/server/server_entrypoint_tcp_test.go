@@ -11,7 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -20,9 +22,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"golang.org/x/net/http2"
@@ -1633,6 +1637,119 @@ func TestHTTP2RequestTLS(t *testing.T) {
 			_ = resp.Body.Close()
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		})
+	}
+}
+
+func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		hijack bool
+	}{
+		{
+			desc: "closed client connection",
+		},
+		{
+			desc:   "hijacked client connection",
+			hijack: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var backendConns atomic.Int32
+
+			backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+			backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+				switch state {
+				case http.StateNew:
+					backendConns.Add(1)
+				case http.StateClosed, http.StateHijacked:
+					backendConns.Add(-1)
+				}
+			}
+			backend.Start()
+			t.Cleanup(backend.Close)
+
+			backendURL, err := url.Parse(backend.URL)
+			require.NoError(t, err)
+
+			rtManager := service.NewRoundTripperManager()
+			rtManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			roundTripper, err := rtManager.Get("default@internal")
+			require.NoError(t, err)
+
+			router, err := tcprouter.NewRouter()
+			require.NoError(t, err)
+
+			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// Reverse proxy the received request to the backend, keeping its Authorization header so the
+				// round tripper sticks the connection as it would for a real NTLM/Kerberos backend.
+				req.URL.Scheme = backendURL.Scheme
+				req.URL.Host = backendURL.Host
+				req.RequestURI = ""
+
+				resp, err := roundTripper.RoundTrip(req)
+				if err != nil {
+					rw.WriteHeader(http.StatusBadGateway)
+					return
+				}
+				_ = resp.Body.Close()
+
+				if !test.hijack {
+					rw.WriteHeader(resp.StatusCode)
+					return
+				}
+
+				conn, _, err := http.NewResponseController(rw).Hijack()
+				if err != nil {
+					rw.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				defer conn.Close()
+
+				_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"))
+			}))
+
+			epConfig := &static.EntryPointsTransport{}
+			epConfig.SetDefaults()
+
+			entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+				Address:          "127.0.0.1:0",
+				Transport:        epConfig,
+				ForwardedHeaders: &static.ForwardedHeaders{},
+				HTTP2:            &static.HTTP2Config{},
+			}, nil)
+			require.NoError(t, err)
+
+			conn, err := startEntrypoint(t, entryPoint, router)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = conn.Close()
+				entryPoint.Shutdown(t.Context())
+			})
+
+			req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1", http.NoBody)
+			require.NoError(t, err)
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+			require.NoError(t, req.Write(conn))
+
+			resp, err := http.ReadResponse(bufio.NewReader(conn), req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			// A hijacked connection is released as soon as it is hijacked, before the response is even written.
+			if !test.hijack {
+				require.EqualValues(t, 1, backendConns.Load())
+				require.NoError(t, conn.Close())
+			}
+
+			assert.Eventually(t, func() bool { return backendConns.Load() == 0 }, 5*time.Second, 10*time.Millisecond)
 		})
 	}
 }

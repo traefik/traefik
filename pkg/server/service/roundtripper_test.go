@@ -691,3 +691,70 @@ func TestKerberosRoundTripperSticksOnceOnConcurrentRequests(t *testing.T) {
 
 	assert.EqualValues(t, 1, newCalls.Load())
 }
+
+func TestReleaseTransportOnContext(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		disableHTTP2 bool
+	}{
+		{
+			desc: "with HTTP/2 enabled",
+		},
+		{
+			desc:         "with HTTP/2 disabled",
+			disableHTTP2: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var backendConns atomic.Int32
+
+			backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+			backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+				switch state {
+				case http.StateNew:
+					backendConns.Add(1)
+				case http.StateClosed, http.StateHijacked:
+					backendConns.Add(-1)
+				}
+			}
+			backend.Start()
+			t.Cleanup(backend.Close)
+
+			rtManager := NewRoundTripperManager()
+			rtManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {DisableHTTP2: test.disableHTTP2}})
+
+			roundTripper, err := rtManager.Get("default@internal")
+			require.NoError(t, err)
+
+			ctx := AddTransportOnContext(t.Context())
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, backend.URL, http.NoBody)
+			require.NoError(t, err)
+			req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+			resp, err := roundTripper.RoundTrip(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			require.EqualValues(t, 1, backendConns.Load())
+
+			ReleaseTransportOnContext(ctx)
+
+			assert.Eventually(t, func() bool { return backendConns.Load() == 0 }, time.Second, 10*time.Millisecond)
+		})
+	}
+}
+
+func TestReleaseTransportOnContextWithoutTransport(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ReleaseTransportOnContext(t.Context())
+		ReleaseTransportOnContext(AddTransportOnContext(t.Context()))
+	})
+}
