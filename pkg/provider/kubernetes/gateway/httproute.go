@@ -160,7 +160,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 
 		var retry *dynamic.Middleware
 		if routeRule.Retry != nil {
-			retry = createRetry(ctx, routeRule.Retry)
+			retry = createRetry(ctx, routeRule.Retry, p.RetryMaxRequestBodyBytes)
 		}
 
 		for _, match := range routeRule.Matches {
@@ -1100,7 +1100,7 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 	}
 }
 
-func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry) *dynamic.Middleware {
+func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry, maxRequestBodyBytes int64) *dynamic.Middleware {
 	// The Gateway API attempts are the number of retries,
 	// whereas the Traefik ones also count the initial request, hence the +1.
 	r := &dynamic.Retry{
@@ -1108,6 +1108,10 @@ func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry) *dynamic.Mid
 		Attempts: ptr.Deref(retry.Attempts, 1) + 1,
 	}
 	r.SetDefaults()
+
+	if maxRequestBodyBytes != 0 {
+		r.MaxRequestBodyBytes = &maxRequestBodyBytes
+	}
 
 	for _, code := range retry.Codes {
 		r.Status = append(r.Status, strconv.Itoa(int(code)))
