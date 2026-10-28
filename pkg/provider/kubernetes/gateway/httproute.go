@@ -820,7 +820,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 					ObservedGeneration: policy.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-					Message:            fmt.Sprintf("getting ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
+					Message:            fmt.Sprintf("Cannot get ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
 				}
 			}
 
