@@ -34,7 +34,7 @@ type Mirroring struct {
 	streamBody bool
 
 	lock  sync.RWMutex
-	total uint64
+	total int64
 }
 
 // New returns a new instance of *Mirroring.
@@ -57,11 +57,11 @@ func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int
 type mirrorHandler struct {
 	http.Handler
 
-	numerator   uint64
-	denominator uint64
+	numerator   int64
+	denominator int64
 
 	lock  sync.RWMutex
-	count uint64
+	count int64
 }
 
 type clonableRequest interface {
@@ -150,7 +150,7 @@ func (m *Mirroring) AddMirror(handler http.Handler, numerator, denominator int64
 	if denominator <= 0 || numerator < 0 || numerator > denominator {
 		return fmt.Errorf("invalid fraction %d/%d: the denominator must be positive, and the numerator between 0 and the denominator", numerator, denominator)
 	}
-	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, numerator: uint64(numerator), denominator: uint64(denominator)})
+	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, numerator: numerator, denominator: denominator})
 	return nil
 }
 
@@ -221,7 +221,7 @@ func (m *Mirroring) serveStreamBody(rw http.ResponseWriter, req *http.Request, m
 	m.handler.ServeHTTP(rw, req)
 }
 
-func (m *Mirroring) inc() uint64 {
+func (m *Mirroring) inc() int64 {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	m.total++

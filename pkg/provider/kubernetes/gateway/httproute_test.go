@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -324,7 +325,7 @@ func Test_createCORS(t *testing.T) {
 	}
 }
 
-func Test_mirrorFraction(t *testing.T) {
+func Test_loadRequestMirror(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		filter              gatev1.HTTPRequestMirrorFilter
@@ -378,9 +379,30 @@ func Test_mirrorFraction(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			numerator, denominator := mirrorFraction(&test.filter)
-			assert.Equal(t, test.expectedNumerator, numerator)
-			assert.Equal(t, test.expectedDenominator, denominator)
+			// A cross-provider backend reference is loaded without any Kubernetes resource.
+			test.filter.BackendRef = gatev1.BackendObjectReference{
+				Group: new(gatev1.Group("traefik.io")),
+				Kind:  new(gatev1.Kind("TraefikService")),
+				Name:  "mirror@file",
+			}
+			route := &gatev1.HTTPRoute{Namespace: "default"}
+			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{
+				Middlewares: map[string]*dynamic.Middleware{},
+				Services:    map[string]*dynamic.Service{},
+			}}
+
+			var p Provider
+			middleware, err := p.loadRequestMirror(t.Context(), "gateway", "default", gatewayListener{}, conf, "mirror", route, &test.filter, nil, nil)
+			require.NoError(t, err)
+
+			expected := &dynamic.Middleware{
+				RequestMirror: &dynamic.RequestMirror{
+					Service:     "mirror@file",
+					Numerator:   test.expectedNumerator,
+					Denominator: test.expectedDenominator,
+				},
+			}
+			assert.Equal(t, expected, middleware)
 		})
 	}
 }

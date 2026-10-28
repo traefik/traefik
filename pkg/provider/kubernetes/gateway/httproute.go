@@ -543,48 +543,6 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 	return middlewareNames, nil
 }
 
-// loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
-func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
-	if filter == nil {
-		return nil, errors.New("missing configuration")
-	}
-
-	mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.BackendRef}
-	serviceName, condition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
-	if condition != nil {
-		return nil, errors.New(condition.Message)
-	}
-
-	numerator, denominator := mirrorFraction(filter)
-
-	return &dynamic.Middleware{
-		RequestMirror: &dynamic.RequestMirror{
-			Service:     serviceName,
-			Numerator:   numerator,
-			Denominator: denominator,
-		},
-	}, nil
-}
-
-// mirrorFraction returns the fraction of requests to mirror, as a numerator and a denominator.
-// When neither the percent nor the fraction is set, all the requests are mirrored.
-func mirrorFraction(filter *gatev1.HTTPRequestMirrorFilter) (int64, int64) {
-	switch {
-	case filter.Percent != nil:
-		return min(max(int64(*filter.Percent), 0), 100), 100
-
-	case filter.Fraction != nil:
-		denominator := int64(ptr.Deref(filter.Fraction.Denominator, 100))
-		if denominator <= 0 {
-			return 0, 1
-		}
-		return min(max(int64(filter.Fraction.Numerator), 0), denominator), denominator
-
-	default:
-		return 1, 1
-	}
-}
-
 func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRef *gatev1.LocalObjectReference) (string, *dynamic.Middleware, error) {
 	if extensionRef == nil {
 		return "", nil, errors.New("filter extension ref undefined")
@@ -1235,4 +1193,40 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
 	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
+}
+
+// loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
+func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
+	if filter == nil {
+		return nil, errors.New("missing configuration")
+	}
+
+	mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.BackendRef}
+	serviceName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
+	if errCondition != nil {
+		return nil, errors.New(errCondition.Message)
+	}
+
+	// When neither the percent nor the fraction is set, all the requests are mirrored.
+	var numerator, denominator int64 = 1, 1
+	switch {
+	case filter.Percent != nil:
+		numerator, denominator = min(max(int64(*filter.Percent), 0), 100), 100
+
+	case filter.Fraction != nil:
+		denominator = int64(ptr.Deref(filter.Fraction.Denominator, 100))
+		if denominator <= 0 {
+			numerator, denominator = 0, 1
+		} else {
+			numerator = min(max(int64(filter.Fraction.Numerator), 0), denominator)
+		}
+	}
+
+	return &dynamic.Middleware{
+		RequestMirror: &dynamic.RequestMirror{
+			Service:     serviceName,
+			Numerator:   numerator,
+			Denominator: denominator,
+		},
+	}, nil
 }
