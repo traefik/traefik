@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-26T16:50:54+01:00"
+date: "2026-10-28T14:03:41+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -31,6 +31,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -40,7 +41,6 @@ profiles:
     - GatewayPort8080
     - ListenerSet
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
@@ -73,6 +73,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -108,7 +109,6 @@ profiles:
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
@@ -133,6 +133,7 @@ profiles:
       Passed: 8
       Skipped: 1
     supportedFeatures:
+    - ClusterTrustBundle
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -143,7 +144,6 @@ profiles:
     - ListenerSet
     - TCPRoute
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
@@ -171,6 +171,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
     - GatewayFrontendClientCertificateValidationInsecureFallback
@@ -182,7 +183,6 @@ profiles:
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster

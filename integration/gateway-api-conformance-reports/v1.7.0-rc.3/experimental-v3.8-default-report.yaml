@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-26T16:48:00+01:00"
+date: "2026-10-28T13:59:22+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -27,6 +27,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -38,7 +39,6 @@ profiles:
     - GatewayStaticAddresses
     - ListenerSet
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
@@ -60,6 +60,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -97,7 +98,6 @@ profiles:
     - HTTPRouteSchemeRedirect
     - ListenerSet
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
@@ -117,6 +117,7 @@ profiles:
       Passed: 11
       Skipped: 0
     supportedFeatures:
+    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -129,7 +130,6 @@ profiles:
     - ListenerSet
     - TCPRoute
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
@@ -151,6 +151,7 @@ profiles:
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
+    - ClusterTrustBundle
     - GatewayAddressEmpty
     - GatewayBackendClientCertificate
     - GatewayFrontendClientCertificateValidation
@@ -164,7 +165,6 @@ profiles:
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
     unsupportedFeatures:
-    - ClusterTrustBundle
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
