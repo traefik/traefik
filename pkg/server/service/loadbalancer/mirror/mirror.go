@@ -30,18 +30,18 @@ type Mirroring struct {
 	maxBodySize      int64
 	wantsHealthCheck bool
 
-	// streaming sends the mirrored requests along with the main one, and streams the body to them while the main handler reads it.
-	streaming bool
+	// streamBody sends the mirrored requests along with the main one, and streams the body to them while the main handler reads it.
+	streamBody bool
 
 	lock  sync.RWMutex
 	total uint64
 }
 
 // New returns a new instance of *Mirroring.
-// When streaming, the request body is streamed to the mirrors instead of being buffered before calling the main handler,
+// When streamBody is true, the request body is streamed to the mirrors instead of being buffered before calling the main handler,
 // and maxBodySize is ignored.
 // A mirror reading the body slower than the main handler is then aborted, so that it never slows the main request down.
-func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, streaming bool, hc *dynamic.HealthCheck) *Mirroring {
+func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, streamBody bool, hc *dynamic.HealthCheck) *Mirroring {
 	return &Mirroring{
 		routinePool:      pool,
 		handler:          handler,
@@ -50,7 +50,7 @@ func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int
 		maxBodySize:      maxBodySize,
 		wantsHealthCheck: hc != nil,
 		// Without a mirrored body, there is nothing to stream.
-		streaming: streaming && mirrorBody,
+		streamBody: streamBody && mirrorBody,
 	}
 }
 
@@ -75,8 +75,8 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if m.streaming {
-		m.serveStreaming(rw, req, mirrors)
+	if m.streamBody {
+		m.serveStreamBody(rw, req, mirrors)
 		return
 	}
 
@@ -179,9 +179,9 @@ func (m *Mirroring) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
-// serveStreaming sends the mirrored requests before calling the main handler,
+// serveStreamBody sends the mirrored requests before calling the main handler,
 // and streams them the request body while the main handler reads it.
-func (m *Mirroring) serveStreaming(rw http.ResponseWriter, req *http.Request, mirrors []http.Handler) {
+func (m *Mirroring) serveStreamBody(rw http.ResponseWriter, req *http.Request, mirrors []http.Handler) {
 	hasBody := req.Body != nil && req.Body != http.NoBody
 
 	var bodies []*streamedBody
