@@ -134,8 +134,17 @@ func hostRegexp(tree *matchersTree, hosts ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(requestdecorator.GetCanonicalHost(req.Context())) ||
-			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
+		reqHost := requestdecorator.GetCanonicalHost(req.Context())
+		if re.MatchString(reqHost) || re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context())) {
+			return true
+		}
+
+		// A fully qualified host with a trailing period names the same host, as in the Host matcher.
+		if h, ok := strings.CutSuffix(reqHost, "."); ok {
+			return re.MatchString(h)
+		}
+
+		return false
 	}
 
 	return nil
