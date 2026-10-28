@@ -42,19 +42,21 @@ const (
 
 	controllerName = "traefik.io/gateway-controller"
 
-	groupCore    = "core"
-	groupGateway = "gateway.networking.k8s.io"
+	groupCore         = "core"
+	groupGateway      = "gateway.networking.k8s.io"
+	groupCertificates = "certificates.k8s.io"
 
-	kindGateway        = "Gateway"
-	kindTraefikService = "TraefikService"
-	kindHTTPRoute      = "HTTPRoute"
-	kindGRPCRoute      = "GRPCRoute"
-	kindTCPRoute       = "TCPRoute"
-	kindTLSRoute       = "TLSRoute"
-	kindService        = "Service"
-	kindListenerSet    = "ListenerSet"
-	kindConfigMap      = "ConfigMap"
-	kindSecret         = "Secret"
+	kindGateway            = "Gateway"
+	kindTraefikService     = "TraefikService"
+	kindHTTPRoute          = "HTTPRoute"
+	kindGRPCRoute          = "GRPCRoute"
+	kindTCPRoute           = "TCPRoute"
+	kindTLSRoute           = "TLSRoute"
+	kindService            = "Service"
+	kindListenerSet        = "ListenerSet"
+	kindConfigMap          = "ConfigMap"
+	kindSecret             = "Secret"
+	kindClusterTrustBundle = "ClusterTrustBundle"
 
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
@@ -1127,7 +1129,7 @@ func (p *Provider) resolveFrontendValidation(gateway *gatev1.Gateway, validation
 }
 
 // resolveCACertificateRefs returns the referenced CA certificate, or the ResolvedRefs condition explaining why it cannot.
-// Only the Core support is implemented: a single ConfigMap reference with a ca.crt key.
+// A single reference is supported: a ConfigMap with a ca.crt key, or a ClusterTrustBundle.
 func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gatev1.ObjectReference) (string, *metav1.Condition) {
 	if len(refs) != 1 {
 		return "", &metav1.Condition{
@@ -1141,6 +1143,10 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 	}
 
 	ref := refs[0]
+	if ref.Group == groupCertificates && ref.Kind == kindClusterTrustBundle {
+		return p.resolveClusterTrustBundleRef(gateway, ref)
+	}
+
 	if (ref.Group != "" && ref.Group != groupCore) || ref.Kind != kindConfigMap {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -1191,6 +1197,68 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 	return caCert, nil
 }
 
+// resolveClusterTrustBundleRef returns the trust bundle of the referenced ClusterTrustBundle, or the ResolvedRefs condition explaining why it cannot.
+// Per GEP-5075, the reference needs no ReferenceGrant, and an unsupported API is reported as an invalid kind.
+func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gatev1.ObjectReference) (string, *metav1.Condition) {
+	if !p.client.clusterTrustBundleAPIServed {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+			Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
+		}
+	}
+
+	if !p.client.clusterTrustBundleAllowed {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+			Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
+		}
+	}
+
+	if ref.Namespace != nil {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+			Message:            fmt.Sprintf("Unsupported namespace on cluster-scoped CACertificateRef: ClusterTrustBundle %s", ref.Name),
+		}
+	}
+
+	ctb, err := p.client.GetClusterTrustBundle(string(ref.Name))
+	if err != nil {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+			Message:            fmt.Sprintf("Cannot resolve ClusterTrustBundle: %s: %s", ref.Name, err),
+		}
+	}
+
+	if ctb.Spec.TrustBundle == "" {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+			Message:            fmt.Sprintf("Cannot find trustBundle: ClusterTrustBundle %s", ref.Name),
+		}
+	}
+
+	return ctb.Spec.TrustBundle, nil
+}
+
 func (p *Provider) makeGatewayStatus(gwl gatewayWithListeners, addresses []gatev1.GatewayStatusAddress, accepted bool) (gatev1.GatewayStatus, []metav1.Condition) {
 	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
@@ -1215,7 +1283,8 @@ func (p *Provider) makeGatewayStatus(gwl gatewayWithListeners, addresses []gatev
 		}
 
 		if len(listener.Status.Conditions) == 0 {
-			listener.Status.Conditions = append(listener.Status.Conditions,
+			listener.Status.Conditions = append(
+				listener.Status.Conditions,
 				metav1.Condition{
 					Type:               string(gatev1.ListenerConditionAccepted),
 					Status:             metav1.ConditionTrue,

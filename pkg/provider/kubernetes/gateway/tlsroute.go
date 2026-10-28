@@ -528,14 +528,40 @@ func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.Back
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != kindConfigMap && caCertRef.Kind != kindSecret) {
+		isConfigMapOrSecret := (caCertRef.Group == "" || caCertRef.Group == groupCore) && (caCertRef.Kind == kindConfigMap || caCertRef.Kind == kindSecret)
+		isClusterTrustBundle := caCertRef.Group == groupCertificates && caCertRef.Kind == kindClusterTrustBundle
+
+		if !isClusterTrustBundle && !isConfigMapOrSecret {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps and Secrets are supported",
+				Message:            "Only ConfigMaps, Secrets, and ClusterTrustBundles are supported",
+			}
+		}
+
+		// GEP-5075 requires the InvalidKind reason when the cluster does not serve the ClusterTrustBundle API.
+		if isClusterTrustBundle && !p.client.clusterTrustBundleAPIServed {
+			return nil, metav1.Condition{
+				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+				Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
+			}
+		}
+
+		if isClusterTrustBundle && !p.client.clusterTrustBundleAllowed {
+			return nil, metav1.Condition{
+				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+				Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
 			}
 		}
 
@@ -567,6 +593,31 @@ func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.Back
 				}
 			}
 			caCRT = string(secret.Data["ca.crt"])
+		case kindClusterTrustBundle:
+			ctb, err := p.client.GetClusterTrustBundle(string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("Cannot get ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
+				}
+			}
+
+			if ctb.Spec.TrustBundle == "" {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("ClusterTrustBundle %s has an empty trustBundle", string(caCertRef.Name)),
+				}
+			}
+
+			caCRT = ctb.Spec.TrustBundle
 		}
 
 		if caCRT == "" {

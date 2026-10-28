@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -227,6 +228,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		entryPoints              map[string]Entrypoint
 		nativeLB                 bool
 		retryMaxRequestBodyBytes int64
+		clusterTrustBundleAPI    bool
+		clusterTrustBundleRBAC   bool
 	}{
 		{
 			desc: "Empty",
@@ -4505,6 +4508,189 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:                   "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle",
+			paths:                  []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI:  true,
+			clusterTrustBundleRBAC: true,
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://10.10.0.1:80",
+									},
+									{
+										URL: "https://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								ServersTransport: "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+							ServerName: "whoami",
+							RootCAs: []types.FileOrContent{
+								"CA-FROM-CLUSTER-TRUST-BUNDLE",
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle when the API is not served",
+			paths: []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+										Status: new(500),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:                  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle when the list and watch permissions are missing",
+			paths:                 []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI: true,
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+										Status: new(500),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
 			desc:     "Simple HTTPRoute with NativeLBByDefault enabled",
 			paths:    []string{"services.yml", "httproute/simple.yml"},
 			nativeLB: true,
@@ -5352,6 +5538,19 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
+			if test.clusterTrustBundleAPI {
+				kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
+					GroupVersion: "certificates.k8s.io/v1",
+					APIResources: []metav1.APIResource{
+						{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
+					},
+				})
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+					return true, &authorizationv1.SelfSubjectAccessReview{
+						Status: authorizationv1.SubjectAccessReviewStatus{Allowed: test.clusterTrustBundleRBAC},
+					}, nil
+				})
+			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -6243,11 +6442,91 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 func TestLoadGRPCRoutes(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		paths       []string
-		expected    *dynamic.Configuration
-		entryPoints map[string]Entrypoint
+		desc                   string
+		paths                  []string
+		expected               *dynamic.Configuration
+		entryPoints            map[string]Entrypoint
+		clusterTrustBundleAPI  bool
+		clusterTrustBundleRBAC bool
 	}{
+		{
+			desc:                   "Simple GRPCRoute and BackendTLSPolicy with ClusterTrustBundle",
+			paths:                  []string{"services.yml", "grpcroute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI:  true,
+			clusterTrustBundleRBAC: true,
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
+							Rule:       `Host("foo.com") && PathPrefix("/")`,
+							Priority:   22,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://10.10.0.1:80",
+									},
+									{
+										URL: "https://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								ServersTransport: "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-svc-default-whoami-0": {
+							ServerName: "whoami",
+							RootCAs: []types.FileOrContent{
+								"CA-FROM-CLUSTER-TRUST-BUNDLE",
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
 		{
 			desc:  "Simple GRPCRoute and BackendTLSPolicy with CA certificate",
 			paths: []string{"services.yml", "grpcroute/with_backend_tls_policy.yml"},
@@ -7103,6 +7382,19 @@ func TestLoadGRPCRoutes(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
+			if test.clusterTrustBundleAPI {
+				kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
+					GroupVersion: "certificates.k8s.io/v1",
+					APIResources: []metav1.APIResource{
+						{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
+					},
+				})
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+					return true, &authorizationv1.SelfSubjectAccessReview{
+						Status: authorizationv1.SubjectAccessReviewStatus{Allowed: test.clusterTrustBundleRBAC},
+					}, nil
+				})
+			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -8623,12 +8915,14 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 func TestLoadTLSRoutes(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		entryPoints  map[string]Entrypoint
-		nativeLB     bool
-		expected     *dynamic.Configuration
+		desc                   string
+		ingressClass           string
+		paths                  []string
+		entryPoints            map[string]Entrypoint
+		nativeLB               bool
+		clusterTrustBundleAPI  bool
+		clusterTrustBundleRBAC bool
+		expected               *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -9986,6 +10280,163 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:                   "Simple TLSRoute and BackendTLSPolicy with ClusterTrustBundle",
+			paths:                  []string{"services.yml", "tlsroute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI:  true,
+			clusterTrustBundleRBAC: true,
+			entryPoints: map[string]Entrypoint{"tls": {
+				Address: ":9001",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5": {
+							EntryPoints: []string{"tls"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-wrr",
+							Rule:        `HostSNI("foo.com")`,
+							Priority:    7,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:80",
+										TLS:     true,
+									},
+									{
+										Address: "10.10.0.2:80",
+										TLS:     true,
+									},
+								},
+								ServersTransport: "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-svc-default-whoami-0": {
+							TLS: &dynamic.TLSClientConfig{
+								ServerName: "whoami",
+								RootCAs: []types.FileOrContent{
+									"CA-FROM-CLUSTER-TRUST-BUNDLE",
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute and BackendTLSPolicy with ClusterTrustBundle when the API is not served",
+			paths: []string{"services.yml", "tlsroute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			entryPoints: map[string]Entrypoint{"tls": {
+				Address: ":9001",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5": {
+							EntryPoints: []string{"tls"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-wrr",
+							Rule:        `HostSNI("foo.com")`,
+							Priority:    7,
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-err-lb",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-5c999a999d12ac0531c5-err-lb": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:  "Simple TLSRoute and BackendTLSPolicy with CA certificate",
 			paths: []string{"services.yml", "tlsroute/with_backend_tls_policy.yml"},
 			entryPoints: map[string]Entrypoint{"tls": {
@@ -10623,6 +11074,19 @@ func TestLoadTLSRoutes(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
+			if test.clusterTrustBundleAPI {
+				kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
+					GroupVersion: "certificates.k8s.io/v1",
+					APIResources: []metav1.APIResource{
+						{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
+					},
+				})
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+					return true, &authorizationv1.SelfSubjectAccessReview{
+						Status: authorizationv1.SubjectAccessReviewStatus{Allowed: test.clusterTrustBundleRBAC},
+					}, nil
+				})
+			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -14405,6 +14869,17 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	k8sObjects, gwObjects := readResources(t, []string{"frontend_validation_ca_refs.yml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
+	kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
+		GroupVersion: "certificates.k8s.io/v1",
+		APIResources: []metav1.APIResource{
+			{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
+		},
+	})
+	kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 	client := newClientImpl(kubeClient, gwClient)
@@ -14419,6 +14894,29 @@ func Test_resolveFrontendValidation(t *testing.T) {
 
 	p := Provider{client: client}
 
+	// A client on a cluster that does not serve the ClusterTrustBundle API.
+	clientWithoutAPI := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+
+	_, err = clientWithoutAPI.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	pWithoutAPI := Provider{client: clientWithoutAPI}
+
+	// A client that is not allowed to list ClusterTrustBundles.
+	kubeClientForbidden := kubefake.NewClientset(k8sObjects...)
+	kubeClientForbidden.Resources = kubeClient.Resources
+	kubeClientForbidden.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false},
+		}, nil
+	})
+	clientForbidden := newClientImpl(kubeClientForbidden, newGatewaySimpleClientSet(t, gwObjects...))
+
+	_, err = clientForbidden.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	pForbidden := Provider{client: clientForbidden}
+
 	gateway := &gatev1.Gateway{
 		Name:       "my-gateway",
 		Namespace:  "default",
@@ -14428,6 +14926,8 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		validation *gatev1.FrontendTLSValidation
+		withoutAPI bool
+		forbidden  bool
 		expected   frontendValidation
 	}{
 		{
@@ -14599,11 +15099,121 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "a valid ClusterTrustBundle ref is resolved",
+			validation: &gatev1.FrontendTLSValidation{
+				Mode: gatev1.AllowValidOnly,
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA5"},
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle ref with a namespace is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle", Namespace: new(gatev1.Namespace("default"))},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            "Unsupported namespace on cluster-scoped CACertificateRef: ClusterTrustBundle ca-bundle",
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle ref is rejected when the API is not served",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			withoutAPI: true,
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle ref is rejected when the list permission is missing",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			forbidden: true,
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
+				},
+			},
+		},
+		{
+			desc: "unresolvable ClusterTrustBundle is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "does-not-exist"},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            `Cannot resolve ClusterTrustBundle: does-not-exist: clustertrustbundle.certificates.k8s.io "does-not-exist" not found`,
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle with an empty trustBundle is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle-empty"},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            "Cannot find trustBundle: ClusterTrustBundle ca-bundle-empty",
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			got := p.resolveFrontendValidation(gateway, test.validation)
+			provider := p
+			if test.withoutAPI {
+				provider = pWithoutAPI
+			}
+			if test.forbidden {
+				provider = pForbidden
+			}
+
+			got := provider.resolveFrontendValidation(gateway, test.validation)
 
 			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
 			if got.errCondition != nil {

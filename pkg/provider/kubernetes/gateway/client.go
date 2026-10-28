@@ -12,8 +12,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -46,6 +49,11 @@ type clientWrapper struct {
 
 	gatewayClass  string
 	labelSelector string
+
+	// The ClusterTrustBundle API is optional, and an informer that cannot list or watch
+	// the resource blocks the cache sync, so both are checked before watching it.
+	clusterTrustBundleAPIServed bool
+	clusterTrustBundleAllowed   bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -156,6 +164,25 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
+	}
+
+	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed()
+	if err != nil {
+		return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
+	}
+
+	if c.clusterTrustBundleAPIServed {
+		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed()
+		if err != nil {
+			return nil, fmt.Errorf("checking ClusterTrustBundle permissions: %w", err)
+		}
+	}
+
+	if c.clusterTrustBundleAPIServed && c.clusterTrustBundleAllowed {
+		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(gatewayClassOptions), gateinformers.WithTransform(k8s.StripManagedFields))
@@ -432,6 +459,11 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	}
 
 	return servicePolicies, nil
+}
+
+// GetClusterTrustBundle returns the named ClusterTrustBundle.
+func (c *clientWrapper) GetClusterTrustBundle(name string) (*certificatesv1.ClusterTrustBundle, error) {
+	return c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Lister().Get(name)
 }
 
 // GetService returns the named service from the given namespace.
@@ -979,4 +1011,44 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
+}
+
+// isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
+func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
+	if err != nil {
+		if kerror.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
+}
+
+// isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
+func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
+	for _, verb := range []string{"list", "watch"} {
+		review := &authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{
+					Group:    certificatesv1.GroupName,
+					Resource: "clustertrustbundles",
+					Verb:     verb,
+				},
+			},
+		}
+
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		if err != nil {
+			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
+		}
+
+		if !review.Status.Allowed {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
