@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const typeName = "AuthTLSPassCertificateToUpstream"
@@ -76,18 +75,17 @@ func normalizeHeaderName(name string) string {
 }
 
 type authTLSPassCertificateToUpstream struct {
-	next           http.Handler
-	name           string
-	clientAuthType string
-	caCertPool     *x509.CertPool
+	next            http.Handler
+	name            string
+	caCertPool      *x509.CertPool
+	passCertificate bool
 }
 
 func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler, config dynamic.AuthTLSPassCertificateToUpstream, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
-	// caCertPool only needed to do internal validation if VerifyClient is optional_no_ca.
 	var caCertPool *x509.CertPool
-	if config.ClientAuthType == tls.RequestClientCert && len(config.CAFiles) > 0 {
+	if len(config.CAFiles) > 0 {
 		caCertPool = x509.NewCertPool()
 		for _, ca := range config.CAFiles {
 			if !caCertPool.AppendCertsFromPEM([]byte(ca)) {
@@ -97,10 +95,10 @@ func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler,
 	}
 
 	return &authTLSPassCertificateToUpstream{
-		next:           next,
-		name:           name,
-		clientAuthType: config.ClientAuthType,
-		caCertPool:     caCertPool,
+		next:            next,
+		name:            name,
+		caCertPool:      caCertPool,
+		passCertificate: config.PassCertificate,
 	}, nil
 }
 
@@ -136,22 +134,40 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	// Nginx only returns the leaf certificate.
 	cert := req.TLS.PeerCertificates[0]
 
-	clientVerify := "SUCCESS"
-	// Go's RequestClientCert doesn't verify at TLS level, so we have to verify in the middleware to return the correct Ssl-Client-Verify header.
-	// For other cases, validation happens during the handshake, so if it reaches this middleware, it means that the certificate is valid.
-	if p.clientAuthType == tls.RequestClientCert {
-		_, err := cert.Verify(x509.VerifyOptions{Roots: p.caCertPool})
-		if err != nil {
-			clientVerify = "FAILED:" + err.Error()
-		}
-	}
-
-	req.Header.Set(sslClientVerify, clientVerify)
+	req.Header.Set(sslClientVerify, p.verify(req.TLS.PeerCertificates))
 	req.Header.Set(sslClientSubjectDN, cert.Subject.String())
 	req.Header.Set(sslClientIssuerDN, cert.Issuer.String())
-	req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	if p.passCertificate {
+		req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	}
 
 	p.next.ServeHTTP(rw, req)
+}
+
+// verify returns the Ssl-Client-Verify value for the certificates the client presented.
+// The handshake may not have run with the TLS option this middleware was built for (conflicting TLS options fall back to the default one),
+// so the result never relies on it, and comes from the CA certificates the middleware was given.
+func (p *authTLSPassCertificateToUpstream) verify(certs []*x509.Certificate) string {
+	// A nil Roots would verify against the system certificate pool.
+	if p.caCertPool == nil {
+		return "FAILED:no CA certificate"
+	}
+
+	// The options are the ones crypto/tls uses to verify a client certificate during the handshake.
+	opts := x509.VerifyOptions{
+		Roots:         p.caCertPool,
+		Intermediates: x509.NewCertPool(),
+		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	for _, cert := range certs[1:] {
+		opts.Intermediates.AddCert(cert)
+	}
+
+	if _, err := certs[0].Verify(opts); err != nil {
+		return "FAILED:" + err.Error()
+	}
+
+	return "SUCCESS"
 }
 
 func extractCertificatePEM(ctx context.Context, cert *x509.Certificate) string {
