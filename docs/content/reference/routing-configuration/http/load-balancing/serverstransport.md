@@ -122,3 +122,7 @@ labels:
 | <a id="opt-spiffe" href="#opt-spiffe" title="#opt-spiffe">`spiffe`</a> | Defines the SPIFFE configuration. An empty `spiffe` section enables SPIFFE (that allows any SPIFFE ID).                                  |         | No       |
 | <a id="opt-spiffe-ids" href="#opt-spiffe-ids" title="#opt-spiffe-ids">`spiffe.ids`</a> | Defines the allowed SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain.                                                  | []      | No       |
 | <a id="opt-spiffe-trustDomain" href="#opt-spiffe-trustDomain" title="#opt-spiffe-trustDomain">`spiffe.trustDomain`</a> | Defines the SPIFFE trust domain.                                                                                                         | ""      | No       |
+
+!!! info "Response Headers Size"
+
+    The response headers of the servers are limited to 10 MiB. This limit is not configurable.
