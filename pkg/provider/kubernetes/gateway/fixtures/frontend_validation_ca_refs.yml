@@ -62,7 +62,7 @@ data:
   ca.crt: "CA4"
 
 ---
-apiVersion: certificates.k8s.io/v1beta1
+apiVersion: certificates.k8s.io/v1
 kind: ClusterTrustBundle
 metadata:
   name: ca-bundle
@@ -70,7 +70,7 @@ spec:
   trustBundle: "CA5"
 
 ---
-apiVersion: certificates.k8s.io/v1beta1
+apiVersion: certificates.k8s.io/v1
 kind: ClusterTrustBundle
 metadata:
   name: ca-bundle-empty

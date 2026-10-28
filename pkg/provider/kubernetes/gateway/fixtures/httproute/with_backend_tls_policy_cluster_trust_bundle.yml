@@ -69,7 +69,7 @@ spec:
         name: my-ca-bundle
 
 ---
-apiVersion: certificates.k8s.io/v1beta1
+apiVersion: certificates.k8s.io/v1
 kind: ClusterTrustBundle
 metadata:
   name: my-ca-bundle

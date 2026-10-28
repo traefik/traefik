@@ -778,7 +778,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1beta1 API",
+				Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
 			}
 		}
 

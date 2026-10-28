@@ -13,7 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
 	authorizationv1 "k8s.io/api/authorization/v1"
-	certv1beta1 "k8s.io/api/certificates/v1beta1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
@@ -169,7 +169,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if c.clusterTrustBundleAvailable {
-		_, err = c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -452,8 +452,8 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 }
 
 // GetClusterTrustBundle returns the named ClusterTrustBundle.
-func (c *clientWrapper) GetClusterTrustBundle(name string) (*certv1beta1.ClusterTrustBundle, error) {
-	return c.factoryNamespace.Certificates().V1beta1().ClusterTrustBundles().Lister().Get(name)
+func (c *clientWrapper) GetClusterTrustBundle(name string) (*certificatesv1.ClusterTrustBundle, error) {
+	return c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Lister().Get(name)
 }
 
 // GetService returns the named service from the given namespace.
@@ -1007,7 +1007,7 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 // and lets Traefik watch it. The API is optional, and an informer that cannot list or watch
 // the resource blocks the cache sync.
 func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
-	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certv1beta1.SchemeGroupVersion.String())
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
 		if kerror.IsNotFound(err) {
 			return false, nil
@@ -1024,7 +1024,7 @@ func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
 		review := &authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationv1.ResourceAttributes{
-					Group:    certv1beta1.GroupName,
+					Group:    certificatesv1.GroupName,
 					Resource: "clustertrustbundles",
 					Verb:     verb,
 				},

@@ -5540,7 +5540,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			if test.clusterTrustBundleAPI {
 				kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
-					GroupVersion: "certificates.k8s.io/v1beta1",
+					GroupVersion: "certificates.k8s.io/v1",
 					APIResources: []metav1.APIResource{
 						{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
 					},
@@ -14605,7 +14605,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
-		GroupVersion: "certificates.k8s.io/v1beta1",
+		GroupVersion: "certificates.k8s.io/v1",
 		APIResources: []metav1.APIResource{
 			{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
 		},
@@ -14864,7 +14864,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: 1,
 					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
-					Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1beta1 API",
+					Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
 				},
 			},
 		},

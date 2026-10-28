@@ -1207,7 +1207,7 @@ func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gat
 			ObservedGeneration: gateway.Generation,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
-			Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1beta1 API",
+			Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
 		}
 	}
 
