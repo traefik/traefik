@@ -14902,6 +14902,21 @@ func Test_resolveFrontendValidation(t *testing.T) {
 
 	pWithoutAPI := Provider{client: clientWithoutAPI}
 
+	// A client that is not allowed to list ClusterTrustBundles.
+	kubeClientForbidden := kubefake.NewClientset(k8sObjects...)
+	kubeClientForbidden.Resources = kubeClient.Resources
+	kubeClientForbidden.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false},
+		}, nil
+	})
+	clientForbidden := newClientImpl(kubeClientForbidden, newGatewaySimpleClientSet(t, gwObjects...))
+
+	_, err = clientForbidden.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	pForbidden := Provider{client: clientForbidden}
+
 	gateway := &gatev1.Gateway{
 		Name:       "my-gateway",
 		Namespace:  "default",
@@ -14912,6 +14927,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 		desc       string
 		validation *gatev1.FrontendTLSValidation
 		withoutAPI bool
+		forbidden  bool
 		expected   frontendValidation
 	}{
 		{
@@ -15134,6 +15150,24 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			},
 		},
 		{
+			desc: "ClusterTrustBundle ref is rejected when the list permission is missing",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			forbidden: true,
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
+				},
+			},
+		},
+		{
 			desc: "unresolvable ClusterTrustBundle is rejected",
 			validation: &gatev1.FrontendTLSValidation{
 				CACertificateRefs: []gatev1.ObjectReference{
@@ -15174,6 +15208,9 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			provider := p
 			if test.withoutAPI {
 				provider = pWithoutAPI
+			}
+			if test.forbidden {
+				provider = pForbidden
 			}
 
 			got := provider.resolveFrontendValidation(gateway, test.validation)

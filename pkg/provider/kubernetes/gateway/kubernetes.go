@@ -1200,7 +1200,7 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 // resolveClusterTrustBundleRef returns the trust bundle of the referenced ClusterTrustBundle, or the ResolvedRefs condition explaining why it cannot.
 // Per GEP-5075, the reference needs no ReferenceGrant, and an unsupported API is reported as an invalid kind.
 func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gatev1.ObjectReference) (string, *metav1.Condition) {
-	if !p.client.clusterTrustBundleAvailable {
+	if !p.client.clusterTrustBundleAPIServed {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -1208,6 +1208,17 @@ func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gat
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
 			Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
+		}
+	}
+
+	if !p.client.clusterTrustBundleAllowed {
+		return "", &metav1.Condition{
+			Type:               string(gatev1.ListenerConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+			Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
 		}
 	}
 

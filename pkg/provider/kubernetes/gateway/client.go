@@ -50,7 +50,10 @@ type clientWrapper struct {
 	gatewayClass  string
 	labelSelector string
 
-	clusterTrustBundleAvailable bool
+	// The ClusterTrustBundle API is optional, and an informer that cannot list or watch
+	// the resource blocks the cache sync, so both are checked before watching it.
+	clusterTrustBundleAPIServed bool
+	clusterTrustBundleAllowed   bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -163,12 +166,19 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
-	c.clusterTrustBundleAvailable, err = c.checkClusterTrustBundleAvailability()
+	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed()
 	if err != nil {
 		return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
 	}
 
-	if c.clusterTrustBundleAvailable {
+	if c.clusterTrustBundleAPIServed {
+		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed()
+		if err != nil {
+			return nil, fmt.Errorf("checking ClusterTrustBundle permissions: %w", err)
+		}
+	}
+
+	if c.clusterTrustBundleAPIServed && c.clusterTrustBundleAllowed {
 		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -1003,10 +1013,8 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 	})
 }
 
-// checkClusterTrustBundleAvailability reports whether the cluster serves the ClusterTrustBundle API
-// and lets Traefik watch it. The API is optional, and an informer that cannot list or watch
-// the resource blocks the cache sync.
-func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
+// isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
+func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
 		if kerror.IsNotFound(err) {
@@ -1016,10 +1024,11 @@ func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
 		return false, err
 	}
 
-	if !slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }) {
-		return false, nil
-	}
+	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
+}
 
+// isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
+func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
 	for _, verb := range []string{"list", "watch"} {
 		review := &authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
@@ -1031,13 +1040,12 @@ func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
 			},
 		}
 
-		review, err = c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
 		if err != nil {
 			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
 		}
 
 		if !review.Status.Allowed {
-			log.Warn().Msgf("ClusterTrustBundle references are not supported: the %s permission on clustertrustbundles.certificates.k8s.io is missing", verb)
 			return false, nil
 		}
 	}
