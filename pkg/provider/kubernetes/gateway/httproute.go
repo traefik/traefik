@@ -196,7 +196,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			router.Middlewares, err = p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, route, routeRule.Filters, match.Path, statusReport)
 			switch {
 			case err != nil:
-				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
+				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
 				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
@@ -297,8 +297,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, responseHeaderTimeout, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
-			log.Ctx(ctx).Error().
-				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
+			log.Ctx(ctx).Debug().Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
 
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -515,7 +514,7 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 			middleware, err := p.loadRequestMirror(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, filter.RequestMirror, pathMatch, statusReport)
 			if err != nil {
 				// As per the spec, an invalid mirror is dropped without failing the request.
-				log.Ctx(ctx).Error().Err(err).Msg("Dropping RequestMirror filter")
+				log.Ctx(ctx).Debug().Err(err).Msg("Dropping RequestMirror filter")
 				continue
 			}
 			middlewares = append(middlewares, namedMiddleware{
