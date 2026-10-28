@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -228,6 +229,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		nativeLB                 bool
 		retryMaxRequestBodyBytes int64
 		clusterTrustBundleAPI    bool
+		clusterTrustBundleRBAC   bool
 	}{
 		{
 			desc: "Empty",
@@ -4506,9 +4508,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle",
-			paths:                 []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
-			clusterTrustBundleAPI: true,
+			desc:                   "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle",
+			paths:                  []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI:  true,
+			clusterTrustBundleRBAC: true,
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -4585,6 +4588,59 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		{
 			desc:  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle when the API is not served",
 			paths: []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+						},
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+							Rule:       `Host("foo.com") && Path("/bar")`,
+							Priority:   100008,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+										Weight: new(1),
+										Status: new(500),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:                  "Simple HTTPRoute and BackendTLSPolicy with ClusterTrustBundle when the list and watch permissions are missing",
+			paths:                 []string{"services.yml", "httproute/with_backend_tls_policy_cluster_trust_bundle.yml"},
+			clusterTrustBundleAPI: true,
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -5488,6 +5544,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					APIResources: []metav1.APIResource{
 						{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
 					},
+				})
+				kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+					return true, &authorizationv1.SelfSubjectAccessReview{
+						Status: authorizationv1.SubjectAccessReviewStatus{Allowed: test.clusterTrustBundleRBAC},
+					}, nil
 				})
 			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)

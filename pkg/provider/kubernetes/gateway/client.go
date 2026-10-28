@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -1002,8 +1003,9 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 	})
 }
 
-// checkClusterTrustBundleAvailability reports whether the cluster serves the ClusterTrustBundle API.
-// The API is optional, and watching it on a cluster that does not serve it blocks the cache sync.
+// checkClusterTrustBundleAvailability reports whether the cluster serves the ClusterTrustBundle API
+// and lets Traefik watch it. The API is optional, and an informer that cannot list or watch
+// the resource blocks the cache sync.
 func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certv1beta1.SchemeGroupVersion.String())
 	if err != nil {
@@ -1014,11 +1016,31 @@ func (c *clientWrapper) checkClusterTrustBundleAvailability() (bool, error) {
 		return false, err
 	}
 
-	for _, r := range resourceList.APIResources {
-		if r.Name == "clustertrustbundles" {
-			return true, nil
+	if !slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }) {
+		return false, nil
+	}
+
+	for _, verb := range []string{"list", "watch"} {
+		review := &authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{
+					Group:    certv1beta1.GroupName,
+					Resource: "clustertrustbundles",
+					Verb:     verb,
+				},
+			},
+		}
+
+		review, err = c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		if err != nil {
+			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
+		}
+
+		if !review.Status.Allowed {
+			log.Warn().Msgf("ClusterTrustBundle references are not supported: the %s permission on clustertrustbundles.certificates.k8s.io is missing", verb)
+			return false, nil
 		}
 	}
 
-	return false, nil
+	return true, nil
 }
