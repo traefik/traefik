@@ -320,6 +320,27 @@ When chaining or mixing load-balancers (e.g. a load-balancer of servers is one o
 
 If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
+#### Stickiness & Terminating Servers
+
+By default, a terminating server that is still serving can receive requests whose affinity cookie selects it.
+Set `sticky.excludeTerminating` to `true` to send those requests to an available, non-terminating server and update the affinity cookie.
+If no eligible server remains, the request receives a `503` response.
+Established connections are not closed by this setting.
+
+For Kubernetes Ingress, set the Service annotation `traefik.ingress.kubernetes.io/service.sticky.excludeterminating: "true"`.
+
+```yaml
+http:
+  services:
+    my-service:
+      loadBalancer:
+        sticky:
+          cookie: {}
+          excludeTerminating: true
+        servers:
+          - url: "http://backend:8080"
+```
+
 #### Cookie Name
 
 The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).

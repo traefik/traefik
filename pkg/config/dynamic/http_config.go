@@ -381,6 +381,8 @@ type GRPCStatus struct {
 type Sticky struct {
 	// Cookie defines the sticky cookie configuration.
 	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	// ExcludeTerminating moves sticky requests away from terminating yet still serving servers.
+	ExcludeTerminating bool `json:"excludeTerminating,omitempty" toml:"excludeTerminating,omitempty" yaml:"excludeTerminating,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

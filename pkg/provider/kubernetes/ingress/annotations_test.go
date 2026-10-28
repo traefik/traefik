@@ -120,23 +120,25 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc: "service annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":                                    "bar",
-				"traefik.ingress.kubernetes.io/foo":                            "bar",
-				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
-				"traefik.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
-				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
-				"traefik.ingress.kubernetes.io/service.nativelb":               "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.samesite": "none",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.domain":   "foo.com",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.path":     "foobar",
+				"ingress.kubernetes.io/foo":                                       "bar",
+				"traefik.ingress.kubernetes.io/foo":                               "bar",
+				"traefik.ingress.kubernetes.io/service.serversscheme":             "protocol",
+				"traefik.ingress.kubernetes.io/service.serverstransport":          "foobar@file",
+				"traefik.ingress.kubernetes.io/service.passhostheader":            "true",
+				"traefik.ingress.kubernetes.io/service.nativelb":                  "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie":             "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly":    "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":        "foobar",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":      "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.samesite":    "none",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.domain":      "foo.com",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.path":        "foobar",
+				"traefik.ingress.kubernetes.io/service.sticky.excludeterminating": "true",
 			},
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
 					Sticky: &dynamic.Sticky{
+						ExcludeTerminating: true,
 						Cookie: &dynamic.Cookie{
 							Name:     "foobar",
 							Secure:   true,

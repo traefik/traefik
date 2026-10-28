@@ -61,7 +61,8 @@ type Balancer struct {
 	// No mutex is needed, as it is modified only during the configuration build.
 	updaters []func(bool)
 
-	sticky *loadbalancer.Sticky
+	sticky             *loadbalancer.Sticky
+	excludeTerminating bool
 
 	randMu sync.Mutex
 	rand   rnd
@@ -77,6 +78,7 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	}
 	if stickyConfig != nil && stickyConfig.Cookie != nil {
 		balancer.sticky = loadbalancer.NewSticky(*stickyConfig.Cookie)
+		balancer.excludeTerminating = stickyConfig.ExcludeTerminating
 	}
 
 	return balancer
@@ -142,8 +144,9 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		} else if h != nil {
 			b.handlersMu.RLock()
 			_, ok := b.status[h.Name]
+			_, fenced := b.fenced[h.Name]
 			b.handlersMu.RUnlock()
-			if ok {
+			if ok && !(b.excludeTerminating && fenced) {
 				if rewrite {
 					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")

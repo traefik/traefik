@@ -310,3 +310,88 @@ func testHandlers(inflights ...int) []*namedHandler {
 	}
 	return out
 }
+
+func TestStickyExcludeTerminating(t *testing.T) {
+	for _, test := range []struct {
+		name               string
+		excludeTerminating bool
+		terminating        bool
+		replacement        bool
+		wantServer         string
+		wantStatus         int
+	}{
+		{
+			name:        "preserve terminating affinity by default",
+			terminating: true,
+			replacement: true,
+			wantServer:  "first",
+			wantStatus:  http.StatusOK,
+		},
+		{
+			name:               "preserve healthy affinity when enabled",
+			excludeTerminating: true,
+			replacement:        true,
+			wantServer:         "first",
+			wantStatus:         http.StatusOK,
+		},
+		{
+			name:               "move terminating affinity to a replacement",
+			excludeTerminating: true,
+			terminating:        true,
+			replacement:        true,
+			wantServer:         "second",
+			wantStatus:         http.StatusOK,
+		},
+		{
+			name:               "no non-terminating server available",
+			excludeTerminating: true,
+			terminating:        true,
+			wantStatus:         http.StatusServiceUnavailable,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			sticky := &dynamic.Sticky{
+				Cookie:             &dynamic.Cookie{Name: "test"},
+				ExcludeTerminating: test.excludeTerminating,
+			}
+			add := func(b *Balancer, name string, fenced bool) {
+				b.AddServer(name, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+					rw.Header().Set("server", name)
+					rw.WriteHeader(http.StatusOK)
+				}), dynamic.Server{Fenced: fenced})
+			}
+
+			initial := New(sticky, false)
+			add(initial, "first", false)
+			recorder := httptest.NewRecorder()
+			initial.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+			cookies := recorder.Result().Cookies()
+			require.Len(t, cookies, 1)
+			originalCookie := cookies[0]
+
+			updated := New(sticky, false)
+			add(updated, "first", test.terminating)
+			if test.replacement {
+				add(updated, "second", false)
+			}
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.AddCookie(originalCookie)
+			recorder = httptest.NewRecorder()
+			updated.ServeHTTP(recorder, req)
+			assert.Equal(t, test.wantStatus, recorder.Code)
+			assert.Equal(t, test.wantServer, recorder.Header().Get("server"))
+
+			if test.wantServer == "second" {
+				cookies = recorder.Result().Cookies()
+				require.Len(t, cookies, 1)
+				assert.NotEqual(t, originalCookie.Value, cookies[0].Value)
+				req = httptest.NewRequest(http.MethodGet, "/", nil)
+				req.AddCookie(cookies[0])
+				recorder = httptest.NewRecorder()
+				updated.ServeHTTP(recorder, req)
+				assert.Equal(t, http.StatusOK, recorder.Code)
+				assert.Equal(t, "second", recorder.Header().Get("server"))
+			}
+		})
+	}
+}

@@ -408,6 +408,10 @@ spec:
                                       (i.e. HTTPS).
                                     type: boolean
                                 type: object
+                              excludeTerminating:
+                                description: ExcludeTerminating moves sticky requests
+                                  away from terminating yet still serving servers.
+                                type: boolean
                             type: object
                           strategy:
                             description: |-
