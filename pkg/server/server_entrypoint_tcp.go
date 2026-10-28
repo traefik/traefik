@@ -730,8 +730,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = populateRequestTLS(handler)
 
-	// The round trippers dedicated to a connection (Kerberos or NTLM) are only reachable from its context,
-	// which is kept until the ConnState hook reports the connection closed to release them.
+	// The round trippers and connection pools dedicated to a connection (Kerberos or NTLM) are only reachable from its
+	// context, which is kept until the ConnState hook reports the connection closed to release them.
 	var transportConnContexts connContexts
 
 	var connContext multipleConnContext
@@ -771,6 +771,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		if state == http.StateClosed || state == http.StateHijacked {
 			if ctx, ok := transportConnContexts.remove(c); ok {
 				kerberos.ReleaseTransportOnContext(ctx)
+				fast.ReleaseConnPoolsOnContext(ctx)
 			}
 		}
 

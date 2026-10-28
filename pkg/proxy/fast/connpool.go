@@ -426,6 +426,32 @@ func (c *connPool) clone() *connPool {
 	}
 }
 
+// closeIdleConns closes the idle connections of a dedicated pool once its frontend connection is gone.
+// A closed connection is put back in the pool rather than dropped, as a concurrent AcquireConn may be waiting on the
+// pool for the connection it has just dialed: it then gets the closed connection, sees it is stale, and dials again.
+func (c *connPool) closeIdleConns() {
+	for range len(c.idleConns) {
+		select {
+		case co := <-c.idleConns:
+			co.broken.Store(true)
+
+			if err := co.Close(); err != nil {
+				log.Debug().
+					Err(err).
+					Msg("Unexpected error while closing the connection")
+			}
+
+			select {
+			case c.idleConns <- co:
+			default:
+			}
+
+		default:
+			return
+		}
+	}
+}
+
 // cleanIdleConns is a routine cleaning the expired connections at a regular basis.
 func (c *connPool) cleanIdleConns() {
 	for {
@@ -557,6 +583,28 @@ func (s *stickyConnPools) stick(owner *connPool) *connPool {
 	s.pools[owner] = pool
 
 	return pool
+}
+
+// release closes the idle backend connections of the dedicated pools, as nothing else does once their frontend
+// connection is closed: they would stay open until their idle timeout, and as each frontend connection has its own
+// pool, maxIdleConnsPerHost does not bound them.
+func (s *stickyConnPools) release() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, pool := range s.pools {
+		pool.closeIdleConns()
+	}
+
+	s.pools = nil
+}
+
+// ReleaseConnPoolsOnContext releases the connection pools dedicated to the frontend connection of the given context.
+// It must be called once that connection is closed.
+func ReleaseConnPoolsOnContext(ctx context.Context) {
+	if stickyPools, ok := ctx.Value(connPoolsKey).(*stickyConnPools); ok {
+		stickyPools.release()
+	}
 }
 
 // containsNTLMorNegotiate reports whether any of the given Authorization header values carries an NTLM or Kerberos
