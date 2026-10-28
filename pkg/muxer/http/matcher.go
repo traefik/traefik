@@ -134,8 +134,14 @@ func hostRegexp(tree *matchersTree, hosts ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(requestdecorator.GetCanonicalHost(req.Context())) ||
-			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
+		reqHost := requestdecorator.GetCanonicalHost(req.Context())
+		if re.MatchString(reqHost) || re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context())) {
+			return true
+		}
+
+		// A fully qualified request host ends with a dot, which Host also accepts.
+		h, ok := strings.CutSuffix(reqHost, ".")
+		return ok && re.MatchString(h)
 	}
 
 	return nil

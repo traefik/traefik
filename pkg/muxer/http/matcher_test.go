@@ -370,6 +370,27 @@ func TestHostRegexpMatcher(t *testing.T) {
 			},
 		},
 		{
+			desc: "valid HostRegexp matcher - URL ending with a dot",
+			rule: "HostRegexp(`^[a-zA-Z-]+\\.com$`)",
+			expected: map[string]int{
+				"https://example.com.":      http.StatusOK,
+				"https://example.com.:8080": http.StatusOK,
+				"https://example.com./path": http.StatusOK,
+				"https://example.com..":     http.StatusNotFound,
+				"https://example.org.":      http.StatusNotFound,
+				"https://example.org./path": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "valid HostRegexp matcher - matcher ending with a dot",
+			rule: "HostRegexp(`^[a-zA-Z-]+\\.com\\.$`)",
+			expected: map[string]int{
+				"https://example.com":  http.StatusNotFound,
+				"https://example.com.": http.StatusOK,
+				"https://example.org.": http.StatusNotFound,
+			},
+		},
+		{
 			desc: "valid HostRegexp matcher with Traefik v2 syntax",
 			rule: "HostRegexp(`{domain:[a-zA-Z-]+\\.com}`)",
 			expected: map[string]int{
