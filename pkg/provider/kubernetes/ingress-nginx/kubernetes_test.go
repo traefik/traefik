@@ -12880,14 +12880,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^https?://[^/]+/(example)(/.*)`,
+								Regex:       `(?i)^https?://[^/]+/(example)(/.*)`,
 								Replacement: "https://redirect.example.com/$1$2",
 								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
 						"default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^https?://[^/]+/(example)(/.*)`,
+								Regex:       `(?i)^https?://[^/]+/(example)(/.*)`,
 								Replacement: "https://redirect.example.com/$1$2",
 								StatusCode:  new(http.StatusMovedPermanently),
 							},

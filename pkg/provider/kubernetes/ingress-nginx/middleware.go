@@ -164,7 +164,7 @@ func (p *Provider) buildRedirect(loc *location) {
 
 	regex := ".*"
 	if loc.UseRegex {
-		regex = `^https?://[^/]+` + loc.Path
+		regex = `(?i)^https?://[^/]+` + loc.Path
 	}
 
 	loc.Redirect = &dynamic.RedirectRegex{
