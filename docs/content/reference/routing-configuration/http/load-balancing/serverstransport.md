@@ -125,4 +125,4 @@ labels:
 
 !!! info "Response Headers Size"
 
-    The response headers of the servers are limited to 10 MiB. This limit is not configurable.
+    The response headers of the servers are limited to 10 MiB, or 64 KiB when the experimental [FastProxy](../../../install-configuration/experimental/fastproxy.md) is enabled. This limit is not configurable.
