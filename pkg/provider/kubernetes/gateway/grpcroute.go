@@ -20,7 +20,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, statusReport *statusReport) {
+func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.GRPCRoute, attachedRoutes attachedRoutes, candidates *routerConfCandidates, statusReport *statusReport) {
 	logger := log.Ctx(ctx).With().
 		Str("grpc_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -89,12 +89,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 			if accepted && listener.Attached {
 				for _, rc := range routerConfs {
 					router := rc.Conf.HTTP.Routers[rc.Name]
-					if servedBy, alreadyServed := servedRules.register(rc.Name, router.ParentRefs, router.Rule); alreadyServed {
-						logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q under the same parent routers", rc.Name, servedBy, router.Rule)
-						continue
-					}
-
-					mergeHTTPConfiguration(rc.Conf, conf)
+					candidates.add(rc.Name, router.ParentRefs, router.Rule, router.Priority, rc.Conf)
 				}
 
 				// Only consider the route attached if the listener is in an "attached" state.
@@ -133,6 +128,8 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
+	hostPriority := hostnamePriority(listener.Hostname, route.Spec.Hostnames) * hostnamePriorityFactor
+
 	for ri, routeRule := range route.Spec.Rules {
 		matches := routeRule.Matches
 		if len(matches) == 0 {
@@ -145,7 +142,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Rule:       rule,
-				Priority:   priority,
+				Priority:   hostPriority + priority,
 				ParentRefs: listener.RouterNames,
 			}
 
@@ -506,11 +503,11 @@ func buildGRPCMatchRule(hostnames []gatev1.Hostname, match gatev1.GRPCRouteMatch
 
 	matchRulesStr := strings.Join(matchRules, " && ")
 
-	hostRule, priority := buildHostRule(hostnames)
+	hostRule := buildHostRule(hostnames)
 	if hostRule == "" {
 		return matchRulesStr, len(matchRulesStr)
 	}
-	return hostRule + " && " + matchRulesStr, priority + len(matchRulesStr)
+	return hostRule + " && " + matchRulesStr, len(matchRulesStr)
 }
 
 func buildGRPCMethodRule(method *gatev1.GRPCMethodMatch) string {

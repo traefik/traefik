@@ -592,15 +592,20 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 	slices.SortStableFunc(routes, compareRoutes)
 
 	attached := make(attachedRoutes)
-	served := make(servedRules)
+	candidates := newRouterConfCandidates()
 	for _, route := range routes {
 		switch route := route.(type) {
 		case *gatev1.HTTPRoute:
-			p.loadHTTPRoute(ctx, gateways, route, conf, attached, served, statusReport)
+			p.loadHTTPRoute(ctx, gateways, route, attached, candidates, statusReport)
 		case *gatev1.GRPCRoute:
-			p.loadGRPCRoute(ctx, gateways, route, conf, attached, served, statusReport)
+			p.loadGRPCRoute(ctx, gateways, route, attached, candidates, statusReport)
 		}
 	}
+
+	candidates.merge(ctx, func(name string, parentRefs []string, routerConf *dynamic.Configuration) {
+		routerConf.HTTP.Routers[name].ParentRefs = parentRefs
+		mergeHTTPConfiguration(routerConf, conf)
+	})
 }
 
 // loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
@@ -1841,6 +1846,36 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 	return h2
 }
 
+// hostnamePriority computes the precedence a route takes from its hostnames on the given listener.
+// The precedence follows the specificity of the route's own hostnames matching the listener,
+// not of their intersection with the listener hostname,
+// as the GatewayRouteHostnameIntersectionPrecedence feature asks.
+// The wildcard does not count,
+// so a non-wildcard hostname always outranks a wildcard hostname matching the same host.
+// A route without hostnames inherits the listener hostname.
+func hostnamePriority(listenerHostname *gatev1.Hostname, routeHostnames []gatev1.Hostname) int {
+	if len(routeHostnames) == 0 {
+		if listenerHostname == nil {
+			return 0
+		}
+
+		return len(strings.TrimPrefix(string(*listenerHostname), "*"))
+	}
+
+	var priority int
+	for _, routeHostname := range routeHostnames {
+		if listenerHostname != nil &&
+			findMatchingHostname(*listenerHostname, routeHostname) == "" &&
+			findMatchingHostname(routeHostname, *listenerHostname) == "" {
+			continue
+		}
+
+		priority = max(priority, len(strings.TrimPrefix(string(routeHostname), "*")))
+	}
+
+	return priority
+}
+
 func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {
 	if !slices.Contains(listener.AllowedRouteKinds, routeKind) {
 		return false
@@ -1859,31 +1894,74 @@ func compareRoutes(a, b metav1.Object) int {
 		strings.Compare(a.GetName(), b.GetName()))
 }
 
-// servedRuleKey identifies a rule within the scope its router competes in.
-// A TCP router competes in the muxer of its entry points,
-// and an HTTP router in the muxer of its listener parent routers, as it has no entry points of its own.
-type servedRuleKey struct {
+// ruleScope identifies a rule within a scope its router competes in.
+// A TCP router competes in the muxer of each of its entry points,
+// and an HTTP router in the muxer of each of its listener parent routers, as it has no entry points of its own.
+// The competition happens per scope, because two routers can share only some of their scopes,
+// e.g. the parent routers of listeners from two Gateways on the same entry point.
+type ruleScope struct {
 	Scope string
 	Rule  string
 }
 
-// servedRules keeps the router that serves each rule.
+// routerConfCandidate is a router candidate to serve a rule, with the configuration of its resources.
+type routerConfCandidate struct {
+	Name     string
+	Rule     string
+	Priority int
+	Scopes   []string
+	Conf     *dynamic.Configuration
+}
+
+// routerConfCandidates elects the router that serves each rule in each scope.
 // Two routers that compete and have the same rule match the same requests.
-// Thus only the first router that a muxer evaluates can serve a request.
-type servedRules map[servedRuleKey]string
+// Thus only the first router that a muxer evaluates can serve a request,
+// and the other one would never serve any request.
+type routerConfCandidates struct {
+	elected map[ruleScope]*routerConfCandidate
+	// candidates keeps the order the candidates are added in, for the merge of the configurations to be stable.
+	candidates []*routerConfCandidate
+}
 
-// register keeps the given router as the router that serves its rule within the given scope.
-// If a different router serves that rule already, register gives its name, and true.
-func (sr servedRules) register(name string, scope []string, rule string) (string, bool) {
-	key := servedRuleKey{Scope: strings.Join(scope, ","), Rule: rule}
+func newRouterConfCandidates() *routerConfCandidates {
+	return &routerConfCandidates{elected: make(map[ruleScope]*routerConfCandidate)}
+}
 
-	if servedBy, served := sr[key]; served {
-		return servedBy, true
+// add makes the given router a candidate to serve its rule in each of its scopes.
+// When another router has the same rule in a scope already, the router with the highest priority serves the rule there,
+// and, with equal priorities, the router added first,
+// as the routes are added in the order the specification gives precedence in.
+func (c *routerConfCandidates) add(name string, scopes []string, rule string, priority int, conf *dynamic.Configuration) {
+	candidate := &routerConfCandidate{Name: name, Rule: rule, Priority: priority, Scopes: scopes, Conf: conf}
+	c.candidates = append(c.candidates, candidate)
+
+	for _, scope := range scopes {
+		key := ruleScope{Scope: scope, Rule: rule}
+		if current, exists := c.elected[key]; !exists || priority > current.Priority {
+			c.elected[key] = candidate
+		}
 	}
+}
 
-	sr[key] = name
+// merge gives each router elected in at least one scope to mergeRouter, with the scopes it is elected in.
+// A router elected in no scope is not created.
+func (c *routerConfCandidates) merge(ctx context.Context, mergeRouter func(name string, scopes []string, routerConf *dynamic.Configuration)) {
+	for _, candidate := range c.candidates {
+		var scopes []string
+		for _, scope := range candidate.Scopes {
+			elected := c.elected[ruleScope{Scope: scope, Rule: candidate.Rule}]
+			if elected == candidate {
+				scopes = append(scopes, scope)
+				continue
+			}
 
-	return "", false
+			log.Ctx(ctx).Warn().Msgf("Traefik does not attach router %q to %q, because router %q serves the rule %q there", candidate.Name, scope, elected.Name, candidate.Rule)
+		}
+
+		if len(scopes) > 0 {
+			mergeRouter(candidate.Name, scopes, candidate.Conf)
+		}
+	}
 }
 
 // listenerRef identifies a listener of a Gateway.

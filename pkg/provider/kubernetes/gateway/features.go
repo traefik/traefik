@@ -41,6 +41,7 @@ func extendedGatewayFeatures() sets.Set[features.Feature] {
 		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature,
 		// TODO: GEP-5075 requires this feature to be advertised only when the cluster serves the ClusterTrustBundle API.
 		features.ClusterTrustBundleFeature,
+		features.GatewayRouteHostnameIntersectionPrecedenceFeature,
 	)
 }
 

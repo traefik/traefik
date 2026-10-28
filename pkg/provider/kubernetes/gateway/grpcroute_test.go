@@ -25,7 +25,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 			desc:             "One Host rule without match",
 			hostnames:        []gatev1.Hostname{"foo.com"},
 			expectedRule:     `Host("foo.com") && PathPrefix("/")`,
-			expectedPriority: 22,
+			expectedPriority: 15,
 		},
 		{
 			desc: "One GRPCRouteMatch with no GRPCHeaderMatch",
@@ -76,7 +76,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Host("foo.com") && PathRegexp("/foo/bar") && Header("foo","bar")`,
-			expectedPriority: 52,
+			expectedPriority: 45,
 		},
 	}
 

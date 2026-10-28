@@ -1,0 +1,71 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: "*.example.com"
+      allowedRoutes:
+        kinds:
+          - kind: GRPCRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+# The intersection of this route host name with the listener one is *.example.com.
+# Thus this route gives the same rule as the route below.
+# This route is also the older of the two routes,
+# but the precedence follows the route host names, which are less specific than the ones of the route below.
+---
+kind: GRPCRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: grpc-app-less-specific
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "*.com"
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+
+---
+kind: GRPCRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: grpc-app-more-specific
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "*.example.com"
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1

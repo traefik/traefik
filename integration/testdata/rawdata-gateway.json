@@ -49,7 +49,7 @@
 				"listener-web-http-5b3226d4ebd42b7200f1@kubernetesgateway"
 			],
 			"ruleSyntax": "default",
-			"priority": 100008,
+			"priority": 7100001,
 			"status": "enabled"
 		},
 		"httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-119934658cf45eae45a6@kubernetesgateway": {
@@ -59,7 +59,7 @@
 				"listener-websecure-https-439feda8e3f1dbdca529@kubernetesgateway"
 			],
 			"ruleSyntax": "default",
-			"priority": 100008,
+			"priority": 7100001,
 			"status": "enabled"
 		},
 		"listener-web-http-5b3226d4ebd42b7200f1@kubernetesgateway": {
