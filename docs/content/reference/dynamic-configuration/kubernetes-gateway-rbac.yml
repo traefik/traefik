@@ -40,7 +40,6 @@ rules:
     resources:
       - clustertrustbundles
     verbs:
-      - get
       - list
       - watch
   - apiGroups:
