@@ -176,7 +176,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			router.Middlewares, err = p.loadMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters, match.Path)
 			switch {
 			case err != nil:
-				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
+				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
 				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
@@ -257,7 +257,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
-			log.Ctx(ctx).Error().
+			log.Ctx(ctx).Debug().
 				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
 
 			condition = errCondition
