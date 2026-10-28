@@ -14604,6 +14604,17 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	k8sObjects, gwObjects := readResources(t, []string{"frontend_validation_ca_refs.yml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
+	kubeClient.Resources = append(kubeClient.Resources, &metav1.APIResourceList{
+		GroupVersion: "certificates.k8s.io/v1beta1",
+		APIResources: []metav1.APIResource{
+			{Name: "clustertrustbundles", Kind: "ClusterTrustBundle"},
+		},
+	})
+	kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 	client := newClientImpl(kubeClient, gwClient)
@@ -14618,6 +14629,14 @@ func Test_resolveFrontendValidation(t *testing.T) {
 
 	p := Provider{client: client}
 
+	// A client on a cluster that does not serve the ClusterTrustBundle API.
+	clientWithoutAPI := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+
+	_, err = clientWithoutAPI.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	pWithoutAPI := Provider{client: clientWithoutAPI}
+
 	gateway := &gatev1.Gateway{
 		Name:       "my-gateway",
 		Namespace:  "default",
@@ -14627,6 +14646,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		validation *gatev1.FrontendTLSValidation
+		withoutAPI bool
 		expected   frontendValidation
 	}{
 		{
@@ -14798,11 +14818,100 @@ func Test_resolveFrontendValidation(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "a valid ClusterTrustBundle ref is resolved",
+			validation: &gatev1.FrontendTLSValidation{
+				Mode: gatev1.AllowValidOnly,
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			expected: frontendValidation{
+				clientAuth: &tls.ClientAuth{
+					CAFiles:        []types.FileOrContent{"CA5"},
+					ClientAuthType: tls.RequireAndVerifyClientCert,
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle ref with a namespace is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle", Namespace: new(gatev1.Namespace("default"))},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            "Unsupported namespace on cluster-scoped CACertificateRef: ClusterTrustBundle ca-bundle",
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle ref is rejected when the API is not served",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle"},
+				},
+			},
+			withoutAPI: true,
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateKind),
+					Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1beta1 API",
+				},
+			},
+		},
+		{
+			desc: "unresolvable ClusterTrustBundle is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "does-not-exist"},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            `Cannot resolve ClusterTrustBundle: does-not-exist: clustertrustbundle.certificates.k8s.io "does-not-exist" not found`,
+				},
+			},
+		},
+		{
+			desc: "ClusterTrustBundle with an empty trustBundle is rejected",
+			validation: &gatev1.FrontendTLSValidation{
+				CACertificateRefs: []gatev1.ObjectReference{
+					{Group: "certificates.k8s.io", Kind: "ClusterTrustBundle", Name: "ca-bundle-empty"},
+				},
+			},
+			expected: frontendValidation{
+				errCondition: &metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalidCACertificateRef),
+					Message:            "Cannot find trustBundle: ClusterTrustBundle ca-bundle-empty",
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			got := p.resolveFrontendValidation(gateway, test.validation)
+			provider := p
+			if test.withoutAPI {
+				provider = pWithoutAPI
+			}
+
+			got := provider.resolveFrontendValidation(gateway, test.validation)
 
 			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
 			if got.errCondition != nil {
