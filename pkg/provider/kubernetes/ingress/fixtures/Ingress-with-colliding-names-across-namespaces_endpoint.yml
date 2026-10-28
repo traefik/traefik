@@ -1,0 +1,24 @@
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: a-whoami
+  namespace: team
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+    ports:
+      - port: 80
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: team-a
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.2
+    ports:
+      - port: 80

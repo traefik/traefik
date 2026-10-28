@@ -2,13 +2,16 @@ package ingress
 
 import (
 	"errors"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -1908,6 +1911,57 @@ func generateTestFilename(suffix, desc string) string {
 	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
 }
 
+func TestLoadConfigurationFromIngressesWithSafeNaming(t *testing.T) {
+	paths := []string{
+		"fixtures/Ingress-with-colliding-names-across-namespaces_ingress.yml",
+		"fixtures/Ingress-with-colliding-names-across-namespaces_endpoint.yml",
+		"fixtures/Ingress-with-colliding-names-across-namespaces_service.yml",
+	}
+
+	testCases := []struct {
+		desc         string
+		safeNaming   *bool
+		wantRouters  []string
+		wantServices []string
+	}{
+		{
+			desc:         "legacy naming when unset",
+			wantRouters:  []string{"team-a-app-example-com"},
+			wantServices: []string{"team-a-whoami-80"},
+		},
+		{
+			desc:         "legacy naming when disabled",
+			safeNaming:   new(false),
+			wantRouters:  []string{"team-a-app-example-com"},
+			wantServices: []string{"team-a-whoami-80"},
+		},
+		{
+			desc:         "safe naming when enabled",
+			safeNaming:   new(true),
+			wantRouters:  []string{"team-a_app_0_0", "team_a-app_0_0"},
+			wantServices: []string{"team-a_whoami_80", "team_a-whoami_80"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{SafeNaming: test.safeNaming}
+			require.NoError(t, p.Init())
+
+			conf := p.loadConfigurationFromIngresses(t.Context(), newClientMock("v1.19", paths...))
+
+			assert.ElementsMatch(t, test.wantRouters, slices.Collect(maps.Keys(conf.HTTP.Routers)))
+			assert.ElementsMatch(t, test.wantServices, slices.Collect(maps.Keys(conf.HTTP.Services)))
+
+			for _, router := range conf.HTTP.Routers {
+				assert.Contains(t, conf.HTTP.Services, router.Service)
+			}
+		})
+	}
+}
+
 // TestLoadConfigurationFromIngressesWithCrossProviderNamespaces verifies that an Ingress,
 // declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation,
 // is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
@@ -2207,13 +2261,13 @@ func TestGetCertificates(t *testing.T) {
 				},
 			},
 			result: map[string]*tls.CertAndStores{
-				"testing-test-secret": {
+				"testing/test-secret": {
 					Certificate: tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
-				"testing-test-secret2": {
+				"testing/test-secret2": {
 					Certificate: tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
