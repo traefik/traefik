@@ -60,6 +60,7 @@ type Middleware struct {
 	ResponseHeaderModifier *HeaderModifier  `json:"responseHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RequestRedirect        *RequestRedirect `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	URLRewrite             *URLRewrite      `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestMirror          *RequestMirror   `json:"requestMirror,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 
 	// ingress-nginx middlewares.
 	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
@@ -976,6 +977,16 @@ type URLRewrite struct {
 	Hostname   *string `json:"hostname,omitempty"`
 	Path       *string `json:"path,omitempty"`
 	PathPrefix *string `json:"pathPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RequestMirror holds the request mirror middleware configuration.
+// Numerator out of Denominator requests are mirrored to Service.
+type RequestMirror struct {
+	Service     string `json:"service,omitempty"`
+	Numerator   int64  `json:"numerator,omitempty"`
+	Denominator int64  `json:"denominator,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

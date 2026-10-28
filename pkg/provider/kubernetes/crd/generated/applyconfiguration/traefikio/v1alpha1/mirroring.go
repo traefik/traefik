@@ -45,6 +45,12 @@ type MirroringApplyConfiguration struct {
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// StreamBody defines whether the request body is streamed to the mirrors while the main service reads it,
+	// instead of being buffered in memory before reaching the main service.
+	// A mirror reading the body too slowly is aborted, so that it never slows the main request down.
+	// It has no effect when MirrorBody is false, and cannot be used with MaxBodySize.
+	// Default value is false.
+	StreamBody *bool `json:"streamBody,omitempty"`
 	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
 	Mirrors []MirrorServiceApplyConfiguration `json:"mirrors,omitempty"`
 }
@@ -201,6 +207,14 @@ func (b *MirroringApplyConfiguration) WithMirrorBody(value bool) *MirroringApply
 // If called multiple times, the MaxBodySize field is set to the value of the last call.
 func (b *MirroringApplyConfiguration) WithMaxBodySize(value int64) *MirroringApplyConfiguration {
 	b.MaxBodySize = &value
+	return b
+}
+
+// WithStreamBody sets the StreamBody field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the StreamBody field is set to the value of the last call.
+func (b *MirroringApplyConfiguration) WithStreamBody(value bool) *MirroringApplyConfiguration {
+	b.StreamBody = &value
 	return b
 }
 

@@ -452,6 +452,7 @@ There are three types of filters:
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "ExtensionRef Filters"
@@ -577,6 +578,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
