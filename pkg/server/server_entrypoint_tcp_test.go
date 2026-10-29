@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -1493,6 +1494,81 @@ func TestHeaderNamesStrategiesWarnings(t *testing.T) {
 	}
 }
 
+func TestHeaderNamesStrategiesWarnings_GlobalDefault(t *testing.T) {
+	newEntryPoint := func(httpConfig static.HTTPConfig) *static.EntryPoint {
+		transport := &static.EntryPointsTransport{}
+		transport.SetDefaults()
+
+		return &static.EntryPoint{
+			Address:          ":0",
+			Transport:        transport,
+			ForwardedHeaders: &static.ForwardedHeaders{},
+			HTTP2:            &static.HTTP2Config{},
+			HTTP:             httpConfig,
+		}
+	}
+
+	build := func(t *testing.T, buf *bytes.Buffer, global string, web string) {
+		t.Helper()
+
+		ctx := zerolog.New(buf).Level(zerolog.WarnLevel).WithContext(t.Context())
+
+		cfg := &static.Configuration{
+			Providers: &static.Providers{},
+			EntryPoints: static.EntryPoints{
+				"web": newEntryPoint(static.HTTPConfig{AliasHeadersStrategy: web}),
+			},
+		}
+		if global != "" {
+			cfg.Global = &static.Global{AliasHeadersStrategy: global}
+		}
+
+		cfg.SetEffectiveConfiguration()
+		require.NoError(t, cfg.ValidateConfiguration())
+
+		_, err := NewTCPEntryPoint(ctx, "", cfg.EntryPoints["web"], nil, nil)
+		require.NoError(t, err)
+	}
+
+	t.Run("global default silences the warning like an explicit value", func(t *testing.T) {
+		var buf bytes.Buffer
+		build(t, &buf, static.AliasHeadersStrategyDelete, "")
+
+		assert.Equal(t, 0, strings.Count(buf.String(), "aliasHeadersStrategy is not configured"))
+	})
+
+	t.Run("explicit per-entry-point value wins over the global default", func(t *testing.T) {
+		var buf bytes.Buffer
+		build(t, &buf, static.AliasHeadersStrategyDelete, static.AliasHeadersStrategyKeep)
+
+		assert.Equal(t, 0, strings.Count(buf.String(), "aliasHeadersStrategy is not configured"))
+	})
+
+	t.Run("no global default keeps the warning", func(t *testing.T) {
+		var buf bytes.Buffer
+		build(t, &buf, "", "")
+
+		assert.Equal(t, 1, strings.Count(buf.String(), "aliasHeadersStrategy is not configured"))
+	})
+}
+
+func TestNewTCPEntryPoint_InvalidAliasHeadersStrategy(t *testing.T) {
+	transport := &static.EntryPointsTransport{}
+	transport.SetDefaults()
+
+	ctx := zerolog.New(io.Discard).Level(zerolog.WarnLevel).WithContext(t.Context())
+
+	_, err := NewTCPEntryPoint(ctx, "", &static.EntryPoint{
+		Address:          ":0",
+		Transport:        transport,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP:             static.HTTPConfig{AliasHeadersStrategy: "foobar"},
+	}, nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid aliasHeadersStrategy value")
+}
+
 func Test_isAliasingHeaderName(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -1601,8 +1677,9 @@ func TestHTTP2RequestTLS(t *testing.T) {
 
 func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 	testCases := []struct {
-		desc   string
-		hijack bool
+		desc      string
+		fastProxy bool
+		hijack    bool
 	}{
 		{
 			desc: "closed client connection",
@@ -1610,6 +1687,15 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 		{
 			desc:   "hijacked client connection",
 			hijack: true,
+		},
+		{
+			desc:      "closed client connection with FastProxy",
+			fastProxy: true,
+		},
+		{
+			desc:      "hijacked client connection with FastProxy",
+			fastProxy: true,
+			hijack:    true,
 		},
 	}
 
@@ -1635,30 +1721,44 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 			require.NoError(t, err)
 
 			transportManager := service.NewTransportManager(nil)
-			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {MaxIdleConnsPerHost: 1}})
 
-			roundTripper, err := transportManager.GetRoundTripper("default@internal")
-			require.NoError(t, err)
+			// The proxies keep the Authorization header of the received request, so the backend connection is stuck
+			// as it would be for a real NTLM/Kerberos backend.
+			var proxy http.Handler
+			if test.fastProxy {
+				proxy, err = fast.NewProxyBuilder(transportManager, static.FastProxyConfig{}).Build("default@internal", backendURL, true, false)
+				require.NoError(t, err)
+			} else {
+				roundTripper, err := transportManager.GetRoundTripper("default@internal")
+				require.NoError(t, err)
+
+				proxy = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					req.URL.Scheme = backendURL.Scheme
+					req.URL.Host = backendURL.Host
+					req.RequestURI = ""
+
+					resp, err := roundTripper.RoundTrip(req)
+					if err != nil {
+						rw.WriteHeader(http.StatusBadGateway)
+						return
+					}
+					_ = resp.Body.Close()
+
+					rw.WriteHeader(resp.StatusCode)
+				})
+			}
 
 			router, err := tcprouter.NewRouter(nil)
 			require.NoError(t, err)
 
 			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// Reverse proxy the received request to the backend, keeping its Authorization header so the
-				// round tripper sticks the connection as it would for a real NTLM/Kerberos backend.
-				req.URL.Scheme = backendURL.Scheme
-				req.URL.Host = backendURL.Host
-				req.RequestURI = ""
-
-				resp, err := roundTripper.RoundTrip(req)
-				if err != nil {
-					rw.WriteHeader(http.StatusBadGateway)
-					return
-				}
-				_ = resp.Body.Close()
+				// The proxy response is recorded, so that the client connection can still be hijacked afterwards.
+				recorder := httptest.NewRecorder()
+				proxy.ServeHTTP(recorder, req)
 
 				if !test.hijack {
-					rw.WriteHeader(resp.StatusCode)
+					rw.WriteHeader(recorder.Code)
 					return
 				}
 
