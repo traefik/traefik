@@ -6225,6 +6225,110 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "TLSRoute attached to TLS listeners on different entry points",
+			paths: []string{"services.yml", "tlsroute/with_multiple_listeners_different_ports.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls-1":     {Address: ":9001"},
+				"tls-2":     {Address: ":9002"},
+				"websecure": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"deny-unknown-host": {
+							EntryPoints: []string{"tls-1", "tls-2"},
+							Rule:        "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority:    1,
+							Service:     "deny-unknown-host",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-1-0-bc5ab7274857984e4c8b": {
+							EntryPoints: []string{"tls-1"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-1-0-bc5ab7274857984e4c8b-wrr",
+							Priority:    15,
+							Rule:        `HostSNI("foo.example.com")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-1be4423ed2d969a1e927": {
+							EntryPoints: []string{"tls-2"},
+							Service:     "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-1be4423ed2d969a1e927-wrr",
+							Priority:    15,
+							Rule:        `HostSNI("bar.example.com")`,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-1-0-bc5ab7274857984e4c8b-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-1-0-bc5ab7274857984e4c8b-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-1-0-bc5ab7274857984e4c8b-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-1be4423ed2d969a1e927-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-1be4423ed2d969a1e927-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-2-0-1be4423ed2d969a1e927-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple TLSRoute, with multiple SNI matching",
 			paths: []string{"services.yml", "tlsroute/with_multiple_SNI_matching.yml"},
 			entryPoints: map[string]Entrypoint{
