@@ -164,7 +164,7 @@ creating the corresponding routers, services, middlewares, and other components 
             serviceAccountName: traefik-ingress-controller
             containers:
               - name: traefik
-                image: traefik:v3.7
+                image: traefik:v3.8
                 args:
                   - --entryPoints.web.address=:80
                   - --providers.kubernetesingressnginx

@@ -31,7 +31,7 @@ package v1alpha1
 //
 // Tap holds the tap middleware configuration.
 // This middleware sends a copy of the requests and responses going through it to Kubernetes Services.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/tap/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/tap/
 type TapApplyConfiguration struct {
 	// Request defines where and how the request records are sent.
 	// When omitted, requests are not recorded.
