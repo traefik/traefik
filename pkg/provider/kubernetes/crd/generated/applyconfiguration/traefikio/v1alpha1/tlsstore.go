@@ -38,7 +38,7 @@ import (
 // TLSStore is the CRD implementation of a Traefik TLS Store.
 // For the time being, only the TLSStore named default is supported.
 // This means that you cannot have two stores that are named default in different Kubernetes namespaces.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#certificates-stores
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#certificates-stores
 type TLSStoreApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

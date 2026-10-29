@@ -64,7 +64,7 @@ type MiddlewareSpecApplyConfiguration struct {
 	GrpcWeb           *dynamic.GrpcWeb                  `json:"grpcWeb,omitempty"`
 	Tap               *TapApplyConfiguration            `json:"tap,omitempty"`
 	// Plugin defines the middleware plugin configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/#community-middlewares
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]v1.JSON `json:"plugin,omitempty"`
 }
 

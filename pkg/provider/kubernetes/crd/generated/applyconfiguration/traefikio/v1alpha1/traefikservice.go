@@ -39,7 +39,7 @@ import (
 // TraefikService object allows to:
 // - Apply weight to Services on load-balancing
 // - Mirror traffic on services
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/traefikservice/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/traefikservice/
 type TraefikServiceApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

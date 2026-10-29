@@ -36,7 +36,7 @@ import (
 //
 // RateLimit holds the rate limit configuration.
 // This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/ratelimit/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/ratelimit/
 type RateLimitApplyConfiguration struct {
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.

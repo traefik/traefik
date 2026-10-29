@@ -30,7 +30,7 @@ package v1alpha1
 // with apply.
 //
 // HighestRandomWeight holds the highest random weight configuration.
-// More info: https://doc.traefik.io/traefik/v3.7/routing/services/#highest-random-configuration
+// More info: https://doc.traefik.io/traefik/v3.8/routing/services/#highest-random-configuration
 type HighestRandomWeightApplyConfiguration struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []ServiceApplyConfiguration `json:"services,omitempty"`
