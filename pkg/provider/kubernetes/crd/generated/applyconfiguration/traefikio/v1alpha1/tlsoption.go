@@ -36,7 +36,7 @@ import (
 // with apply.
 //
 // TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#tls-options
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#tls-options
 type TLSOptionApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

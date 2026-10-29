@@ -431,7 +431,7 @@ Example utilizing Docker Compose:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.7
+    image: traefik:v3.8
     environment:
       - TZ=US/Alaska
     command:

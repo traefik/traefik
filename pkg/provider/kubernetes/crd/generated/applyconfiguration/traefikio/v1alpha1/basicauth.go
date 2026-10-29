@@ -31,7 +31,7 @@ package v1alpha1
 //
 // BasicAuth holds the basic auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/basicauth/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/basicauth/
 type BasicAuthApplyConfiguration struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret *string `json:"secret,omitempty"`
@@ -42,7 +42,7 @@ type BasicAuthApplyConfiguration struct {
 	// Default: false.
 	RemoveHeader *bool `json:"removeHeader,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/basicauth/#headerfield
 	HeaderField *string `json:"headerField,omitempty"`
 }
 
