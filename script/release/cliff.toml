@@ -62,8 +62,8 @@ commit_parsers = [
     { field="remote.pr_title", pattern="Merge branch", skip=true },
 
     { field="remote.pr_labels", pattern="area/documentation", group = "<!-- 2 -->Documentation" },
-    { field="remote.pr_labels", pattern="kind/bug/fix", group = "<!-- 0 -->Bug fixes" },
-    { field="remote.pr_labels", pattern="kind/enhancement", group = "<!-- 1 -->Enhancement" },
+    { field="remote.pr_labels", pattern="kind/bug/fix", group = "<!-- 1 -->Bug fixes" },
+    { field="remote.pr_labels", pattern="kind/enhancement", group = "<!-- 0 -->Enhancement" },
     { field="remote.pr_labels", pattern=".*", group = "<!-- 3 -->Misc" },
 ]
 ############################################
