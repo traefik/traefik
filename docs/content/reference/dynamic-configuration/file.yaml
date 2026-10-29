@@ -465,6 +465,7 @@ http:
         readTimeout: 42s
         writeTimeout: 42s
       disableHTTP2: true
+      preferIPv6: true
       peerCertURI: foobar
       spiffe:
         ids:
@@ -497,6 +498,7 @@ http:
         readTimeout: 42s
         writeTimeout: 42s
       disableHTTP2: true
+      preferIPv6: true
       peerCertURI: foobar
       spiffe:
         ids:
