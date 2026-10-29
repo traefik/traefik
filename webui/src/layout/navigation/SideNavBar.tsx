@@ -23,6 +23,7 @@ import { LAPTOP_BP } from '.'
 import IconButton from 'components/buttons/IconButton'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
+import InstanceBadge from 'components/InstanceBadge'
 import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
@@ -132,7 +133,7 @@ export const SideNav = ({
   isResponsive?: boolean
 }) => {
   const windowSize = useWindowSize()
-  const { version } = useContext(VersionContext)
+  const { version, dashboardName } = useContext(VersionContext)
 
   const { http, tcp, udp, certificates } = useTotals()
 
@@ -229,6 +230,11 @@ export const SideNav = ({
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
+        {!isSmallAndResponsive && !!dashboardName && (
+          <Flex data-testid="instance-badge-below" css={{ pl: '$3', mb: '$4' }}>
+            <InstanceBadge />
+          </Flex>
+        )}
         {ROUTES.map((section, index) => (
           <Flex
             key={`nav-section-${index}`}
