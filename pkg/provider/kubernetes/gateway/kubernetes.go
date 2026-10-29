@@ -1894,72 +1894,72 @@ func compareRoutes(a, b metav1.Object) int {
 		strings.Compare(a.GetName(), b.GetName()))
 }
 
-// ruleScope identifies a rule within a scope its router competes in.
-// A TCP router competes in the muxer of each of its entry points,
-// and an HTTP router in the muxer of each of its listener parent routers, as it has no entry points of its own.
-// The competition happens per scope, because two routers can share only some of their scopes,
+// listenerRule identifies a rule within a listener its router is attached to.
+// A TCP router is attached to its listeners through its entry points,
+// and an HTTP router through its listener parent routers, as it has no entry points of its own.
+// The routers compete per listener, because two routers can share only some of their listeners,
 // e.g. the parent routers of listeners from two Gateways on the same entry point.
-type ruleScope struct {
-	Scope string
-	Rule  string
+type listenerRule struct {
+	Listener string
+	Rule     string
 }
 
 // routerConfCandidate is a router candidate to serve a rule, with the configuration of its resources.
 type routerConfCandidate struct {
-	Name     string
-	Rule     string
-	Priority int
-	Scopes   []string
-	Conf     *dynamic.Configuration
+	Name      string
+	Rule      string
+	Priority  int
+	Listeners []string
+	Conf      *dynamic.Configuration
 }
 
-// routerConfCandidates elects the router that serves each rule in each scope.
+// routerConfCandidates elects the router that serves each rule in each listener.
 // Two routers that compete and have the same rule match the same requests.
 // Thus only the first router that a muxer evaluates can serve a request,
 // and the other one would never serve any request.
 type routerConfCandidates struct {
-	elected map[ruleScope]*routerConfCandidate
+	elected map[listenerRule]*routerConfCandidate
 	// candidates keeps the order the candidates are added in, for the merge of the configurations to be stable.
 	candidates []*routerConfCandidate
 }
 
 func newRouterConfCandidates() *routerConfCandidates {
-	return &routerConfCandidates{elected: make(map[ruleScope]*routerConfCandidate)}
+	return &routerConfCandidates{elected: make(map[listenerRule]*routerConfCandidate)}
 }
 
-// add makes the given router a candidate to serve its rule in each of its scopes.
-// When another router has the same rule in a scope already, the router with the highest priority serves the rule there,
+// add makes the given router a candidate to serve its rule in each of its listeners.
+// When another router has the same rule in a listener already, the router with the highest priority serves the rule there,
 // and, with equal priorities, the router added first,
 // as the routes are added in the order the specification gives precedence in.
-func (c *routerConfCandidates) add(name string, scopes []string, rule string, priority int, conf *dynamic.Configuration) {
-	candidate := &routerConfCandidate{Name: name, Rule: rule, Priority: priority, Scopes: scopes, Conf: conf}
+func (c *routerConfCandidates) add(name string, listeners []string, rule string, priority int, conf *dynamic.Configuration) {
+	candidate := &routerConfCandidate{Name: name, Rule: rule, Priority: priority, Listeners: listeners, Conf: conf}
 	c.candidates = append(c.candidates, candidate)
 
-	for _, scope := range scopes {
-		key := ruleScope{Scope: scope, Rule: rule}
+	for _, listener := range listeners {
+		key := listenerRule{Listener: listener, Rule: rule}
 		if current, exists := c.elected[key]; !exists || priority > current.Priority {
 			c.elected[key] = candidate
 		}
 	}
 }
 
-// merge gives each router elected in at least one scope to mergeRouter, with the scopes it is elected in.
-// A router elected in no scope is not created.
-func (c *routerConfCandidates) merge(ctx context.Context, mergeRouter func(name string, scopes []string, routerConf *dynamic.Configuration)) {
+// merge gives each router elected in at least one listener to mergeRouter, with the listeners it is elected in.
+// A router elected in no listener is not created.
+func (c *routerConfCandidates) merge(ctx context.Context, mergeRouter func(name string, listeners []string, routerConf *dynamic.Configuration)) {
 	for _, candidate := range c.candidates {
-		var scopes []string
-		for _, scope := range candidate.Scopes {
-			elected := c.elected[ruleScope{Scope: scope, Rule: candidate.Rule}]
+		var listeners []string
+		for _, listener := range candidate.Listeners {
+			elected := c.elected[listenerRule{Listener: listener, Rule: candidate.Rule}]
 			if elected == candidate {
-				scopes = append(scopes, scope)
+				listeners = append(listeners, listener)
 				continue
 			}
 
-			log.Ctx(ctx).Warn().Msgf("Traefik does not attach router %q to %q, because router %q serves the rule %q there", candidate.Name, scope, elected.Name, candidate.Rule)
+			log.Ctx(ctx).Warn().Msgf("Traefik does not attach router %q to %q, because router %q serves the rule %q there", candidate.Name, listener, elected.Name, candidate.Rule)
 		}
 
-		if len(scopes) > 0 {
-			mergeRouter(candidate.Name, scopes, candidate.Conf)
+		if len(listeners) > 0 {
+			mergeRouter(candidate.Name, listeners, candidate.Conf)
 		}
 	}
 }
