@@ -101,7 +101,7 @@ For development purposes, you can specify which tests to run by using (only work
     ```json 
         "autoApprovers": {
           // Allow myself to automatically
-          // advertize routes for docker networks
+          // advertise routes for docker networks
           "routes": {
             "172.31.42.0/24": ["your_tailscale_identity"],
           },
