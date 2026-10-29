@@ -121,6 +121,35 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 	}
 }
 
+func TestConnPool_CloseIdleConns(t *testing.T) {
+	var dialed, closed int
+	dialer := func() (net.Conn, error) {
+		dialed++
+		return &mockConn{
+			doneCh: make(chan struct{}),
+			closeFn: func() error {
+				closed++
+				return nil
+			},
+		}, nil
+	}
+
+	pool := newConnPool(2, 0, 0, dialer)
+
+	c1, err := pool.AcquireConn()
+	require.NoError(t, err)
+	pool.ReleaseConn(c1)
+
+	pool.closeIdleConns()
+	assert.Equal(t, 1, closed)
+
+	// The closed connection stays in the pool, but must never be handed out again.
+	c2, err := pool.AcquireConn()
+	require.NoError(t, err)
+	assert.NotSame(t, c1, c2)
+	assert.Equal(t, 2, dialed)
+}
+
 func TestGC(t *testing.T) {
 	// TODO: make the test stable if possible.
 	t.Skip("This test is flaky")

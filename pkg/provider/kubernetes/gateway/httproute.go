@@ -158,6 +158,11 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 		}
 
+		var retry *dynamic.Middleware
+		if routeRule.Retry != nil {
+			retry = createRetry(ctx, routeRule.Retry, p.RetryMaxRequestBodyBytes)
+		}
+
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
@@ -181,11 +186,17 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			}
 
 			var err error
-			// TODO loadMiddlewares errors could change the condition.
-			router.Middlewares, err = p.loadMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters, match.Path)
+			// TODO the filters loading issues should be reported in the route conditions, which is not done yet:
+			//  - an unsupported filter, or an invalid ExtensionRef or URLRewrite filter, makes the rule respond
+			//    with a 500 status, but the route keeps ResolvedRefs=True, whereas the spec requires a warning condition.
+			//    Backend-level filters already report it as ResolvedRefs=False with the InvalidKind reason, see loadService.
+			//  - an invalid RequestMirror backend reference only drops the mirror, as per the spec, but the route keeps
+			//    ResolvedRefs=True, whereas the spec requires ResolvedRefs=False, with the RefNotPermitted reason when
+			//    the reference is not allowed by a ReferenceGrant. This applies to backend-level filters too.
+			router.Middlewares, err = p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, route, routeRule.Filters, match.Path, statusReport)
 			switch {
 			case err != nil:
-				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
+				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
 				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
@@ -221,6 +232,13 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
+			}
+
+			if err == nil && retry != nil {
+				// The retry middleware comes last, so that only the call to the backend is retried.
+				retryName := routerName + "-retry"
+				routerConf.HTTP.Middlewares[retryName] = retry
+				router.Middlewares = append(router.Middlewares, retryName)
 			}
 
 			p.applyRouterTransform(ctx, &router, route)
@@ -276,11 +294,10 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 	for bi, backendRef := range routeRule.BackendRefs {
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, responseHeaderTimeout, statusReport)
+		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, responseHeaderTimeout, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
-			log.Ctx(ctx).Error().
-				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
+			log.Ctx(ctx).Debug().Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
 
 			condition = errCondition
 			wrr.Services = append(wrr.Services, dynamic.WRRService{
@@ -303,7 +320,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -340,7 +357,7 @@ func (p *Provider) loadService(gatewayName, gatewayNamespace string, listener ga
 		}
 	}
 
-	middlewares, err := p.loadMiddlewares(conf, route.Namespace, serviceName, backendRef.Filters, pathMatch)
+	middlewares, err := p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, conf, serviceName, route, backendRef.Filters, pathMatch, statusReport)
 	if err != nil {
 		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -433,7 +450,7 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, parentName string, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch) ([]string, error) {
+func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) ([]string, error) {
 	type namedMiddleware struct {
 		Name   string
 		Config *dynamic.Middleware
@@ -468,7 +485,7 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 			})
 
 		case gatev1.HTTPRouteFilterExtensionRef:
-			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
+			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(route.Namespace, filter.ExtensionRef)
 			if err != nil {
 				return nil, fmt.Errorf("loading ExtensionRef filter %s: %w", filter.Type, err)
 			}
@@ -491,6 +508,18 @@ func (p *Provider) loadMiddlewares(conf *dynamic.Configuration, namespace, paren
 			middlewares = append(middlewares, namedMiddleware{
 				name,
 				createCORS(filter.CORS),
+			})
+
+		case gatev1.HTTPRouteFilterRequestMirror:
+			middleware, err := p.loadRequestMirror(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, filter.RequestMirror, pathMatch, statusReport)
+			if err != nil {
+				// As per the spec, an invalid mirror is dropped without failing the request.
+				log.Ctx(ctx).Debug().Err(err).Msg("Dropping RequestMirror filter")
+				continue
+			}
+			middlewares = append(middlewares, namedMiddleware{
+				name,
+				middleware,
 			})
 
 		default:
@@ -589,7 +618,8 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
 			if serversTransport != nil {
-				policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				policyAncestorStatus.Conditions = append(
+					policyAncestorStatus.Conditions,
 					metav1.Condition{
 						Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
@@ -612,7 +642,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			}
 
 			var resolvedRefCondition metav1.Condition
-			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy)
+			serversTransport, resolvedRefCondition = p.loadServersTransport(namespace, policy, listener.BackendClientCertificates)
 
 			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions, resolvedRefCondition)
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
@@ -678,9 +708,10 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 	return lb, serversTransport, nil
 }
 
-func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
+func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.ServersTransport, metav1.Condition) {
 	st := &dynamic.ServersTransport{
-		ServerName: string(policy.Spec.Validation.Hostname),
+		ServerName:   string(policy.Spec.Validation.Hostname),
+		Certificates: clientCertificates,
 	}
 
 	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
@@ -725,14 +756,40 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != kindConfigMap && caCertRef.Kind != kindSecret) {
+		isConfigMapOrSecret := (caCertRef.Group == "" || caCertRef.Group == groupCore) && (caCertRef.Kind == kindConfigMap || caCertRef.Kind == kindSecret)
+		isClusterTrustBundle := caCertRef.Group == groupCertificates && caCertRef.Kind == kindClusterTrustBundle
+
+		if !isClusterTrustBundle && !isConfigMapOrSecret {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps and Secrets are supported",
+				Message:            "Only ConfigMaps, Secrets, and ClusterTrustBundles are supported",
+			}
+		}
+
+		// GEP-5075 requires the InvalidKind reason when the cluster does not serve the ClusterTrustBundle API.
+		if isClusterTrustBundle && !p.client.clusterTrustBundleAPIServed {
+			return nil, metav1.Condition{
+				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+				Message:            "ClusterTrustBundles are not supported, the cluster does not serve the certificates.k8s.io/v1 API",
+			}
+		}
+
+		if isClusterTrustBundle && !p.client.clusterTrustBundleAllowed {
+			return nil, metav1.Condition{
+				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
+				Message:            "ClusterTrustBundles are not supported, Traefik is not allowed to list and watch clustertrustbundles",
 			}
 		}
 
@@ -764,6 +821,32 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 				}
 			}
 			caCRT = string(secret.Data["ca.crt"])
+
+		case kindClusterTrustBundle:
+			ctb, err := p.client.GetClusterTrustBundle(string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("Cannot get ClusterTrustBundle %s: %s", string(caCertRef.Name), err),
+				}
+			}
+
+			if ctb.Spec.TrustBundle == "" {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("ClusterTrustBundle %s has an empty trustBundle", string(caCertRef.Name)),
+				}
+			}
+
+			caCRT = ctb.Spec.TrustBundle
 		}
 
 		if caCRT == "" {
@@ -1087,6 +1170,30 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 	}
 }
 
+func createRetry(ctx context.Context, retry *gatev1.HTTPRouteRetry, maxRequestBodyBytes int64) *dynamic.Middleware {
+	// The Gateway API attempts are the number of retries,
+	// whereas the Traefik ones also count the initial request, hence the +1.
+	r := &dynamic.Retry{
+		Attempts:            ptr.Deref(retry.Attempts, 1) + 1,
+		MaxRequestBodyBytes: &maxRequestBodyBytes,
+	}
+
+	for _, code := range retry.Codes {
+		r.Status = append(r.Status, strconv.Itoa(int(code)))
+	}
+
+	if retry.Backoff != nil {
+		// The CRD validation guarantees a valid GEP-2257 duration string.
+		if backoff, err := time.ParseDuration(string(*retry.Backoff)); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Ignoring HTTPRoute retry.backoff: invalid duration")
+		} else {
+			r.InitialInterval = ptypes.Duration(backoff)
+		}
+	}
+
+	return &dynamic.Middleware{Retry: r}
+}
+
 func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	if portSpec.Protocol != corev1.ProtocolTCP {
 		return "", errors.New("only TCP protocol is supported")
@@ -1138,4 +1245,40 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
 	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
+}
+
+// loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
+func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
+	if filter == nil {
+		return nil, errors.New("missing configuration")
+	}
+
+	mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.BackendRef}
+	serviceName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
+	if errCondition != nil {
+		return nil, errors.New(errCondition.Message)
+	}
+
+	// When neither the percent nor the fraction is set, all the requests are mirrored.
+	var numerator, denominator int64 = 1, 1
+	switch {
+	case filter.Percent != nil:
+		numerator, denominator = min(max(int64(*filter.Percent), 0), 100), 100
+
+	case filter.Fraction != nil:
+		denominator = int64(ptr.Deref(filter.Fraction.Denominator, 100))
+		if denominator <= 0 {
+			numerator, denominator = 0, 1
+		} else {
+			numerator = min(max(int64(filter.Fraction.Numerator), 0), denominator)
+		}
+	}
+
+	return &dynamic.Middleware{
+		RequestMirror: &dynamic.RequestMirror{
+			Service:     serviceName,
+			Numerator:   numerator,
+			Denominator: denominator,
+		},
+	}, nil
 }

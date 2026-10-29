@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -702,6 +703,51 @@ func TestStickyConnPool(t *testing.T) {
 	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, ""))
 	// Authenticated clients each get their own dedicated connection, never shared with one another.
 	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "NTLM TlRMTVNTUAAB"))
+}
+
+func TestReleaseConnPoolsOnContext(t *testing.T) {
+	var backendConns atomic.Int32
+
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateNew:
+			backendConns.Add(1)
+		case http.StateClosed, http.StateHijacked:
+			backendConns.Add(-1)
+		}
+	}
+	backend.Start()
+	t.Cleanup(backend.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 1}}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("default@internal", testhelpers.MustParseURL(backend.URL), false, false)
+	require.NoError(t, err)
+
+	ctx := AddConnPoolsOnContext(t.Context())
+
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(ctx)
+	req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+	res := httptest.NewRecorder()
+	proxyHandler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+
+	require.EqualValues(t, 1, backendConns.Load())
+
+	ReleaseConnPoolsOnContext(ctx)
+
+	assert.Eventually(t, func() bool { return backendConns.Load() == 0 }, time.Second, 10*time.Millisecond)
+}
+
+func TestReleaseConnPoolsOnContextWithoutConnPools(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ReleaseConnPoolsOnContext(t.Context())
+		ReleaseConnPoolsOnContext(AddConnPoolsOnContext(t.Context()))
+	})
 }
 
 type transportManagerMock struct {

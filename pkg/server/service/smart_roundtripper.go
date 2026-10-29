@@ -46,6 +46,12 @@ func (m *smartRoundTripper) Clone() http.RoundTripper {
 	}
 }
 
+func (m *smartRoundTripper) CloseIdleConnections() {
+	m.http2.CloseIdleConnections()
+	m.http.CloseIdleConnections()
+	m.h2c.CloseIdleConnections()
+}
+
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	h2c := req.URL.Scheme == "h2c"
 	if h2c {

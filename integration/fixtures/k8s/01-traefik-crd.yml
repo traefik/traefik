@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: ingressroutes.traefik.io
 spec:
   group: traefik.io
@@ -528,7 +528,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: ingressroutetcps.traefik.io
 spec:
   group: traefik.io
@@ -791,7 +791,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: ingressrouteudps.traefik.io
 spec:
   group: traefik.io
@@ -907,7 +907,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: middlewares.traefik.io
 spec:
   group: traefik.io
@@ -2950,7 +2950,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: middlewaretcps.traefik.io
 spec:
   group: traefik.io
@@ -3039,7 +3039,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: serverstransports.traefik.io
 spec:
   group: traefik.io
@@ -3259,7 +3259,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: serverstransporttcps.traefik.io
 spec:
   group: traefik.io
@@ -3432,7 +3432,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: tlsoptions.traefik.io
 spec:
   group: traefik.io
@@ -3551,7 +3551,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: tlsstores.traefik.io
 spec:
   group: traefik.io
@@ -3648,7 +3648,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.21.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   name: traefikservices.traefik.io
 spec:
   group: traefik.io
@@ -4984,6 +4984,14 @@ spec:
                     - leasttime
                     - RoundRobin
                     type: string
+                  streamBody:
+                    description: |-
+                      StreamBody defines whether the request body is streamed to the mirrors while the main service reads it,
+                      instead of being buffered in memory before reaching the main service.
+                      A mirror reading the body too slowly is aborted, so that it never slows the main request down.
+                      It has no effect when MirrorBody is false, and cannot be used with MaxBodySize.
+                      Default value is false.
+                    type: boolean
                   weight:
                     description: |-
                       Weight defines the weight and should only be specified when Name references a TraefikService object

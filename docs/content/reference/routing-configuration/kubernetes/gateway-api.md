@@ -140,6 +140,42 @@ spec:
           from: Same
 ```
 
+### Backend Client Certificate
+
+The `tls.backend.clientCertificateRef` field on a `Gateway` (`spec.tls.backend`, a sibling of `spec.listeners`) sets the client certificate that Traefik presents to backends that require mutual TLS (mTLS), as defined by [GEP-3155](https://gateway-api.sigs.k8s.io/geps/gep-3155/).
+
+Traefik presents the certificate to the backends selected by a [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/), for `HTTPRoute` and `GRPCRoute` routes.
+Backends without a `BackendTLSPolicy` are not affected, because the field does not enable TLS by itself.
+The listeners of a `ListenerSet` use the certificate of their parent `Gateway`.
+
+The reference must point to a core `Secret` that contains the `tls.crt` and `tls.key` entries.
+A `Secret` in another namespace requires a [ReferenceGrant](https://gateway-api.sigs.k8s.io/reference/api-types/referencegrant/) in that namespace.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    backend:
+      # Presented to every backend selected by a BackendTLSPolicy.
+      clientCertificateRef:
+        name: backend-client-tls
+        # Set namespace only for a Secret in another namespace, which requires a ReferenceGrant.
+        # namespace: certs
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
 ### ListenerSets
 
 Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.
@@ -416,6 +452,7 @@ There are three types of filters:
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "ExtensionRef Filters"
@@ -541,6 +578,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"

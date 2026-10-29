@@ -113,7 +113,7 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 		// which a single node cannot do for the several port 80 Services the
 		// operator provisions. nodeLoadBalancer assigns their addresses.
 		testcontainers.WithCmdArgs("--disable=servicelb"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.6.3.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.7.0-rc.3.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/01-operator.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/02-gatewayclass.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/operator/03-bootstrap-gateway.yml"),
