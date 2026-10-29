@@ -1,0 +1,77 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-tls-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tls
+      protocol: TLS
+      port: 9000
+      hostname: abc.example.com
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+
+# The intersection of this route host name with the listener one is abc.example.com.
+# Thus this route gives the same rule as the route below.
+# This route is also the older of the two routes,
+# but the precedence follows the route host names, which are less specific than the ones of the route below.
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-wildcard
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "*.example.com"
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: tls-app-exact
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - abc.example.com
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""

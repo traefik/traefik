@@ -1,0 +1,93 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: abc.example.com
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+# The intersection of this route host name with the listener one is abc.example.com.
+# Thus this route gives the same rule as the route below for its second rule.
+# This route is also the older of the two routes,
+# but the precedence follows the route host names, which are less specific than the ones of the route below.
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-wildcard
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "*.example.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /path/prefix
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-exact
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - abc.example.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""

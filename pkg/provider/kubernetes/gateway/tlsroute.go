@@ -33,13 +33,9 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 	// to make a decision between the routes that match a connection equally well.
 	slices.SortStableFunc(routes, func(a, b *gatev1.TLSRoute) int { return compareRoutes(a, b) })
 
-	served := make(servedRules)
+	candidates := newRouterConfCandidates()
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().
-			Str("tls_route", route.Name).
-			Str("namespace", route.Namespace).Logger()
-
 		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
 		if len(routeParentRefs) == 0 {
 			continue
@@ -88,12 +84,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 				if accepted && listener.Attached {
 					for _, rc := range routerConfs {
 						router := rc.Conf.TCP.Routers[rc.Name]
-						if servedBy, alreadyServed := served.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
-							logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
-							continue
-						}
-
-						mergeTCPConfiguration(rc.Conf, conf)
+						candidates.add(rc.Name, router.EntryPoints, router.Rule, router.Priority, rc.Conf)
 					}
 
 					// Only consider the route attached if the listener is in an "attached" state.
@@ -113,19 +104,24 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 				Conditions:     parentStatusConditions,
 			})
 		}
+	}
 
-		// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
-		// Note that when there is HTTPS listeners this will predate the traffic and reject the connection to undefined hosts instead of returning a 404.
-		if len(conf.TCP.Routers) > 0 {
-			conf.TCP.Routers["deny-unknown-host"] = &dynamic.TCPRouter{
-				Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
-				Priority: 1,
-				Service:  "deny-unknown-host",
-				TLS:      &dynamic.RouterTCPTLSConfig{},
-			}
-			conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
-				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
-			}
+	candidates.merge(ctx, func(name string, entryPoints []string, routerConf *dynamic.Configuration) {
+		routerConf.TCP.Routers[name].EntryPoints = entryPoints
+		mergeTCPConfiguration(routerConf, conf)
+	})
+
+	// When there is at least one TLS listener, we add a default deny-all route to avoid accepting traffic for undefined hosts.
+	// Note that when there is HTTPS listeners this will predate the traffic and reject the connection to undefined hosts instead of returning a 404.
+	if len(conf.TCP.Routers) > 0 {
+		conf.TCP.Routers["deny-unknown-host"] = &dynamic.TCPRouter{
+			Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+			Priority: 1,
+			Service:  "deny-unknown-host",
+			TLS:      &dynamic.RouterTCPTLSConfig{},
+		}
+		conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
+			LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 		}
 	}
 }
@@ -154,11 +150,11 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 			continue
 		}
 
-		rule, priority := hostSNIRule(hostnames)
+		rule := hostSNIRule(hostnames)
 		router := dynamic.TCPRouter{
 			RuleSyntax:  "default",
 			Rule:        rule,
-			Priority:    priority,
+			Priority:    hostnamePriority(listener.Hostname, route.Spec.Hostnames),
 			EntryPoints: []string{listener.EPName},
 			TLS: &dynamic.RouterTCPTLSConfig{
 				Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
@@ -643,9 +639,7 @@ func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.Back
 	}
 }
 
-func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
-	var priority int
-
+func hostSNIRule(hostnames []gatev1.Hostname) string {
 	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[gatev1.Hostname]struct{}{}
 
@@ -656,12 +650,6 @@ func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
 
 		host := string(hostname)
 		wildcard := strings.Count(host, "*")
-
-		thisPriority := len(hostname) - wildcard
-
-		if priority < thisPriority {
-			priority = thisPriority
-		}
 
 		if _, exists := uniqHostnames[hostname]; exists {
 			continue
@@ -681,8 +669,8 @@ func hostSNIRule(hostnames []gatev1.Hostname) (string, int) {
 	}
 
 	if len(hostnames) == 0 || len(rules) == 0 {
-		return `HostSNI("*")`, 0
+		return `HostSNI("*")`
 	}
 
-	return strings.Join(rules, " || "), priority
+	return strings.Join(rules, " || ")
 }
