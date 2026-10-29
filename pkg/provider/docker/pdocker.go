@@ -92,12 +92,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			if p.Watch {
-				startStopHandle := func(m eventtypes.Message) {
-					logger.Debug().Msgf("Provider event received %+v", m)
+				refreshHandle := func() {
 					containers, err := p.listContainers(ctx, dockerClient)
 					if err != nil {
 						logger.Error().Err(err).Msg("Failed to list containers for docker")
-						// Call cancel to get out of the monitor
 						return
 					}
 
@@ -114,11 +112,25 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 				}
 
+				startStopHandle := func(m eventtypes.Message) {
+					logger.Debug().Msgf("Provider event received %+v", m)
+					refreshHandle()
+				}
+
+				var tickerc <-chan time.Time
+				if p.RefreshSeconds > 0 {
+					ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
+					tickerc = ticker.C
+					defer ticker.Stop()
+				}
+
 				res := dockerClient.Events(ctx, client.EventsListOptions{
 					Filters: make(client.Filters).Add("type", string(eventtypes.ContainerEventType)),
 				})
 				for {
 					select {
+					case <-tickerc:
+						refreshHandle()
 					case event := <-res.Messages:
 						if event.Action == "start" ||
 							event.Action == "die" ||
