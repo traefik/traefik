@@ -1,3 +1,12 @@
+## [v2.11.61](https://github.com/traefik/traefik/tree/v2.11.61) (2026-10-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.60...v2.11.61)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-jose/go-jose/v4 to v4.1.6 ([#14165](https://github.com/traefik/traefik/pull/14165) @Mheaus)
+- **[server]** Add an entry point option to limit the number of request header values ([#14111](https://github.com/traefik/traefik/pull/14111) @juliens)
+- **[server]** Bump golang.org/x/net to v0.62.0 ([#14176](https://github.com/traefik/traefik/pull/14176) @kevinpollet)
+- **[server]** Fix backend connection leak for NTLM and Kerberos authentication ([#14144](https://github.com/traefik/traefik/pull/14144) @juliens)
+
 ## [v2.11.60](https://github.com/traefik/traefik/tree/v2.11.60) (2026-10-20)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.59...v2.11.60)
 
