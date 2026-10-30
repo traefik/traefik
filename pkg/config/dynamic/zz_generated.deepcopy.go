@@ -1500,6 +1500,11 @@ func (in *Redis) DeepCopyInto(out *Redis) {
 		*out = new(paersertypes.Duration)
 		**out = **in
 	}
+	if in.DenyOnError != nil {
+		in, out := &in.DenyOnError, &out.DenyOnError
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
