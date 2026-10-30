@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -257,6 +258,10 @@ func findConflictingRouters(ep string, routers map[string]*dynamic.Router, stric
 		}
 
 		for _, domain := range domains {
+			// The Host and HostSNI matchers ignore a trailing dot,
+			// so "example.com." and "example.com" are the same host.
+			domain = strings.TrimSuffix(domain, ".")
+
 			if routersByHostAndOption[domain] == nil {
 				routersByHostAndOption[domain] = map[string][]string{}
 			}
