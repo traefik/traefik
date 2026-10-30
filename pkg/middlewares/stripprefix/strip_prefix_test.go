@@ -210,6 +210,33 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/api../foo",
 			expectedStatusCode: http.StatusBadRequest,
 		},
+		{
+			desc: "dot-segment with path parameters in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api..;x/foo",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "current dot-segment with path parameters in the path not stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api.;x/foo",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "encoded dot-segment with path parameters in the path stripped by the prefix",
+			config: dynamic.StripPrefix{
+				Prefixes: []string{"/api"},
+			},
+			path:               "/api/..%3Bx/foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/..;x/foo",
+			expectedRawPath:    "/..%3Bx/foo",
+			expectedHeader:     "/api",
+		},
 	}
 
 	for _, test := range testCases {

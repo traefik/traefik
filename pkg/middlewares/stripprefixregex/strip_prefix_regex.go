@@ -84,6 +84,14 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 				return
 			}
 
+			// Stop here if the stripped path starts a segment with "..;" or ".;",
+			// as backends stripping path parameters (Servlet containers, Spring, ...) resolve it as a dot-segment.
+			if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, "/..;") || strings.Contains(escapedPath, "/.;") {
+				logger.Debugf("Rejecting request, stripped path: %q contains a dot-segment with path parameters", escapedPath)
+				http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+
 			req.RequestURI = req.URL.RequestURI()
 			break
 		}

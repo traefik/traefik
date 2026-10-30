@@ -161,6 +161,37 @@ func TestReplacePathRegex(t *testing.T) {
 			},
 			expectedStatusCode: http.StatusBadRequest,
 		},
+		{
+			desc: "path with ..;",
+			path: "/foo..;x/bar",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/$1",
+				Regex:       `^/foo(.*)`,
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "path with .;",
+			path: "/foo.;x/bar",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/$1",
+				Regex:       `^/foo(.*)`,
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "path with encoded ..;",
+			path: "/foo/..%3Bx/bar",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/$1",
+				Regex:       `^/foo/(.*)`,
+			},
+			expectedPath:       "/..;x/bar",
+			expectedRawPath:    "/..%3Bx/bar",
+			expectedHeader:     "/foo/..%3Bx/bar",
+			expectedRequestURI: "/..%3Bx/bar",
+			expectedStatusCode: http.StatusOK,
+		},
 	}
 
 	for _, test := range testCases {
