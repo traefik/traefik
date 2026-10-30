@@ -720,11 +720,12 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 	}
 
 	errp := &dynamic.ErrorPage{
-		Status:              errorPage.Status,
-		StatusRewrites:      errorPage.StatusRewrites,
-		Query:               errorPage.Query,
-		ErrorRequestHeaders: errorPage.ErrorRequestHeaders,
-		Service:             serviceName,
+		Status:               errorPage.Status,
+		StatusRewrites:       errorPage.StatusRewrites,
+		Query:                errorPage.Query,
+		ErrorRequestHeaders:  errorPage.ErrorRequestHeaders,
+		ErrorResponseHeaders: errorPage.ErrorResponseHeaders,
+		Service:              serviceName,
 	}
 	if service != nil {
 		errp.Service = serviceKey
