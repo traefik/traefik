@@ -5,19 +5,23 @@ type ExpiryStatus = {
   label: string
 }
 
-export const getCertExpiryStatus = (daysLeft: number): ExpiryStatus => {
+// Ratio of the remaining lifetime of a certificate before it is considered expiring
+const expiringRatio = 1 / 3;
+
+export const getCertExpiryStatus = (daysLeft: number, daysLifetime: number): ExpiryStatus => {
   if (daysLeft < 0) return { variant: 'red', label: 'EXPIRED' }
-  if (daysLeft < 30) return { variant: 'orange', label: 'Expiring Soon' }
+  if (daysLeft / daysLifetime < expiringRatio) return { variant: 'orange', label: 'Expiring Soon' }
   return { variant: 'green', label: 'Valid' }
 }
 
 type CertExpiryBadgeProps = {
   daysLeft: number
+  daysLifetime: number
   size?: 'small' | 'large'
 }
 
-const CertExpiryBadge = ({ daysLeft, size = 'large' }: CertExpiryBadgeProps) => {
-  const { variant } = getCertExpiryStatus(daysLeft)
+const CertExpiryBadge = ({ daysLeft, daysLifetime, size = 'large' }: CertExpiryBadgeProps) => {
+  const { variant } = getCertExpiryStatus(daysLeft, daysLifetime)
 
   return (
     <Badge size={size} variant={variant}>
