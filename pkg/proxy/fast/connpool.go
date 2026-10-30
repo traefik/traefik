@@ -41,9 +41,25 @@ type conn struct {
 
 	responseHeaderTimeout time.Duration
 
+	// readTimeout and writeTimeout bound successive read/write operations,
+	// and are not enforced on idle or upgraded connections.
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+
 	expectedResponse atomic.Bool
 	broken           atomic.Bool
 	upgraded         atomic.Bool
+
+	// responsePending gates the read deadline, and cannot be replaced by
+	// expectedResponse: the latter is set before the request is written, and
+	// arming the deadline that early breaks any request taking longer than
+	// readTimeout to be written to the backend.
+	responsePending atomic.Bool
+
+	// readLoopDone signals that the readLoop has terminated and will never
+	// receive from RWCh. readLoopErr holds the error that terminated it.
+	readLoopDone chan struct{}
+	readLoopErr  error
 
 	closeMu  sync.Mutex
 	closed   bool
@@ -57,6 +73,33 @@ type conn struct {
 // Overrides conn Read to use the buffered reader.
 func (c *conn) Read(b []byte) (n int, err error) {
 	return c.br.Read(b)
+}
+
+// Write writes data to the connection.
+// Overrides conn Write to arm the write deadline, except on upgraded connections.
+func (c *conn) Write(b []byte) (n int, err error) {
+	if c.writeTimeout > 0 && !c.upgraded.Load() {
+		_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	return c.Conn.Write(b)
+}
+
+// timeoutReader feeds the connection buffered reader, arming the read deadline
+// before each read while a response is pending, and never while the connection
+// is idle or upgraded.
+type timeoutReader struct {
+	conn *conn
+}
+
+func (r timeoutReader) Read(b []byte) (n int, err error) {
+	if r.conn.readTimeout > 0 && r.conn.responsePending.Load() && !r.conn.upgraded.Load() {
+		_ = r.conn.Conn.SetReadDeadline(time.Now().Add(r.conn.readTimeout))
+		defer r.conn.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	return r.conn.Conn.Read(b)
 }
 
 // Close closes the connection.
@@ -91,6 +134,7 @@ func (c *conn) isUpgraded() bool {
 // readLoop handles the successive HTTP response read operations on the connection,
 // and watches for unsolicited bytes or connection errors when idle.
 func (c *conn) readLoop() {
+	defer close(c.readLoopDone)
 	defer c.Close()
 
 	for {
@@ -102,6 +146,7 @@ func (c *conn) readLoop() {
 				c.ErrCh <- err
 			// An error occurred on an idle connection.
 			default:
+				c.readLoopErr = err
 				c.broken.Store(true)
 			}
 			return
@@ -109,6 +154,7 @@ func (c *conn) readLoop() {
 
 		// Unsolicited response received on an idle connection.
 		if !c.expectedResponse.Load() {
+			c.readLoopErr = errors.New("unsolicited response received on idle connection")
 			c.broken.Store(true)
 			return
 		}
@@ -120,6 +166,14 @@ func (c *conn) readLoop() {
 		}
 
 		c.expectedResponse.Store(false)
+		c.responsePending.Store(false)
+
+		// The deadline armed at request-write time may still be pending when the
+		// response was entirely buffered, and would break the idle connection.
+		if c.readTimeout > 0 {
+			_ = c.Conn.SetReadDeadline(time.Time{})
+		}
+
 		c.ErrCh <- nil
 
 		// An upgraded connection is handed over to the tunnel copiers, which read from the same bufio.Reader:
@@ -203,8 +257,17 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 
 	// Deal with 101 Switching Protocols responses: (WebSocket, h2c, etc)
 	if res.StatusCode() == http.StatusSwitchingProtocols {
+		// Marking the connection as upgraded disables the read/write timeouts
+		// for the tunnel, and prevents it from going back to the pool.
+		c.upgraded.Store(true)
+
+		// The deadline armed at request-write time may still be pending,
+		// and would break the upgraded connection.
+		if c.readTimeout > 0 {
+			_ = c.Conn.SetReadDeadline(time.Time{})
+		}
+
 		r.Upgrade(r.RW, res, c)
-		c.upgraded.Store(true) // As the connection has been upgraded, it cannot be added back to the pool.
 		return nil
 	}
 
@@ -326,6 +389,8 @@ type connPool struct {
 	idleConns             chan *conn
 	idleConnTimeout       time.Duration
 	responseHeaderTimeout time.Duration
+	readTimeout           time.Duration
+	writeTimeout          time.Duration
 	ticker                *time.Ticker
 	bufferPool            pool[[]byte]
 	limitedReaderPool     pool[*io.LimitedReader]
@@ -339,12 +404,14 @@ type connPool struct {
 }
 
 // newConnPool creates a new connPool.
-func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout time.Duration, dialer func() (net.Conn, error)) *connPool {
+func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout, readTimeout, writeTimeout time.Duration, dialer func() (net.Conn, error)) *connPool {
 	c := &connPool{
 		dialer:                dialer,
 		idleConns:             make(chan *conn, maxIdleConn),
 		idleConnTimeout:       idleConnTimeout,
 		responseHeaderTimeout: responseHeaderTimeout,
+		readTimeout:           readTimeout,
+		writeTimeout:          writeTimeout,
 		doneCh:                make(chan struct{}),
 	}
 
@@ -524,15 +591,18 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 
 	newConn := &conn{
 		Conn:                  co,
-		br:                    bufio.NewReaderSize(co, bufioSize),
 		idleAt:                time.Now(),
 		idleTimeout:           c.idleConnTimeout,
 		responseHeaderTimeout: c.responseHeaderTimeout,
+		readTimeout:           c.readTimeout,
+		writeTimeout:          c.writeTimeout,
 		RWCh:                  make(chan rwWithUpgrade),
 		ErrCh:                 make(chan error),
+		readLoopDone:          make(chan struct{}),
 		bufferPool:            &c.bufferPool,
 		limitedReaderPool:     &c.limitedReaderPool,
 	}
+	newConn.br = bufio.NewReaderSize(timeoutReader{conn: newConn}, bufioSize)
 	go newConn.readLoop()
 
 	c.releaseConn(newConn)
