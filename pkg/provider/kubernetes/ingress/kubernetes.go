@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
 	"strconv"
@@ -49,8 +50,13 @@ type Provider struct {
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	CrossProviderNamespaces   []string         `description:"List of namespaces from which Ingresses or Services are allowed to declare Middlewares, TLSOptions, or ServersTransport references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	// SafeNaming enables collision-safe naming for generated routers and services.
+	SafeNaming *bool `description:"Enable collision-safe naming for the Kubernetes Ingress provider." json:"safeNaming,omitempty" toml:"safeNaming,omitempty" yaml:"safeNaming,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
+
+	// safeNaming is initialized once according to whether SafeNaming is enabled.
+	safeNaming bool
 
 	routerTransform k8s.RouterTransform
 }
@@ -68,6 +74,9 @@ type EndpointIngress struct {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	// SafeNaming defaults to false (legacy naming) when left unset.
+	p.safeNaming = p.SafeNaming != nil && *p.SafeNaming
+
 	return nil
 }
 
@@ -88,6 +97,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	if p.CrossProviderNamespaces != nil {
 		logger.Warnf("Cross-provider Middleware, TLSOption and ServersTransport references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
+	}
+
+	if p.SafeNaming == nil {
+		logger.Warn("SafeNaming is not explicitly set: generated routers and services will use the legacy naming scheme, " +
+			"under which names can collide across namespaces or resources. " +
+			"It is recommended to explicitly set the SafeNaming option, to `true` on new setups, or to `false` to keep the legacy behavior and silence this warning. " +
+			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v2.11/migration/v2/#kubernetes-ingress-safe-naming-configuration-option")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -302,7 +318,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 		routers := map[string][]*dynamic.Router{}
 
-		for _, rule := range ingress.Spec.Rules {
+		for ruleIndex, rule := range ingress.Spec.Rules {
 			if err := p.updateIngressStatus(ingress, client); err != nil {
 				log.FromContext(ctxIngress).Errorf("Error while updating ingress status: %v", err)
 			}
@@ -311,7 +327,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			for _, pa := range rule.HTTP.Paths {
+			for pathIndex, pa := range rule.HTTP.Paths {
 				if pa.Backend.Resource != nil {
 					// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
 					log.FromContext(ctxIngress).Error("Resource backends are not supported")
@@ -347,7 +363,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				}
 
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
-				conf.HTTP.Services[serviceName] = service
+				if p.safeNaming {
+					serviceName = makeSafeKey(ingress.Namespace, pa.Backend.Service.Name, portString)
+				}
+				addToConfig(log.FromContext(ctxIngress), "service", serviceName, conf.HTTP.Services, service)
 
 				rt, err := loadRouter(rule, pa, rtConfig, serviceName)
 				if err != nil {
@@ -360,6 +379,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
+				if p.safeNaming {
+					// The rule and path indexes make the name unique within the Ingress, so no hash is needed.
+					routerKey := makeSafeKey(ingress.Namespace, ingress.Name, strconv.Itoa(ruleIndex), strconv.Itoa(pathIndex))
+					addToConfig(log.FromContext(ctxIngress), "router", routerKey, conf.HTTP.Routers, rt)
+					continue
+				}
+
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
 
 				routers[routerKey] = append(routers[routerKey], rt)
@@ -368,7 +394,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 		for routerKey, conflictingRouters := range routers {
 			if len(conflictingRouters) == 1 {
-				conf.HTTP.Routers[routerKey] = conflictingRouters[0]
+				addToConfig(log.FromContext(ctxIngress), "router", routerKey, conf.HTTP.Routers, conflictingRouters[0])
 				continue
 			}
 
@@ -467,7 +493,9 @@ func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Clie
 			continue
 		}
 
-		configKey := ingress.Namespace + "-" + t.SecretName
+		// configKey only deduplicates the certificates and never appears in the configuration:
+		// a '/' cannot appear in a Kubernetes namespace or name, so the key cannot collide.
+		configKey := ingress.Namespace + "/" + t.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {
@@ -526,6 +554,27 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	}
 
 	return cert, key, nil
+}
+
+// nameSeparator joins the components of a SafeNaming generated name.
+// It cannot appear in a Kubernetes namespace or name, so joining components with it is unambiguous.
+const nameSeparator = "_"
+
+// makeSafeKey builds a generated name from its components separated by the nameSeparator.
+func makeSafeKey(components ...string) string {
+	return strings.Join(components, nameSeparator)
+}
+
+// addToConfig assigns obj to objects[name], logging a warning if name is already assigned to a
+// different object: in that case, the existing object is dropped from the configuration, and silently
+// replaced by obj. This is most likely to happen when SafeNaming is disabled, as the legacy naming scheme
+// does not guarantee that generated names are unique.
+func addToConfig[T any](logger log.Logger, kind, name string, objects map[string]T, obj T) {
+	if existing, ok := objects[name]; ok && !reflect.DeepEqual(existing, obj) {
+		logger.Warnf("Name collision: %s %q is defined more than once, the previous definition will be overridden", kind, name)
+	}
+
+	objects[name] = obj
 }
 
 func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {

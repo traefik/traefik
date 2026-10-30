@@ -151,6 +151,7 @@ providers:
     crossProviderNamespaces:
       - foobar
       - foobar
+    safeNaming: true
   kubernetesCRD:
     endpoint: foobar
     token: foobar

@@ -804,6 +804,9 @@ Kubernetes Ingress label selector to use.
 `--providers.kubernetesingress.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetesingress.safenaming`:  
+Enable collision-safe naming for the Kubernetes Ingress provider. (Default: ```false```)
+
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 

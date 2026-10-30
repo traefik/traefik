@@ -136,6 +136,7 @@
     allowEmptyServices = true
     allowExternalNameServices = true
     crossProviderNamespaces = ["foobar", "foobar"]
+    safeNaming = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
