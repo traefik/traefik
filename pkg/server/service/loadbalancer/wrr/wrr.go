@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -226,7 +227,11 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+	// The loop below only stops once it pops an available handler. Without one
+	// it would spin forever while holding the lock, so bail out early. This state
+	// is reachable when every up server is fenced while the others are down, or
+	// when the only up server has a zero weight and is therefore not in the heap.
+	if !slices.ContainsFunc(b.handlers, func(h *namedHandler) bool { return b.isAvailable(h.name) }) {
 		return nil, errNoAvailableServer
 	}
 
@@ -240,14 +245,19 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		handler.deadline += 1 / handler.weight
 
 		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
-			}
+		if b.isAvailable(handler.name) {
+			break
 		}
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
 	return handler, nil
+}
+
+// isAvailable reports whether the named handler is up according to the health
+// check and not fenced. b.handlersMu must be held.
+func (b *Balancer) isAvailable(name string) bool {
+	_, up := b.status[name]
+	_, fenced := b.fenced[name]
+	return up && !fenced
 }
