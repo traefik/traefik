@@ -79,6 +79,7 @@ entryPoints:
 - `/foo/../bar` → `/bar` (resolves parent directory traversal)
 - `/foo/bar//` → `/foo/bar/` (removes duplicate slashes)
 - `/./foo/../bar//` → `/bar/` (combines all normalizations)
+- `/foo/..;bar/baz` → `/foo/..%3Bbar/baz` (encodes the semicolon of dot-segments with path parameters)
 
 ### Encoded Character Filtering
 

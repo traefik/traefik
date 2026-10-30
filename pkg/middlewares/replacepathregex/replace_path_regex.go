@@ -87,6 +87,14 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
+
+		// Stop here if the replaced path starts a segment with "..;" or ".;",
+		// as backends stripping path parameters (Servlet containers, Spring, ...) resolve it as a dot-segment.
+		if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, "/..;") || strings.Contains(escapedPath, "/.;") {
+			logger.Debugf("Rejecting request, replaced path: %q contains a dot-segment with path parameters", escapedPath)
+			http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
 	}
 
 	rp.next.ServeHTTP(rw, req)

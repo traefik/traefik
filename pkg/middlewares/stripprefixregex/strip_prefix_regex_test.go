@@ -209,6 +209,28 @@ func TestStripPrefixRegex(t *testing.T) {
 			path:               "/api../foo",
 			expectedStatusCode: http.StatusBadRequest,
 		},
+		{
+			desc:               "/api..;x/foo",
+			config:             dynamic.StripPrefixRegex{Regex: []string{"/api"}},
+			path:               "/api..;x/foo",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc:               "/api.;x/foo",
+			config:             dynamic.StripPrefixRegex{Regex: []string{"/api"}},
+			path:               "/api.;x/foo",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc:               "/api/..%3Bx/foo",
+			config:             dynamic.StripPrefixRegex{Regex: []string{"/api"}},
+			path:               "/api/..%3Bx/foo",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/..;x/foo",
+			expectedRawPath:    "/..%3Bx/foo",
+			expectedRequestURI: "/..%3Bx/foo",
+			expectedHeader:     "/api",
+		},
 	}
 
 	for _, test := range testCases {
