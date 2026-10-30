@@ -104,7 +104,7 @@ Follow the [documentation style guide](./docs/content/contributing/documentation
 
 Traefik welcomes AI-assisted contributions, provided a few simple rules are followed:
 
-- **Declare substantial AI assistance** with an `Assisted-by:` trailer at the bottom of the commit message whenever an agent produced a meaningful portion of the diff — for example `Assisted-by: Claude Opus 4.6`. Trivial edits such as a typo fix or a one-line rename do not need a trailer.
+- **Declare substantial AI assistance in the pull request description**, with `Assisted-by: <agent name>` (for example `Assisted-by: Claude Opus 4.6`), whenever an agent produced a meaningful portion of the diff. Trivial edits such as a typo fix or a one-line rename do not need it. Never add `Co-authored-by:`, `Assisted-by:` or any other AI attribution trailer to commit messages, and never make an agent the author of a commit.
 - **Keep issue and PR conversations human.** Do not let an agent post comments, review replies, or triage messages on your behalf. If an agent drafted a message for you, rewrite it in your own voice before sending — maintainers need to know they are talking to a person, not a bot.
 - **Align with a maintainer before generating code for anything larger than a bug fix.** An agent can produce thousands of lines in minutes; maintainer review capacity cannot scale the same way. Open an issue, state the intended approach, and wait for confirmation before asking an agent to implement it.
 
