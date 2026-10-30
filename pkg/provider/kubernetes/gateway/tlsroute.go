@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"regexp"
 	"slices"
@@ -33,6 +34,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 	slices.SortStableFunc(routes, func(a, b *gatev1.TLSRoute) int { return compareRoutes(a, b) })
 
 	served := make(servedRules)
+	entryPoints := make(map[string]struct{})
 
 	for _, route := range routes {
 		logger := log.Ctx(ctx).With().
@@ -94,6 +96,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 						}
 
 						mergeTCPConfiguration(rc.Conf, conf)
+						entryPoints[listener.EPName] = struct{}{}
 					}
 
 					// Only consider the route attached if the listener is in an "attached" state.
@@ -118,10 +121,11 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gateways []gatewayWithList
 		// Note that when there is HTTPS listeners this will predate the traffic and reject the connection to undefined hosts instead of returning a 404.
 		if len(conf.TCP.Routers) > 0 {
 			conf.TCP.Routers["deny-unknown-host"] = &dynamic.TCPRouter{
-				Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
-				Priority: 1,
-				Service:  "deny-unknown-host",
-				TLS:      &dynamic.RouterTCPTLSConfig{},
+				EntryPoints: slices.Sorted(maps.Keys(entryPoints)),
+				Rule:        "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+				Priority:    1,
+				Service:     "deny-unknown-host",
+				TLS:         &dynamic.RouterTCPTLSConfig{},
 			}
 			conf.TCP.Services["deny-unknown-host"] = &dynamic.TCPService{
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{},
