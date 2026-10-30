@@ -16,12 +16,6 @@
     "test:watch": "vitest",
     "test:unit:ci": "vitest run"
   },
-  "lint-staged": {
-    "**/*.{ts,tsx}": [
-      "prettier --config .prettierrc.json --write",
-      "eslint --fix"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -83,8 +77,6 @@
     "vitest-canvas-mock": "^0.3.3"
   },
   "devDependencies": {
-    "husky": "9.1.7",
-    "lint-staged": "^15.0.0",
     "prettier": "3.9.10"
   },
   "msw": {
