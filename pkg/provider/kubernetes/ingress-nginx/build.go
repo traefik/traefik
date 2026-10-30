@@ -643,6 +643,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 // applyServerClientAuth applies the client-auth TLS option (auth-tls-secret) of the first location declaring one for a host to every location of that host.
 // ingress-nginx enforces client certificate authentication for the whole server block, configured by the first Ingress declaring it for the host.
+// The Ssl-Client-* headers of every location are therefore built from that same TLS option.
 // It also keeps every router serving the host on the same TLS option.
 func applyServerClientAuth(ctx context.Context, servers map[string]*server) {
 	for _, srv := range servers {
@@ -665,6 +666,7 @@ func applyServerClientAuth(ctx context.Context, servers map[string]*server) {
 
 			loc.TLSOptionName = owner.TLSOptionName
 			loc.TLSOption = owner.TLSOption
+			buildAuthTLSPassCert(loc)
 		}
 	}
 }
