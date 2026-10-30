@@ -46,6 +46,11 @@ The `Header` and `HeaderRegexp` matchers allow matching requests that contain sp
 
 The `Host` and `HostRegexp` matchers allow matching requests that are targeted to a given host.
 
+`HostRegexp` compiles its pattern and matches it against the request host as a **substring** (`regexp.MatchString`).
+Use the start of string (`^`) and end of string (`$`) anchors when you need a full host match.
+Without them, ``HostRegexp(`app\.localhost`)`` also matches `evapp.localhost`, and ``HostRegexp(`[a-z]+\.traefik\.com`)`` also matches hosts such as `foo.traefik.com.attacker.example`.
+The configuration examples below are anchored for that reason.
+
 These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
 If no `Host` is set in the request URL (for example, it's an IP address), these matchers will look at the `Host` header.
@@ -144,7 +149,7 @@ The configuration below uses the [File Provider (Structured)](../../../install-c
 http:
   routers:
     Router-v3:
-      rule: HostRegexp(`[a-z]+\\.traefik\\.com`)
+      rule: HostRegexp(`^[a-z]+\\.traefik\\.com$`)
       ruleSyntax: v3
     Router-v2:
       rule: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
@@ -155,7 +160,7 @@ http:
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-v3]
-    rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+    rule = "HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
     ruleSyntax = "v3"
   [http.routers.Router-v2]
     rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
@@ -164,7 +169,7 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+  - "traefik.http.routers.Router-v3.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
   - "traefik.http.routers.Router-v3.ruleSyntax=v3"
   - "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
   - "traefik.http.routers.Router-v2.ruleSyntax=v2"
@@ -174,7 +179,7 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+    "traefik.http.routers.Router-v3.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)",
     "traefik.http.routers.Router-v3.ruleSyntax=v3"
     "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)",
     "traefik.http.routers.Router-v2.ruleSyntax=v2"
@@ -190,7 +195,7 @@ labels:
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`[a-z]+\.traefik\.com`)"
+          rule: "HostRegexp(`^[a-z]+\.traefik\.com$`)"
           # ...
         Router-2:
           rule: "Host(`foobar.traefik.com`)"
@@ -200,7 +205,7 @@ labels:
     ```toml tab="Structured (TOML)"
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+        rule = "HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
         # ...
       [http.routers.Router-2]
         rule = "Host(`foobar.traefik.com`)"
@@ -209,7 +214,7 @@ labels:
 
     ```yaml tab="Labels"
     labels:
-      - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      - "traefik.http.routers.Router-1.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
       - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
     ```
 
@@ -217,7 +222,7 @@ labels:
     {
         // ...
         "Tags": [
-          "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+          "traefik.http.routers.Router-1.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)",
           "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
         ]
       }
@@ -227,7 +232,7 @@ labels:
 
     | Name     | Rule                                     | Priority |
     |----------|------------------------------------------|----------|
-    | <a id="opt-Router-1" href="#opt-Router-1" title="#opt-Router-1">Router-1</a> | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
+    | <a id="opt-Router-1" href="#opt-Router-1" title="#opt-Router-1">Router-1</a> | ```HostRegexp(`^[a-z]+\.traefik\.com$`)``` | 36       |
     | <a id="opt-Router-2" href="#opt-Router-2" title="#opt-Router-2">Router-2</a> | ```Host(`foobar.traefik.com`)```         | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
@@ -259,7 +264,7 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
 http:
   routers:
     Router-1:
-      rule: "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      rule: "HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
       entryPoints:
       - "web"
       service: service-1
@@ -276,7 +281,7 @@ http:
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-1]
-    rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+    rule = "HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
     entryPoints = ["web"]
     service = "service-1"
     priority = 1
@@ -289,7 +294,7 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
+  - "traefik.http.routers.Router-1.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)"
   - "traefik.http.routers.Router-1.entryPoints=web"
   - "traefik.http.routers.Router-1.service=service-1"
   - "traefik.http.routers.Router-1.priority=1"
@@ -303,7 +308,7 @@ labels:
   {
     // ...
     "Tags": [
-      "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
+      "traefik.http.routers.Router-1.rule=HostRegexp(`^[a-z]+\\.traefik\\.com$`)",
       "traefik.http.routers.Router-1.entryPoints=web",
       "traefik.http.routers.Router-1.service=service-1",
       "traefik.http.routers.Router-1.priority=1"
