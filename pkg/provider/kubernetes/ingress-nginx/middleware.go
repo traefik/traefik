@@ -175,6 +175,15 @@ func (p *Provider) buildRedirect(loc *location) {
 }
 
 func (p *Provider) buildBuffering(ctx context.Context, loc *location) {
+	// NGINX proxies GRPC/GRPCS backends with its grpc_pass directive (ngx_http_grpc_module),
+	// which has no equivalent to the proxy_buffering/proxy_request_buffering directives of
+	// ngx_http_proxy_module, so buffering is always off for gRPC backends regardless of the
+	// proxy-buffering/proxy-request-buffering annotations.
+	switch strings.ToUpper(ptr.Deref(loc.Config.BackendProtocol, "HTTP")) {
+	case "GRPC", "GRPCS":
+		return
+	}
+
 	disableReq := !p.ProxyRequestBuffering
 	if loc.Config.ProxyRequestBuffering != nil {
 		disableReq = *loc.Config.ProxyRequestBuffering != "on"
