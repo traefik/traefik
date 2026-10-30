@@ -359,6 +359,24 @@ func TestHostRegexpMatcher(t *testing.T) {
 			},
 		},
 		{
+			desc: "valid HostRegexp matcher - URL ending with a dot",
+			rule: "HostRegexp(`^[a-zA-Z-]+\\.com$`)",
+			expected: map[string]int{
+				"https://example.com.":      http.StatusOK,
+				"https://example.com./path": http.StatusOK,
+				"https://example.org.":      http.StatusNotFound,
+				"https://example.org./path": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "valid HostRegexp matcher - matcher ending with a dot",
+			rule: "HostRegexp(`^[a-zA-Z-]+\\.com\\.$`)",
+			expected: map[string]int{
+				"https://example.com.": http.StatusOK,
+				"https://example.org.": http.StatusNotFound,
+			},
+		},
+		{
 			desc: "valid HostRegexp matcher with case sensitive regexp",
 			rule: "HostRegexp(`^[A-Z]+\\.com$`)",
 			expected: map[string]int{
