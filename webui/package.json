@@ -36,7 +36,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@eslint/js": "^9.32.0",
+    "@eslint/js": "9.39.5",
     "@noble/ed25519": "3.2.0",
     "@noble/hashes": "2.4.0",
     "@testing-library/dom": "10.4.2",
@@ -52,7 +52,7 @@
     "@vitest/coverage-v8": "4.1.12",
     "@vitest/web-worker": "4.1.12",
     "chart.js": "4.6.1",
-    "eslint": "^9.32.0",
+    "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
     "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-import": "2.32.0",
