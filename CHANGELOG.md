@@ -1,3 +1,35 @@
+## [v3.7.17](https://github.com/traefik/traefik/tree/v3.7.17) (2026-10-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.16...v3.7.17)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.6.0 ([#14166](https://github.com/traefik/traefik/pull/14166) @ldez)
+- **[acme]** Bump github.com/go-jose/go-jose/v4 to v4.1.6 ([#14165](https://github.com/traefik/traefik/pull/14165) @Mheaus)
+- **[http3]** Bump github.com/quic-go/quic-go to v0.64.1 ([#14132](https://github.com/traefik/traefik/pull/14132) @janpachol)
+- **[k8s/gatewayapi]** Preserve Gateway status conditions owned by other controllers ([#14128](https://github.com/traefik/traefik/pull/14128) @Neffi42)
+- **[k8s/ingress-nginx]** Avoid generated name collisions across namespaces in the ingress-nginx provider ([#14140](https://github.com/traefik/traefik/pull/14140) @Neffi42)
+- **[logs, k8s/gatewayapi]** Lower user configuration error logs to debug ([#14159](https://github.com/traefik/traefik/pull/14159) @rtribotte)
+- **[middleware]** Bump github.com/andybalholm/brotli to v1.2.7 ([#14137](https://github.com/traefik/traefik/pull/14137) @albe2669)
+- **[middleware]** Fix broken flush, hijack, and deadlines in wrapped ResponseWriters ([#14082](https://github.com/traefik/traefik/pull/14082) @Neffi42)
+- **[middleware, authentication, k8s/crd, k8s, k8s/ingress-nginx]** Resolve secret references when building middlewares ([#14083](https://github.com/traefik/traefik/pull/14083) @sdelicata)
+- **[server]** Add an entry point option to limit the number of request header values ([#14111](https://github.com/traefik/traefik/pull/14111) @juliens)
+- **[server]** Add global default for aliasHeadersStrategy ([#13919](https://github.com/traefik/traefik/pull/13919) @nikolas-sapa)
+- **[server]** Bump golang.org/x/net to v0.62.0 ([#14176](https://github.com/traefik/traefik/pull/14176) @kevinpollet)
+- **[server]** Fix backend connection leak for NTLM and Kerberos authentication ([#14144](https://github.com/traefik/traefik/pull/14144) @juliens)
+- **[server, fastproxy]** Fix FastProxy backend connection leak for NTLM and Kerberos ([#14158](https://github.com/traefik/traefik/pull/14158) @juliens)
+
+**Documentation:**
+- **[docker]** Update Docker Basic guide to use Traefik v3.7 ([#14141](https://github.com/traefik/traefik/pull/14141) @Saku0512)
+- **[security]** Point security announcements to GitHub advisories ([#14099](https://github.com/traefik/traefik/pull/14099) @nmengin)
+
+## [v2.11.61](https://github.com/traefik/traefik/tree/v2.11.61) (2026-10-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.60...v2.11.61)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-jose/go-jose/v4 to v4.1.6 ([#14165](https://github.com/traefik/traefik/pull/14165) @Mheaus)
+- **[server]** Add an entry point option to limit the number of request header values ([#14111](https://github.com/traefik/traefik/pull/14111) @juliens)
+- **[server]** Bump golang.org/x/net to v0.62.0 ([#14176](https://github.com/traefik/traefik/pull/14176) @kevinpollet)
+- **[server]** Fix backend connection leak for NTLM and Kerberos authentication ([#14144](https://github.com/traefik/traefik/pull/14144) @juliens)
+
 ## [v3.7.16](https://github.com/traefik/traefik/tree/v3.7.16) (2026-10-20)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.15...v3.7.16)
 

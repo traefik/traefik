@@ -76,8 +76,9 @@ func parseAcceptableEncodings(acceptEncoding []string, supportedEncodings map[st
 			// If no "q" parameter is present, the default weight is 1.
 			// https://www.rfc-editor.org/rfc/rfc9110.html#name-quality-values
 			weight := 1.0
-			if len(parsed) > 1 && strings.HasPrefix(parsed[1], "q=") {
-				w, _ := strconv.ParseFloat(strings.TrimPrefix(parsed[1], "q="), 64)
+			// The "q" parameter name is case-insensitive.
+			if len(parsed) > 1 && len(parsed[1]) >= 2 && strings.EqualFold(parsed[1][:2], "q=") {
+				w, _ := strconv.ParseFloat(parsed[1][2:], 64)
 
 				// If the weight is 0, the encoding is not acceptable.
 				// We can skip the encoding.

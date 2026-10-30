@@ -122,6 +122,16 @@ func Test_getCompressionEncoding(t *testing.T) {
 			expected:        notAcceptable,
 		},
 		{
+			desc:           "Zero weights with uppercase Q, no compression",
+			acceptEncoding: []string{"br;Q=0, gzip;Q=0, zstd;Q=0"},
+			expected:       notAcceptable,
+		},
+		{
+			desc:           "uppercase Q weight is honored",
+			acceptEncoding: []string{"gzip;Q=0.5, br;Q=0.8"},
+			expected:       brotliName,
+		},
+		{
 			desc:           "Same weight, first supported encoding",
 			acceptEncoding: []string{"br;q=1.0, gzip;q=1.0, zstd;q=1.0"},
 			expected:       gzipName,
