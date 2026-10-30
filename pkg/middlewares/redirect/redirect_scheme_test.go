@@ -375,3 +375,50 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestRedirectSchemeHandler_IPv6HostWithPort(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      dynamic.RedirectScheme
+		host        string
+		expectedURL string
+	}{
+		{
+			desc:        "IPv6 host with port to HTTPS without port",
+			config:      dynamic.RedirectScheme{Scheme: "https"},
+			host:        "[::1]:8080",
+			expectedURL: "https://[::1]/path?q=1",
+		},
+		{
+			desc:        "IPv6 host with port to HTTPS with port",
+			config:      dynamic.RedirectScheme{Scheme: "https", Port: "8443"},
+			host:        "[2001:db8::1]:8080",
+			expectedURL: "https://[2001:db8::1]:8443/path?q=1",
+		},
+		{
+			desc:        "IPv6 host with port 80 to HTTPS without port",
+			config:      dynamic.RedirectScheme{Scheme: "https"},
+			host:        "[2001:db8::1]:80",
+			expectedURL: "https://[2001:db8::1]/path?q=1",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+			handler, err := NewRedirectScheme(t.Context(), next, test.config, "traefikTest")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/path?q=1", nil)
+			req.Host = test.host
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusFound, recorder.Code)
+			assert.Equal(t, test.expectedURL, recorder.Header().Get("Location"))
+		})
+	}
+}
