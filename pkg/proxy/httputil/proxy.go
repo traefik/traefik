@@ -120,6 +120,17 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 			pr.Out.Trailer[name] = nil
 		}
 
+		// Since go1.26, ReverseProxy gives the transport a request body whose Close is a no-op
+		// (https://github.com/golang/go/issues/78973). When a backend ends an HTTP/2 stream while the client
+		// is still sending the body, as gRPC does when a bidirectional stream fails on the server side,
+		// the transport cannot interrupt its pending read of the body, and the proxy waits for it forever
+		// instead of ending the response.
+		// The no-op Close only avoids a hang when closing an HTTP/1 body (https://github.com/golang/go/issues/75933),
+		// whereas closing an HTTP/2 body never blocks.
+		if pr.Out.Body != nil && pr.In.ProtoMajor == 2 {
+			pr.Out.Body = pr.In.Body
+		}
+
 		pr.Out.Proto = "HTTP/1.1"
 		pr.Out.ProtoMajor = 1
 		pr.Out.ProtoMinor = 1
