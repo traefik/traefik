@@ -54,6 +54,11 @@ type TLSOptionSpecApplyConfiguration struct {
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
 	// DisableSessionTickets disables TLS session resumption via session tickets.
 	DisableSessionTickets *bool `json:"disableSessionTickets,omitempty"`
+	// ECHKeys defines the names of the referenced Kubernetes Secrets storing RFC 9934 PEM-encoded Encrypted Client Hello keys under the tls.ech key.
+	ECHKeys []string `json:"echKeys,omitempty"`
+	// ECHDecryptOnlyKeys defines the names of the referenced Kubernetes Secrets storing rotated-out Encrypted Client Hello keys,
+	// still accepted for decryption but no longer advertised to clients.
+	ECHDecryptOnlyKeys []string `json:"echDecryptOnlyKeys,omitempty"`
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion is set.
 	//
@@ -134,6 +139,26 @@ func (b *TLSOptionSpecApplyConfiguration) WithALPNProtocols(values ...string) *T
 // If called multiple times, the DisableSessionTickets field is set to the value of the last call.
 func (b *TLSOptionSpecApplyConfiguration) WithDisableSessionTickets(value bool) *TLSOptionSpecApplyConfiguration {
 	b.DisableSessionTickets = &value
+	return b
+}
+
+// WithECHKeys adds the given value to the ECHKeys field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ECHKeys field.
+func (b *TLSOptionSpecApplyConfiguration) WithECHKeys(values ...string) *TLSOptionSpecApplyConfiguration {
+	for i := range values {
+		b.ECHKeys = append(b.ECHKeys, values[i])
+	}
+	return b
+}
+
+// WithECHDecryptOnlyKeys adds the given value to the ECHDecryptOnlyKeys field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ECHDecryptOnlyKeys field.
+func (b *TLSOptionSpecApplyConfiguration) WithECHDecryptOnlyKeys(values ...string) *TLSOptionSpecApplyConfiguration {
+	for i := range values {
+		b.ECHDecryptOnlyKeys = append(b.ECHDecryptOnlyKeys, values[i])
+	}
 	return b
 }
 
