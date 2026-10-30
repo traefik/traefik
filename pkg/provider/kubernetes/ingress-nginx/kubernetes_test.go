@@ -5006,7 +5006,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("x-forwarded-prefix.localhost") && Path("/")`,
+							Rule:        `Host("x-forwarded-prefix.localhost") && PathRegexp("(?i)^/")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-rewrite-target", "default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-31-whoami-6-80-2",
@@ -5054,7 +5054,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("x-forwarded-prefix.localhost") && Path("/")`,
+							Rule:        `Host("x-forwarded-prefix.localhost") && PathRegexp("(?i)^/")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-31-whoami-6-80-2",
@@ -6282,7 +6282,7 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("rewrite-target-no-regex.localhost") && Path("/original")`,
+							Rule:        `Host("rewrite-target-no-regex.localhost") && PathRegexp("(?i)^/original")`,
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-rewrite-target-no-regex-36-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -6301,7 +6301,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("rewrite-target-no-regex.localhost") && Path("/original")`,
+							Rule:        `Host("rewrite-target-no-regex.localhost") && PathRegexp("(?i)^/original")`,
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-rewrite-target-no-regex-36-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{

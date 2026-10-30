@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -197,7 +198,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 			}
 
-			rule := buildRule(srv.Hostname, loc)
+			rule := buildRule(srv, loc)
+			exclusions := buildShadowingExclusions(srv, loc, mc.Backends)
+			routerRule, priority := excludeRules(rule, exclusions)
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -208,7 +211,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			rt := &dynamic.Router{
 				EntryPoints:   p.NonTLSEntryPoints,
-				Rule:          rule,
+				Rule:          routerRule,
+				Priority:      priority,
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
@@ -232,7 +236,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.SSLPassthrough {
 				rtTLS = &dynamic.Router{
 					EntryPoints: p.TLSEntryPoints,
-					Rule:        rule,
+					Rule:        routerRule,
+					Priority:    priority,
 					RuleSyntax:  "default",
 					Service:     routerSvcName,
 					TLS: &dynamic.RouterTLSConfig{
@@ -255,10 +260,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+				canaryRule, canaryPriority := excludeRules(appendCanaryRule(rule, loc.Canary), exclusions)
 				canaryKey := routerKey + "-canary"
 				canaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendCanaryRule(rule, loc.Canary),
+					Rule:          canaryRule,
+					Priority:      canaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
@@ -270,7 +277,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					canaryKeyTLS := canaryKey + "-tls"
 					canaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendCanaryRule(rule, loc.Canary),
+						Rule:          canaryRule,
+						Priority:      canaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       canarySvcName,
 						TLS:           rtTLS.TLS,
@@ -282,10 +290,12 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+				nonCanaryRule, nonCanaryPriority := excludeRules(appendNonCanaryRule(rule, loc.Canary), exclusions)
 				nonCanaryKey := routerKey + "-non-canary"
 				nonCanaryRouter := &dynamic.Router{
 					EntryPoints:   rt.EntryPoints,
-					Rule:          appendNonCanaryRule(rule, loc.Canary),
+					Rule:          nonCanaryRule,
+					Priority:      nonCanaryPriority,
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
@@ -297,7 +307,8 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					nonCanaryKeyTLS := nonCanaryKey + "-tls"
 					nonCanaryRouterTLS := &dynamic.Router{
 						EntryPoints:   rtTLS.EntryPoints,
-						Rule:          appendNonCanaryRule(rule, loc.Canary),
+						Rule:          nonCanaryRule,
+						Priority:      nonCanaryPriority,
 						RuleSyntax:    rtTLS.RuleSyntax,
 						Service:       primarySvcName,
 						TLS:           rtTLS.TLS,
@@ -311,6 +322,83 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	}
 
 	return conf
+}
+
+// buildShadowingExclusions returns the rules of the locations NGINX serves before loc
+// that Traefik would otherwise rank below it.
+// On a literal host, these are the Exact locations that loc outranks by rule length.
+// On a regex host, these are the locations sharing loc's path and defined before it.
+func buildShadowingExclusions(srv *server, loc *location, backends map[string]*backend) []string {
+	if loc.UseRegex {
+		return buildRegexTieExclusions(srv, loc, backends)
+	}
+	if isExactLocation(loc) {
+		return nil
+	}
+
+	rule := buildRule(srv, loc)
+	// The canary routers share these exclusions, and their longer rules can outrank an Exact path the main router does not.
+	priority := httpmuxer.GetRulePriority(rule)
+	if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {
+		priority = max(priority, httpmuxer.GetRulePriority(appendCanaryRule(rule, loc.Canary)))
+	}
+	if loc.Canary != nil && loc.Canary.RequiresNonCanaryRouter() {
+		priority = max(priority, httpmuxer.GetRulePriority(appendNonCanaryRule(rule, loc.Canary)))
+	}
+
+	prefix := strings.TrimSuffix(loc.Path, "/")
+	var exclusions []string
+	for _, other := range srv.Locations {
+		if other.UseRegex || !isExactLocation(other) {
+			continue
+		}
+		if prefix != "" && other.Path != prefix && !strings.HasPrefix(other.Path, prefix+"/") {
+			continue
+		}
+
+		if _, ok := backends[other.BackendName]; !ok {
+			continue
+		}
+
+		exactRule := buildRule(srv, other)
+		if priority < httpmuxer.GetRulePriority(exactRule) {
+			continue
+		}
+
+		exclusions = append(exclusions, "("+exactRule+")")
+	}
+	return exclusions
+}
+
+// buildRegexTieExclusions keeps an Exact and a non-Exact location sharing a path in NGINX order.
+// ingress-nginx sorts locations before appending the Prefix slash, so locations sharing a path stay
+// in definition order, and NGINX serves a request from the first matching regex.
+func buildRegexTieExclusions(srv *server, loc *location, backends map[string]*backend) []string {
+	idx := slices.Index(srv.Locations, loc)
+	if idx < 0 {
+		return nil
+	}
+
+	var exclusions []string
+	for _, other := range srv.Locations[:idx] {
+		if other.Path != loc.Path || isExactLocation(other) == isExactLocation(loc) {
+			continue
+		}
+		if _, ok := backends[other.BackendName]; !ok {
+			continue
+		}
+		exclusions = append(exclusions, "("+buildRule(srv, other)+")")
+	}
+	return exclusions
+}
+
+func excludeRules(rule string, exclusions []string) (string, int) {
+	if len(exclusions) == 0 {
+		return rule, 0
+	}
+
+	// Exclusions must not change ordering against other paths, hosts, or providers.
+	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || ")), httpmuxer.GetRulePriority(rule)
 }
 
 func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
@@ -632,7 +720,6 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 	conf.HTTP.Routers[routerKey+"-from-to-www-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          f.ExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{mwName},
 		Service:       unavailableServiceName,
@@ -653,7 +740,6 @@ func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, o
 	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
 		EntryPoints:   rt.EntryPoints,
 		Rule:          loc.AppRootExtraRouterRule,
-		Priority:      rt.Priority,
 		RuleSyntax:    "default",
 		Middlewares:   []string{routerKey + "-app-root"},
 		Service:       unavailableServiceName,
@@ -686,37 +772,60 @@ func buildHostRule(host string, aliases []string) string {
 	return hostRules[0]
 }
 
-func buildRule(host string, loc *location) string {
+func buildRule(srv *server, loc *location) string {
 	var rules []string
 
-	if host != "" {
-		rules = append(rules, buildHostRule(host, loc.Aliases))
+	if srv.Hostname != "" {
+		rules = append(rules, buildHostRule(srv.Hostname, loc.Aliases))
 	}
 
 	if len(loc.Path) > 0 {
-		pathType := ptr.Deref(loc.PathType, netv1.PathTypePrefix)
-
-		regexPath := loc.Path
-		if pathType == netv1.PathTypeImplementationSpecific {
-			pathType = netv1.PathTypePrefix
-			if hasAbsoluteRewriteTarget(loc) {
-				regexPath = makeTrailingGroupOptional(loc.Path)
-			}
-		}
-
-		switch pathType {
-		case netv1.PathTypeExact:
+		switch {
+		case loc.UseRegex:
+			// NGINX renders every location of a regex host as `~* "^<path>"`, Exact included.
+			rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+buildRegexPath(srv, loc)))
+		case isExactLocation(loc):
 			rules = append(rules, fmt.Sprintf("Path(%q)", loc.Path))
-		case netv1.PathTypePrefix:
-			if loc.UseRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(%q)", "(?i)^"+regexPath))
-			} else {
-				rules = append(rules, buildPrefixRule(loc.Path))
-			}
+		default:
+			rules = append(rules, buildPrefixRule(loc.Path))
 		}
 	}
 
 	return strings.Join(rules, " && ")
+}
+
+// buildRegexPath returns the path NGINX renders for a location of a regex host.
+func buildRegexPath(srv *server, loc *location) string {
+	switch ptr.Deref(loc.PathType, netv1.PathTypePrefix) {
+	case netv1.PathTypeImplementationSpecific:
+		if hasAbsoluteRewriteTarget(loc) {
+			return makeTrailingGroupOptional(loc.Path)
+		}
+	case netv1.PathTypePrefix:
+		// ingress-nginx appends a slash to a Prefix path that an Exact location already uses,
+		// unless the Prefix location itself enables use-regex or rewrites.
+		if !hasOwnRegex(loc) && !strings.HasSuffix(loc.Path, "/") && hasExactLocationAt(srv, loc.Path) {
+			return loc.Path + "/"
+		}
+	}
+	return loc.Path
+}
+
+// hasOwnRegex reports whether the location itself enables use-regex or rewrites,
+// instead of only inheriting regex matching from another location of its host.
+func hasOwnRegex(loc *location) bool {
+	rewrite := ptr.Deref(loc.Config.RewriteTarget, "")
+	return ptr.Deref(loc.Config.UseRegex, false) || (rewrite != "" && rewrite != loc.Path)
+}
+
+func hasExactLocationAt(srv *server, path string) bool {
+	return slices.ContainsFunc(srv.Locations, func(other *location) bool {
+		return other.Path == path && isExactLocation(other)
+	})
+}
+
+func isExactLocation(loc *location) bool {
+	return ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeExact
 }
 
 // buildPrefixRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
