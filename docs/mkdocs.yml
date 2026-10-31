@@ -111,6 +111,7 @@ plugins:
         'https/tailscale.md': 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
         'https/spiffe.md': 'reference/install-configuration/tls/spiffe.md'
         'https/ocsp.md': 'reference/install-configuration/tls/ocsp.md'
+        'https/crl.md': 'reference/install-configuration/tls/crl.md'
         # Middlewares
         'middlewares/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
         # HTTP
@@ -281,6 +282,7 @@ nav:
             - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
           - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
           - "OCSP" : 'reference/install-configuration/tls/ocsp.md'
+          - "CRL"  : 'reference/install-configuration/tls/crl.md'
       - 'Observability':
           - 'Metrics' : 'reference/install-configuration/observability/metrics.md'
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
