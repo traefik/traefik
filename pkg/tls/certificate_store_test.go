@@ -112,6 +112,161 @@ func TestGetBestCertificate_SharedSAN(t *testing.T) {
 	}
 }
 
+// TestGetBestCertificate_Hostnames ensures a certificate restricted to hostnames is only served for matching server names,
+// even if one of its SANs matches the server name (https://github.com/traefik/traefik/issues/12742).
+func TestGetBestCertificate_Hostnames(t *testing.T) {
+	wildcardCert := &CertificateData{
+		Certificate: &tls.Certificate{},
+		Hostnames:   []string{"*.example.test"},
+	}
+	// The identifier of this certificate sorts before the one of the wildcard certificate,
+	// so without restriction it would be selected for any *.example.test server name.
+	otherCert := &CertificateData{
+		Certificate: &tls.Certificate{},
+		Hostnames:   []string{"foobar.test"},
+	}
+	unrestrictedCert := &CertificateData{Certificate: &tls.Certificate{}}
+
+	testCases := []struct {
+		desc       string
+		certs      map[string]*CertificateData
+		serverName string
+		expected   *CertificateData
+	}{
+		{
+			desc: "restricted certificate is not served outside of its hostnames",
+			certs: map[string]*CertificateData{
+				"*.example.test":             wildcardCert,
+				"*.example.test,foobar.test": otherCert,
+			},
+			serverName: "hello.example.test",
+			expected:   wildcardCert,
+		},
+		{
+			desc: "restricted certificate is served for its hostnames",
+			certs: map[string]*CertificateData{
+				"*.example.test":             wildcardCert,
+				"*.example.test,foobar.test": otherCert,
+			},
+			serverName: "foobar.test",
+			expected:   otherCert,
+		},
+		{
+			desc: "no certificate when the only matching one is restricted to other hostnames",
+			certs: map[string]*CertificateData{
+				"*.example.test,foobar.test": otherCert,
+			},
+			serverName: "hello.example.test",
+		},
+		{
+			desc: "certificate without hostnames is served for any matching server name",
+			certs: map[string]*CertificateData{
+				"*.example.test,foobar.test": unrestrictedCert,
+			},
+			serverName: "hello.example.test",
+			expected:   unrestrictedCert,
+		},
+		{
+			desc: "wildcard hostname matches several labels",
+			certs: map[string]*CertificateData{
+				"a.b.example.test": wildcardCert,
+			},
+			serverName: "a.b.example.test",
+			expected:   wildcardCert,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			store := &CertificateStore{
+				DynamicCerts: safe.New(test.certs),
+				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
+			}
+
+			actual := store.GetBestCertificate(&tls.ClientHelloInfo{ServerName: test.serverName})
+			if test.expected == nil {
+				assert.Nil(t, actual)
+				return
+			}
+
+			assert.Same(t, test.expected.Certificate, actual)
+		})
+	}
+}
+
+func Test_matchHostname(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		hostname   string
+		serverName string
+		expected   bool
+	}{
+		{desc: "exact match", hostname: "foobar.test", serverName: "foobar.test", expected: true},
+		{desc: "exact mismatch", hostname: "foobar.test", serverName: "hello.foobar.test"},
+		{desc: "wildcard matches one label", hostname: "*.example.test", serverName: "hello.example.test", expected: true},
+		{desc: "wildcard matches several labels", hostname: "*.example.test", serverName: "a.b.example.test", expected: true},
+		{desc: "wildcard does not match the apex", hostname: "*.example.test", serverName: "example.test"},
+		{desc: "wildcard does not match another domain", hostname: "*.example.test", serverName: "hello.example.org"},
+		{desc: "wildcard does not match a partial label", hostname: "*.example.test", serverName: "helloexample.test"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, matchHostname(test.hostname, test.serverName))
+		})
+	}
+}
+
+func Test_mergeHostnames(t *testing.T) {
+	cert := &tls.Certificate{Certificate: [][]byte{[]byte("cert")}}
+	otherCert := &tls.Certificate{Certificate: [][]byte{[]byte("other")}}
+
+	testCases := []struct {
+		desc     string
+		existing *CertificateData
+		cert     *CertificateData
+		expected []string
+	}{
+		{
+			desc:     "same certificate with other hostnames",
+			existing: &CertificateData{Certificate: cert, Hostnames: []string{"b.test"}},
+			cert:     &CertificateData{Certificate: cert, Hostnames: []string{"a.test", "b.test"}},
+			expected: []string{"a.test", "b.test"},
+		},
+		{
+			desc:     "same certificate without hostnames lifts the restriction",
+			existing: &CertificateData{Certificate: cert, Hostnames: []string{"a.test"}},
+			cert:     &CertificateData{Certificate: cert},
+		},
+		{
+			desc:     "same certificate already without hostnames",
+			existing: &CertificateData{Certificate: cert},
+			cert:     &CertificateData{Certificate: cert, Hostnames: []string{"a.test"}},
+		},
+		{
+			desc:     "different certificate keeps the existing one",
+			existing: &CertificateData{Certificate: cert, Hostnames: []string{"a.test"}},
+			cert:     &CertificateData{Certificate: otherCert, Hostnames: []string{"b.test"}},
+			expected: []string{"a.test"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := mergeHostnames(test.existing, test.cert)
+
+			assert.Same(t, cert, actual.Certificate)
+			assert.Equal(t, test.expected, actual.Hostnames)
+		})
+	}
+}
+
 func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	replacement := "wildcard"
 	if uppercase {
