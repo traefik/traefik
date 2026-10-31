@@ -109,7 +109,7 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
+It must be a valid [Go template](https://pkg.go.dev/text/template), and can use
 [sprig template functions](https://masterminds.github.io/sprig/).
 The container service name can be accessed with the `Name` identifier,
 and the template has access to all the labels defined on this container.

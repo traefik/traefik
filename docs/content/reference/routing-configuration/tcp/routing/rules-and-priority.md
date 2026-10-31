@@ -27,7 +27,7 @@ The table below lists all the available matchers:
 
     To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
 
-    Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
+    Single quotes `'` are not accepted since the values are [Go's String Literals](https://go.dev/ref/spec#String_literals).
 
 ### Expressing Complex Rules Using Operators and Parenthesis
 

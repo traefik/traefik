@@ -12,8 +12,8 @@ Traefik provides metrics in the [OpenTelemetry](#open-telemetry) format as well 
 - [Prometheus](#prometheus)
 - [StatsD](#statsd)
 
-Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
-and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
+Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346-traefik-official-standalone-dashboard/)
+and [Kubernetes](https://grafana.com/grafana/dashboards/17347-traefik-official-kubernetes-dashboard/) deployments.
 
 ---
 
@@ -614,6 +614,6 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 !!! info "`method` label value"
 
-    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
     then the value for the method label becomes `EXTENSION_METHOD`.

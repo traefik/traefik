@@ -38,7 +38,7 @@ or on one backend's own re-interpretation of a character the standard permits:
 
 - The escape works only with encoded-character handling left permissive. That
   default is a deliberate, documented compatibility decision, revisited only at a major version.
-- The vector is a character [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) permits in a path
+- The vector is a character [RFC 3986](https://www.rfc-editor.org/info/rfc3986/) permits in a path
   segment, such as a literal `;` or a backslash, and the escape exists only because a given backend
   re-interprets it. That re-interpretation varies by backend and is the backend's to define: path
   parameters introduced by `;` are standard behaviour across the Java servlet family, not one

@@ -65,7 +65,7 @@ spec:
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-regex" href="#opt-regex" title="#opt-regex">`regex`</a> | The `regex` option is the regular expression to match and capture elements from the request URL.| "" | Yes |
 | <a id="opt-permanent" href="#opt-permanent" title="#opt-permanent">`permanent`</a> | Enable a permanent redirection. | false | No |
-| <a id="opt-replacement" href="#opt-replacement" title="#opt-replacement">`replacement`</a> | The `replacement` option defines how to modify the URL to have the new target URL..<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax. | "" | No |
+| <a id="opt-replacement" href="#opt-replacement" title="#opt-replacement">`replacement`</a> | The `replacement` option defines how to modify the URL to have the new target URL..<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://pkg.go.dev/regexp#Regexp.Expand)), so use `${1}` syntax. | "" | No |
 
 ### `regex`
 
@@ -73,7 +73,7 @@ The `regex` option is the regular expression to match and capture elements from 
 
 !!! tip
 
-    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
+    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://go.dev/play/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2/substitution).
 
     When defining a regular expression within YAML, any escaped character needs to be escaped twice: `example\.com` needs to be written as `example\\.com`.
     
@@ -83,6 +83,6 @@ The `replacement` option defines how to modify the URL to have the new target UR
 
 !!! warning
 
-    Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
+    Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://pkg.go.dev/regexp#Regexp.Expand)), so use `${1}` syntax.
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

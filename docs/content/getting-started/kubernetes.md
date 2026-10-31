@@ -65,7 +65,7 @@ Create a values file. This configuration:
 - Maps ports 80 and 443 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
 - Enables the [dashboard](../reference/install-configuration/api-dashboard.md) with a specific hostname rule
 - Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
-- Allows the Gateway to expose [HTTPRoutes](https://gateway-api.sigs.k8s.io/api-types/httproute/) from all namespaces
+- Allows the Gateway to expose [HTTPRoutes](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/) from all namespaces
 
 ```yaml
 # values.yaml
