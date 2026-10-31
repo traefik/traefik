@@ -929,6 +929,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.ReplacePathRegex)
 		**out = **in
 	}
+	if in.QueryParameters != nil {
+		in, out := &in.QueryParameters, &out.QueryParameters
+		*out = new(dynamic.QueryParameters)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Chain != nil {
 		in, out := &in.Chain, &out.Chain
 		*out = new(Chain)
