@@ -93,8 +93,18 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	if err := setupLogger(ctx, staticConfiguration); err != nil {
+	logCloser, err := setupLogger(ctx, staticConfiguration)
+	if err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
+	}
+
+	if logCloser != nil {
+		// Deferred before svr.Close, so logs emitted during the server shutdown still get exported.
+		defer func() {
+			if err := logCloser.Close(); err != nil {
+				log.Error().Err(err).Msg("Unable to shutdown OpenTelemetry logger provider")
+			}
+		}()
 	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
