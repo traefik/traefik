@@ -177,10 +177,10 @@ followed by the index of the reference, and the namespace, the name and the port
 default-whoami-80    ->    default_wrr1_wrr_1_default_whoami_80
 ```
 
-Each of these references carries its own options (`serversTransport`, `scheme`, `sticky`, `healthCheck`, ...),
-which were not part of the generated name before: two references to the same Kubernetes Service with different
-options were collapsed into a single service, and the last one built silently won. With `safeNaming` enabled,
-they are distinct services, which also means that the servers of a Kubernetes Service referenced from several
+Each of these references carries its own options (`serversTransport`, `scheme`, `sticky`, `healthCheck`, ...).
+The legacy names include a hash of those options, so two references to the same Kubernetes Service with different
+options produce distinct services. With `safeNaming` enabled, they are also distinct because they are scoped to
+their parent, which also means that the servers of a Kubernetes Service referenced from several
 parents are health checked once per reference, instead of once for all of them.
 
 !!! warning "Observability"
