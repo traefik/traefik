@@ -376,7 +376,7 @@ Traefik Proxy follows [official OpenTelemetry semantic conventions v1.23.1](http
 
 | Metric     | Type      | [Labels](#labels)       | Description   |
 |----------|-----------|-------------------------|------------------|
-| <a id="opt-http-server-request-duration" href="#opt-http-server-request-duration" title="#opt-http-server-request-duration">`http.server.request.duration`</a> | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
+| <a id="opt-http-server-request-duration" href="#opt-http-server-request-duration" title="#opt-http-server-request-duration">`http.server.request.duration`</a> | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `http.route`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
 
 ##### Labels
 
@@ -387,6 +387,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 | <a id="opt-error-type" href="#opt-error-type" title="#opt-error-type">`error.type`</a> | Describes a class of error the operation ended with          | "500"         |
 | <a id="opt-http-request-method" href="#opt-http-request-method" title="#opt-http-request-method">`http.request.method`</a> | HTTP request method                                          | "GET"         |
 | <a id="opt-http-response-status-code" href="#opt-http-response-status-code" title="#opt-http-response-status-code">`http.response.status_code`</a> | HTTP response status code                                    | "200"         |
+| <a id="opt-http-route" href="#opt-http-route" title="#opt-http-route">`http.route`</a> | Rule of the router that matched the request, only set when a router matches the request | ``PathPrefix(`/search`)`` |
 | <a id="opt-network-protocol-name" href="#opt-network-protocol-name" title="#opt-network-protocol-name">`network.protocol.name`</a> | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
 | <a id="opt-network-protocol-version" href="#opt-network-protocol-version" title="#opt-network-protocol-version">`network.protocol.version`</a> | Version of the protocol specified in `network.protocol.name` | "1.1"         |
 | <a id="opt-server-address" href="#opt-server-address" title="#opt-server-address">`server.address`</a> | Name of the local HTTP server that received the request      | "example.com" |
