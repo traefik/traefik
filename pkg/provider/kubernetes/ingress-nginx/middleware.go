@@ -298,6 +298,7 @@ func (p *Provider) buildCORS(loc *location) {
 		AccessControlAllowOriginList:      originList,
 		AccessControlAllowOriginListRegex: originRegexList,
 		AccessControlMaxAge:               new(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
+		CORSStrict:                        true,
 	}
 }
 
