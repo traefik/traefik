@@ -118,7 +118,8 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Observability config.
-		if router.Observability != nil {
+		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
+		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}

@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -321,6 +322,68 @@ func TestOpaqueRequestURL(t *testing.T) {
 
 	assert.Equal(t, 1, callCount)
 	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+// TestRequestHeaderSanitization checks that CR and LF in request header values do not reach the upstream.
+// fasthttp replaces them with a space since v1.73.0 (see https://github.com/traefik/traefik/issues/13624).
+func TestRequestHeaderSanitization(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		values   []string
+		expected []string
+	}{
+		{
+			desc:     "carriage return and line feed",
+			values:   []string{"benign\r\nX-Injected: admin"},
+			expected: []string{"benign  X-Injected: admin"},
+		},
+		{
+			desc:     "carriage return",
+			values:   []string{"before\rafter"},
+			expected: []string{"before after"},
+		},
+		{
+			desc:     "line feed",
+			values:   []string{"before\nafter"},
+			expected: []string{"before after"},
+		},
+		{
+			desc:     "multiple values",
+			values:   []string{"first\r\nX-Injected: admin", "second"},
+			expected: []string{"first  X-Injected: admin", "second"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				receivedValues []string
+				injectedValue  string
+			)
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				receivedValues = req.Header.Values("X-Tenant-Note")
+				injectedValue = req.Header.Get("X-Injected")
+			}))
+			t.Cleanup(server.Close)
+
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, true)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req.Header["X-Tenant-Note"] = test.values
+			res := httptest.NewRecorder()
+
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code)
+			assert.Equal(t, test.expected, receivedValues)
+			assert.Empty(t, injectedValue)
+		})
+	}
 }
 
 func TestHeadRequest(t *testing.T) {
@@ -640,6 +703,51 @@ func TestStickyConnPool(t *testing.T) {
 	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, ""))
 	// Authenticated clients each get their own dedicated connection, never shared with one another.
 	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "NTLM TlRMTVNTUAAB"))
+}
+
+func TestReleaseConnPoolsOnContext(t *testing.T) {
+	var backendConns atomic.Int32
+
+	backend := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	backend.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		switch state {
+		case http.StateNew:
+			backendConns.Add(1)
+		case http.StateClosed, http.StateHijacked:
+			backendConns.Add(-1)
+		}
+	}
+	backend.Start()
+	t.Cleanup(backend.Close)
+
+	builder := NewProxyBuilder(&transportManagerMock{serversTransport: &dynamic.ServersTransport{MaxIdleConnsPerHost: 1}}, static.FastProxyConfig{})
+
+	proxyHandler, err := builder.Build("default@internal", testhelpers.MustParseURL(backend.URL), false, false)
+	require.NoError(t, err)
+
+	ctx := AddConnPoolsOnContext(t.Context())
+
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(ctx)
+	req.Header.Set("Authorization", "NTLM TlRMTVNTUAAB")
+
+	res := httptest.NewRecorder()
+	proxyHandler.ServeHTTP(res, req)
+	require.Equal(t, http.StatusOK, res.Code)
+
+	require.EqualValues(t, 1, backendConns.Load())
+
+	ReleaseConnPoolsOnContext(ctx)
+
+	assert.Eventually(t, func() bool { return backendConns.Load() == 0 }, time.Second, 10*time.Millisecond)
+}
+
+func TestReleaseConnPoolsOnContextWithoutConnPools(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ReleaseConnPoolsOnContext(t.Context())
+		ReleaseConnPoolsOnContext(AddConnPoolsOnContext(t.Context()))
+	})
 }
 
 type transportManagerMock struct {

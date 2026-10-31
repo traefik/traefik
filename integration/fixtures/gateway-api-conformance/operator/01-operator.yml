@@ -183,6 +183,17 @@ spec:
                     description: MinAvailable is the minimum number of available pods.
                     x-kubernetes-int-or-string: true
                 type: object
+              providers:
+                description: Providers configures the data plane configuration providers.
+                properties:
+                  throttleDuration:
+                    description: |-
+                      ThrottleDuration is the minimum duration between two configuration
+                      reloads of the data plane. The data plane reports a route as accepted
+                      before the reload applying it, so a lower value shortens the time a
+                      route is accepted but not yet served. Traefik defaults to 2s.
+                    type: string
+                type: object
               service:
                 description: Service configures the data plane Service.
                 properties:

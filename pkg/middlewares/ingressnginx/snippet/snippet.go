@@ -1,7 +1,6 @@
 package snippet
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -144,6 +144,12 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 				return http.ErrUseLastResponse
 			},
 			Timeout: 30 * time.Second,
+			// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
+			// Authentication does), which requires the authentication requests of a client connection to be sent
+			// on a connection to the auth server dedicated to it.
+			Transport: kerberos.NewRoundTripper(http.DefaultTransport, func() http.RoundTripper {
+				return http.DefaultTransport.(*http.Transport).Clone()
+			}),
 		}
 	}
 	return m, nil
@@ -546,21 +552,6 @@ func (w *snippetResponseWriter) Write(b []byte) (int, error) {
 // to discover the underlying writer's capabilities (Flusher, Hijacker, etc.).
 func (w *snippetResponseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
-}
-
-// Flush implements http.Flusher.
-func (w *snippetResponseWriter) Flush() {
-	if f, ok := w.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-// Hijack implements http.Hijacker.
-func (w *snippetResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-	return nil, nil, fmt.Errorf("not a hijacker: %T", w.ResponseWriter)
 }
 
 // WriteResponse writes the final response based on the action context.

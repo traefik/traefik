@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -144,6 +146,71 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 			assert.Equal(t, 1, reqOut.ProtoMajor)
 			assert.Equal(t, 1, reqOut.ProtoMinor)
 			assert.False(t, !test.passHostHeader && reqOut.Host != reqOut.URL.Host)
+		})
+	}
+}
+
+func TestProxy_ConnectRejected(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		http2 bool
+	}{
+		{
+			desc: "HTTP/1.1",
+		},
+		{
+			desc:  "HTTP/2",
+			http2: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var backendCalled atomic.Bool
+			backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				backendCalled.Store(true)
+			}))
+			t.Cleanup(backend.Close)
+
+			backendURL, err := url.Parse(backend.URL)
+			require.NoError(t, err)
+
+			proxy := buildSingleHostProxy(backendURL, true, false, 0, http.DefaultTransport, newBufferPool())
+
+			serverProtocols := new(http.Protocols)
+			serverProtocols.SetHTTP1(true)
+			serverProtocols.SetUnencryptedHTTP2(true)
+
+			srv := httptest.NewUnstartedServer(proxy)
+			srv.Config.Protocols = serverProtocols
+			srv.Start()
+			t.Cleanup(srv.Close)
+
+			clientProtocols := new(http.Protocols)
+			if test.http2 {
+				clientProtocols.SetUnencryptedHTTP2(true)
+			} else {
+				clientProtocols.SetHTTP1(true)
+			}
+			transport := &http.Transport{Protocols: clientProtocols}
+			t.Cleanup(transport.CloseIdleConnections)
+
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodConnect, srv.URL, strings.NewReader("foo"))
+			require.NoError(t, err)
+
+			res, err := transport.RoundTrip(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			if test.http2 {
+				assert.Equal(t, 2, res.ProtoMajor)
+			} else {
+				assert.Equal(t, 1, res.ProtoMajor)
+			}
+			assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+			assert.False(t, backendCalled.Load())
 		})
 	}
 }

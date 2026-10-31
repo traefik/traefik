@@ -45,7 +45,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@traefik-labs/faency": "12.3.3",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^22.15.18",
+    "@types/node": "^26.6.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "5.2.0",

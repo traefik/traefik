@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -24,6 +25,45 @@ func TestNewBasicEmpty(t *testing.T) {
 
 	_, err := NewBasic(t.Context(), nil, auth, "authName")
 	require.Error(t, err)
+}
+
+func TestNewBasicInvalidUser(t *testing.T) {
+	validUsersFile := filepath.Join(t.TempDir(), "valid-users")
+	require.NoError(t, os.WriteFile(validUsersFile, []byte("test:hash\ntest2:hash\n"), 0o600))
+
+	usersFile := filepath.Join(t.TempDir(), "users")
+	require.NoError(t, os.WriteFile(usersFile, []byte("# comment\n\ntest:hash\nnot-a-user\n"), 0o600))
+
+	testCases := []struct {
+		desc        string
+		auth        dynamic.BasicAuth
+		expectedErr string
+	}{
+		{
+			desc:        "invalid user in the list",
+			auth:        dynamic.BasicAuth{Users: []string{"test:hash", "not-a-user"}},
+			expectedErr: "parsing user at index 1: expected user:hash format",
+		},
+		{
+			desc:        "index in the list does not count the users of the file",
+			auth:        dynamic.BasicAuth{UsersFile: validUsersFile, Users: []string{"test3:hash", "not-a-user"}},
+			expectedErr: "parsing user at index 1: expected user:hash format",
+		},
+		{
+			desc:        "invalid user in the file",
+			auth:        dynamic.BasicAuth{UsersFile: usersFile},
+			expectedErr: fmt.Sprintf("parsing user 2 of %s: expected user:hash format", usersFile),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := NewBasic(t.Context(), nil, test.auth, "authName")
+			assert.EqualError(t, err, test.expectedErr)
+		})
+	}
 }
 
 func TestNewBasicNotFoundSecretIsSet(t *testing.T) {

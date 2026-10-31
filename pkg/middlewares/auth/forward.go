@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -112,6 +113,11 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		Timeout: 30 * time.Second,
 	}
 
+	transport := http.DefaultTransport
+	newTransport := func() http.RoundTripper {
+		return http.DefaultTransport.(*http.Transport).Clone()
+	}
+
 	if config.TLS != nil {
 		if config.TLS.CAOptional != nil {
 			logger.Warn().Msg("tls.CAOptional option is deprecated, TLS client authentication is a server side option, please remove any usage of this option.")
@@ -131,8 +137,16 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig
-		fa.client.Transport = tr
+		transport = tr
+		newTransport = func() http.RoundTripper {
+			return tr.Clone()
+		}
 	}
+
+	// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
+	// Authentication does), which requires the authentication requests of a client connection to be sent
+	// on a connection to the auth server dedicated to it.
+	fa.client.Transport = kerberos.NewRoundTripper(transport, newTransport)
 
 	if config.AuthResponseHeadersRegex != "" {
 		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
@@ -163,6 +177,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		forwardReqMethod = req.Method
 	}
 
+	// The request context carries the transports dedicated to the client connection (see kerberos.AddTransportOnContext).
 	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
 	if err != nil {
 		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)

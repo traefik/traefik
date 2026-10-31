@@ -33,7 +33,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -699,6 +699,8 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = denyFragment(handler)
 
+	handler = denyConnect(handler)
+
 	switch configuration.HTTP.AliasHeadersStrategy {
 	case "":
 		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
@@ -726,14 +728,23 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// hence the wrapping has to be done last so that it is the first handler executed.
 	handler = denyOpaque(handler)
 
+	handler = populateRequestTLS(handler)
+
+	// The round trippers and connection pools dedicated to a connection (Kerberos or NTLM) are only reachable from its
+	// context, which is kept until the ConnState hook reports the connection closed to release them.
+	var transportConnContexts connContexts
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
+		ctx = kerberos.AddTransportOnContext(ctx)
 		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
 		ctx = fast.AddConnPoolsOnContext(ctx)
+		transportConnContexts.add(ctx, c)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
+			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
+
 			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
 				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
 			}
@@ -755,9 +766,16 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		})
 	}
 
-	var connState func(c net.Conn, state http.ConnState)
-	if debugConnection {
-		connState = func(c net.Conn, state http.ConnState) {
+	connState := func(c net.Conn, state http.ConnState) {
+		// A hijacked connection never reports the closed state, and serves no further request.
+		if state == http.StateClosed || state == http.StateHijacked {
+			if ctx, ok := transportConnContexts.remove(c); ok {
+				kerberos.ReleaseTransportOnContext(ctx)
+				fast.ReleaseConnPoolsOnContext(ctx)
+			}
+		}
+
+		if debugConnection {
 			clientConnectionStatesMu.Lock()
 			if clientConnectionStates[getConnKey(c)] != nil {
 				clientConnectionStates[getConnKey(c)].State = state.String()
@@ -767,13 +785,14 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	}
 
 	serverHTTP := &http.Server{
-		Protocols:      &protocols,
-		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		Protocols:           &protocols,
+		Handler:             handler,
+		ErrorLog:            stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:        time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
+		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
 		HTTP2: &http.HTTP2Config{
 			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
@@ -839,6 +858,22 @@ func denyOpaque(h http.Handler) http.Handler {
 	})
 }
 
+type tlsConnKey struct{}
+
+// populateRequestTLS populates the TLS connection state of the request when it is missing on a TLS connection.
+func populateRequestTLS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			if tlsConn, ok := req.Context().Value(tlsConnKey{}).(*tls.Conn); ok {
+				state := tlsConn.ConnectionState()
+				req.TLS = &state
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
 // denyFragment rejects the request if the URL path contains a fragment (hash character).
 // When go receives an HTTP request, it assumes the absence of fragment URL.
 // However, it is still possible to send a fragment in the request.
@@ -849,6 +884,21 @@ func denyFragment(h http.Handler) http.Handler {
 		if strings.Contains(req.URL.RawPath, "#") {
 			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
 			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// denyConnect rejects the CONNECT requests, whatever the HTTP version.
+// CONNECT tunnels are not supported, and forwarding them without a dedicated handling is unsafe.
+func denyConnect(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodConnect {
+			log.Debug().Msg("Rejecting CONNECT request: CONNECT tunnels are not supported")
+			rw.WriteHeader(http.StatusNotImplemented)
 
 			return
 		}

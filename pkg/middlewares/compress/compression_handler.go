@@ -307,25 +307,21 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	return r.compressionWriter.Write(p)
 }
 
-// Flush flushes data to the appropriate underlying writer(s), although it does
+// FlushError flushes data to the appropriate underlying writer(s), although it does
 // not guarantee that all buffered data will be sent.
 // If not enough bytes have been written to determine whether to enable compression,
 // no flushing will take place.
-func (r *responseWriter) Flush() {
+func (r *responseWriter) FlushError() (err error) {
 	if !r.seenData {
 		// we should not flush if there never was any data, because flushing the bw
 		// (just like closing) would send some extra end of compressionStarted stream bytes.
-		return
+		return nil
 	}
 
 	// It was already established by Write that compression is disabled, we only
 	// have to flush the uncompressed writer.
 	if r.compressionDisabled {
-		if rw, ok := r.rw.(http.Flusher); ok {
-			rw.Flush()
-		}
-
-		return
+		return http.NewResponseController(r.rw).Flush()
 	}
 
 	// Here, nothing was ever written either to rw or to bw (since we're still
@@ -349,36 +345,43 @@ func (r *responseWriter) Flush() {
 		// because we also ignore the error returned by Write anyway
 		_ = r.compressionWriter.Flush()
 
-		if rw, ok := r.rw.(http.Flusher); ok {
-			rw.Flush()
-		}
+		err = http.NewResponseController(r.rw).Flush()
 	}()
 
 	// We empty whatever is left of the buffer that Write never took care of.
-	n, err := r.compressionWriter.Write(r.buf)
-	if err != nil {
-		return
+	n, werr := r.compressionWriter.Write(r.buf)
+	if werr != nil {
+		return nil
 	}
 
 	// And just like in Write we also handle "short writes".
 	if n < len(r.buf) {
 		r.buf = r.buf[n:]
-		return
+		return nil
 	}
 
 	r.buf = r.buf[:0]
+
+	return nil
 }
 
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hijacker, ok := r.rw.(http.Hijacker); ok {
-		// We only make use of r.hijacked in close (and not in Write/WriteHeader)
-		// because we want to let the stdlib catch the error on writes, as
-		// they already do a good job of logging it.
-		r.hijacked = true
-		return hijacker.Hijack()
+	conn, brw, err := http.NewResponseController(r.rw).Hijack()
+	if errors.Is(err, http.ErrNotSupported) {
+		return nil, nil, err
 	}
 
-	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.rw)
+	// We only make use of r.hijacked in close (and not in Write/WriteHeader)
+	// because we want to let the stdlib catch the error on writes, as
+	// they already do a good job of logging it.
+	r.hijacked = true
+
+	return conn, brw, err
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseWriter) Unwrap() http.ResponseWriter {
+	return r.rw
 }
 
 // close closes the underlying writers if/when appropriate.
