@@ -94,6 +94,10 @@ func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if r.path != nil && r.pathPrefix == nil {
 		redirectURL.Path = *r.path
+		// redirectURL is a shallow copy of the request URL, so it still carries the
+		// RawPath of the request. String would then emit that encoded form instead
+		// of the configured path.
+		redirectURL.RawPath = ""
 	}
 
 	if r.path != nil && r.pathPrefix != nil {
