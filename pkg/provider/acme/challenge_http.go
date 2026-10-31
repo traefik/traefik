@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -82,7 +83,8 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		domain, _, err := net.SplitHostPort(req.Host)
 		if err != nil {
 			logger.Debug().Err(err).Msg("Unable to split host and port. Fallback to request host.")
-			domain = req.Host
+			// A portless IPv6 host is bracketed (e.g. [::1]), but tokens are stored under the bare IP.
+			domain = strings.TrimSuffix(strings.TrimPrefix(req.Host, "["), "]")
 		}
 
 		tokenValue := c.getTokenValue(logger.WithContext(req.Context()), token, domain)
