@@ -3,6 +3,7 @@ package ratelimiter
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -70,16 +71,24 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 		return nil, fmt.Errorf("loading bucket script: %w", err)
 	}
 
-	return &redisLimiter{
+	client := redis.NewUniversalClient(options)
+	limiter := &redisLimiter{
 		rate:     rate,
 		burst:    burst,
 		period:   config.Period,
 		maxDelay: maxDelay,
 		logger:   logger,
 		ttl:      ttl,
-		client:   redis.NewUniversalClient(options),
+		client:   client,
 		script:   script,
-	}, nil
+	}
+	// The configuration context can be canceled while the previous handler is still serving requests.
+	// Close the client only after the limiter is no longer reachable.
+	runtime.AddCleanup(limiter, func(client redis.UniversalClient) {
+		_ = client.Close()
+	}, client)
+
+	return limiter, nil
 }
 
 func (r *redisLimiter) Allow(ctx context.Context, source string) (*time.Duration, error) {
@@ -94,6 +103,8 @@ func (r *redisLimiter) Allow(ctx context.Context, source string) (*time.Duration
 }
 
 func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (bool, *time.Duration, error) {
+	defer runtime.KeepAlive(r)
+
 	if r.rate == rate.Inf {
 		return true, nil, nil
 	}
