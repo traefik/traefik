@@ -488,6 +488,12 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
+	if loc.CORS != nil {
+		name := routerKey + "-cors"
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Headers: loc.CORS}
+		rt.Middlewares = append(rt.Middlewares, name)
+	}
+
 	if loc.Redirect != nil {
 		name := routerKey + "-redirect"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RedirectRegex: loc.Redirect}
@@ -532,12 +538,6 @@ func (p *Provider) applyMiddlewares(mc *model, loc *location, routerKey string, 
 	if loc.IPAllowList != nil {
 		name := routerKey + "-allowed-source-range"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{IPAllowList: loc.IPAllowList}
-		rt.Middlewares = append(rt.Middlewares, name)
-	}
-
-	if loc.CORS != nil {
-		name := routerKey + "-cors"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Headers: loc.CORS}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
