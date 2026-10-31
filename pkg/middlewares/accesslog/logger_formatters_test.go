@@ -282,3 +282,55 @@ func Test_toLog(t *testing.T) {
 		})
 	}
 }
+
+func TestCommonLogFormatter_NoTimestamp(t *testing.T) {
+	clf := CommonLogFormatter{NoTimestamp: true}
+
+	data := map[string]any{
+		StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+		Duration:               123 * time.Second,
+		ClientHost:             "10.0.0.1",
+		ClientUsername:         "Client",
+		RequestMethod:          http.MethodGet,
+		RequestPath:            "/foo",
+		RequestProtocol:        "http",
+		DownstreamStatus:       200,
+		DownstreamContentSize:  100,
+		RequestRefererHeader:   "",
+		RequestUserAgentHeader: "",
+		RequestCount:           1,
+		RouterName:             "test",
+		ServiceURL:             "http://10.0.0.2",
+	}
+
+	entry := &logrus.Entry{Data: data}
+	out, err := clf.Format(entry)
+	require.NoError(t, err)
+
+	expected := "10.0.0.1 - Client [-] \"GET /foo http\" 200 100 \"-\" \"-\" 1 \"test\" \"http://10.0.0.2\" 123000ms\n"
+	assert.Equal(t, expected, string(out))
+}
+
+func TestGenericCLFLogFormatter_NoTimestamp(t *testing.T) {
+	clf := GenericCLFLogFormatter{NoTimestamp: true}
+
+	data := map[string]any{
+		StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+		ClientHost:             "10.0.0.1",
+		ClientUsername:         "Client",
+		RequestMethod:          http.MethodGet,
+		RequestPath:            "/foo",
+		RequestProtocol:        "http",
+		DownstreamStatus:       200,
+		DownstreamContentSize:  100,
+		RequestRefererHeader:   "",
+		RequestUserAgentHeader: "",
+	}
+
+	entry := &logrus.Entry{Data: data}
+	out, err := clf.Format(entry)
+	require.NoError(t, err)
+
+	expected := "10.0.0.1 - Client [-] \"GET /foo http\" 200 100 \"-\" \"-\"\n"
+	assert.Equal(t, expected, string(out))
+}
