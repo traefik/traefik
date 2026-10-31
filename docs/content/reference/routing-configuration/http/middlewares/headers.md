@@ -259,7 +259,7 @@ spec:
 
 !!! warning
 
-    Custom headers will overwrite existing headers if they have identical names.
+    Custom headers overwrite existing headers with identical names, except `Set-Cookie` response headers, which the middleware appends to the existing ones.
 
 !!! note ""
 
