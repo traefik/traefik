@@ -143,6 +143,27 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		}
 	}
 
+	// The h2c scheme is not natively supported by the HTTP client.
+	if addr, err := url.Parse(config.Address); err == nil && addr.Scheme == "h2c" {
+		addr.Scheme = "http"
+		fa.address = addr.String()
+
+		tr, ok := transport.(*http.Transport)
+		if !ok {
+			tr = http.DefaultTransport.(*http.Transport).Clone()
+		} else {
+			tr = tr.Clone()
+		}
+		tr.Protocols = new(http.Protocols)
+		tr.Protocols.SetHTTP1(false)
+		tr.Protocols.SetUnencryptedHTTP2(true)
+		tr.ForceAttemptHTTP2 = true
+		transport = tr
+		newTransport = func() http.RoundTripper {
+			return tr.Clone()
+		}
+	}
+
 	// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
 	// Authentication does), which requires the authentication requests of a client connection to be sent
 	// on a connection to the auth server dedicated to it.
