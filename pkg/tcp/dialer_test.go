@@ -12,10 +12,14 @@ import (
 	"math/big"
 	"net"
 	"net/url"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/pires/go-proxyproto"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
@@ -858,4 +862,48 @@ func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.Trus
 
 func (s *fakeSpiffeSource) GetX509SVID() (*x509svid.SVID, error) {
 	return s.svid, nil
+}
+
+func TestCreateRootCACertPool(t *testing.T) {
+	caFile := filepath.Join(t.TempDir(), "ca.pem")
+	require.NoError(t, os.WriteFile(caFile, []byte("not a certificate"), 0o600))
+
+	testCases := []struct {
+		desc        string
+		rootCAs     []types.FileOrContent
+		expectedLog string
+	}{
+		{
+			desc:    "valid content",
+			rootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+		},
+		{
+			desc:        "invalid content",
+			rootCAs:     []types.FileOrContent{"not a certificate"},
+			expectedLog: "No valid certificate found in RootCAs content",
+		},
+		{
+			desc:        "file without certificate",
+			rootCAs:     []types.FileOrContent{types.FileOrContent(caFile)},
+			expectedLog: "No valid certificate found in RootCAs file " + caFile,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var buf bytes.Buffer
+			originalLogger := log.Logger
+			log.Logger = zerolog.New(&buf)
+			t.Cleanup(func() { log.Logger = originalLogger })
+
+			pool := createRootCACertPool(test.rootCAs)
+			require.NotNil(t, pool)
+
+			if test.expectedLog == "" {
+				assert.Empty(t, buf.String())
+				return
+			}
+			assert.Contains(t, buf.String(), test.expectedLog)
+		})
+	}
 }
