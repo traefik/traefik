@@ -145,7 +145,7 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 
 func (x *XForwarded) rewrite(outreq *http.Request) {
 	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
-		clientIP = removeIPv6Zone(clientIP)
+		clientIP = RemoveIPv6Zone(clientIP)
 
 		if unsafeHeader(outreq.Header).Get(xRealIP) == "" {
 			unsafeHeader(outreq.Header).Set(xRealIP, clientIP)
@@ -251,9 +251,9 @@ func DeleteXForwardedHeaders(headers http.Header) {
 	}
 }
 
-// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
+// RemoveIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
-func removeIPv6Zone(clientIP string) string {
+func RemoveIPv6Zone(clientIP string) string {
 	if before, _, found := strings.Cut(clientIP, "%"); found {
 		return before
 	}

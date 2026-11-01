@@ -461,6 +461,7 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		clientIP = forwardedheaders.RemoveIPv6Zone(clientIP)
 		if prior, ok := forwardReq.Header[forwardedheaders.XForwardedFor]; ok {
 			clientIP = strings.Join(prior, ", ") + ", " + clientIP
 		}
@@ -502,7 +503,7 @@ func oldWriteHeader(req, forwardReq *http.Request, allowedHeaders []string) {
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		forwardReq.Header.Set(forwardedheaders.XForwardedFor, clientIP)
+		forwardReq.Header.Set(forwardedheaders.XForwardedFor, forwardedheaders.RemoveIPv6Zone(clientIP))
 	}
 
 	proto := "http"

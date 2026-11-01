@@ -257,3 +257,23 @@ func Test_isTLSConfigError(t *testing.T) {
 		})
 	}
 }
+
+func Test_rewriteRequestBuilder_XForwardedForIPv6Zone(t *testing.T) {
+	target := testhelpers.MustParseURL("http://example.com")
+	rewriteRequest := rewriteRequestBuilder(target, false, false)
+
+	reqIn := httptest.NewRequest(http.MethodGet, "http://example.com/test", http.NoBody)
+	reqIn.Header.Add("X-Forwarded-For", "1.2.3.4")
+	// RemoteAddr of a link-local IPv6 connection carries an IPv6 zone identifier.
+	reqIn.RemoteAddr = "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:1234"
+
+	reqOut := httptest.NewRequest(http.MethodGet, "http://example.com/test", http.NoBody)
+	pr := &httputil.ProxyRequest{
+		In:  reqIn,
+		Out: reqOut,
+	}
+	rewriteRequest(pr)
+
+	// The zone identifier is only meaningful on the local host and must not be forwarded.
+	assert.Equal(t, "1.2.3.4, fe80::d806:a55d:eb1b:49cc", reqOut.Header.Get("X-Forwarded-For"))
+}

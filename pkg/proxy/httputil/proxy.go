@@ -69,6 +69,11 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		copyForwardedHeader(pr.Out.Header, pr.In.Header)
 		if !ShouldNotAppendXFF(pr.In.Context()) {
 			if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
+				// The zone identifier of a link-local IPv6 remote address is only meaningful on the local host,
+				// it must not be forwarded to the backend (this mirrors the X-Real-Ip handling of the
+				// forwardedheaders middleware).
+				clientIP = removeIPv6Zone(clientIP)
+
 				// If we aren't the first proxy retain prior
 				// X-Forwarded-For information as a comma+space
 				// separated list and fold multiple headers into one.
@@ -281,4 +286,13 @@ func singleJoiningSlash(a, b string) string {
 		return a + "/" + b
 	}
 	return a + b
+}
+
+// removeIPv6Zone removes the zone identifier from an IPv6 address, if any.
+// It cannot be imported from the forwardedheaders package, as it imports this one.
+func removeIPv6Zone(clientIP string) string {
+	if before, _, found := strings.Cut(clientIP, "%"); found {
+		return before
+	}
+	return clientIP
 }
