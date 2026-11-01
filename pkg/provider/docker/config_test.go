@@ -406,10 +406,8 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				Shared: Shared{
-					ExposedByDefault: true,
-					DefaultRule:      test.defaultRule,
-				},
+				ExposedByDefault: true,
+				DefaultRule:      test.defaultRule,
 			}
 			require.NoError(t, p.Init())
 
@@ -3910,14 +3908,12 @@ func TestDynConfBuilder_build(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				Shared: Shared{
-					AllowEmptyServices: test.allowEmptyServices,
-					ExposedByDefault:   true,
-					UseBindPortIP:      test.useBindPortIP,
-					DefaultRule:        "Host(`{{ normalize .Name }}.traefik.wtf`)",
-				},
+				AllowEmptyServices: test.allowEmptyServices,
+				ExposedByDefault:   true,
+				UseBindPortIP:      test.useBindPortIP,
+				DefaultRule:        "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				Constraints:        test.constraints,
 			}
-			p.Constraints = test.constraints
 
 			require.NoError(t, p.Init())
 

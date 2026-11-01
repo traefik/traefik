@@ -116,9 +116,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, gateways []gatewayWithList
 	}
 
 	status := gatev1.GRPCRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
+		Parents: parentStatuses,
 	}
 	if err := p.client.UpdateGRPCRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
 		logger.Warn().
@@ -178,7 +176,7 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 			router.Middlewares, err = p.loadGRPCMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters)
 			switch {
 			case err != nil:
-				log.Ctx(ctx).Error().Err(err).Msg("Unable to load GRPC route filters")
+				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load GRPC route filters")
 
 				errWrrName := routerName + "-err-wrr"
 				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{

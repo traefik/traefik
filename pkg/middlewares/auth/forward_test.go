@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/forward"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
@@ -341,6 +343,112 @@ func TestForwardAuthNotForwardBody(t *testing.T) {
 	assert.Equal(t, 1, nextCallCount)
 }
 
+func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
+	testCases := []struct {
+		desc string
+		tls  bool
+	}{
+		{
+			desc: "HTTP auth server",
+		},
+		{
+			desc: "HTTPS auth server",
+			tls:  true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			type authConnKey struct{}
+			type authConn struct{ user string }
+
+			// The auth server mimics IIS Windows Authentication: an NTLM credential authenticates the connection it
+			// is sent on, and later requests without credential on that connection are authenticated as the same user.
+			authServer := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				conn := req.Context().Value(authConnKey{}).(*authConn)
+				if scheme, user, ok := strings.Cut(req.Header.Get("Authorization"), " "); ok && scheme == "NTLM" {
+					conn.user = user
+				}
+
+				if conn.user == "" {
+					rw.Header().Set("WWW-Authenticate", "NTLM")
+					rw.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
+				rw.Header().Set("X-Auth-User", conn.user)
+			}))
+			authServer.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+				return context.WithValue(ctx, authConnKey{}, &authConn{})
+			}
+
+			auth := dynamic.ForwardAuth{
+				AuthResponseHeaders: []string{"X-Auth-User"},
+			}
+			if test.tls {
+				authServer.StartTLS()
+				auth.TLS = &dynamic.ClientTLS{InsecureSkipVerify: true}
+			} else {
+				authServer.Start()
+			}
+			t.Cleanup(authServer.Close)
+			auth.Address = authServer.URL
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				_, _ = fmt.Fprint(rw, req.Header.Get("X-Auth-User"))
+			})
+
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewUnstartedServer(middleware)
+			ts.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+				return kerberos.AddTransportOnContext(ctx)
+			}
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			// Each client has its own transport, hence its own connection to Traefik.
+			send := func(client *http.Client, authorization string) (int, string) {
+				t.Helper()
+
+				req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+				if authorization != "" {
+					req.Header.Set("Authorization", authorization)
+				}
+
+				res, err := client.Do(req)
+				require.NoError(t, err)
+				t.Cleanup(func() { _ = res.Body.Close() })
+
+				body, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+
+				return res.StatusCode, string(body)
+			}
+
+			alice := &http.Client{Transport: &http.Transport{}}
+			t.Cleanup(alice.CloseIdleConnections)
+			bob := &http.Client{Transport: &http.Transport{}}
+			t.Cleanup(bob.CloseIdleConnections)
+
+			status, user := send(alice, "NTLM alice")
+			assert.Equal(t, http.StatusOK, status)
+			assert.Equal(t, "alice", user)
+
+			status, user = send(bob, "")
+			assert.Equal(t, http.StatusUnauthorized, status)
+			assert.Empty(t, user)
+
+			status, user = send(alice, "")
+			assert.Equal(t, http.StatusOK, status)
+			assert.Equal(t, "alice", user)
+		})
+	}
+}
+
 func TestForwardAuthRedirect(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
@@ -490,12 +598,12 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 
 func TestForwardAuthClientClosedRequest(t *testing.T) {
 	requestStarted := make(chan struct{})
-	requestCancelled := make(chan struct{})
 	responseComplete := make(chan struct{})
 
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		close(requestStarted)
-		<-requestCancelled
+		// Wait for the client to give up on the request, so the auth server never answers before the cancellation is observed.
+		<-r.Context().Done()
 	}))
 	t.Cleanup(authTs.Close)
 
@@ -521,11 +629,7 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 
 	<-requestStarted
 
-	// Cancel request and wait for cancellation to propagate
 	cancel()
-	<-ctx.Done()
-
-	close(requestCancelled)
 
 	<-responseComplete
 

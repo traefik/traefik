@@ -1,10 +1,7 @@
 package recovery
 
 import (
-	"bufio"
 	"context"
-	"fmt"
-	"net"
 	"net/http"
 	"runtime"
 
@@ -30,13 +27,13 @@ func New(ctx context.Context, next http.Handler) (http.Handler, error) {
 }
 
 func (re *recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	recoveryRW := newRecoveryResponseWriter(rw)
+	recoveryRW := &responseWriterWrapper{rw: rw}
 	defer recoverFunc(recoveryRW, req)
 
 	re.next.ServeHTTP(recoveryRW, req)
 }
 
-func recoverFunc(rw recoveryResponseWriter, req *http.Request) {
+func recoverFunc(rw *responseWriterWrapper, req *http.Request) {
 	if err := recover(); err != nil {
 		defer rw.finalizeResponse()
 
@@ -59,21 +56,6 @@ func recoverFunc(rw recoveryResponseWriter, req *http.Request) {
 func shouldLogPanic(panicValue any) bool {
 	//nolint:errorlint // false-positive because panicValue is an interface.
 	return panicValue != nil && panicValue != http.ErrAbortHandler
-}
-
-type recoveryResponseWriter interface {
-	http.ResponseWriter
-
-	finalizeResponse()
-}
-
-func newRecoveryResponseWriter(rw http.ResponseWriter) recoveryResponseWriter {
-	wrapper := &responseWriterWrapper{rw: rw}
-	if _, ok := rw.(http.CloseNotifier); !ok {
-		return wrapper
-	}
-
-	return &responseWriterWrapperWithCloseNotify{wrapper}
 }
 
 type responseWriterWrapper struct {
@@ -105,18 +87,9 @@ func (r *responseWriterWrapper) WriteHeader(code int) {
 	r.rw.WriteHeader(code)
 }
 
-func (r *responseWriterWrapper) Flush() {
-	if f, ok := r.rw.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-func (r *responseWriterWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := r.rw.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-
-	return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseWriterWrapper) Unwrap() http.ResponseWriter {
+	return r.rw
 }
 
 func (r *responseWriterWrapper) finalizeResponse() {
@@ -129,12 +102,4 @@ func (r *responseWriterWrapper) finalizeResponse() {
 	// The response has not yet started to be written,
 	// we can safely return a fresh new error response.
 	http.Error(r.rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-}
-
-type responseWriterWrapperWithCloseNotify struct {
-	*responseWriterWrapper
-}
-
-func (r *responseWriterWrapperWithCloseNotify) CloseNotify() <-chan bool {
-	return r.rw.(http.CloseNotifier).CloseNotify()
 }

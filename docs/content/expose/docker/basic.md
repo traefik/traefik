@@ -17,7 +17,7 @@ First, create a `docker-compose.yml` file:
 ```yaml
 services:
   traefik:
-    image: "traefik:v3.4"
+    image: "traefik:v3.7"
     container_name: "traefik"
     restart: unless-stopped
     security_opt:
@@ -164,7 +164,7 @@ Update your `docker-compose.yml` file with the following changes:
 ```yaml
 services:
   traefik:
-    image: "traefik:v3.4"
+    image: "traefik:v3.7"
     container_name: "traefik"
     restart: unless-stopped
     security_opt:
