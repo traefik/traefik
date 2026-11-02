@@ -86,6 +86,8 @@ http:
 
 Passwords must be hashed using MD5, SHA1, or BCrypt.
 
+Passwords longer than 1024 bytes are rejected.
+
 !!! tip
 
     Use `htpasswd` to generate the passwords.
