@@ -26,7 +26,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, statusReport *statusReport) {
+func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, attachedRoutes attachedRoutes, candidates *routerConfCandidates, statusReport *statusReport) {
 	logger := log.Ctx(ctx).With().
 		Str("http_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -95,12 +95,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 			if accepted && listener.Attached {
 				for _, rc := range routerConfs {
 					router := rc.Conf.HTTP.Routers[rc.Name]
-					if servedBy, alreadyServed := servedRules.register(rc.Name, router.ParentRefs, router.Rule); alreadyServed {
-						logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q under the same parent routers", rc.Name, servedBy, router.Rule)
-						continue
-					}
-
-					mergeHTTPConfiguration(rc.Conf, conf)
+					candidates.add(rc.Name, router.ParentRefs, router.Rule, router.Priority, rc.Conf)
 				}
 
 				// Only consider the route attached if the listener is in an "attached" state.
@@ -139,6 +134,8 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 		Reason:             string(gatev1.RouteConditionResolvedRefs),
 	}
 
+	hostPriority := hostnamePriority(listener.Hostname, route.Spec.Hostnames) * hostnamePriorityFactor
+
 	for ri, routeRule := range route.Spec.Rules {
 		var respondingTimeouts *dynamic.RouterRespondingTimeouts
 		if routeRule.Timeouts != nil {
@@ -169,7 +166,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax:         "default",
 				Rule:               rule,
-				Priority:           priority + len(route.Spec.Rules) - ri,
+				Priority:           hostPriority + priority + len(route.Spec.Rules) - ri,
 				ParentRefs:         listener.RouterNames,
 				RespondingTimeouts: respondingTimeouts,
 			}
@@ -872,34 +869,31 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 }
 
-func buildHostRule(hostnames []gatev1.Hostname) (string, int) {
+// hostnamePriorityFactor scales the hostname priority of HTTP and GRPC routers above the priority of their other matches,
+// as the most specific hostname takes precedence over any other match.
+const hostnamePriorityFactor = 1_000_000
+
+func buildHostRule(hostnames []gatev1.Hostname) string {
 	var rules []string
-	var priority int
-
 	for _, hostname := range hostnames {
-		host := string(hostname)
-
-		if priority < len(host) {
-			priority = len(host)
-		}
-
-		rules = append(rules, fmt.Sprintf("Host(%q)", hostnameMatcherValue(host)))
+		rules = append(rules, fmt.Sprintf("Host(%q)", hostnameMatcherValue(string(hostname))))
 	}
 
 	switch len(rules) {
 	case 0:
-		return "", 0
+		return ""
 	case 1:
-		return rules[0], priority
+		return rules[0]
 	default:
-		return fmt.Sprintf("(%s)", strings.Join(rules, " || ")), priority
+		return fmt.Sprintf("(%s)", strings.Join(rules, " || "))
 	}
 }
 
-// buildMatchRule builds the route rule and computes its priority.
+// buildMatchRule builds the route rule and computes its priority, without the hostname priority.
 // The current priority computing is rather naive but aims to fulfill Conformance tests suite requirement.
 // The priority is computed to match the following precedence order:
 //
+// * Hostname specificity, added by the caller (see hostnamePriority).
 // * "Exact" path match (+100000).
 // * "Prefix" path match with largest number of characters (+10000 + nb_characters*100).
 // * Method match (+1000).
@@ -935,14 +929,11 @@ func buildMatchRule(hostnames []gatev1.Hostname, match gatev1.HTTPRouteMatch) (s
 
 	matchRulesStr := strings.Join(matchRules, " && ")
 
-	hostRule, hostPriority := buildHostRule(hostnames)
-
+	hostRule := buildHostRule(hostnames)
 	if hostRule == "" {
 		return matchRulesStr, priority
 	}
 
-	// A route with a host should match over the same route with no host.
-	priority += hostPriority
 	return hostRule + " && " + matchRulesStr, priority
 }
 

@@ -11,11 +11,9 @@ import (
 
 func Test_buildHostRule(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		hostnames        []gatev1.Hostname
-		expectedRule     string
-		expectedPriority int
-		expectErr        bool
+		desc         string
+		hostnames    []gatev1.Hostname
+		expectedRule string
 	}{
 		{
 			desc:         "Empty (should not happen)",
@@ -26,8 +24,7 @@ func Test_buildHostRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{
 				"Foo",
 			},
-			expectedRule:     `Host("Foo")`,
-			expectedPriority: 3,
+			expectedRule: `Host("Foo")`,
 		},
 		{
 			desc: "Multiple Hosts",
@@ -36,8 +33,7 @@ func Test_buildHostRule(t *testing.T) {
 				"Bar",
 				"Bir",
 			},
-			expectedRule:     `(Host("Foo") || Host("Bar") || Host("Bir"))`,
-			expectedPriority: 3,
+			expectedRule: `(Host("Foo") || Host("Bar") || Host("Bir"))`,
 		},
 		{
 			desc: "Several Host and wildcard",
@@ -46,16 +42,14 @@ func Test_buildHostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule:     `(Host("**.bar.foo") || Host("bar.foo") || Host("foo.foo"))`,
-			expectedPriority: 9,
+			expectedRule: `(Host("**.bar.foo") || Host("bar.foo") || Host("foo.foo"))`,
 		},
 		{
 			desc: "Host with wildcard",
 			hostnames: []gatev1.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule:     `Host("**.bar.foo")`,
-			expectedPriority: 9,
+			expectedRule: `Host("**.bar.foo")`,
 		},
 	}
 
@@ -63,9 +57,7 @@ func Test_buildHostRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rule, priority := buildHostRule(test.hostnames)
-			assert.Equal(t, test.expectedRule, rule)
-			assert.Equal(t, test.expectedPriority, priority)
+			assert.Equal(t, test.expectedRule, buildHostRule(test.hostnames))
 		})
 	}
 }
@@ -88,7 +80,7 @@ func Test_buildMatchRule(t *testing.T) {
 			desc:             "One Host rule without match",
 			hostnames:        []gatev1.Hostname{"foo.com"},
 			expectedRule:     `Host("foo.com") && PathPrefix("/")`,
-			expectedPriority: 8,
+			expectedPriority: 1,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
@@ -190,7 +182,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Host("foo.com") && Path("/foo/") && Header("my-header","foo")`,
-			expectedPriority: 100107,
+			expectedPriority: 100100,
 		},
 	}
 

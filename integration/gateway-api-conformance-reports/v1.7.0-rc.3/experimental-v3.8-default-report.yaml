@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-28T13:59:22+01:00"
+date: "2026-10-28T17:13:30+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -22,7 +22,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 12
+      Passed: 13
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -36,13 +36,13 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -55,7 +55,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 63
+      Passed: 64
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -69,6 +69,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
@@ -101,7 +102,6 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -126,6 +126,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
     - ListenerSet
     - TCPRoute
@@ -133,7 +134,6 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
@@ -146,7 +146,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 17
+      Passed: 18
       Skipped: 0
     supportedFeatures:
     - BackendTLSPolicy
@@ -160,6 +160,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
     - ListenerSet
     - TLSRouteModeMixed
@@ -168,7 +169,6 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
 succeededProvisionalTests:

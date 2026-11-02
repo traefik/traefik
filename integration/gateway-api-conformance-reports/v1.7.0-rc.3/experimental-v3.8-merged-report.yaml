@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-10-28T14:03:41+01:00"
+date: "2026-10-28T17:16:42+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0-rc.3
 implementation:
@@ -23,11 +23,12 @@ profiles:
   extended:
     result: partial
     skippedTests:
+    - GRPCRouteMultipleRoutesAttachmentSameHostnameIntersection
     - GatewayInfrastructureMetadata
     statistics:
       Failed: 0
       Passed: 9
-      Skipped: 1
+      Skipped: 2
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
@@ -39,17 +40,17 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-GRPC
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
-    succeeded with 1 test skips.
+    succeeded with 2 test skips.
 - core:
     result: partial
     skippedTests:
@@ -66,10 +67,11 @@ profiles:
     - GatewayFrontendInvalidDefaultClientCertificateValidation
     - GatewayInfrastructureMetadata
     - GatewayInvalidFrontendClientCertificateValidation
+    - HTTPRouteMultipleRoutesAttachmentSameHostnameIntersection
     statistics:
       Failed: 0
       Passed: 56
-      Skipped: 5
+      Skipped: 6
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
@@ -81,6 +83,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
     - HTTPRoute308RedirectStatusCode
@@ -113,11 +116,10 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-HTTP
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
-    succeeded with 5 test skips.
+    succeeded with 6 test skips.
 - core:
     result: success
     statistics:
@@ -141,6 +143,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - ListenerSet
     - TCPRoute
     unsupportedFeatures:
@@ -148,7 +151,6 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests partially succeeded with 1 test skips.
@@ -164,10 +166,11 @@ profiles:
     result: partial
     skippedTests:
     - GatewayInfrastructureMetadata
+    - TLSRouteMultipleRoutesAttachmentSameHostnameIntersection
     statistics:
       Failed: 0
       Passed: 14
-      Skipped: 1
+      Skipped: 2
     supportedFeatures:
     - BackendTLSPolicy
     - BackendTLSPolicySANValidation
@@ -179,6 +182,7 @@ profiles:
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
     - GatewayPort8080
+    - GatewayRouteHostnameIntersectionPrecedence
     - ListenerSet
     - TLSRouteModeMixed
     - TLSRouteModeTerminate
@@ -187,11 +191,10 @@ profiles:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
     - GatewayListenerFilters
-    - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-TLS
   summary: Core tests partially succeeded with 1 test skips. Extended tests partially
-    succeeded with 1 test skips.
+    succeeded with 2 test skips.
 succeededProvisionalTests:
 - BackendTLSPolicyPreserveForeignStatus
 - GatewayPreserveForeignConditions

@@ -32,14 +32,9 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 	// https://gateway-api.sigs.k8s.io/guides/api-design/#conflicts
 	slices.SortStableFunc(routes, func(a, b *gatev1.TCPRoute) int { return compareRoutes(a, b) })
 
-	served := make(servedRules)
+	candidates := newRouterConfCandidates()
 
 	for _, route := range routes {
-		logger := log.Ctx(ctx).With().
-			Str("tcp_route", route.Name).
-			Str("namespace", route.Namespace).
-			Logger()
-
 		routeParentRefs := matchingGatewayListenersForParentRef(gateways, route.Namespace, route.Spec.ParentRefs)
 		if len(routeParentRefs) == 0 {
 			continue
@@ -85,12 +80,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 					if listener.Status.AttachedRoutes == 1 {
 						for _, rc := range routerConfs {
 							router := rc.Conf.TCP.Routers[rc.Name]
-							if servedBy, alreadyServed := served.register(rc.Name, router.EntryPoints, router.Rule); alreadyServed {
-								logger.Warn().Msgf("Traefik does not create router %q, because router %q serves the rule %q on the same entry points", rc.Name, servedBy, router.Rule)
-								continue
-							}
-
-							mergeTCPConfiguration(rc.Conf, conf)
+							candidates.add(rc.Name, router.EntryPoints, router.Rule, router.Priority, rc.Conf)
 						}
 					}
 
@@ -112,6 +102,11 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 			})
 		}
 	}
+
+	candidates.merge(ctx, func(name string, entryPoints []string, routerConf *dynamic.Configuration) {
+		routerConf.TCP.Routers[name].EntryPoints = entryPoints
+		mergeTCPConfiguration(routerConf, conf)
+	})
 }
 
 // tcpRouteRouter is a router of a TCPRoute, with the configuration of its resources.

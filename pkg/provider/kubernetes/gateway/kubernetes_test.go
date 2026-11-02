@@ -394,7 +394,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -789,7 +789,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -875,7 +875,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca"},
 							Service:    "httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-5b6dacf4c7da9367767b-wrr",
 							Rule:       `Host("abc.example.com") && Path("/precise")`,
-							Priority:   100016,
+							Priority:   15100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-63284dea2e7614ab00a2": {
@@ -885,7 +885,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							},
 							Service:    "httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-63284dea2e7614ab00a2-wrr",
 							Rule:       `Host("**.example.com") && Path("/wildcard")`,
-							Priority:   100014,
+							Priority:   12100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-other-gw-default-my-other-gateway-ep-web-0-d7590587db124f0d35ce": {
@@ -1040,7 +1040,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca"},
 							Service:    "httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-5b6dacf4c7da9367767b-wrr",
 							Rule:       `Host("abc.example.com") && Path("/precise")`,
-							Priority:   100016,
+							Priority:   15100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-other-gw-default-my-other-gateway-ep-web-0-d7590587db124f0d35ce": {
@@ -1160,7 +1160,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-example-com-e7b9da953ca48d642d6b"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-2944dbefe4493e703281-wrr",
 							Rule:       `Host("**.example.com") && Path("/bar")`,
-							Priority:   100014,
+							Priority:   12100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -1228,14 +1228,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-b0d3512b71b7695aa511-wrr",
 							Rule:       `Host("foo.com") && Path("/omitted")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-28c8ec797c4b0f521cf7": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-28c8ec797c4b0f521cf7-wrr",
 							Rule:       `Host("foo.com") && Path("/empty")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -1298,7 +1298,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:         []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:            "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:               `Host("foo.com") && Path("/bar")`,
-							Priority:           100010,
+							Priority:           7100003,
 							RuleSyntax:         "default",
 							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(10 * time.Second)), WriteTimeout: new(ptypes.Duration(10 * time.Second))},
 						},
@@ -1306,7 +1306,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:         []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:            "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-6bebfd4e0e692b59df74-wrr",
 							Rule:               `Host("foo.com") && Path("/baz")`,
-							Priority:           100009,
+							Priority:           7100002,
 							RuleSyntax:         "default",
 							RespondingTimeouts: &dynamic.RouterRespondingTimeouts{ReadTimeout: new(ptypes.Duration(0)), WriteTimeout: new(ptypes.Duration(0))},
 						},
@@ -1314,7 +1314,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-c465583028340322911a-wrr",
 							Rule:       `Host("foo.com") && Path("/buz")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -1455,7 +1455,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "api@internal",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -1497,7 +1497,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
@@ -1576,7 +1576,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
@@ -1685,7 +1685,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-fe758dd8380cc8acabbc-wrr",
 							Rule:       `(Host("foo.com") || Host("bar.com")) && PathPrefix("/")`,
-							Priority:   9,
+							Priority:   7000002,
 							RuleSyntax: "default",
 						},
 					},
@@ -1753,7 +1753,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-5af0a8dc466bcb103301-wrr",
 							Rule:       `(Host("foo.com") || Host("**.bar.com")) && PathPrefix("/")`,
-							Priority:   11,
+							Priority:   8000002,
 							RuleSyntax: "default",
 						},
 					},
@@ -1821,7 +1821,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-764e519b9557509caa7d-wrr",
 							Rule:       `(Host("foo.com") || Host("**.foo.com")) && PathPrefix("/")`,
-							Priority:   11,
+							Priority:   8000002,
 							RuleSyntax: "default",
 						},
 					},
@@ -1888,14 +1888,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-71ae3ac5f5f8583c5cfa": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && Path("/bir")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-71ae3ac5f5f8583c5cfa-wrr",
 						},
@@ -1990,7 +1990,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 						},
@@ -2092,13 +2092,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-http-ep-web-0-779a0bc558422ee1b154-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-036eecf3c21d00eac117": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-https-ep-websecure-0-036eecf3c21d00eac117-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
@@ -2214,13 +2214,13 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
@@ -2323,21 +2323,21 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-cbebdedef34a6261eced": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && (Path("/bar") || PathPrefix("/bar/")) && Header("my-header","foo") && Header("my-header2","bar")`,
-							Priority:   10610,
+							Priority:   7010603,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-cbebdedef34a6261eced-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-74d0c698c3be747a738f": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && PathRegexp("^/buzz/[0-9]+$")`,
-							Priority:   11408,
+							Priority:   7011401,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-2-74d0c698c3be747a738f-wrr",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-d4501fe0597184abd40e": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && Path("/bar") && Header("my-header","bar")`,
-							Priority:   100109,
+							Priority:   7100102,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-d4501fe0597184abd40e-wrr",
 						},
@@ -2459,7 +2459,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-eaf4f488cc5127097136": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && (Path("/foo") || PathPrefix("/foo/")) && Method("GET")`,
-							Priority:   11408,
+							Priority:   7011401,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-eaf4f488cc5127097136-wrr",
 						},
@@ -2527,7 +2527,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-8dc41dbb469b11d7ce9c": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Rule:       `Host("foo.com") && (Path("/foo") || PathPrefix("/foo/")) && Query("foo","bar") && QueryRegexp("baz","buz")`,
-							Priority:   10428,
+							Priority:   7010421,
 							RuleSyntax: "default",
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-8dc41dbb469b11d7ce9c-wrr",
 						},
@@ -2596,7 +2596,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-71c892303a6d70cb4efe-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -2664,14 +2664,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-default-gw-default-my-gateway-ep-web-0-71c892303a6d70cb4efe-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-eb47eeb38d713d8e351d": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-eb47eeb38d713d8e351d-wrr",
 							Rule:       `Host("bar.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -2766,7 +2766,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-bar-http-app-bar-gw-default-my-gateway-ep-web-0-eb47eeb38d713d8e351d-wrr",
 							Rule:       `Host("bar.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -2834,7 +2834,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-requestheadermodifier-0"},
 						},
@@ -2912,7 +2912,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-requestheadermodifier-0", "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-retry"},
 						},
@@ -2998,7 +2998,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-requestheadermodifier-0", "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-retry"},
 						},
@@ -3084,7 +3084,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-retry"},
 						},
@@ -3160,7 +3160,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-responseheadermodifier-0"},
 						},
@@ -3237,7 +3237,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-78ef4770613eae69b5da-wrr",
 							Rule:       `Host("foo.com") && (Path("/bar") || PathPrefix("/bar/"))`,
-							Priority:   10408,
+							Priority:   7010401,
 							RuleSyntax: "default",
 						},
 					},
@@ -3314,7 +3314,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-requestredirect-0"},
 						},
@@ -3368,7 +3368,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs:  []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-wrr",
 							Rule:        `Host("example.org") && PathPrefix("/")`,
-							Priority:    13,
+							Priority:    11000002,
 							RuleSyntax:  "default",
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-c683caccb22c43e5e664-requestredirect-0"},
 						},
@@ -3422,7 +3422,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-wrr",
 							Rule:        `Host("example.com") && (Path("/foo") || PathPrefix("/foo/"))`,
 							RuleSyntax:  "default",
-							Priority:    10412,
+							Priority:    11010401,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-urlrewrite-0"},
 						},
 					},
@@ -3497,7 +3497,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-wrr",
 							Rule:       `Host("example.com") && (Path("/foo") || PathPrefix("/foo/"))`,
 							RuleSyntax: "default",
-							Priority:   10412,
+							Priority:   11010401,
 							Middlewares: []string{
 								"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestmirror-0",
 								"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-requestheadermodifier-1",
@@ -3650,7 +3650,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-wrr",
 							Rule:       `Host("example.com") && (Path("/foo") || PathPrefix("/foo/"))`,
 							RuleSyntax: "default",
-							Priority:   10412,
+							Priority:   11010401,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -3718,7 +3718,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-wrr",
 							Rule:        `Host("example.com") && (Path("/foo") || PathPrefix("/foo/"))`,
 							RuleSyntax:  "default",
-							Priority:    10412,
+							Priority:    11010401,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-urlrewrite-0"},
 						},
 					},
@@ -3793,7 +3793,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-wrr",
 							Rule:        `Host("example.com") && (Path("/foo") || PathPrefix("/foo/"))`,
 							RuleSyntax:  "default",
-							Priority:    10412,
+							Priority:    11010401,
 							Middlewares: []string{"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-d1e350a646631250e99d-urlrewrite-0"},
 						},
 					},
@@ -3869,7 +3869,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -3944,14 +3944,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-37f0249f693ead70647a": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-37f0249f693ead70647a-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"listener-web-http-5b3226d4ebd42b7200f1": {
@@ -4061,28 +4061,28 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-37f0249f693ead70647a": {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-1-37f0249f693ead70647a-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-other-gateway-ep-web-alt-0-8643b4eec05412c1ca31": {
 							ParentRefs: []string{"listener-web-alt-http-f9685282dacd58da3164"},
 							Service:    "httproute-default-http-app-1-gw-default-my-other-gateway-ep-web-alt-0-8643b4eec05412c1ca31-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-other-gateway-ep-web-alt-1-598fb9b61886d4edc744": {
 							ParentRefs: []string{"listener-web-alt-http-f9685282dacd58da3164"},
 							Service:    "httproute-default-http-app-1-gw-default-my-other-gateway-ep-web-alt-1-598fb9b61886d4edc744-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"listener-web-alt-http-f9685282dacd58da3164": {
@@ -4263,14 +4263,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-alt-http-f9685282dacd58da3164"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-alt-0-6d65ece8c8e5c1272ab8-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100009,
+							Priority:   7100002,
 							RuleSyntax: "default",
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-alt-1-cc507dc61ee70b0f1b77": {
 							ParentRefs: []string{"listener-web-alt-http-f9685282dacd58da3164"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-alt-1-cc507dc61ee70b0f1b77-wrr",
 							Rule:       `Host("foo.com") && Path("/foo")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 						"listener-web-alt-http-f9685282dacd58da3164": {
@@ -4383,7 +4383,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4461,7 +4461,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4536,7 +4536,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4612,7 +4612,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4665,7 +4665,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4718,7 +4718,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4783,7 +4783,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4849,7 +4849,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4917,7 +4917,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -4977,7 +4977,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -5036,7 +5036,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-catch-all-gw-default-my-gateway-ep-web-0-402d8b0319543c8e637b": {
 							Service:    "httproute-default-http-app-catch-all-gw-default-my-gateway-ep-web-0-402d8b0319543c8e637b-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   9,
+							Priority:   7000002,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-foo-com-5f20d578e2e3eccac466"},
 						},
@@ -5079,6 +5079,212 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "HTTPRoutes with the same hostname intersection",
+			paths: []string{"services.yml", "httproute/with_same_hostname_intersection.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("abc.example.com")`,
+						},
+						"httproute-default-http-app-wildcard-gw-default-my-gateway-ep-web-0-b2f0a9ce301bcdda3f51": {
+							Service:    "httproute-default-http-app-wildcard-gw-default-my-gateway-ep-web-0-b2f0a9ce301bcdda3f51-wrr",
+							Rule:       `Host("abc.example.com") && (Path("/path/prefix") || PathPrefix("/path/prefix/"))`,
+							Priority:   12011202,
+							RuleSyntax: "default",
+							ParentRefs: []string{"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca"},
+						},
+						// The exact host name of this route outranks the wildcard one of the route above, whatever the path.
+						// Thus, this route serves the rule it shares with the second rule of the route above,
+						// whose router is not created.
+						"httproute-default-http-app-exact-gw-default-my-gateway-ep-web-0-9bb4909cecf951e247bc": {
+							Service:    "httproute-default-http-app-exact-gw-default-my-gateway-ep-web-0-9bb4909cecf951e247bc-wrr",
+							Rule:       `Host("abc.example.com") && PathPrefix("/")`,
+							Priority:   15000002,
+							RuleSyntax: "default",
+							ParentRefs: []string{"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-wildcard-gw-default-my-gateway-ep-web-0-b2f0a9ce301bcdda3f51-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-wildcard-gw-default-my-gateway-ep-web-0-b2f0a9ce301bcdda3f51-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-wildcard-gw-default-my-gateway-ep-web-0-b2f0a9ce301bcdda3f51-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-exact-gw-default-my-gateway-ep-web-0-9bb4909cecf951e247bc-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-exact-gw-default-my-gateway-ep-web-0-9bb4909cecf951e247bc-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-exact-gw-default-my-gateway-ep-web-0-9bb4909cecf951e247bc-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "HTTPRoutes with the same rule under a shared parent router",
+			paths: []string{"services.yml", "httproute/with_same_rule_shared_parent_router.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-example-com-e7b9da953ca48d642d6b": {
+							EntryPoints: []string{"web"},
+							Rule:        `(Host("**.example.com")) && !(Host("abc.example.com"))`,
+						},
+						"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("abc.example.com")`,
+						},
+						"httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-b30b8fd0df54951a1b8e": {
+							ParentRefs: []string{"listener-web-http-abc-example-com-05dd4f497bcb27f2cdca"},
+							Service:    "httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-b30b8fd0df54951a1b8e-wrr",
+							Rule:       `Host("abc.example.com") && Path("/foo")`,
+							Priority:   15100001,
+							RuleSyntax: "default",
+						},
+						// The older route above serves the rule under the parent router of abc.example.com,
+						// which this router shares with it.
+						// Thus, this router only keeps the parent router it does not share.
+						"httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-fd34f267ba2247eef7b7": {
+							ParentRefs: []string{"listener-web-http-example-com-e7b9da953ca48d642d6b"},
+							Service:    "httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-fd34f267ba2247eef7b7-wrr",
+							Rule:       `Host("abc.example.com") && Path("/foo")`,
+							Priority:   15100001,
+							RuleSyntax: "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-b30b8fd0df54951a1b8e-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-b30b8fd0df54951a1b8e-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-precise-gw-default-my-gateway-ep-web-0-b30b8fd0df54951a1b8e-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-fd34f267ba2247eef7b7-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-fd34f267ba2247eef7b7-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"httproute-default-http-app-wildcard-gw-default-my-wildcard-gateway-ep-web-0-fd34f267ba2247eef7b7-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
 			desc:  "HTTPRoute attached to a ListenerSet HTTPS listener",
 			paths: []string{"services.yml", "httproute/with_listenerset.yml"},
 			entryPoints: map[string]Entrypoint{
@@ -5095,7 +5301,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								"listener-websecure-https-439feda8e3f1dbdca529",
 							},
 							RuleSyntax: "default",
-							Priority:   100016,
+							Priority:   15100001,
 						},
 						"listener-websecure-https-439feda8e3f1dbdca529": {
 							EntryPoints: []string{
@@ -5220,14 +5426,14 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure-0-398c6f76284d21e6e3b3-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-websecure2-0-e22d24f42cd0b2e1fc86": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-websecure2-0-e22d24f42cd0b2e1fc86-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure2-https-dd662c6921e9998d0cca"},
 						},
@@ -5363,7 +5569,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-websecure-https-foo-com-c4461032f627a1b9033b"},
 							Service:    "httproute-default-http-app-secure-gw-default-my-secure-gateway-ep-websecure-0-b7eaf4c1f751a09c9658-wrr",
 							Rule:       `Host("foo.com") && Path("/secure")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 						},
 					},
@@ -5617,7 +5823,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -5673,7 +5879,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -5732,7 +5938,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -5789,7 +5995,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -5847,7 +6053,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -5925,7 +6131,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-bbdaa7d1e726d90930fd": {
 							Service:    "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-bbdaa7d1e726d90930fd-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -6116,7 +6322,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Middlewares: []string{
@@ -6216,7 +6422,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Middlewares: []string{
@@ -6315,7 +6521,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-err-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -6371,7 +6577,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-err-wrr",
 							Rule:       `Host("foo.com") && Path("/bar")`,
-							Priority:   100008,
+							Priority:   7100001,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -6478,7 +6684,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -6554,7 +6760,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -6629,7 +6835,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 						"listener-web-http-5b3226d4ebd42b7200f1": {
@@ -6715,7 +6921,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -6793,7 +6999,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -6876,14 +7082,14 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure-0-5015e40a36a5159a5ca2-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure-https-439feda8e3f1dbdca529"},
 						},
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure2-0-c1153de85fa10a42dc33": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-websecure2-0-c1153de85fa10a42dc33-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-websecure2-https-dd662c6921e9998d0cca"},
 						},
@@ -7019,7 +7225,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-websecure-https-foo-com-c4461032f627a1b9033b"},
 							Service:    "grpcroute-default-grpc-app-secure-gw-default-my-secure-gateway-ep-websecure-0-3aae484bce849b96c90c-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -7208,7 +7414,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -7268,7 +7474,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -7327,7 +7533,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"grpcroute-default-grpc-app-catch-all-gw-default-my-gateway-ep-web-0-24ad420c9f1560b62d23": {
 							Service:    "grpcroute-default-grpc-app-catch-all-gw-default-my-gateway-ep-web-0-24ad420c9f1560b62d23-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-foo-com-5f20d578e2e3eccac466"},
 						},
@@ -7345,6 +7551,75 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							},
 						},
 						"grpcroute-default-grpc-app-catch-all-gw-default-my-gateway-ep-web-0-24ad420c9f1560b62d23-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "GRPCRoutes with the same hostname intersection",
+			paths: []string{"services.yml", "grpcroute/with_same_hostname_intersection.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-example-com-e7b9da953ca48d642d6b": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("**.example.com")`,
+						},
+						// The router of the older and less specific route, which has the same rule, is not created.
+						"grpcroute-default-grpc-app-more-specific-gw-default-my-gateway-ep-web-0-0655f6672582d2865d43": {
+							Service:    "grpcroute-default-grpc-app-more-specific-gw-default-my-gateway-ep-web-0-0655f6672582d2865d43-wrr",
+							Rule:       `Host("**.example.com") && PathPrefix("/")`,
+							Priority:   12000015,
+							RuleSyntax: "default",
+							ParentRefs: []string{"listener-web-http-example-com-e7b9da953ca48d642d6b"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-more-specific-gw-default-my-gateway-ep-web-0-0655f6672582d2865d43-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-more-specific-gw-default-my-gateway-ep-web-0-0655f6672582d2865d43-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-more-specific-gw-default-my-gateway-ep-web-0-0655f6672582d2865d43-svc-default-whoami-0": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -7456,7 +7731,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Middlewares: []string{
@@ -7532,7 +7807,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Middlewares: []string{
@@ -7606,7 +7881,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-err-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -7665,7 +7940,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296": {
 							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-0abda411573f19f36296-err-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 						},
@@ -10988,6 +11263,78 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "TLSRoutes with the same hostname intersection",
+			paths: []string{"services.yml", "tlsroute/with_same_hostname_intersection.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						// The router of the older and less specific route, which has the same rule, is not created.
+						"tlsroute-default-tls-app-exact-gw-default-my-tls-gateway-ep-tcp-0-b5cdbf5e3b10c3b147c2": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tlsroute-default-tls-app-exact-gw-default-my-tls-gateway-ep-tcp-0-b5cdbf5e3b10c3b147c2-wrr",
+							Rule:        `HostSNI("abc.example.com")`,
+							Priority:    15,
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+						"deny-unknown-host": {
+							Rule:     "HostSNI(`*`) && !ALPN(`h2`) && !ALPN(`http/1.1`)",
+							Priority: 1,
+							Service:  "deny-unknown-host",
+							TLS:      &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tlsroute-default-tls-app-exact-gw-default-my-tls-gateway-ep-tcp-0-b5cdbf5e3b10c3b147c2-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-exact-gw-default-my-tls-gateway-ep-tcp-0-b5cdbf5e3b10c3b147c2-svc-default-whoamitcp-0",
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-exact-gw-default-my-tls-gateway-ep-tcp-0-b5cdbf5e3b10c3b147c2-svc-default-whoamitcp-0": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+						"deny-unknown-host": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
 			desc:  "TLSRoute attached to a ListenerSet Passthrough listener",
 			paths: []string{"services.yml", "tlsroute/with_listenerset.yml"},
 			entryPoints: map[string]Entrypoint{
@@ -12204,7 +12551,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "grpcroute-default-grpc-app-priority-gw-default-my-gateway-ep-web-0-46e5641ba0ccfa2eff8a-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   22,
+							Priority:   7000015,
 							RuleSyntax: "default",
 						},
 					},
@@ -12268,7 +12615,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
 							Service:    "httproute-default-http-app-conflict-gw-default-my-gateway-ep-web-0-3fcf93756cef1b546fd2-wrr",
 							Rule:       `Host("foo.com") && PathPrefix("/")`,
-							Priority:   9,
+							Priority:   7000002,
 							RuleSyntax: "default",
 						},
 					},
@@ -12412,7 +12759,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								"listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e",
 							},
 							RuleSyntax: "default",
-							Priority:   100016,
+							Priority:   15100001,
 						},
 						"listener-websecure-https-baz-example-com-dd68422a9ac9bfc6c47e": {
 							EntryPoints: []string{
@@ -12521,7 +12868,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								"listener-web2-http-4b299c63a1fd0bffdf3d",
 							},
 							RuleSyntax: "default",
-							Priority:   100018,
+							Priority:   17100001,
 						},
 						"listener-web2-http-4b299c63a1fd0bffdf3d": {
 							EntryPoints: []string{
@@ -12624,7 +12971,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 								"listener-websecure-https-439feda8e3f1dbdca529",
 							},
 							RuleSyntax: "default",
-							Priority:   100016,
+							Priority:   15100001,
 						},
 						"listener-websecure-https-439feda8e3f1dbdca529": {
 							EntryPoints: []string{
@@ -13050,7 +13397,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Rule:       `Host("foo.example.com") && PathPrefix("/")`,
 							Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-http-0-f6b84730f282bab89081-wrr",
 							RuleSyntax: "default",
-							Priority:   17,
+							Priority:   15000002,
 							ParentRefs: []string{"listener-http-http-foo-example-com-34297ca2d1326bfcdaad"},
 						},
 					},
@@ -13092,7 +13439,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 								"listener-websecure-https-439feda8e3f1dbdca529",
 							},
 							RuleSyntax: "default",
-							Priority:   100016,
+							Priority:   15100001,
 						},
 						"listener-websecure-https-439feda8e3f1dbdca529": {
 							EntryPoints: []string{
@@ -14260,6 +14607,76 @@ func Test_findMatchingHostnames(t *testing.T) {
 			got, ok := findMatchingHostnames(test.listenerHostname, test.routeHostnames)
 			assert.Equal(t, test.wantOk, ok)
 			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func Test_hostnamePriority(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		listenerHostname *gatev1.Hostname
+		routeHostnames   []gatev1.Hostname
+		want             int
+	}{
+		{
+			desc: "Empty",
+		},
+		{
+			desc:             "Only listener hostname",
+			listenerHostname: new(gatev1.Hostname("abc.example.com")),
+			want:             15,
+		},
+		{
+			desc:             "Only listener wildcard hostname",
+			listenerHostname: new(gatev1.Hostname("*.example.com")),
+			want:             12,
+		},
+		{
+			desc:           "Only route hostname",
+			routeHostnames: []gatev1.Hostname{"abc.example.com"},
+			want:           15,
+		},
+		{
+			desc:           "Only route wildcard hostname",
+			routeHostnames: []gatev1.Hostname{"*.example.com"},
+			want:           12,
+		},
+		{
+			desc:             "Route wildcard hostname matching the listener hostname",
+			listenerHostname: new(gatev1.Hostname("abc.example.com")),
+			routeHostnames:   []gatev1.Hostname{"*.example.com"},
+			want:             12,
+		},
+		{
+			desc:             "Route hostname matching the listener wildcard hostname",
+			listenerHostname: new(gatev1.Hostname("*.example.com")),
+			routeHostnames:   []gatev1.Hostname{"abc.example.com"},
+			want:             15,
+		},
+		{
+			desc:             "Route less specific wildcard hostname matching the listener wildcard hostname",
+			listenerHostname: new(gatev1.Hostname("*.example.com")),
+			routeHostnames:   []gatev1.Hostname{"*.com"},
+			want:             4,
+		},
+		{
+			desc:             "Route hostname not matching the listener hostname does not count",
+			listenerHostname: new(gatev1.Hostname("*.example.com")),
+			routeHostnames:   []gatev1.Hostname{"*.com", "very-long-hostname.example.net"},
+			want:             4,
+		},
+		{
+			desc:           "Most specific route hostname",
+			routeHostnames: []gatev1.Hostname{"*.com", "abc.example.com", "*.example.com"},
+			want:           15,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.want, hostnamePriority(test.listenerHostname, test.routeHostnames))
 		})
 	}
 }
