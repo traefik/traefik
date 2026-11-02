@@ -8,11 +8,11 @@ description: "Learn how to use the Kubernetes Gateway API as a provider for conf
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specification from the Kubernetes Special Interest Groups (SIGs).
 
-This provider supports Standard version [v1.6.3](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.3) of the Gateway API specification.
+This provider supports Standard version [v1.7.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0) of the Gateway API specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, `TCPRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6.3/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.7/traefik-traefik).
 
 !!! info "Using The Helm Chart"
 
@@ -26,17 +26,8 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
     ```bash
     # Install Gateway API CRDs from the Standard channel.
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml
+    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
     ```
-
-    !!! warning "`experimentalChannel` requires the Experimental channel CRDs"
-
-        The `experimentalChannel` option makes Traefik watch `TCPRoute` and `TLSRoute` resources,
-        which the Standard channel CRDs do not provide.
-        Enabling it without installing the Experimental channel CRDs
-        (`experimental-install.yaml`) prevents the Kubernetes Gateway provider from starting:
-        no Gateway API resource is served at all, not only `TCPRoute` and `TLSRoute`.
-        Traefik keeps running and the other providers are unaffected.
 
 2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
