@@ -338,6 +338,7 @@ func Test_createConfiguration(t *testing.T) {
 			require.NoError(t, err)
 
 			actualJSON, err := json.MarshalIndent(cfg, "", "  ")
+			require.NoError(t, err)
 
 			assert.JSONEq(t, string(expectedJSON), string(actualJSON))
 		})
