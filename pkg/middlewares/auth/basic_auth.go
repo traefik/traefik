@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	basicTypeName = "BasicAuth"
+	basicTypeName     = "BasicAuth"
+	maxPasswordLength = 1024
 )
 
 type basicAuth struct {
@@ -78,7 +79,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	user, password, ok := req.BasicAuth()
 	var authenticated bool
-	if ok {
+	if ok && len(password) <= maxPasswordLength {
 		secret := b.auth.Secrets(user, b.auth.Realm)
 		if secret != "" {
 			authenticated = goauth.CheckSecret(password, secret)

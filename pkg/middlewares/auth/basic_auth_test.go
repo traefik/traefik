@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
+	goauth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -90,6 +92,48 @@ func TestBasicAuthSuccess(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+}
+
+func TestBasicAuthPasswordLength(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		password       string
+		expectedStatus int
+	}{
+		{
+			desc:           "password at max length",
+			password:       strings.Repeat("a", maxPasswordLength),
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "password exceeding max length",
+			password:       strings.Repeat("a", maxPasswordLength+1),
+			expectedStatus: http.StatusUnauthorized,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+			hash := goauth.MD5Crypt([]byte(test.password), []byte("H6uskkkW"), []byte("$apr1$"))
+			auth := dynamic.BasicAuth{
+				Users: []string{"test:" + string(hash)},
+			}
+			authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+			req.SetBasicAuth("test", test.password)
+
+			rw := httptest.NewRecorder()
+			authMiddleware.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectedStatus, rw.Code)
+		})
+	}
 }
 
 func TestBasicAuthUserHeader(t *testing.T) {
