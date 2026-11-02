@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -1676,8 +1677,9 @@ func TestHTTP2RequestTLS(t *testing.T) {
 
 func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 	testCases := []struct {
-		desc   string
-		hijack bool
+		desc      string
+		fastProxy bool
+		hijack    bool
 	}{
 		{
 			desc: "closed client connection",
@@ -1685,6 +1687,15 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 		{
 			desc:   "hijacked client connection",
 			hijack: true,
+		},
+		{
+			desc:      "closed client connection with FastProxy",
+			fastProxy: true,
+		},
+		{
+			desc:      "hijacked client connection with FastProxy",
+			fastProxy: true,
+			hijack:    true,
 		},
 	}
 
@@ -1710,30 +1721,44 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 			require.NoError(t, err)
 
 			transportManager := service.NewTransportManager(nil)
-			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {MaxIdleConnsPerHost: 1}})
 
-			roundTripper, err := transportManager.GetRoundTripper("default@internal")
-			require.NoError(t, err)
+			// The proxies keep the Authorization header of the received request, so the backend connection is stuck
+			// as it would be for a real NTLM/Kerberos backend.
+			var proxy http.Handler
+			if test.fastProxy {
+				proxy, err = fast.NewProxyBuilder(transportManager, static.FastProxyConfig{}).Build("default@internal", backendURL, true, false)
+				require.NoError(t, err)
+			} else {
+				roundTripper, err := transportManager.GetRoundTripper("default@internal")
+				require.NoError(t, err)
+
+				proxy = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					req.URL.Scheme = backendURL.Scheme
+					req.URL.Host = backendURL.Host
+					req.RequestURI = ""
+
+					resp, err := roundTripper.RoundTrip(req)
+					if err != nil {
+						rw.WriteHeader(http.StatusBadGateway)
+						return
+					}
+					_ = resp.Body.Close()
+
+					rw.WriteHeader(resp.StatusCode)
+				})
+			}
 
 			router, err := tcprouter.NewRouter(nil)
 			require.NoError(t, err)
 
 			router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// Reverse proxy the received request to the backend, keeping its Authorization header so the
-				// round tripper sticks the connection as it would for a real NTLM/Kerberos backend.
-				req.URL.Scheme = backendURL.Scheme
-				req.URL.Host = backendURL.Host
-				req.RequestURI = ""
-
-				resp, err := roundTripper.RoundTrip(req)
-				if err != nil {
-					rw.WriteHeader(http.StatusBadGateway)
-					return
-				}
-				_ = resp.Body.Close()
+				// The proxy response is recorded, so that the client connection can still be hijacked afterwards.
+				recorder := httptest.NewRecorder()
+				proxy.ServeHTTP(recorder, req)
 
 				if !test.hijack {
-					rw.WriteHeader(resp.StatusCode)
+					rw.WriteHeader(recorder.Code)
 					return
 				}
 
