@@ -338,9 +338,72 @@ func Test_createConfiguration(t *testing.T) {
 			require.NoError(t, err)
 
 			actualJSON, err := json.MarshalIndent(cfg, "", "  ")
-			require.NoError(t, err)
 
 			assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+		})
+	}
+}
+
+func Test_serverTransportTCP_spiffe(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		staticCfg     static.Configuration
+		expectedIDs   []string
+		expectedTrust string
+	}{
+		{
+			desc: "only the TCP servers transport defines a SPIFFE configuration",
+			staticCfg: static.Configuration{
+				TCPServersTransport: &static.TCPServersTransport{
+					TLS: &static.TLSClientConfig{
+						Spiffe: &static.Spiffe{
+							IDs:         []string{"spiffe://trust.domain/tcp"},
+							TrustDomain: "tcp.trust.domain",
+						},
+					},
+				},
+			},
+			expectedIDs:   []string{"spiffe://trust.domain/tcp"},
+			expectedTrust: "tcp.trust.domain",
+		},
+		{
+			desc: "the TCP and the HTTP servers transports define distinct SPIFFE configurations",
+			staticCfg: static.Configuration{
+				ServersTransport: &static.ServersTransport{
+					Spiffe: &static.Spiffe{
+						IDs:         []string{"spiffe://trust.domain/http"},
+						TrustDomain: "http.trust.domain",
+					},
+				},
+				TCPServersTransport: &static.TCPServersTransport{
+					TLS: &static.TLSClientConfig{
+						Spiffe: &static.Spiffe{
+							IDs:         []string{"spiffe://trust.domain/tcp"},
+							TrustDomain: "tcp.trust.domain",
+						},
+					},
+				},
+			},
+			expectedIDs:   []string{"spiffe://trust.domain/tcp"},
+			expectedTrust: "tcp.trust.domain",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			provider := Provider{staticCfg: test.staticCfg}
+
+			cfg := provider.createConfiguration(t.Context())
+
+			tcpServersTransport := cfg.TCP.ServersTransports["default"]
+			require.NotNil(t, tcpServersTransport)
+			require.NotNil(t, tcpServersTransport.TLS)
+			require.NotNil(t, tcpServersTransport.TLS.Spiffe)
+
+			assert.Equal(t, test.expectedIDs, tcpServersTransport.TLS.Spiffe.IDs)
+			assert.Equal(t, test.expectedTrust, tcpServersTransport.TLS.Spiffe.TrustDomain)
 		})
 	}
 }
