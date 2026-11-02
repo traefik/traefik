@@ -261,6 +261,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		desc                 string
 		clientAuthType       string
 		caFiles              []types.FileOrContent
+		passCertificate      bool
 		certContents         []string
 		noTLS                bool
 		expectedClientVerify string
@@ -283,6 +284,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with simple certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -292,6 +294,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with complete certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(completeCheeseCrt).Subject.String(),
@@ -301,6 +304,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with multiple certificates only uses leaf",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt, completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -310,6 +314,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with optional verify client",
 			clientAuthType:       tls.VerifyClientCertIfGiven,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -319,11 +324,20 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with optional_no_ca invalid cert (no matching CA)",
 			clientAuthType:       tls.RequestClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "FAILED:",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
 			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
 			expectedCert:         getCertPEM(minimalCheeseCrt),
+		},
+		{
+			desc:                 "TLS without passing the certificate",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
+			certContents:         []string{minimalCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
 		},
 		{
 			desc:           "No TLS with optional_no_ca",
@@ -342,8 +356,9 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			t.Parallel()
 
 			config := dynamic.AuthTLSPassCertificateToUpstream{
-				ClientAuthType: test.clientAuthType,
-				CAFiles:        test.caFiles,
+				ClientAuthType:  test.clientAuthType,
+				CAFiles:         test.caFiles,
+				PassCertificate: test.passCertificate,
 			}
 
 			handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
@@ -491,7 +506,8 @@ func TestAuthTLSNoTLSClearsAliasingCertHeaders(t *testing.T) {
 // the backend beside Traefik's own value.
 func TestAuthTLSMTLSClearsAliasingCertHeaders(t *testing.T) {
 	config := dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType: tls.RequireAndVerifyClientCert,
+		ClientAuthType:  tls.RequireAndVerifyClientCert,
+		PassCertificate: true,
 	}
 	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
 	require.NoError(t, err)

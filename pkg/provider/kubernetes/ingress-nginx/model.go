@@ -225,7 +225,7 @@ type location struct {
 	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
 	LimitConnections *dynamic.InFlightReq
 
-	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
+	// AuthTLSPassCert, if non-nil, sets the Ssl-Client-* headers from the client TLS certificate, removing the values the client sent for them.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
 	// SnippetAuth, if non-nil, configures server/configuration snippets and forward auth.

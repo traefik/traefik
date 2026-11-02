@@ -76,10 +76,11 @@ func normalizeHeaderName(name string) string {
 }
 
 type authTLSPassCertificateToUpstream struct {
-	next           http.Handler
-	name           string
-	clientAuthType string
-	caCertPool     *x509.CertPool
+	next            http.Handler
+	name            string
+	clientAuthType  string
+	caCertPool      *x509.CertPool
+	passCertificate bool
 }
 
 func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler, config dynamic.AuthTLSPassCertificateToUpstream, name string) (http.Handler, error) {
@@ -97,10 +98,11 @@ func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler,
 	}
 
 	return &authTLSPassCertificateToUpstream{
-		next:           next,
-		name:           name,
-		clientAuthType: config.ClientAuthType,
-		caCertPool:     caCertPool,
+		next:            next,
+		name:            name,
+		clientAuthType:  config.ClientAuthType,
+		caCertPool:      caCertPool,
+		passCertificate: config.PassCertificate,
 	}, nil
 }
 
@@ -149,7 +151,9 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	req.Header.Set(sslClientVerify, clientVerify)
 	req.Header.Set(sslClientSubjectDN, cert.Subject.String())
 	req.Header.Set(sslClientIssuerDN, cert.Issuer.String())
-	req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	if p.passCertificate {
+		req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	}
 
 	p.next.ServeHTTP(rw, req)
 }

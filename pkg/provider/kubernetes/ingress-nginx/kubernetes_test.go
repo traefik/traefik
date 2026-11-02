@@ -13979,7 +13979,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-28-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14000,6 +14000,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-retry",
 							},
 							Service: "default-7-ingress-with-auth-tls-secret-28-whoami-6-80-2",
@@ -14015,6 +14016,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -14141,7 +14152,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14160,7 +14171,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14176,7 +14187,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-pass-certificate-to-upstream", "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-retry"},
 							Service:     "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14195,7 +14206,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-retry"},
+							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-pass-certificate-to-upstream", "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-retry"},
 							Service:     "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14209,6 +14220,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -14368,7 +14399,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14387,7 +14418,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14401,6 +14432,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -14505,7 +14546,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-name-collision-dash.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14524,7 +14565,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-name-collision-dash.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14540,7 +14581,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-name-collision-dot.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14559,7 +14600,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-name-collision-dot.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14573,6 +14614,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -14751,7 +14812,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14772,6 +14833,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry",
 							},
 							Service: "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
@@ -14787,6 +14849,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
 						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -14908,7 +14980,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-conflict.localhost") && Path("/protected")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-protected-ingress-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14929,6 +15001,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme",
+								"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-protected-ingress-17-rule-0-path-0-retry",
 							},
 							Service: "default-7-protected-ingress-17-whoami-6-80-2",
@@ -14946,7 +15019,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-conflict.localhost") && Path("/second")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-same-host-second-ingress-24-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-same-host-second-ingress-24-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-same-host-second-ingress-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-same-host-second-ingress-24-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14967,6 +15040,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-same-host-second-ingress-24-rule-0-path-0-redirect-scheme",
+								"default-7-same-host-second-ingress-24-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-same-host-second-ingress-24-rule-0-path-0-retry",
 							},
 							Service: "default-7-same-host-second-ingress-24-whoami-6-80-2",
@@ -14982,6 +15056,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-same-host-second-ingress-24-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-same-host-second-ingress-24-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -15156,7 +15250,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-tls-retry"},
 							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15175,7 +15269,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-retry"},
 							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15191,7 +15285,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/protected")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-protected-ingress-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15212,6 +15306,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme",
+								"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-protected-ingress-17-rule-0-path-0-retry",
 							},
 							Service: "default-7-protected-ingress-17-whoami-6-80-2",
@@ -15229,7 +15324,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-optional-ingress-16-rule-0-path-0-tls-retry"},
 							Service:     "default-7-optional-ingress-16-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15248,7 +15343,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-pass-certificate-to-upstream", "default-7-optional-ingress-16-rule-0-path-0-retry"},
 							Service:     "default-7-optional-ingress-16-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15262,6 +15357,36 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-optional-ingress-16-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-optional-ingress-16-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-public-ingress-14-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -15477,7 +15602,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
 							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15493,7 +15618,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default",
@@ -15510,6 +15635,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -15617,7 +15752,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
 							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -15633,7 +15768,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default",
@@ -15689,6 +15824,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry",
 							},
 							Service: "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
@@ -15706,7 +15842,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "auth-tls-verify-client.localhost",
@@ -15723,6 +15859,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
@@ -15739,6 +15885,16 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
 								ForcePermanentRedirect: true,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
 							},
 						},
 						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry": {
@@ -15890,6 +16046,368 @@ func TestLoadIngresses(t *testing.T) {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS pass certificate to upstream follows the Ingress owning client authentication on the same host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-pass-certificate-to-upstream-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/inheriting")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-inheriting-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-inheriting-ingress-18-rule-0-path-0-tls-retry"},
+							Service:     "default-7-inheriting-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "inheriting-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/inheriting")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-inheriting-ingress-18-rule-0-path-0-pass-certificate-to-upstream", "default-7-inheriting-ingress-18-rule-0-path-0-retry"},
+							Service:     "default-7-inheriting-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "inheriting-ingress",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-owner-ingress-13-rule-0-path-0-tls-retry"},
+							Service:     "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-7-owner-ingress-13-rule-0-path-0-redirect-scheme",
+								"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream",
+								"default-7-owner-ingress-13-rule-0-path-0-retry",
+							},
+							Service: "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/forwarded")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-forwarded-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-forwarded-ingress-17-rule-0-path-0-tls-retry"},
+							Service:     "default-7-forwarded-ingress-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "forwarded-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/forwarded")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-forwarded-ingress-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-forwarded-ingress-17-rule-0-path-0-retry"},
+							Service:     "default-7-forwarded-ingress-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "forwarded-ingress",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-forwarded-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-inheriting-ingress-18-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-inheriting-ingress-18",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-owner-ingress-13",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-forwarded-ingress-17-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-forwarded-ingress-17",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-inheriting-ingress-18": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-owner-ingress-13": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-forwarded-ingress-17": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
+						},
+					},
+					Options: map[string]tls.Options{
+						"pass-cert-shared-host.localhost": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequestClientCert,
 							},
 							CipherSuites: []string{
 								"TLS_AES_128_GCM_SHA256",
@@ -18933,15 +19451,15 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-redirect-scheme": {
@@ -19103,15 +19621,15 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-retry": {
@@ -25131,8 +25649,9 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequestClientCert,
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-redirect-scheme": {
@@ -25149,8 +25668,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequestClientCert,
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-retry": {
