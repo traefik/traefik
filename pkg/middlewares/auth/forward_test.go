@@ -1588,3 +1588,16 @@ func TestForwardAuth_writeHeader_XForwardedForIPv6Zone(t *testing.T) {
 	// The zone identifier is only meaningful on the local host and must not be forwarded.
 	assert.Equal(t, "fe80::d806:a55d:eb1b:49cc", forwardReq.Header.Get("X-Forwarded-For"))
 }
+
+func TestForwardAuth_oldWriteHeader_XForwardedForIPv6Zone(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
+	// RemoteAddr of a link-local IPv6 connection carries an IPv6 zone identifier.
+	req.RemoteAddr = "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:1234"
+
+	forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
+
+	oldWriteHeader(req, forwardReq, nil)
+
+	// The zone identifier is only meaningful on the local host and must not be forwarded.
+	assert.Equal(t, "fe80::d806:a55d:eb1b:49cc", forwardReq.Header.Get("X-Forwarded-For"))
+}
