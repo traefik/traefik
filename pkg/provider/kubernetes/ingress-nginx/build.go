@@ -541,6 +541,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 			seenHosts := map[string]struct{}{}
 			for _, rule := range ing.Spec.Rules {
+				// Like ingress-nginx, hostless rules keep the global default backend as their fallback.
+				if rule.Host == "" {
+					continue
+				}
+
 				if _, ok := seenHosts[rule.Host]; ok {
 					continue
 				}
