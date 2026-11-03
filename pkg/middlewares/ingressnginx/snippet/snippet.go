@@ -288,7 +288,7 @@ func (s *Snippet) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// PHASE: HEADER_FILTER (response headers)
 	// Wrap response writer to apply header modifications when response is written.
 	// add_header: Override behavior - location replaces server
-	// more_*, proxy_hide_header, expires: Additive - both apply
+	// proxy_hide_header, more_*, expires: Additive - both apply
 	// ========================================================================
 	wrappedRW := s.wrapResponseWriterWithCollectors(rw, ctx, serverCollector, locationCollector)
 
@@ -317,16 +317,35 @@ func (s *Snippet) wrapResponseWriterWithCollectors(rw http.ResponseWriter, ctx *
 			overrideEntries = serverCollector.HeaderFilterOverride
 		}
 
+		// $upstream_http_* variables refer to the headers sent by the upstream,
+		// including the ones hidden by proxy_hide_header.
+		var upstreamHeaders http.Header
+		if len(overrideEntries) > 0 {
+			upstreamHeaders = h.Clone()
+		}
+
+		// proxy_hide_header: Additive behavior - both apply, before add_header.
+		for _, act := range serverCollector.HeaderFilterHide {
+			_, _ = act(headerRW, ctx.req, ctx)
+		}
+		for _, act := range locationCollector.HeaderFilterHide {
+			_, _ = act(headerRW, ctx.req, ctx)
+		}
+
 		for _, entry := range overrideEntries {
 			// Status code filtering: without "always", only add for specific status codes
 			if !entry.always && !isAddHeaderStatusCode(code) {
 				continue
 			}
-			resolvedVal := ingressnginx.ReplaceVariables(entry.value, ctx.req, nil, ctx.vars)
+			resolvedVal := ingressnginx.ReplaceVariables(entry.value, ctx.req, upstreamHeaders, ctx.vars)
+			// Like NGINX, add_header does not add a header with an empty value.
+			if resolvedVal == "" {
+				continue
+			}
 			h.Add(entry.key, resolvedVal)
 		}
 
-		// more_*, proxy_hide_header, expires: Additive behavior - both apply
+		// more_*, expires: Additive behavior - both apply
 		for _, act := range serverCollector.HeaderFilterAdditive {
 			_, _ = act(headerRW, ctx.req, ctx)
 		}
