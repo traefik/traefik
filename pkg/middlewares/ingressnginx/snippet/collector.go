@@ -27,7 +27,12 @@ type PhaseCollector struct {
 	// it completely replaces parent block's add_header directives.
 	HeaderFilterOverride []addHeaderEntry
 
-	// HeaderFilterAdditive contains additive header directives (more_*, proxy_hide_header, expires).
+	// HeaderFilterHide contains proxy_hide_header directives.
+	// They are applied to the upstream response headers before add_header and the additive directives.
+	// Both server and location apply.
+	HeaderFilterHide []action
+
+	// HeaderFilterAdditive contains additive header directives (more_*, expires).
 	// Both server and location apply.
 	HeaderFilterAdditive []action
 
@@ -447,7 +452,7 @@ func createProxyHideHeaderCollectable(d config.IDirective) (CollectableAction, e
 	}
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (bool, error) {
-		pc.HeaderFilterAdditive = append(pc.HeaderFilterAdditive, act)
+		pc.HeaderFilterHide = append(pc.HeaderFilterHide, act)
 		return false, nil
 	}, nil
 }

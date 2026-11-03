@@ -275,6 +275,7 @@ func Test_Directives(t *testing.T) {
 		path                       string
 		remoteAddr                 string
 		requestHeaders             map[string]string
+		upstreamResponseHeaders    map[string]string
 		expectedResponseHeaders    map[string]string
 		unexpectedResponseHeaders  []string
 		expectedRequestHeaders     map[string]string
@@ -1290,7 +1291,42 @@ deny all;
 			configurationSnippet: `
 proxy_hide_header X-Powered-By;
 `,
+			upstreamResponseHeaders:   map[string]string{"X-Powered-By": "upstream"},
 			unexpectedResponseHeaders: []string{"X-Powered-By"},
+		},
+		{
+			desc: "proxy_hide_header in server snippet removes response header",
+			serverSnippet: `
+proxy_hide_header X-Powered-By;
+`,
+			upstreamResponseHeaders:   map[string]string{"X-Powered-By": "upstream"},
+			unexpectedResponseHeaders: []string{"X-Powered-By"},
+		},
+		{
+			desc: "proxy_hide_header does not remove header added by add_header",
+			configurationSnippet: `
+proxy_hide_header Access-Control-Allow-Origin;
+add_header Access-Control-Allow-Origin "*" always;
+`,
+			upstreamResponseHeaders: map[string]string{"Access-Control-Allow-Origin": "https://upstream.example.com"},
+			expectedResponseHeaders: map[string]string{"Access-Control-Allow-Origin": "*"},
+		},
+		{
+			desc: "add_header resolves upstream_http variable from hidden header",
+			configurationSnippet: `
+proxy_hide_header Access-Control-Allow-Origin;
+add_header X-Copied $upstream_http_access_control_allow_origin always;
+`,
+			upstreamResponseHeaders:   map[string]string{"Access-Control-Allow-Origin": "*"},
+			expectedResponseHeaders:   map[string]string{"X-Copied": "*"},
+			unexpectedResponseHeaders: []string{"Access-Control-Allow-Origin"},
+		},
+		{
+			desc: "add_header skips header with empty value",
+			configurationSnippet: `
+add_header X-Copied $upstream_http_access_control_allow_origin always;
+`,
+			unexpectedResponseHeaders: []string{"X-Copied"},
 		},
 		// --- expires tests ---
 		{
@@ -1822,6 +1858,9 @@ if ($http_x_block_auth = "yes") {
 				for header := range test.expectedRequestHeaders {
 					capturedRequestHeaders[header] = r.Header.Get(header)
 				}
+				for k, v := range test.upstreamResponseHeaders {
+					w.Header().Set(k, v)
+				}
 				w.WriteHeader(http.StatusOK)
 			})
 
@@ -1908,7 +1947,7 @@ if ($http_x_block_auth = "yes") {
 			}
 
 			for _, header := range test.unexpectedResponseHeaders {
-				assert.Empty(t, rw.Header().Get(header), "response header %s should not be set", header)
+				assert.Empty(t, rw.Header().Values(header), "response header %s should not be set", header)
 			}
 
 			for header, expectedValue := range test.expectedRequestHeaders {
