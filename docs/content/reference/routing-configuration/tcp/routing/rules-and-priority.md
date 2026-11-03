@@ -49,6 +49,9 @@ HostSNI(`example.com`) || (HostSNI(`example.org`) && !ALPN(`h2`))
 
 `HostSNI` and `HostSNIRegexp` matchers allow matching connections targeted to a given domain.
 
+`HostSNIRegexp` matches its pattern as a **substring** of the Server Name Indication (`regexp.MatchString`).
+Use the `^` and `$` anchors when you need a full domain match: without them, ``HostSNIRegexp(`[a-z]+\.example\.com`)`` also matches `foo.example.com.attacker.example`.
+
 These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
 !!! note "HostSNI & TLS"

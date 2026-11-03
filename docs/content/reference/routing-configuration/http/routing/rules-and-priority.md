@@ -36,6 +36,8 @@ The table below lists all the available matchers:
 
 The `Header` and `HeaderRegexp` matchers allow matching requests that contain specific header.
 
+Like `HostRegexp`, `HeaderRegexp` matches its pattern as a **substring** of each header value (`regexp.MatchString`); use `^` and `$` for a full-value match.
+
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml" href="#opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml" title="#opt-Match-requests-with-a-Content-Type-header-set-to-applicationyaml">Match requests with a `Content-Type` header set to `application/yaml`.</a> | ```Header(`Content-Type`, `application/yaml`)``` |
@@ -96,6 +98,8 @@ For exact matches, use `Path` and its prefixed alternative `PathPrefix`, for reg
 
 Path are always starting with a `/`, except for `PathRegexp`.
 
+`PathRegexp` matches its pattern as a **substring** of the request path (`regexp.MatchString`); use `^` and `$` when the whole path must match.
+
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
 | <a id="opt-Match-products-but-neither-productsshoes-nor-products" href="#opt-Match-products-but-neither-productsshoes-nor-products" title="#opt-Match-products-but-neither-productsshoes-nor-products">Match `/products` but neither `/products/shoes` nor `/products/`.</a> | ```Path(`/products`)``` |
@@ -107,6 +111,8 @@ Path are always starting with a `/`, except for `PathRegexp`.
 ### Query and QueryRegexp
 
 The `Query` and `QueryRegexp` matchers allow matching requests based on query parameters.
+
+`QueryRegexp` matches its pattern as a **substring** of each parameter value (`regexp.MatchString`); use `^` and `$` for a full-value match.
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
