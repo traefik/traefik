@@ -922,25 +922,36 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 	})
 }
 
-// dotSegmentParamsReplacer encodes the semicolon of the "..;" and ".;" segments,
-// as backends stripping path parameters (Servlet containers, Spring, ...) resolve them as dot-segments.
-var dotSegmentParamsReplacer = strings.NewReplacer("/..;", "/..%3B", "/.;", "/.%3B")
-
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
-// It also encodes the semicolon of the "..;" and ".;" segments, see dotSegmentParamsReplacer.
+// The path parameters of the "..;", ".;" and ";" segments are removed first, as backends stripping path parameters (Servlet containers, Spring, ...) resolve them as dot-segments or duplicate slashes.
 // It cleans the request URL Path and RawPath, and updates the request URI.
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
 
+		// Removes the path parameters of the dot-segments and empty segments, so that JoinPath collapses them.
+		if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, ";") {
+			segments := strings.Split(escapedPath, "/")
+			for i, segment := range segments {
+				switch {
+				case strings.HasPrefix(segment, "..;"):
+					segments[i] = ".."
+				case strings.HasPrefix(segment, ".;"):
+					segments[i] = "."
+				case strings.HasPrefix(segment, ";"):
+					segments[i] = ""
+				}
+			}
+
+			r2.URL = new(url.URL)
+			*r2.URL = *req.URL
+			r2.URL.RawPath = strings.Join(segments, "/")
+			r2.URL.Path, _ = url.PathUnescape(r2.URL.RawPath)
+		}
+
 		// Cleans the URL raw path and path.
 		r2.URL = r2.URL.JoinPath()
-
-		if escapedPath := r2.URL.EscapedPath(); strings.Contains(escapedPath, ";") {
-			// Path is left as is, as the encoded semicolon decodes to the original one.
-			r2.URL.RawPath = dotSegmentParamsReplacer.Replace(escapedPath)
-		}
 
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
