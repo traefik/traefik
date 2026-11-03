@@ -132,7 +132,7 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	i := interp.New(interp.Options{
 		GoPath: goPath,
 		Env:    os.Environ(),
-		Stdout: logs.NoLevel(*log.Ctx(ctx), zerolog.DebugLevel),
+		Stdout: logs.NoLevel(*log.Ctx(ctx), zerolog.InfoLevel),
 		Stderr: logs.NoLevel(*log.Ctx(ctx), zerolog.ErrorLevel),
 	})
 
