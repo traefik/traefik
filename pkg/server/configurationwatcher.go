@@ -3,7 +3,11 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"reflect"
+	"slices"
+	"sync"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -28,7 +32,11 @@ type ConfigurationWatcher struct {
 	newConfigs chan dynamic.Configurations
 
 	requiredProvider       string
-	configurationListeners []func(dynamic.Configuration)
+	configurationListeners []func(dynamic.Configuration) error
+	initialProviders       []string
+	initialDone            chan struct{}
+	initialOnce            sync.Once
+	initialError           error
 
 	configurationTransformers []func(context.Context, dynamic.Configurations) dynamic.Configurations
 
@@ -51,6 +59,8 @@ func NewConfigurationWatcher(
 		defaultEntryPoints:  defaultEntryPoints,
 		requiredProvider:    requiredProvider,
 		strictTLSOptions:    strictTLSOptions,
+		initialDone:         make(chan struct{}),
+		initialProviders:    []string{requiredProvider},
 	}
 }
 
@@ -69,7 +79,48 @@ func (c *ConfigurationWatcher) Stop() {
 
 // AddListener adds a new listener function used when new configuration is provided.
 func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration)) {
+	c.AddCriticalListener(func(conf dynamic.Configuration) error { listener(conf); return nil })
+}
+
+// AddCriticalListener registers an application step whose failure prevents initial readiness.
+func (c *ConfigurationWatcher) AddCriticalListener(listener func(dynamic.Configuration) error) {
 	c.configurationListeners = append(c.configurationListeners, listener)
+}
+
+// SetRequiredProviders selects initial snapshots required before accepting traffic.
+// Partial configurations still reach listeners, including certificate-provider feedback.
+func (c *ConfigurationWatcher) SetRequiredProviders(names ...string) {
+	c.initialProviders = slices.Clone(names)
+	slices.Sort(c.initialProviders)
+	c.initialProviders = slices.Compact(c.initialProviders)
+}
+
+// WaitInitialConfiguration waits for the first complete configuration to finish applying.
+func (c *ConfigurationWatcher) WaitInitialConfiguration(ctx context.Context) error {
+	log.Info().Strs("providers", c.initialProviders).Msg("Waiting for initial configuration before accepting traffic")
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-c.initialDone:
+		return c.initialError
+	}
+}
+
+func (c *ConfigurationWatcher) finishInitialConfiguration(err error) {
+	c.initialOnce.Do(func() { c.initialError = err; close(c.initialDone) })
+}
+
+func (c *ConfigurationWatcher) missingInitialProviders(configs dynamic.Configurations) []string {
+	var missing []string
+	for _, name := range c.initialProviders {
+		if name == "" {
+			continue
+		}
+		if _, ok := configs[name]; !ok {
+			missing = append(missing, name)
+		}
+	}
+	return missing
 }
 
 // AddTransformer registers a function to modify configurations before they are applied.
@@ -126,7 +177,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					continue
 				}
 
-				if isEmptyConfiguration(configMsg.Configuration) {
+				if isEmptyConfiguration(configMsg.Configuration) && !slices.Contains(c.initialProviders, configMsg.ProviderName) {
 					logger.Debug().Msg("Skipping empty configuration")
 					continue
 				}
@@ -189,10 +240,22 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers, c.strictTLSOptions)
 			}
 
+			var applyErrors []error
 			for _, listener := range c.configurationListeners {
-				listener(conf)
+				if err := listener(conf); err != nil {
+					log.Error().Err(err).Msg("Configuration application failed")
+					applyErrors = append(applyErrors, err)
+				}
 			}
-
+			if missing := c.missingInitialProviders(newConfigs); len(missing) == 0 {
+				err := errors.Join(applyErrors...)
+				if err != nil {
+					err = fmt.Errorf("applying initial configuration: %w", err)
+				}
+				c.finishInitialConfiguration(err)
+			} else {
+				log.Info().Strs("providers", missing).Msg("Initial configuration is waiting for provider snapshots")
+			}
 			lastConfigurations = newConfigs
 		}
 	}

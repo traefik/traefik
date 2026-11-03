@@ -91,11 +91,21 @@ func (m *Manager) Run(ctx context.Context) {
 // UpdateConfigs updates the TLS* configuration options.
 // It initializes the default TLS store, and the TLS store for the ACME challenges.
 func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
+	// Existing callers retain best-effort reloads; startup must observe failures.
+	_ = m.UpdateConfigsWithError(ctx, stores, configs, certs)
+}
+
+// UpdateConfigsWithError applies TLS configuration and reports incomplete application.
+func (m *Manager) UpdateConfigsWithError(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
+	var configErrors []error
 	m.configs = configs
 	for optionName, option := range m.configs {
+		if _, err := buildTLSConfig(option); err != nil {
+			configErrors = append(configErrors, fmt.Errorf("TLS option %s: %w", optionName, err))
+		}
 		// Handle `PreferServerCipherSuites` depreciation
 		if option.PreferServerCipherSuites != nil {
 			log.Ctx(ctx).Warn().Msgf("TLSOption %q uses `PreferServerCipherSuites` option, but this option is deprecated and ineffective, please remove this option.", optionName)
@@ -136,6 +146,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		cert, SANs, err := parseCertificate(&conf.Certificate)
 		if err != nil {
+			configErrors = append(configErrors, fmt.Errorf("parsing TLS certificate: %w", err))
 			log.Ctx(ctx).Error().Err(err).Msgf("Unable to parse certificate %s", conf.Certificate.GetTruncatedCertificateName())
 			continue
 		}
@@ -148,12 +159,14 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			if len(cert.Certificate) > 1 {
 				issuer, err = x509.ParseCertificate(cert.Certificate[1])
 				if err != nil {
+					configErrors = append(configErrors, fmt.Errorf("parsing TLS issuer: %w", err))
 					log.Ctx(ctx).Error().Err(err).Msgf("Unable to parse issuer certificate %s", conf.Certificate.GetTruncatedCertificateName())
 					continue
 				}
 			}
 
 			if err := m.ocspStapler.Upsert(certHash, cert.Leaf, issuer); err != nil {
+				configErrors = append(configErrors, fmt.Errorf("updating OCSP certificate: %w", err))
 				log.Ctx(ctx).Error().Err(err).Msgf("Unable to upsert OCSP certificate %s", conf.Certificate.GetTruncatedCertificateName())
 				continue
 			}
@@ -193,6 +206,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		certificate, err := m.getDefaultCertificate(ctxStore, storeConfig, st)
 		if err != nil {
+			configErrors = append(configErrors, fmt.Errorf("creating TLS store %s: %w", storeName, err))
 			logger.Error().Err(err).Msg("Error while creating certificate store")
 		}
 
@@ -202,6 +216,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	if m.ocspStapler != nil {
 		m.ocspStapler.ForceStapleUpdates()
 	}
+	return errors.Join(configErrors...)
 }
 
 // sanitizeDomains sanitizes the domain definition Main and SANS,
