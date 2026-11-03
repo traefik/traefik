@@ -89,6 +89,9 @@ func (o *ocspStapler) Upsert(key string, leaf, issuer *x509.Certificate) error {
 	}
 
 	if item, ok := o.cache.Get(key); ok {
+		if entry, ok := item.(*ocspEntry); ok && issuer != nil {
+			entry.issuer = issuer
+		}
 		o.cache.Set(key, item, cache.NoExpiration)
 		return nil
 	}
@@ -205,4 +208,56 @@ func (o *ocspStapler) updateStaple(ctx context.Context, entry *ocspEntry) error 
 	}
 
 	return errors.New("no OCSP staple obtained from any responders")
+}
+
+// findIssuer searches for the issuing certificate of leaf in the provided certificate chain.
+func findIssuer(leaf *x509.Certificate, certChain [][]byte) (*x509.Certificate, error) {
+	if leaf == nil {
+		return nil, errors.New("leaf certificate is nil")
+	}
+
+	for _, rawCert := range certChain {
+		cand, err := x509.ParseCertificate(rawCert)
+		if err != nil {
+			continue
+		}
+
+		if bytes.Equal(cand.Raw, leaf.Raw) {
+			continue
+		}
+
+		if !bytes.Equal(leaf.RawIssuer, cand.RawSubject) {
+			continue
+		}
+
+		if len(leaf.AuthorityKeyId) > 0 && len(cand.SubjectKeyId) > 0 && !bytes.Equal(leaf.AuthorityKeyId, cand.SubjectKeyId) {
+			continue
+		}
+
+		if err := leaf.CheckSignatureFrom(cand); err != nil {
+			continue
+		}
+
+		return cand, nil
+	}
+
+	for _, rawCert := range certChain {
+		cand, err := x509.ParseCertificate(rawCert)
+		if err != nil {
+			continue
+		}
+
+		if !bytes.Equal(cand.Raw, leaf.Raw) && bytes.Equal(leaf.RawIssuer, cand.RawSubject) {
+			return cand, nil
+		}
+	}
+
+	if len(certChain) > 1 {
+		cand, err := x509.ParseCertificate(certChain[1])
+		if err == nil {
+			return cand, nil
+		}
+	}
+
+	return leaf, nil
 }
