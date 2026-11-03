@@ -862,6 +862,7 @@ var (
 		string(gatev1.GatewayConditionAccepted),
 		string(gatev1.GatewayConditionProgrammed),
 		string(gatev1.GatewayConditionResolvedRefs),
+		string(gatev1.GatewayConditionInsecureFrontendValidationMode),
 	}
 	listenerConditionTypes = []string{
 		string(gatev1.ListenerConditionAccepted),
