@@ -106,6 +106,11 @@ func (c *ConfigurationWatcher) WaitInitialConfiguration(ctx context.Context) err
 	}
 }
 
+// AddTransformer registers a function to modify configurations before they are applied.
+func (c *ConfigurationWatcher) AddTransformer(transformer func(context.Context, dynamic.Configurations) dynamic.Configurations) {
+	c.configurationTransformers = append(c.configurationTransformers, transformer)
+}
+
 func (c *ConfigurationWatcher) finishInitialConfiguration(err error) {
 	c.initialOnce.Do(func() { c.initialError = err; close(c.initialDone) })
 }
@@ -121,11 +126,6 @@ func (c *ConfigurationWatcher) missingInitialProviders(configs dynamic.Configura
 		}
 	}
 	return missing
-}
-
-// AddTransformer registers a function to modify configurations before they are applied.
-func (c *ConfigurationWatcher) AddTransformer(transformer func(context.Context, dynamic.Configurations) dynamic.Configurations) {
-	c.configurationTransformers = append(c.configurationTransformers, transformer)
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {

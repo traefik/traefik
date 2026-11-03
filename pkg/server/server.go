@@ -70,23 +70,6 @@ func (s *Server) Start(ctx context.Context) error {
 	return nil
 }
 
-// Construction binds sockets and starts HTTP forwarders before the accept loops.
-// Startup failure must release these without entering graceful serving shutdown.
-func (s *Server) closeUnstartedEntryPoints() {
-	for _, ep := range s.tcpEntryPoints {
-		_ = ep.listener.Close()
-		_ = ep.httpServer.Server.Close()
-		_ = ep.httpsServer.Server.Close()
-		if ep.http3Server != nil {
-			_ = ep.http3Server.Close()
-		}
-		ep.tracker.Close()
-	}
-	for _, ep := range s.udpEntryPoints {
-		_ = ep.listener.Close()
-	}
-}
-
 // Wait blocks until the server shutdown.
 func (s *Server) Wait() {
 	<-s.stopChan
@@ -127,6 +110,23 @@ func (s *Server) Close() {
 	s.observabilityMgr.Close()
 
 	cancel()
+}
+
+// Construction binds sockets and starts HTTP forwarders before the accept loops.
+// Startup failure must release these without entering graceful serving shutdown.
+func (s *Server) closeUnstartedEntryPoints() {
+	for _, ep := range s.tcpEntryPoints {
+		_ = ep.listener.Close()
+		_ = ep.httpServer.Server.Close()
+		_ = ep.httpsServer.Server.Close()
+		if ep.http3Server != nil {
+			_ = ep.http3Server.Close()
+		}
+		ep.tracker.Close()
+	}
+	for _, ep := range s.udpEntryPoints {
+		_ = ep.listener.Close()
+	}
 }
 
 func stopMetricsClients() {

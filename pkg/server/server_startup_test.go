@@ -84,6 +84,7 @@ func (p *startupProvider) Provide(out chan<- dynamic.Message, pool *safe.Pool) e
 
 type startupListener struct {
 	net.Listener
+
 	accepted chan struct{}
 }
 
