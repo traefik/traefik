@@ -1165,11 +1165,18 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	if srv, ok := m[hostname]; ok {
 		return srv
 	}
-	srv := &server{Hostname: hostname, TLSOptionName: tls.DefaultTLSConfigName}
+	tlsOptionName := tls.DefaultTLSConfigName
+	var tlsOption *tls.Options
 	if hostname != "" {
-		srv.TLSOptionName = hostname
-		srv.TLSOption = &tls.Options{}
-		srv.TLSOption.SetDefaults()
+		tlsOptionName = hostname
+		tlsOption = &tls.Options{}
+		tlsOption.SetDefaults()
+	}
+
+	srv := &server{
+		Hostname:      hostname,
+		TLSOptionName: tlsOptionName,
+		TLSOption:     tlsOption,
 	}
 	m[hostname] = srv
 	return srv
