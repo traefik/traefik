@@ -391,9 +391,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				case srv.clientAuthIngress == "":
 					srv.TLSOption = clientAuthTLSOption
 					srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
-					if srv.Hostname == "" {
-						srv.TLSOptionName = tls.DefaultTLSConfigName
-					}
 				case srv.TLSOption != clientAuthTLSOption:
 					log.Ctx(ctxIng).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
 				}
@@ -1168,7 +1165,7 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	if srv, ok := m[hostname]; ok {
 		return srv
 	}
-	srv := &server{Hostname: hostname}
+	srv := &server{Hostname: hostname, TLSOptionName: tls.DefaultTLSConfigName}
 	if hostname != "" {
 		srv.TLSOptionName = makeKey(hostname)
 		srv.TLSOption = &tls.Options{}

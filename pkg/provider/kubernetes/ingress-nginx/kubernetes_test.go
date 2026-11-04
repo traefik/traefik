@@ -8150,7 +8150,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{Options: "default"},
 						},
 						"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root-redirect": {
 							EntryPoints: []string{"https"},
@@ -8167,7 +8167,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{Options: "default"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
