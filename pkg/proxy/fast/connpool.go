@@ -336,12 +336,28 @@ type connPool struct {
 	// garbage collected with that frontend connection, hence their idle connections self-expire through a
 	// read deadline instead.
 	dedicated bool
+
+	disableReuse bool
 }
 
 // newConnPool creates a new connPool.
+// maxIdleConn follows the net/http MaxIdleConnsPerHost semantics, as documented for the ServersTransport option:
+// zero falls back to http.DefaultMaxIdleConnsPerHost, and a negative value disables connection reuse.
 func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout time.Duration, dialer func() (net.Conn, error)) *connPool {
+	var disableReuse bool
+	switch {
+	case maxIdleConn == 0:
+		maxIdleConn = http.DefaultMaxIdleConnsPerHost
+	case maxIdleConn < 0:
+		// The channel still needs room for one connection: a freshly dialed connection is handed over to the waiting
+		// AcquireConn through it, and an unbuffered channel would close it when the receiver is not parked yet.
+		maxIdleConn = 1
+		disableReuse = true
+	}
+
 	c := &connPool{
 		dialer:                dialer,
+		disableReuse:          disableReuse,
 		idleConns:             make(chan *conn, maxIdleConn),
 		idleConnTimeout:       idleConnTimeout,
 		responseHeaderTimeout: responseHeaderTimeout,
@@ -407,6 +423,15 @@ func (c *connPool) ReleaseConn(co *conn) {
 		return
 	}
 
+	if c.disableReuse {
+		if err := co.Close(); err != nil {
+			log.Debug().
+				Err(err).
+				Msg("Unexpected error while closing the connection")
+		}
+		return
+	}
+
 	co.idleAt = time.Now()
 	c.releaseConn(co)
 }
@@ -423,6 +448,7 @@ func (c *connPool) clone() *connPool {
 		idleConnTimeout:       c.idleConnTimeout,
 		responseHeaderTimeout: c.responseHeaderTimeout,
 		dedicated:             true,
+		disableReuse:          c.disableReuse,
 	}
 }
 
