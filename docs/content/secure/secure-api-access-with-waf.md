@@ -8,7 +8,7 @@ description: 'Traefik Hub API Gateway - Learn how to configure the Coraza Web Ap
 !!! info "Traefik Hub Feature"
     This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
 
-The [Coraza Web Application Firewall](https://coraza.io/) middleware in Traefik Hub API Gateway provides comprehensive protection against common web application attacks. The middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
+The [Coraza Web Application Firewall](https://www.coraza.io/) middleware in Traefik Hub API Gateway provides comprehensive protection against common web application attacks. The middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
 
 ## Basic WAF Protection
 
@@ -185,6 +185,6 @@ spec:
 !!! note "Advanced Configuration"
     Advanced options and detailed rule configuration are described in the [reference page](../reference/routing-configuration/http/middlewares/waf.md).
 
-    The WAF middleware supports extensive customization through Coraza directives. You can create custom rules, tune detection thresholds, configure logging levels, and integrate with external threat intelligence feeds. For comprehensive rule writing guidance, consult the [Coraza documentation](https://coraza.io/docs/tutorials/introduction/) and [OWASP CRS documentation](https://coreruleset.org/docs/).
+    The WAF middleware supports extensive customization through Coraza directives. You can create custom rules, tune detection thresholds, configure logging levels, and integrate with external threat intelligence feeds. For comprehensive rule writing guidance, consult the [Coraza documentation](https://www.coraza.io/docs/tutorials/introduction/) and [OWASP CRS documentation](https://coreruleset.org/docs/).
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}

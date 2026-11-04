@@ -169,10 +169,10 @@ Connection parameters to your [Redis](https://redis.io/ "Link to website of Redi
 The following Redis modes are supported:
 
 - Single instance mode
-- [Redis Cluster](https://redis.io/docs/management/scaling "Link to official Redis documentation about Redis Cluster mode")
-- [Redis Sentinel](https://redis.io/docs/management/sentinel "Link to official Redis documentation about Redis Sentinel mode")
+- [Redis Cluster](https://redis.io/docs/latest/management/scaling/ "Link to official Redis documentation about Redis Cluster mode")
+- [Redis Sentinel](https://redis.io/docs/latest/management/sentinel/ "Link to official Redis documentation about Redis Sentinel mode")
 
-For more information about Redis, we recommend the [official Redis documentation](https://redis.io/docs/ "Link to official Redis documentation").
+For more information about Redis, we recommend the [official Redis documentation](https://redis.io/docs/latest/ "Link to official Redis documentation").
 
 !!! info
 
