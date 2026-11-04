@@ -2,6 +2,7 @@ package fast
 
 import (
 	"net"
+	"net/http"
 	"runtime"
 	"testing"
 	"time"
@@ -117,6 +118,65 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 			test.poolFn(pool)
 
 			assert.Equal(t, test.expected, keepOpenedConn)
+		})
+	}
+}
+
+func TestConnPool_MaxIdleConnFallbacks(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		maxIdleConn    int
+		expectedDialed int
+		expectedOpened int
+	}{
+		{
+			desc:           "Zero uses the default",
+			maxIdleConn:    0,
+			expectedDialed: 3,
+			expectedOpened: http.DefaultMaxIdleConnsPerHost,
+		},
+		{
+			desc:           "Negative disables reuse",
+			maxIdleConn:    -1,
+			expectedDialed: 4,
+			expectedOpened: 0,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var dialed, closed int
+			dialer := func() (net.Conn, error) {
+				dialed++
+				return &mockConn{
+					doneCh: make(chan struct{}),
+					closeFn: func() error {
+						closed++
+						return nil
+					},
+				}, nil
+			}
+
+			pool := newConnPool(test.maxIdleConn, 0, 0, dialer)
+
+			var conns []*conn
+			for range 3 {
+				c, err := pool.AcquireConn()
+				require.NoError(t, err)
+				conns = append(conns, c)
+			}
+			for _, c := range conns {
+				pool.ReleaseConn(c)
+			}
+
+			c, err := pool.AcquireConn()
+			require.NoError(t, err)
+			pool.ReleaseConn(c)
+
+			assert.Equal(t, test.expectedDialed, dialed)
+			assert.Equal(t, test.expectedOpened, dialed-closed)
 		})
 	}
 }
