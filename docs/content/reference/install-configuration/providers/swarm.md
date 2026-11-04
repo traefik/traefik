@@ -344,8 +344,8 @@ See the list of labels in the dedicated [routing](../../../reference/routing-con
 By default, Traefik watches for [container level labels](https://docs.docker.com/engine/manage-resources/labels/) on a standalone Docker Engine.
 
 When using Docker Compose, labels are specified by the directive
-[`labels`](https://docs.docker.com/reference/compose-file/legacy-versions/) from the
-["services" objects](https://docs.docker.com/compose/compose-file/compose-file-v3/#service-configuration-reference).
+[`labels`](https://docs.docker.com/reference/compose-file/services/#labels) from the
+["services" objects](https://docs.docker.com/reference/compose-file/services/).
 
 !!! tip "Not Only Docker"
 
@@ -356,9 +356,9 @@ When using Docker Compose, labels are specified by the directive
 While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
 
 Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
-[`deploy`](https://docs.docker.com/reference/compose-file/legacy-versions/) part of your service.
+[`deploy`](https://docs.docker.com/reference/compose-file/deploy/) part of your service.
 
-This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)).
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/reference/compose-file/)).
 
 ### Port Detection
 
