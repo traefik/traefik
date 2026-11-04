@@ -379,9 +379,14 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		for ri, rule := range ing.Spec.Rules {
 			srv := getOrCreateServer(mc.Servers, rule.Host)
 
+			// A rule without paths only names the host of the Ingress default backend:
+			// like ingress-nginx, it does not enable the client auth of its host, except on the default server.
+			if rule.HTTP == nil && srv.Hostname != "" {
+				continue
+			}
+
 			// The first Ingress declaring client auth wins the host, as ingress-nginx applies it to the whole server block.
-			// Like ingress-nginx, the rules without paths do not take part, except on its default server.
-			if clientAuthTLSOption != nil && (rule.HTTP != nil || srv.Hostname == "") {
+			if clientAuthTLSOption != nil {
 				switch {
 				case srv.clientAuthIngress == "":
 					srv.TLSOption = clientAuthTLSOption
