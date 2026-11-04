@@ -15406,13 +15406,14 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Auth TLS secret on a host-less rule keeps the hosts without auth TLS serving without client certificate",
+			desc: "Auth TLS secret on a host-less rule leaves the TLS options of the hosts",
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
 				"ingressclasses.yml",
 				"ingresses/ingress-with-auth-tls-secret-hostless.yml",
-				"ingresses/ingress-with-auth-tls-secret-hostless-other-host.yml",
+				"ingresses/ingress-without-auth.yml",
+				"ingresses/ingress-with-auth-tls-verify-client.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -15456,37 +15457,75 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
-						"default-7-host-no-auth-tls-16-rule-0-path-0": {
+						"default-7-ingress-without-auth-20-rule-0-path-0": {
 							EntryPoints: []string{"http"},
-							Rule:        `Host("plain.localhost") && PathPrefix("/")`,
+							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-host-no-auth-tls-16-rule-0-path-0-retry"},
-							Service:     "default-7-host-no-auth-tls-16-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-retry"},
+							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
 										Kind:      "Ingress",
 										Namespace: "default",
-										Name:      "host-no-auth-tls",
+										Name:      "ingress-without-auth",
 									},
 								},
 							},
 						},
-						"default-7-host-no-auth-tls-16-rule-0-path-0-tls": {
+						"default-7-ingress-without-auth-20-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
-							Rule:        `Host("plain.localhost") && PathPrefix("/")`,
+							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-host-no-auth-tls-16-rule-0-path-0-tls-retry"},
-							Service:     "default-7-host-no-auth-tls-16-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
+							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "plain.localhost-15",
+								Options: "whoami.localhost-16",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
 										Kind:      "Ingress",
 										Namespace: "default",
-										Name:      "host-no-auth-tls",
+										Name:      "ingress-without-auth",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry",
+							},
+							Service: "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-verify-client",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
+							Service:     "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-verify-client.localhost-32",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-verify-client",
 									},
 								},
 							},
@@ -15494,28 +15533,28 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
-						"default-7-host-no-auth-tls-16-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
-						"default-7-host-no-auth-tls-16-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -15551,7 +15590,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
-						"default-7-host-no-auth-tls-16-whoami-6-80-2": {
+						"default-7-ingress-without-auth-20-whoami-6-80-2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{URL: "http://10.10.0.1:80"},
@@ -15559,7 +15598,30 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								Strategy:         "wrr",
 								PassHostHeader:   new(true),
-								ServersTransport: "default-7-host-no-auth-tls-16",
+								ServersTransport: "default-7-ingress-without-auth-20",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-auth-tls-verify-client-35",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -15584,7 +15646,15 @@ func TestLoadIngresses(t *testing.T) {
 								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
-						"default-7-host-no-auth-tls-16": {
+						"default-7-ingress-without-auth-20": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -15595,6 +15665,12 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
+						},
+					},
 					Options: map[string]tls.Options{
 						"default": {
 							ClientAuth: tls.ClientAuth{
@@ -15618,225 +15694,8 @@ func TestLoadIngresses(t *testing.T) {
 							},
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
-						"plain.localhost-15": hostTLSOption(),
-					},
-				},
-			},
-		},
-		{
-			desc: "Auth TLS secret on a host-less rule leaves the auth TLS of other hosts",
-			paths: []string{
-				"services.yml",
-				"secrets.yml",
-				"ingressclasses.yml",
-				"ingresses/ingress-with-auth-tls-secret-hostless.yml",
-				"ingresses/ingress-with-auth-tls-secret-hostless-other-host-auth-tls.yml",
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-7-hostless-auth-tls-17-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        `PathPrefix("/")`,
-							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
-							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "hostless-auth-tls",
-									},
-								},
-							},
-						},
-						"default-7-hostless-auth-tls-17-rule-0-path-0-tls": {
-							EntryPoints: []string{"https"},
-							Rule:        `PathPrefix("/")`,
-							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
-							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
-							TLS: &dynamic.RouterTLSConfig{
-								Options: "default",
-							},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "hostless-auth-tls",
-									},
-								},
-							},
-						},
-						"default-7-host-auth-tls-13-rule-0-path-0": {
-							EntryPoints: []string{"http"},
-							Rule:        `Host("mtls.localhost") && PathPrefix("/")`,
-							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-host-auth-tls-13-rule-0-path-0-retry"},
-							Service:     "default-7-host-auth-tls-13-whoami-6-80-2",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "host-auth-tls",
-									},
-								},
-							},
-						},
-						"default-7-host-auth-tls-13-rule-0-path-0-tls": {
-							EntryPoints: []string{"https"},
-							Rule:        `Host("mtls.localhost") && PathPrefix("/")`,
-							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-host-auth-tls-13-rule-0-path-0-tls-retry"},
-							Service:     "default-7-host-auth-tls-13-whoami-6-80-2",
-							TLS: &dynamic.RouterTLSConfig{
-								Options: "mtls.localhost-14",
-							},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "host-auth-tls",
-									},
-								},
-							},
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
-						},
-						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
-						},
-						"default-7-host-auth-tls-13-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
-						},
-						"default-7-host-auth-tls-13-rule-0-path-0-tls-retry": {
-							Retry: &dynamic.Retry{
-								Attempts:            3,
-								MaxRequestBodyBytes: new(defaultProxyBodySize),
-							},
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"unavailable-service": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Strategy:       "wrr",
-								PassHostHeader: new(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-						},
-						"default-7-hostless-auth-tls-17-whoami-6-80-2": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   new(true),
-								ServersTransport: "default-7-hostless-auth-tls-17",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami",
-										Port:      "80",
-									},
-								},
-							},
-						},
-						"default-7-host-auth-tls-13-whoami-6-80-2": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{URL: "http://10.10.0.1:80"},
-									{URL: "http://10.10.0.2:80"},
-								},
-								Strategy:         "wrr",
-								PassHostHeader:   new(true),
-								ServersTransport: "default-7-host-auth-tls-13",
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami",
-										Port:      "80",
-									},
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-7-hostless-auth-tls-17": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-						"default-7-host-auth-tls-13": {
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     ptypes.Duration(60 * time.Second),
-								ReadTimeout:     ptypes.Duration(60 * time.Second),
-								WriteTimeout:    ptypes.Duration(60 * time.Second),
-								IdleConnTimeout: ptypes.Duration(60 * time.Second),
-							},
-						},
-					},
-				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{
-						"default": {
-							ClientAuth: tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-							},
-							CipherSuites: []string{
-								"TLS_AES_128_GCM_SHA256",
-								"TLS_AES_256_GCM_SHA384",
-								"TLS_CHACHA20_POLY1305_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
-							},
-							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
-						},
-						"mtls.localhost-14": {
+						"whoami.localhost-16": hostTLSOption(),
+						"auth-tls-verify-client.localhost-32": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
