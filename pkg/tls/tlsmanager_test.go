@@ -423,6 +423,99 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 	require.True(t, ok)
 }
 
+func TestManager_UpdateConfigs_OCSPMultiCertChain(t *testing.T) {
+	var responderURL string
+	var chain testChain
+
+	responderCall := make(chan struct{}, 1)
+
+	handler := func(rw http.ResponseWriter, req *http.Request) {
+		ct := req.Header.Get("Content-Type")
+		assert.Equal(t, "application/ocsp-request", ct)
+
+		reqBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		_, err = ocsp.ParseRequest(reqBytes)
+		require.NoError(t, err)
+
+		thisUpdate := time.Now().Truncate(time.Minute)
+		nextUpdate := thisUpdate.Add(time.Hour)
+
+		ocspResponseTmpl := ocsp.Response{
+			Status:       ocsp.Good,
+			SerialNumber: chain.leafCert.SerialNumber,
+			ThisUpdate:   thisUpdate,
+			NextUpdate:   nextUpdate,
+			Certificate:  chain.responderCert,
+		}
+
+		ocspResponse, err := ocsp.CreateResponse(chain.intermediateCert, chain.responderCert, ocspResponseTmpl, chain.responderKey)
+		require.NoError(t, err)
+
+		rw.Header().Set("Content-Type", "application/ocsp-response")
+		_, err = rw.Write(ocspResponse)
+		require.NoError(t, err)
+
+		select {
+		case responderCall <- struct{}{}:
+		default:
+		}
+	}
+
+	responder := httptest.NewServer(http.HandlerFunc(handler))
+	t.Cleanup(responder.Close)
+	responderURL = responder.URL
+
+	chain = generateTestChain(t, responderURL)
+
+	leafKeyBytes, err := x509.MarshalECPrivateKey(chain.leafKey)
+	require.NoError(t, err)
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: leafKeyBytes})
+
+	// Put root before intermediate in the cert bundle to simulate non-hierarchical ordering.
+	bundlePEM := append(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: chain.leafCert.Raw}),
+		append(
+			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: chain.rootCert.Raw}),
+			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: chain.intermediateCert.Raw})...,
+		)...,
+	)
+
+	testContext, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tlsManager := NewManager(&OCSPConfig{})
+	go tlsManager.Run(testContext)
+
+	tlsManager.UpdateConfigs(testContext, nil, nil, []*CertAndStores{
+		{
+			CertFile: types.FileOrContent(string(bundlePEM)),
+			KeyFile:  types.FileOrContent(string(keyPEM)),
+		},
+	})
+
+	select {
+	case <-responderCall:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Timeout waiting for OCSP responder call")
+	}
+
+	certHash := hashRawCert(chain.leafCert.Raw)
+	var entry *ocspEntry
+	require.Eventually(t, func() bool {
+		item, ok := tlsManager.ocspStapler.cache.Get(certHash)
+		if !ok {
+			return false
+		}
+		entry = item.(*ocspEntry)
+		return len(entry.staple) > 0
+	}, time.Second, 20*time.Millisecond)
+
+	assert.Equal(t, chain.intermediateCert.Subject.CommonName, entry.issuer.Subject.CommonName)
+}
+
 func TestManager_Get_DefaultValues(t *testing.T) {
 	tlsManager := NewManager(nil)
 
