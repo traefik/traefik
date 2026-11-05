@@ -3,8 +3,11 @@ package traefik
 import (
 	"encoding/json"
 	"flag"
+	"math"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -340,7 +343,33 @@ func Test_createConfiguration(t *testing.T) {
 			actualJSON, err := json.MarshalIndent(cfg, "", "  ")
 			require.NoError(t, err)
 
-			assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+			assert.JSONEq(t, adaptFixturePriorities(string(expectedJSON)), string(actualJSON))
 		})
 	}
+}
+
+// fixturePriorityRegexp matches the router priority values stored in the fixtures.
+var fixturePriorityRegexp = regexp.MustCompile(`("priority": )(\d+)`)
+
+// adaptFixturePriorities rewrites the internal router priorities of a fixture for the
+// architecture the tests are running on.
+//
+// The internal routers derive their priority from math.MaxInt, which is 2^63-1 on a 64-bit
+// platform but 2^31-1 on a 32-bit one. The fixtures store the 64-bit values, so on a 32-bit
+// platform every fixture carrying a priority would otherwise fail to match.
+func adaptFixturePriorities(fixture string) string {
+	if math.MaxInt == math.MaxInt64 {
+		return fixture
+	}
+
+	return fixturePriorityRegexp.ReplaceAllStringFunc(fixture, func(match string) string {
+		groups := fixturePriorityRegexp.FindStringSubmatch(match)
+
+		value, err := strconv.ParseInt(groups[2], 10, 64)
+		if err != nil || value < math.MaxInt64-2 {
+			return match
+		}
+
+		return groups[1] + strconv.Itoa(math.MaxInt-int(math.MaxInt64-value))
+	})
 }
