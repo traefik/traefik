@@ -12534,11 +12534,11 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("cors-permanent-redirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-cors-and-permanent-redirect-whoami-80",
+							Service:     "default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -12548,13 +12548,13 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-cors", "default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-redirect", "default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-cors", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-redirect", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-retry"},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("cors-permanent-redirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Service:     "default-ingress-with-cors-and-permanent-redirect-whoami-80",
+							Service:     "default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -12564,12 +12564,14 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							Middlewares: []string{"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-cors", "default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-redirect", "default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							Middlewares: []string{"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-cors", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-redirect", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-retry"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cors-permanent-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-cors": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-cors": {
 							Headers: &dynamic.Headers{
 								AccessControlAllowCredentials: true,
 								AccessControlAllowHeaders:     []string{"X-Foo"},
@@ -12579,7 +12581,7 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlMaxAge:           new(int64(42)),
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-cors": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-cors": {
 							Headers: &dynamic.Headers{
 								AccessControlAllowCredentials: true,
 								AccessControlAllowHeaders:     []string{"X-Foo"},
@@ -12589,27 +12591,27 @@ func TestLoadIngresses(t *testing.T) {
 								AccessControlMaxAge:           new(int64(42)),
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-redirect": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
 								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-redirect": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
 								Replacement: "https://www.google.com",
 								StatusCode:  new(http.StatusMovedPermanently),
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-retry": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
 								MaxRequestBodyBytes: new(defaultProxyBodySize),
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-rule-0-path-0-tls-retry": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
 								MaxRequestBodyBytes: new(defaultProxyBodySize),
@@ -12626,7 +12628,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
-						"default-ingress-with-cors-and-permanent-redirect-whoami-80": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -12638,7 +12640,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 								Strategy:         "wrr",
 								PassHostHeader:   new(true),
-								ServersTransport: "default-ingress-with-cors-and-permanent-redirect",
+								ServersTransport: "default-7-ingress-with-cors-and-permanent-redirect-40",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -12655,7 +12657,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"default-ingress-with-cors-and-permanent-redirect": {
+						"default-7-ingress-with-cors-and-permanent-redirect-40": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
@@ -12665,7 +12667,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cors-permanent-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
