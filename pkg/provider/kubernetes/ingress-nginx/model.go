@@ -82,6 +82,18 @@ type server struct {
 
 	// Locations holds the per-path routing units for this hostname.
 	Locations []*location
+
+	// TLSOptionName is the name of the TLS option of the server.
+	// Every host gets its own TLS option, as ingress-nginx configures TLS per server block.
+	// Host-less rules belong to the ingress-nginx default server, which answers unknown server names:
+	// in Traefik, only the default TLS option applies to them.
+	TLSOptionName string
+
+	// TLSOption is the TLS option of the server, nil when the server has none to define.
+	TLSOption *tls.Options
+
+	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
+	clientAuthIngress string
 }
 
 // location is the per-path routing unit. It is the central type of the metamodel:
@@ -140,14 +152,6 @@ type location struct {
 	// ResolvedHTTPErrorBackendName is the key into Configuration.Backends for the
 	// custom-http-errors default backend service. Empty if no custom errors configured.
 	ResolvedHTTPErrorBackendName string
-
-	// TLSOptionName is set to the TLS option name when auth-tls-secret is configured.
-	TLSOptionName string
-
-	// TLSOption holds the resolved client-auth TLS option for this Location
-	// (nil when auth-tls-secret is not configured). The translator registers it
-	// once per unique TLSOptionName in conf.TLS.Options.
-	TLSOption *tls.Options
 
 	// HasTLS is true when the parent ingress has a TLS section covering this
 	// location's host. The certs themselves live on the parent Server.
