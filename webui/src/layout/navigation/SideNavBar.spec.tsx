@@ -16,12 +16,10 @@ describe('<SideNav /> InstanceBadge placement', () => {
   it('renders the badge below the logo when dashboardName is set', () => {
     renderSideNav('int')
     expect(screen.getByTestId('instance-badge')).toBeInTheDocument()
-    expect(screen.getByTestId('instance-badge-below')).toBeInTheDocument()
   })
 
   it('renders nothing when dashboardName is empty', () => {
     renderSideNav('')
     expect(screen.queryByTestId('instance-badge')).toBeNull()
-    expect(screen.queryByTestId('instance-badge-below')).toBeNull()
   })
 })

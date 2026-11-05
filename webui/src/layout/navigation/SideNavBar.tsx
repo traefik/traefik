@@ -214,7 +214,7 @@ export const SideNav = ({
           css={{
             color: '$primary',
             mt: '$3',
-            mb: dashboardName && !isSmallAndResponsive ? '$3' : '$6',
+            mb: dashboardName && !isSmallAndResponsive ? '$2' : '$6',
             textDecoration: 'none',
             height: 'fit-content',
             pl: '$3',
@@ -230,11 +230,7 @@ export const SideNav = ({
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
-        {!isSmallAndResponsive && !!dashboardName && (
-          <Flex data-testid="instance-badge-below" css={{ px: '$3', mb: '$6' }}>
-            <InstanceBadge />
-          </Flex>
-        )}
+        {!isSmallAndResponsive && !!dashboardName && <InstanceBadge />}
         {ROUTES.map((section, index) => (
           <Flex
             key={`nav-section-${index}`}

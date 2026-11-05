@@ -1,7 +1,7 @@
-import { Badge } from '@traefik-labs/faency'
+import { Box, Text } from '@traefik-labs/faency'
 import { useContext } from 'react'
 
-import TooltipText from 'components/TooltipText'
+import Tooltip from 'components/Tooltip'
 import { VersionContext } from 'contexts/version'
 
 const InstanceBadge = () => {
@@ -10,9 +10,25 @@ const InstanceBadge = () => {
   if (!dashboardName) return null
 
   return (
-    <Badge size="small" data-testid="instance-badge" css={{ maxWidth: '100%', userSelect: 'none' }}>
-      <TooltipText text={dashboardName} isTruncated css={{ color: 'inherit', fontSize: 'inherit', minWidth: 0 }} />
-    </Badge>
+    <Tooltip label={dashboardName} action="copy">
+      <Box
+        data-testid="instance-badge"
+        css={{ width: 'fit-content', maxWidth: '100%', px: '$2', py: '$1', mb: '$3', borderRadius: '$2', bc: '$contentBg' }}
+      >
+        <Text
+          css={{
+            display: 'block',
+            fontSize: '$2',
+            lineHeight: 1.4,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {dashboardName}
+        </Text>
+      </Box>
+    </Tooltip>
   )
 }
 
