@@ -1145,7 +1145,7 @@ func getNetworkStack(ctx context.Context, networkStack string) challenge.Network
 	case "ipv6only", "ipv6":
 		return challenge.IPv6Only
 
-	case "":
+	case "", "both":
 		return challenge.DualStack
 
 	default:
