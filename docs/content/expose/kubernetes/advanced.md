@@ -197,7 +197,7 @@ Configure a certificate resolver in your Traefik values.yaml:
 
 ```yaml
 additionalArguments:
-  - "--certificatesresolvers.le.acme.email=your-email@example.com" #replace with your email
+  - "--certificatesresolvers.le.acme.email=your-email@example.com" # optional; replace with your email
   - "--certificatesresolvers.le.acme.storage=/data/acme.json"
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 ```
