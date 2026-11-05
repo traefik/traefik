@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -178,6 +179,39 @@ func TestConnPool_MaxIdleConnFallbacks(t *testing.T) {
 			assert.Equal(t, test.expectedDialed, dialed)
 			assert.Equal(t, test.expectedOpened, dialed-closed)
 		})
+	}
+}
+
+func TestConnPool_NoReuseConcurrentAcquire(t *testing.T) {
+	dialer := func() (net.Conn, error) {
+		return &mockConn{doneCh: make(chan struct{})}, nil
+	}
+
+	pool := newConnPool(-1, 0, 0, dialer)
+
+	var wg sync.WaitGroup
+	for range 10 {
+		wg.Go(func() {
+			for range 1000 {
+				c, err := pool.AcquireConn()
+				if !assert.NoError(t, err) {
+					return
+				}
+				pool.ReleaseConn(c)
+			}
+		})
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("AcquireConn is stuck")
 	}
 }
 
