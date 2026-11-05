@@ -455,7 +455,7 @@ You can declare TLS certificates, options, and stores with the file provider.
     Templating does not work in the Traefik main static configuration file.
 
 Traefik supports using Go templating to automatically generate repetitive sections of configuration files.
-These sections must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
+These sections must be a valid [Go template](https://pkg.go.dev/text/template), and can use
 [sprig template functions](https://masterminds.github.io/sprig/).
 
 To illustrate, it is possible to easily define multiple routers, services, and TLS certificates as described in the following examples:

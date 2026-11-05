@@ -54,25 +54,25 @@ Attaching tags to services:
 | <a id="opt-providers-consulCatalog-endpoint-httpAuth" href="#opt-providers-consulCatalog-endpoint-httpAuth" title="#opt-providers-consulCatalog-endpoint-httpAuth">`providers.consulCatalog.endpoint.httpAuth`</a> | Defines authentication settings for the HTTP client using HTTP Basic Authentication. |  N/A    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-httpAuth-username" href="#opt-providers-consulCatalog-endpoint-httpAuth-username" title="#opt-providers-consulCatalog-endpoint-httpAuth-username">`providers.consulCatalog.endpoint.httpAuth.username`</a> | Defines the username to use for HTTP Basic Authentication. |  ""    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-httpAuth-password" href="#opt-providers-consulCatalog-endpoint-httpAuth-password" title="#opt-providers-consulCatalog-endpoint-httpAuth-password">`providers.consulCatalog.endpoint.httpAuth.password`</a> | Defines the password to use for HTTP Basic Authentication. |  ""    | no   |
-| <a id="opt-providers-consulCatalog-strictChecks" href="#opt-providers-consulCatalog-strictChecks" title="#opt-providers-consulCatalog-strictChecks">`providers.consulCatalog.strictChecks`</a> | Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic. |  ["passing", "warning"]    | no   |
+| <a id="opt-providers-consulCatalog-strictChecks" href="#opt-providers-consulCatalog-strictChecks" title="#opt-providers-consulCatalog-strictChecks">`providers.consulCatalog.strictChecks`</a> | Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/register/health-check/vm#define-initial-health-check-status) are allowed to take on traffic. |  ["passing", "warning"]    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-tls-ca" href="#opt-providers-consulCatalog-endpoint-tls-ca" title="#opt-providers-consulCatalog-endpoint-tls-ca">`providers.consulCatalog.endpoint.tls.ca`</a> | Defines the path to the certificate authority used for the secure connection to Consul Calatog, it defaults to the system bundle.  |  ""   | No   |
 | <a id="opt-providers-consulCatalog-endpoint-tls-cert" href="#opt-providers-consulCatalog-endpoint-tls-cert" title="#opt-providers-consulCatalog-endpoint-tls-cert">`providers.consulCatalog.endpoint.tls.cert`</a> | Defines the path to the public certificate used for the secure connection to Consul Calatog. When using this option, setting the `key` option is required. | "" | Yes   |
 | <a id="opt-providers-consulCatalog-endpoint-tls-key" href="#opt-providers-consulCatalog-endpoint-tls-key" title="#opt-providers-consulCatalog-endpoint-tls-key">`providers.consulCatalog.endpoint.tls.key`</a> | Defines the path to the private key used for the secure connection to Consul Catalog. When using this option, setting the `cert` option is required. | ""   | Yes   |
 | <a id="opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify" href="#opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify" title="#opt-providers-consulCatalog-endpoint-tls-insecureSkipVerify">`providers.consulCatalog.endpoint.tls.insecureSkipVerify`</a> | Instructs the provider to accept any certificate presented by Consul Catalog when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
-| <a id="opt-providers-consulCatalog-watch" href="#opt-providers-consulCatalog-watch" title="#opt-providers-consulCatalog-watch">`providers.consulCatalog.watch`</a> | When set to `true`, watches for Consul changes ([Consul watches checks](https://www.consul.io/docs/dynamic-app-config/watches#checks)). | false   | No   |
+| <a id="opt-providers-consulCatalog-watch" href="#opt-providers-consulCatalog-watch" title="#opt-providers-consulCatalog-watch">`providers.consulCatalog.watch`</a> | When set to `true`, watches for Consul changes ([Consul watches checks](https://developer.hashicorp.com/consul/docs/automate/watch#checks)). | false   | No   |
 
 ### `requireConsistent`
 
 Forces the read to be fully consistent. Setting this option can be expensive due to an extra round-trip but prevents ever performing a stale read.
 
-For more information, see the Consul [documentation on consistency](https://www.consul.io/api-docs/features/consistency).
+For more information, see the Consul [documentation on consistency](https://developer.hashicorp.com/consul/api-docs/features/consistency).
 
 ### `defaultRule`
 
 The default host rule for all services.
 
 For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
-The `defaultRule` must be set to a valid [Go template](https://pkg.go.dev/text/template/),
+The `defaultRule` must be set to a valid [Go template](https://pkg.go.dev/text/template),
 and can include [sprig template functions](https://masterminds.github.io/sprig/).
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
