@@ -214,7 +214,7 @@ export const SideNav = ({
           css={{
             color: '$primary',
             mt: '$3',
-            mb: '$6',
+            mb: dashboardName && !isSmallAndResponsive ? '$3' : '$6',
             textDecoration: 'none',
             height: 'fit-content',
             pl: '$3',
@@ -231,7 +231,7 @@ export const SideNav = ({
           )}
         </Flex>
         {!isSmallAndResponsive && !!dashboardName && (
-          <Flex data-testid="instance-badge-below" css={{ pl: '$3', mb: '$4' }}>
+          <Flex data-testid="instance-badge-below" css={{ px: '$3', mb: '$6' }}>
             <InstanceBadge />
           </Flex>
         )}

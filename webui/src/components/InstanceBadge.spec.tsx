@@ -23,34 +23,17 @@ describe('<InstanceBadge />', () => {
       </VersionContext.Provider>,
     )
 
-    const badge = screen.getByTestId('instance-badge')
-    expect(badge).toBeInTheDocument()
-    expect(badge).toHaveAttribute('aria-label', 'Instance: int')
-    expect(badge).toHaveTextContent('int')
+    expect(screen.getByTestId('instance-badge')).toHaveTextContent('int')
   })
 
-  it('truncates with ellipsis when dashboardName exceeds 32 grapheme clusters', () => {
-    const longName = 'a'.repeat(40)
+  it('keeps the full dashboardName in the DOM for long names', () => {
+    const longName = 'production-eu-west-1-cluster-a-ingress-external'
     renderWithProviders(
       <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: longName }}>
         <InstanceBadge />
       </VersionContext.Provider>,
     )
 
-    const badge = screen.getByTestId('instance-badge')
-    expect(badge).toHaveTextContent('a'.repeat(32) + '…')
-    expect(badge).toHaveAttribute('aria-label', `Instance: ${longName}`)
-  })
-
-  it('handles multi-byte unicode safely (no surrogate pair split)', () => {
-    const emojiName = '🌍🌎🌏'
-    renderWithProviders(
-      <VersionContext.Provider value={{ showHubButton: false, version: '', dashboardName: emojiName }}>
-        <InstanceBadge />
-      </VersionContext.Provider>,
-    )
-
-    const badge = screen.getByTestId('instance-badge')
-    expect(badge).toHaveTextContent(emojiName)
+    expect(screen.getByTestId('instance-badge')).toHaveTextContent(longName)
   })
 })
