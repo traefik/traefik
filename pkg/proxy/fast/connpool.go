@@ -349,9 +349,7 @@ func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout time.Du
 	case maxIdleConn == 0:
 		maxIdleConn = http.DefaultMaxIdleConnsPerHost
 	case maxIdleConn < 0:
-		// The channel still needs room for one connection: a freshly dialed connection is handed over to the waiting
-		// AcquireConn through it, and an unbuffered channel would close it when the receiver is not parked yet.
-		maxIdleConn = 1
+		maxIdleConn = 0
 		disableReuse = true
 	}
 
@@ -501,6 +499,13 @@ func (c *connPool) cleanIdleConns() {
 }
 
 func (c *connPool) acquireConn() (*conn, error) {
+	// Without reuse, a dialed connection must go straight to its caller: handing it over through the shared idle
+	// channel lets concurrent callers take each other's connection, and as released connections are closed rather
+	// than returned to the pool, the caller left without one would wait forever.
+	if c.disableReuse {
+		return c.newConn()
+	}
+
 	select {
 	case co := <-c.idleConns:
 		return co, nil
@@ -542,10 +547,19 @@ func (c *connPool) releaseConn(co *conn) {
 }
 
 func (c *connPool) askForNewConn(errCh chan<- error) {
+	co, err := c.newConn()
+	if err != nil {
+		errCh <- err
+		return
+	}
+
+	c.releaseConn(co)
+}
+
+func (c *connPool) newConn() (*conn, error) {
 	co, err := c.dialer()
 	if err != nil {
-		errCh <- fmt.Errorf("create conn: %w", err)
-		return
+		return nil, fmt.Errorf("create conn: %w", err)
 	}
 
 	newConn := &conn{
@@ -561,7 +575,7 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 	}
 	go newConn.readLoop()
 
-	c.releaseConn(newConn)
+	return newConn, nil
 }
 
 type connPoolsKeyType string
