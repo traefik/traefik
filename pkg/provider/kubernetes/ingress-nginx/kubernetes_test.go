@@ -17063,7 +17063,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("auth-tls-canary.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-retry"},
-							Service:     "default-7-public-ingress-14-whoami-6-80-2-wrr",
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -17079,7 +17079,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("auth-tls-canary.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-tls-retry"},
-							Service:     "default-7-public-ingress-14-whoami-6-80-2-wrr",
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -17153,47 +17153,6 @@ func TestLoadIngresses(t *testing.T) {
 										Namespace: "default",
 										Name:      "whoami",
 										Port:      "80",
-									},
-								},
-							},
-						},
-						"default-7-public-ingress-14-whoami-6-80-2-canary": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.7:80",
-									},
-									{
-										URL: "http://10.10.0.8:80",
-									},
-								},
-								Strategy:       "wrr",
-								PassHostHeader: new(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: dynamic.DefaultFlushInterval,
-								},
-								ServersTransport: "default-7-public-ingress-14",
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "canary",
-										Port:      "80",
-									},
-								},
-							},
-						},
-						"default-7-public-ingress-14-whoami-6-80-2-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-7-public-ingress-14-whoami-6-80-2",
-										Weight: new(0),
-									},
-									{
-										Name:   "default-7-public-ingress-14-whoami-6-80-2-canary",
-										Weight: new(100),
 									},
 								},
 							},
