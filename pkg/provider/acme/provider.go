@@ -1002,7 +1002,9 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod, renewInte
 
 // checkRenewalInfo reports whether the ACME server suggests renewing the certificate now,
 // through ACME Renewal Information (RFC 9773), e.g. ahead of a mass revocation.
-// It also returns the duration the ACME server asks to wait before fetching the renewal information again, if any.
+// It also returns the duration the ACME server asks to wait before fetching the renewal information again.
+// This duration is 0 when the ACME server does not provide one or when the renewal information cannot be fetched,
+// so 0 is never a real Retry-After value, and the caller falls back on the renew interval.
 func (p *Provider) checkRenewalInfo(ctx context.Context, crt *x509.Certificate) (bool, time.Duration) {
 	logger := log.Ctx(ctx)
 
