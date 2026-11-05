@@ -1,9 +1,11 @@
 package plugins
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/yaegi/interp"
@@ -25,6 +27,51 @@ func TestNewInterpreter_SyscallErrorCase(t *testing.T) {
 	// This proves our security gate logic works
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "restricted imports", "Our error message should be returned")
+}
+
+func TestNewInterpreter_Stdout(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		level    zerolog.Level
+		expected string
+	}{
+		{
+			name:     "debug level",
+			level:    zerolog.DebugLevel,
+			expected: `{"level":"info","message":"hello from plugin"}` + "\n",
+		},
+		{
+			name:     "info level",
+			level:    zerolog.InfoLevel,
+			expected: `{"level":"info","message":"hello from plugin"}` + "\n",
+		},
+		{
+			name:  "warn level",
+			level: zerolog.WarnLevel,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			logger := zerolog.New(&buf).Level(tc.level)
+
+			i, err := newInterpreter(logger.WithContext(t.Context()), "fixtures", &Manifest{Import: "testpluginsafe"}, Settings{})
+			require.NoError(t, err)
+
+			_, err = i.Eval(`import "fmt"`)
+			require.NoError(t, err)
+
+			_, err = i.Eval(`fmt.Println("hello from plugin")`)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expected, buf.String())
+		})
+	}
 }
 
 // TestNewYaegiMiddlewareBuilder_WithSyscallSupport - Tests the ACTUAL production code!
