@@ -351,7 +351,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		if len(p.DNSChallenge.Resolvers) > 0 || p.DNSChallenge.NetworkStack != "" {
 			opts := &dns01.Options{
 				RecursiveNameservers: p.DNSChallenge.Resolvers,
-				NetworkStack:         getNetworkStack(p.DNSChallenge.NetworkStack),
+				NetworkStack:         getNetworkStack(ctx, p.DNSChallenge.NetworkStack),
 			}
 
 			dns01.SetDefaultClient(dns01.NewClient(opts))
@@ -1137,7 +1137,7 @@ func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool
 	return false
 }
 
-func getNetworkStack(networkStack string) challenge.NetworkStack {
+func getNetworkStack(ctx context.Context, networkStack string) challenge.NetworkStack {
 	switch networkStack {
 	case "ipv4only", "ipv4":
 		return challenge.IPv4Only
@@ -1145,7 +1145,12 @@ func getNetworkStack(networkStack string) challenge.NetworkStack {
 	case "ipv6only", "ipv6":
 		return challenge.IPv6Only
 
+	case "":
+		return challenge.DualStack
+
 	default:
+		log.Ctx(ctx).Warn().Str("network_stack", networkStack).Msg("Unknown network stack")
+
 		return challenge.DualStack
 	}
 }
