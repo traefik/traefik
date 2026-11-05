@@ -383,24 +383,22 @@ func (p *Provider) buildLimitConnections(loc *location) {
 
 // buildAuthTLSPassCert builds the middleware setting the Ssl-Client-* headers from the client-auth TLS option of the server,
 // which ingress-nginx sets on every location of a server block configured for client certificate authentication.
-// Ssl-Client-Cert stays driven by the auth-tls-pass-certificate-to-upstream annotation of the location itself.
+// Like the TLS option, Ssl-Client-Cert follows the auth-tls-pass-certificate-to-upstream annotation of the Ingress configuring it for the host.
 func buildAuthTLSPassCert(srv *server, loc *location) {
 	if srv.clientAuthIngress == "" {
 		return
 	}
 
-	clientAuth := srv.TLSOption.ClientAuth
-
 	var caFiles []types.FileOrContent
 	// RequestClientCert does not verify the client certificate during the handshake, so the middleware verifies it against the CA.
-	if clientAuth.ClientAuthType == tls.RequestClientCert {
-		caFiles = clientAuth.CAFiles
+	if srv.TLSOption.ClientAuth.ClientAuthType == tls.RequestClientCert {
+		caFiles = srv.TLSOption.ClientAuth.CAFiles
 	}
 
 	loc.AuthTLSPassCert = &dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType:  clientAuth.ClientAuthType,
+		ClientAuthType:  srv.TLSOption.ClientAuth.ClientAuthType,
 		CAFiles:         caFiles,
-		PassCertificate: ptr.Deref(loc.Config.AuthTLSPassCertificateToUpstream, false),
+		PassCertificate: srv.clientAuthPassCertificate,
 	}
 }
 

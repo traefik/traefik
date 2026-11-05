@@ -94,6 +94,14 @@ type server struct {
 
 	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
 	clientAuthIngress string
+
+	// clientAuthPassCertificate is the auth-tls-pass-certificate-to-upstream annotation of that Ingress,
+	// as ingress-nginx reads it from the server block and not from the location.
+	clientAuthPassCertificate bool
+
+	// AuthTLSError tells why the first unusable auth-tls-secret declared for the server cannot be used.
+	// ingress-nginx answers 403 to every request of such a server.
+	AuthTLSError string
 }
 
 // location is the per-path routing unit. It is the central type of the metamodel:

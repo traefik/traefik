@@ -1,14 +1,21 @@
 package authtlspasscertificatetoupstream
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	cryptoTLS "crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -250,6 +257,85 @@ var next = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}
 })
 
+// testPKI holds certificates generated for the tests, as PEM, since the verification checks their validity period.
+var testPKI = newTestPKI()
+
+type pki struct {
+	ca                     string
+	intermediate           string
+	clientCert             string
+	intermediateClientCert string
+	serverCert             string
+	untrustedCert          string
+}
+
+func newTestPKI() pki {
+	caCert, caKey, caPEM := issueCert(&x509.Certificate{
+		Subject:               pkix.Name{CommonName: "Test CA"},
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}, nil, nil)
+	intermediateCert, intermediateKey, intermediatePEM := issueCert(&x509.Certificate{
+		Subject:               pkix.Name{CommonName: "Test intermediate CA"},
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}, caCert, caKey)
+	_, _, clientPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "client", Organization: []string{"Cheese"}},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, caCert, caKey)
+	_, _, intermediateClientPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "intermediate client"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, intermediateCert, intermediateKey)
+	_, _, serverPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "server"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}, caCert, caKey)
+	_, _, untrustedPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "client"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, nil, nil)
+
+	return pki{
+		ca:                     caPEM,
+		intermediate:           intermediatePEM,
+		clientCert:             clientPEM,
+		intermediateClientCert: intermediateClientPEM,
+		serverCert:             serverPEM,
+		untrustedCert:          untrustedPEM,
+	}
+}
+
+// issueCert signs template with parentKey, or self-signs it when parent is nil.
+func issueCert(template, parent *x509.Certificate, parentKey crypto.Signer) (*x509.Certificate, crypto.Signer, string) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	template.SerialNumber = big.NewInt(time.Now().UnixNano())
+	template.NotBefore = time.Now().Add(-time.Hour)
+	template.NotAfter = time.Now().Add(time.Hour)
+	if parent == nil {
+		parent, parentKey = template, key
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, parent, key.Public(), parentKey)
+	if err != nil {
+		panic(err)
+	}
+
+	cert, err := x509.ParseCertificate(der)
+	if err != nil {
+		panic(err)
+	}
+
+	return cert, key, string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
+}
+
 func getCertPEM(certContent string) string {
 	cert := getCertificate(certContent)
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
@@ -257,6 +343,8 @@ func getCertPEM(certContent string) string {
 }
 
 func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
+	caFiles := []types.FileOrContent{types.FileOrContent(testPKI.ca)}
+
 	testCases := []struct {
 		desc                 string
 		clientAuthType       string
@@ -330,6 +418,54 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
 			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
 			expectedCert:         getCertPEM(minimalCheeseCrt),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate signed by the CA",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			passCertificate:      true,
+			certContents:         []string{testPKI.clientCert},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(testPKI.clientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.clientCert).Issuer.String(),
+			expectedCert:         getCertPEM(testPKI.clientCert),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate signed by an intermediate CA only uses leaf",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			passCertificate:      true,
+			certContents:         []string{testPKI.intermediateClientCert, testPKI.intermediate},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(testPKI.intermediateClientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.intermediateClientCert).Issuer.String(),
+			expectedCert:         getCertPEM(testPKI.intermediateClientCert),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate not signed by the CA",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			certContents:         []string{testPKI.untrustedCert},
+			expectedClientVerify: "FAILED:",
+			expectedSubjectDN:    getCertificate(testPKI.untrustedCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.untrustedCert).Issuer.String(),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate not allowed for client authentication",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			certContents:         []string{testPKI.serverCert},
+			expectedClientVerify: "FAILED:",
+			expectedSubjectDN:    getCertificate(testPKI.serverCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.serverCert).Issuer.String(),
+		},
+		{
+			desc:                 "TLS with optional_no_ca without CA certificate",
+			clientAuthType:       tls.RequestClientCert,
+			certContents:         []string{testPKI.clientCert},
+			expectedClientVerify: "FAILED:no CA certificate",
+			expectedSubjectDN:    getCertificate(testPKI.clientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.clientCert).Issuer.String(),
 		},
 		{
 			desc:                 "TLS without passing the certificate",
