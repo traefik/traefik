@@ -32,7 +32,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Routers:  make(map[string]*dynamic.TCPRouter),
 			Services: make(map[string]*dynamic.TCPService),
 		},
-		TLS: &dynamic.TLSConfiguration{},
+		TLS: &dynamic.TLSConfiguration{
+			Options: make(map[string]tls.Options),
+		},
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
@@ -221,9 +223,6 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				}
 
 				if srv.TLSOption != nil {
-					if conf.TLS.Options == nil {
-						conf.TLS.Options = make(map[string]tls.Options)
-					}
 					conf.TLS.Options[srv.TLSOptionName] = *srv.TLSOption
 				}
 
