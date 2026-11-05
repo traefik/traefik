@@ -642,7 +642,7 @@ Use `PathRegexp` instead for dynamic path segments.
 
 `QueryRegexp` has been introduced to match query values using a regular expression.
 
-`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://golang.org/pkg/regexp/syntax/).
+`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://pkg.go.dev/regexp/syntax).
 
 These regexp matchers match their pattern as a substring of the value (host, path, header or query value, or SNI).
 v2 template forms such as ``HostRegexp(`{subdomain:[a-z]+}.traefik.com`)`` were effectively full-host matches; the v3 equivalent needs anchors, for example ``HostRegexp(`^[a-z]+\.traefik\.com$`)``.
