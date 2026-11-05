@@ -444,8 +444,8 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 
 		if i.staticCfg.TCPServersTransport.TLS.Spiffe != nil {
 			st.TLS.Spiffe = &dynamic.Spiffe{
-				IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
-				TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+				IDs:         i.staticCfg.TCPServersTransport.TLS.Spiffe.IDs,
+				TrustDomain: i.staticCfg.TCPServersTransport.TLS.Spiffe.TrustDomain,
 			}
 		}
 	}
