@@ -18,6 +18,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
 	lua "github.com/yuin/gopher-lua"
@@ -152,6 +153,64 @@ func TestNewRateLimiter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRateLimitCanceledContext(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		deadlineExceeded bool
+		expectedStatus   int
+	}{
+		{
+			desc:           "client cancellation",
+			expectedStatus: httputil.StatusClientClosedRequest,
+		},
+		{
+			desc:             "deadline exceeded",
+			deadlineExceeded: true,
+			expectedStatus:   http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithCancel(t.Context())
+			if test.deadlineExceeded {
+				cancel()
+				ctx, cancel = context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+			}
+			cancel()
+
+			nextCalled := false
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				nextCalled = true
+			})
+			h, err := New(t.Context(), next, dynamic.RateLimit{Average: 1, Burst: 1}, "rate-limiter")
+			require.NoError(t, err)
+
+			rl := h.(*rateLimiter)
+			// Keep the timer pending so cancellation is selected deterministically.
+			rl.maxDelay = time.Hour
+			rl.limiter = fixedDelayLimiter{delay: time.Hour}
+
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, "http://localhost", nil)
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectedStatus, rw.Code)
+			assert.False(t, nextCalled)
+		})
+	}
+}
+
+type fixedDelayLimiter struct {
+	delay time.Duration
+}
+
+func (l fixedDelayLimiter) Allow(context.Context, string) (*time.Duration, error) {
+	return &l.delay, nil
 }
 
 func TestInMemoryRateLimit(t *testing.T) {
