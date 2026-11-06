@@ -55,6 +55,12 @@ type RateLimitApplyConfiguration struct {
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
 	// Redis hold the configs of Redis as bucket in rate limiter.
 	Redis *RedisApplyConfiguration `json:"redis,omitempty"`
+	// Scope defines what the token buckets are scoped to, that is, what a source's budget
+	// is shared across.
+	// It defaults to router with the in-memory bucket, and to middleware with Redis,
+	// which is the existing behavior of each backend.
+	// The Redis bucket does not support the router scope, as its keys do not carry the router.
+	Scope *dynamic.RateLimitScope `json:"scope,omitempty"`
 }
 
 // RateLimitApplyConfiguration constructs a declarative configuration of the RateLimit type for use with
@@ -100,5 +106,13 @@ func (b *RateLimitApplyConfiguration) WithSourceCriterion(value dynamic.SourceCr
 // If called multiple times, the Redis field is set to the value of the last call.
 func (b *RateLimitApplyConfiguration) WithRedis(value *RedisApplyConfiguration) *RateLimitApplyConfiguration {
 	b.Redis = value
+	return b
+}
+
+// WithScope sets the Scope field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Scope field is set to the value of the last call.
+func (b *RateLimitApplyConfiguration) WithScope(value dynamic.RateLimitScope) *RateLimitApplyConfiguration {
+	b.Scope = &value
 	return b
 }
