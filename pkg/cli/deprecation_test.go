@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -413,6 +414,34 @@ func TestLoad(t *testing.T) {
 			if !test.wantDeprecated {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestLoadIgnoresDefaultConfigFileWhenExplicitConfigFileIsMissing(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Chdir(t.TempDir())
+
+	require.NoError(t, os.WriteFile("traefik.toml", []byte("[pilot]\n  token = \"XXX\"\n"), 0o600))
+
+	testCases := []struct {
+		desc string
+		args []string
+	}{
+		{desc: "missing file", args: []string{"--configfile=missing-traefik.toml"}},
+		{desc: "camel case", args: []string{"--configFile=missing-traefik.toml"}},
+		{desc: "empty path", args: []string{"--configfile="}},
+		{desc: "blank path", args: []string{"--configfile=   "}},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			c := &cli.Command{Configuration: cmd.NewTraefikConfiguration()}
+			deprecated, err := DeprecationLoader{}.Load(test.args, c)
+
+			require.NoError(t, err)
+			assert.False(t, deprecated)
 		})
 	}
 }
