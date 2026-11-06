@@ -1513,6 +1513,11 @@ spec:
                     items:
                       type: string
                     type: array
+                  addAuthCookiesToResponseRegex:
+                    description: AddAuthCookiesToResponseRegex defines a regex pattern
+                      used to match cookies to copy from the authentication server
+                      response to the response.
+                    type: string
                   address:
                     description: Address defines the authentication server address.
                     type: string
