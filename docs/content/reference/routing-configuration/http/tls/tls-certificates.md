@@ -14,6 +14,10 @@ See the [Let's Encrypt](../../../install-configuration/tls/certificate-resolvers
 
 ### User defined
 
+You can use ML-DSA certificates for TLS 1.3 connections with compatible clients.
+Configure ML-DSA certificates using the existing `certFile` and `keyFile` fields; no additional TLS option is required.
+ACME issuance of ML-DSA certificates is not supported.
+
 To add / remove TLS certificates, even when Traefik is already running, their definition can be added to the [dynamic configuration](../../dynamic-configuration-methods.md#providing-dynamic-routing-configuration-to-traefik), in the `[[tls.certificates]]` section:
 
 ```yaml tab="Structured (YAML)"
