@@ -1,0 +1,24 @@
+---
+apiVersion: networking.internal.knative.dev/v1alpha1
+kind: Ingress
+metadata:
+  annotations:
+    networking.knative.dev/ingress.class: traefik.ingress.networking.knative.dev
+  name: custom-another-domain-com
+  namespace: default
+spec:
+  httpOption: Enabled
+  rules:
+    - hosts:
+        - custom.another-domain.com
+      http:
+        paths:
+          - rewriteHost: helloworld-go.default.svc.cluster.local
+            splits:
+              - appendHeaders:
+                  K-Original-Host: custom.another-domain.com
+                percent: 100
+                serviceName: helloworld-go-00001
+                serviceNamespace: default
+                servicePort: 80
+      visibility: ExternalIP
