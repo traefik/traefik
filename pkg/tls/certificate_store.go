@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -28,6 +29,11 @@ type CertificateStore struct {
 	CertCache          *cache.Cache
 
 	ocspStapler *ocspStapler
+
+	// lock makes a store update atomic for lookups: a lookup holds it across
+	// the cache read, the DynamicCerts read and the cache write, so it cannot
+	// cache a certificate from a configuration that update has already replaced.
+	lock sync.RWMutex
 }
 
 // NewCertificateStore create a store for dynamic certificates.
@@ -44,6 +50,9 @@ func NewCertificateStore(ocspStapler *ocspStapler) *CertificateStore {
 
 // GetAllDomains return a slice with all the certificate domain.
 func (c *CertificateStore) GetAllDomains() []string {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	allDomains := c.getDefaultCertificateDomains()
 
 	// Get dynamic certificates
@@ -61,6 +70,9 @@ func (c *CertificateStore) GetDefaultCertificate() *tls.Certificate {
 	if c == nil {
 		return nil
 	}
+
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	if c.ocspStapler != nil && c.DefaultCertificate.Hash != "" {
 		if staple, ok := c.ocspStapler.GetStaple(c.DefaultCertificate.Hash); ok {
@@ -88,6 +100,9 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		}
 		serverName = strings.TrimSpace(host)
 	}
+
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	if cert, ok := c.CertCache.Get(serverName); ok {
 		certificateData := cert.(*CertificateData)
@@ -141,6 +156,9 @@ func (c *CertificateStore) GetCertificate(domains []string) *CertificateData {
 	sort.Strings(domains)
 	domainsKey := strings.Join(domains, ",")
 
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	if cert, ok := c.CertCache.Get(domainsKey); ok {
 		return cert.(*CertificateData)
 	}
@@ -169,6 +187,24 @@ func (c *CertificateStore) GetCertificate(domains []string) *CertificateData {
 	}
 
 	return nil
+}
+
+// update replaces the dynamic certificates and clears the cache, which may
+// hold certificates resolved from the replaced ones.
+func (c *CertificateStore) update(certs map[string]*CertificateData) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.DynamicCerts.Set(certs)
+	c.CertCache.Flush()
+}
+
+// setDefaultCertificate replaces the default certificate.
+func (c *CertificateStore) setDefaultCertificate(certificate *CertificateData) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.DefaultCertificate = certificate
 }
 
 // ResetCache clears the cache in the store.
