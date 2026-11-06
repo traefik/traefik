@@ -1,0 +1,48 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alias-ingress
+  namespace: default
+  creationTimestamp: "2026-01-01T00:00:00Z"
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "alias.localhost"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: original.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /app
+            pathType: Exact
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: default-backend-ingress
+  namespace: default
+  creationTimestamp: "2026-01-02T00:00:00Z"
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: whoami
+      port:
+        number: 80
+  rules:
+    - host: original.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+            path: /foo
+            pathType: Exact
