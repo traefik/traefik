@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -853,30 +855,33 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-// fullServiceName returns the identity-based name for a Kubernetes Service or TraefikService reference:
-// the same reference always produces the same name, regardless of the parent declaring it.
+// fullServiceName returns the name for a Kubernetes Service or TraefikService reference.
+// Legacy names are identity-based (namespace, name, port), with a hash of the
+// reference-specific options when those options are set, so two references to the
+// same Kubernetes Service with different options do not overwrite each other.
 func (c configBuilder) fullServiceName(ctx context.Context, service traefikv1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
 	hasPort := (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "")
 
 	if !c.nameBuilder.safe {
+		var name string
 		if hasPort {
-			return provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, port.String()))
+			name = provider.Normalize(fmt.Sprintf("%s-%s-%s", service.Namespace, service.Name, port.String()))
+		} else if !strings.Contains(service.Name, providerNamespaceSeparator) {
+			name = provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, service.Name))
+		} else {
+			svcName, pName := splitSvcNameProvider(service.Name)
+			if pName == ProviderName {
+				name = provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, svcName))
+			} else {
+				if service.Namespace != "" {
+					log.Ctx(ctx).Warn().Msgf("namespace %q is ignored in cross-provider context", service.Namespace)
+				}
+
+				return provider.Normalize(svcName) + providerNamespaceSeparator + pName
+			}
 		}
 
-		if !strings.Contains(service.Name, providerNamespaceSeparator) {
-			return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, service.Name))
-		}
-
-		name, pName := splitSvcNameProvider(service.Name)
-		if pName == ProviderName {
-			return provider.Normalize(fmt.Sprintf("%s-%s", service.Namespace, name))
-		}
-
-		if service.Namespace != "" {
-			log.Ctx(ctx).Warn().Msgf("namespace %q is ignored in cross-provider context", service.Namespace)
-		}
-
-		return provider.Normalize(name) + providerNamespaceSeparator + pName
+		return appendServiceOptionsHash(name, service)
 	}
 
 	if hasPort {
@@ -905,6 +910,39 @@ func namespaceOrParentNamespace(namespace, parentNamespace string) string {
 	}
 
 	return parentNamespace
+}
+
+// appendServiceOptionsHash suffixes the generated service name with a hash of the
+// reference-specific options (sticky, health check, serversTransport, ...).
+// Identity fields are excluded so two references to the same Kubernetes Service
+// still share a name when their options match, and get distinct names otherwise.
+func appendServiceOptionsHash(name string, service traefikv1alpha1.LoadBalancerSpec) string {
+	hash, err := serviceOptionsHash(service)
+	if err != nil || hash == "" {
+		return name
+	}
+
+	return provider.Normalize(name + "-" + hash)
+}
+
+func serviceOptionsHash(service traefikv1alpha1.LoadBalancerSpec) (string, error) {
+	opts := *service.DeepCopy()
+	opts.Name = ""
+	opts.Kind = ""
+	opts.Namespace = ""
+	opts.Port = intstr.IntOrString{}
+	opts.Weight = nil
+
+	if reflect.DeepEqual(opts, traefikv1alpha1.LoadBalancerSpec{}) {
+		return "", nil
+	}
+
+	hash, err := hashstructure.Hash(opts, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatUint(hash, 16), nil
 }
 
 // getTLSHTTP mutates tlsConfigs.
