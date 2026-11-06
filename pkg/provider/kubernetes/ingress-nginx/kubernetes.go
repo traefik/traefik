@@ -91,9 +91,10 @@ type Provider struct {
 	WatchIngressWithoutClass bool   `description:"Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified." json:"watchIngressWithoutClass,omitempty" toml:"watchIngressWithoutClass,omitempty" yaml:"watchIngressWithoutClass,omitempty" export:"true"`
 	IngressClassByName       bool   `description:"Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class." json:"ingressClassByName,omitempty" toml:"ingressClassByName,omitempty" yaml:"ingressClassByName,omitempty" export:"true"`
 
-	// TODO: support report-node-internal-ip-address and update-status.
-	PublishService       string   `description:"Service fronting the Ingress controller. Takes the form 'namespace/name'." json:"publishService,omitempty" toml:"publishService,omitempty" yaml:"publishService,omitempty" export:"true"`
-	PublishStatusAddress []string `description:"Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies." json:"publishStatusAddress,omitempty" toml:"publishStatusAddress,omitempty" yaml:"publishStatusAddress,omitempty"`
+	// TODO: support update-status.
+	PublishService              string   `description:"Service fronting the Ingress controller. Takes the form 'namespace/name'." json:"publishService,omitempty" toml:"publishService,omitempty" yaml:"publishService,omitempty" export:"true"`
+	PublishStatusAddress        []string `description:"Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies." json:"publishStatusAddress,omitempty" toml:"publishStatusAddress,omitempty" yaml:"publishStatusAddress,omitempty"`
+	ReportNodeInternalIPAddress bool     `description:"Set the load-balancer status of Ingress objects to the internal Node addresses instead of the external ones." json:"reportNodeInternalIPAddress,omitempty" toml:"reportNodeInternalIPAddress,omitempty" yaml:"reportNodeInternalIPAddress,omitempty" export:"true"`
 
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
@@ -257,9 +258,19 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	// Phase 1: build the metamodel from k8s resources.
 	mc := p.build(ctx, ingressClasses)
 
+	// The node addresses are the same for every Ingress, and resolving them
+	// walks all the controller pods, so they are computed once per configuration.
+	var nodeAddresses []string
+	if p.PublishService == "" && len(p.PublishStatusAddress) == 0 {
+		var err error
+		if nodeAddresses, err = p.k8sClient.GetIngressPodNodeAddresses(p.ReportNodeInternalIPAddress); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error while getting controller pod node addresses")
+		}
+	}
+
 	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
 	for _, ing := range mc.ProcessedIngresses {
-		if err := p.updateIngressStatus(ing); err != nil {
+		if err := p.updateIngressStatus(ing, nodeAddresses); err != nil {
 			log.Ctx(ctx).Error().Err(err).
 				Str("namespace", ing.Namespace).
 				Str("ingress", ing.Name).
@@ -319,9 +330,27 @@ func (p *Provider) newK8sClient() (*clientWrapper, error) {
 	}
 }
 
-func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {
-	if p.PublishService == "" && len(p.PublishStatusAddress) == 0 {
+// updateIngressStatusFromNodes sets the Ingress status to the addresses of the
+// nodes running a ready controller pod. This is the ingress-nginx behavior when
+// neither the publish service nor the publish status address is configured.
+func (p *Provider) updateIngressStatusFromNodes(ing *netv1.Ingress, addresses []string) error {
+	// Leaving the status untouched is safer than emptying it, as the addresses
+	// are unknown rather than known to be gone.
+	if len(addresses) == 0 {
 		return nil
+	}
+
+	ingStatus := make([]netv1.IngressLoadBalancerIngress, 0, len(addresses))
+	for _, address := range addresses {
+		ingStatus = append(ingStatus, netv1.IngressLoadBalancerIngress{IP: address})
+	}
+
+	return p.k8sClient.UpdateIngressStatus(ing, ingStatus)
+}
+
+func (p *Provider) updateIngressStatus(ing *netv1.Ingress, nodeAddresses []string) error {
+	if p.PublishService == "" && len(p.PublishStatusAddress) == 0 {
+		return p.updateIngressStatusFromNodes(ing, nodeAddresses)
 	}
 
 	if len(p.PublishStatusAddress) > 0 {
