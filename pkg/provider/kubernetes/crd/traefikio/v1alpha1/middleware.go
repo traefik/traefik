@@ -31,6 +31,7 @@ type MiddlewareSpec struct {
 	StripPrefixRegex *dynamic.StripPrefixRegex `json:"stripPrefixRegex,omitempty"`
 	ReplacePath      *dynamic.ReplacePath      `json:"replacePath,omitempty"`
 	ReplacePathRegex *dynamic.ReplacePathRegex `json:"replacePathRegex,omitempty"`
+	QueryParameters  *dynamic.QueryParameters  `json:"queryParameters,omitempty"`
 	Chain            *Chain                    `json:"chain,omitempty"`
 	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
