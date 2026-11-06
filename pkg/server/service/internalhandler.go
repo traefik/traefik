@@ -15,17 +15,19 @@ type InternalHandlers struct {
 	rest       http.Handler
 	prometheus http.Handler
 	ping       http.Handler
+	ready      http.Handler
 	acmeHTTP   http.Handler
 }
 
 // NewInternalHandlers creates a new InternalHandlers.
-func NewInternalHandlers(apiHandler, rest, metricsHandler, pingHandler, dashboard, acmeHTTP http.Handler) *InternalHandlers {
+func NewInternalHandlers(apiHandler, rest, metricsHandler, pingHandler, readyHandler, dashboard, acmeHTTP http.Handler) *InternalHandlers {
 	return &InternalHandlers{
 		api:        apiHandler,
 		dashboard:  dashboard,
 		rest:       rest,
 		prometheus: metricsHandler,
 		ping:       pingHandler,
+		ready:      readyHandler,
 		acmeHTTP:   acmeHTTP,
 	}
 }
@@ -80,6 +82,12 @@ func (m *InternalHandlers) get(serviceName string) (http.Handler, error) {
 			return nil, errors.New("ping is not enabled")
 		}
 		return m.ping, nil
+
+	case "ready@internal":
+		if m.ready == nil {
+			return nil, errors.New("ready is not enabled")
+		}
+		return m.ready, nil
 
 	case "prometheus@internal":
 		if m.prometheus == nil {
