@@ -7,6 +7,7 @@ import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
 import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
+import RuleDisplay from 'components/routers/RuleDisplay'
 import TlsIcon from 'components/routers/TlsIcon'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import ClickableRow from 'components/tables/ClickableRow'
@@ -34,9 +35,9 @@ export const makeRowRender = (): RenderRowType => {
         )}
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.rule} isTruncated />
+        <RuleDisplay rule={row.rule} compact />
       </AriaTd>
-      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
+      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} limit={2} />}</AriaTd>
       <AriaTd>
         <TooltipText text={row.name} isTruncated />
       </AriaTd>
