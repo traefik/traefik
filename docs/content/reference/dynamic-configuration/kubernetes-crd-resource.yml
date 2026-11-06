@@ -222,6 +222,7 @@ spec:
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
   disableHTTP2: true
+  preferIPv6: true
 
 ---
 apiVersion: traefik.io/v1alpha1
