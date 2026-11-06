@@ -1,0 +1,82 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: owner-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - pass-cert-shared-host.localhost
+      secretName: whoami-tls
+  rules:
+    - host: pass-cert-shared-host.localhost
+      http:
+        paths:
+          - path: /owner
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: inheriting-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: pass-cert-shared-host.localhost
+      http:
+        paths:
+          - path: /inheriting
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forwarded-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/other-ca-secret"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: pass-cert-shared-host.localhost
+      http:
+        paths:
+          - path: /forwarded
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  namespace: default
+  name: other-ca-secret
+
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tT1RIRVItLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0t
