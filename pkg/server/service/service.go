@@ -532,6 +532,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			return nil, fmt.Errorf("getting RoundTripper: %w", err)
 		}
 
+		tlsConfig, err := m.transportManager.GetTLSConfig(service.ServersTransport)
+		if err != nil {
+			return nil, fmt.Errorf("getting TLS config: %w", err)
+		}
+
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
 			m.observabilityMgr.MetricsRegistry(),
@@ -539,6 +544,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			lb,
 			info,
 			roundTripper,
+			tlsConfig,
 			healthCheckTargets,
 			serviceName,
 		)
