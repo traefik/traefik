@@ -6,6 +6,10 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"os"
+	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -38,6 +42,16 @@ func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
 	default:
 		return verbosity == MinimalVerbosity
 	}
+}
+
+// envSamplers mirrors the OTEL_TRACES_SAMPLER values that the OpenTelemetry Go SDK supports in sdk/trace/sampler_env.go, which it does not export.
+var envSamplers = []string{
+	"always_on",
+	"always_off",
+	"traceidratio",
+	"parentbased_always_on",
+	"parentbased_always_off",
+	"parentbased_traceidratio",
 }
 
 // OTelTracing provides configuration settings for the open-telemetry tracer.
@@ -96,17 +110,55 @@ func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate 
 	// Register the trace exporter with a TracerProvider, using a batch
 	// span processor to aggregate spans before export.
 	bsp := sdktrace.NewBatchSpanProcessor(exporter)
-	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sampleRate))),
+	opts := []sdktrace.TracerProviderOption{
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
-	)
+	}
+
+	// The SDK applies the OTEL_TRACES_SAMPLER sampler before the options, so an explicit sampler would override it.
+	useEnvSampler, envErr := checkEnvSampler()
+	if envErr != nil {
+		log.Warn().Err(envErr).Msg("Using sampleRate instead of the OTEL_TRACES_SAMPLER env variables")
+	}
+
+	if !useEnvSampler {
+		opts = append(opts, sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sampleRate))))
+	}
+
+	tracerProvider := sdktrace.NewTracerProvider(opts...)
 
 	otel.SetTracerProvider(tracerProvider)
 
 	log.Debug().Msg("OpenTelemetry tracer configured")
 
 	return tracerProvider.Tracer("github.com/traefik/traefik"), &tpCloser{provider: tracerProvider}, err
+}
+
+// checkEnvSampler reports whether the OTEL_TRACES_SAMPLER env variables define a valid sampler.
+// The SDK samples every root span when it rejects a value, so checkEnvSampler returns an error and sampleRate applies instead.
+func checkEnvSampler() (bool, error) {
+	value := os.Getenv("OTEL_TRACES_SAMPLER")
+	sampler := strings.ToLower(strings.TrimSpace(value))
+	if sampler == "" {
+		return false, nil
+	}
+
+	if !slices.Contains(envSamplers, sampler) {
+		return false, fmt.Errorf("unsupported OTEL_TRACES_SAMPLER value %q", value)
+	}
+
+	arg := strings.TrimSpace(os.Getenv("OTEL_TRACES_SAMPLER_ARG"))
+	if arg == "" || !strings.HasSuffix(sampler, "traceidratio") {
+		return true, nil
+	}
+
+	ratio, err := strconv.ParseFloat(arg, 64)
+	// The negated comparison also rejects NaN, which the SDK accepts without a usable ratio.
+	if err != nil || !(ratio >= 0 && ratio <= 1) {
+		return false, fmt.Errorf("invalid OTEL_TRACES_SAMPLER_ARG value %q, it must be a ratio between 0 and 1", arg)
+	}
+
+	return true, nil
 }
 
 func (c *OTelTracing) setupHTTPExporter() (*otlptrace.Exporter, error) {
