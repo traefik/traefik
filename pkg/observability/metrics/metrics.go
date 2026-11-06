@@ -52,6 +52,7 @@ type Registry interface {
 	ServiceReqDurationHistogram() ScalableHistogram
 	ServiceRetriesCounter() metrics.Counter
 	ServiceServerUpGauge() metrics.Gauge
+	ServiceInflightRequestsGauge() metrics.Gauge
 	ServiceReqsBytesCounter() metrics.Counter
 	ServiceRespsBytesCounter() metrics.Counter
 }
@@ -85,6 +86,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceRetriesCounter []metrics.Counter
 	var serviceServerUpGauge []metrics.Gauge
+	var serviceInflightRequestsGauge []metrics.Gauge
 	var serviceReqsBytesCounter []metrics.Counter
 	var serviceRespsBytesCounter []metrics.Counter
 
@@ -146,6 +148,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.ServiceServerUpGauge() != nil {
 			serviceServerUpGauge = append(serviceServerUpGauge, r.ServiceServerUpGauge())
 		}
+		if r.ServiceInflightRequestsGauge() != nil {
+			serviceInflightRequestsGauge = append(serviceInflightRequestsGauge, r.ServiceInflightRequestsGauge())
+		}
 		if r.ServiceReqsBytesCounter() != nil {
 			serviceReqsBytesCounter = append(serviceReqsBytesCounter, r.ServiceReqsBytesCounter())
 		}
@@ -156,7 +161,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 
 	return &standardRegistry{
 		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0,
-		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
+		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0 || len(serviceInflightRequestsGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
@@ -177,6 +182,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		serviceReqDurationHistogram:    MultiHistogram(serviceReqDurationHistogram),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
+		serviceInflightRequestsGauge:   multi.NewGauge(serviceInflightRequestsGauge...),
 		serviceReqsBytesCounter:        multi.NewCounter(serviceReqsBytesCounter...),
 		serviceRespsBytesCounter:       multi.NewCounter(serviceRespsBytesCounter...),
 	}
@@ -205,6 +211,7 @@ type standardRegistry struct {
 	serviceReqDurationHistogram    ScalableHistogram
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
+	serviceInflightRequestsGauge   metrics.Gauge
 	serviceReqsBytesCounter        metrics.Counter
 	serviceRespsBytesCounter       metrics.Counter
 }
@@ -295,6 +302,10 @@ func (r *standardRegistry) ServiceRetriesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
+}
+
+func (r *standardRegistry) ServiceInflightRequestsGauge() metrics.Gauge {
+	return r.serviceInflightRequestsGauge
 }
 
 func (r *standardRegistry) ServiceReqsBytesCounter() metrics.Counter {
