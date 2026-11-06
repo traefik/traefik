@@ -39,13 +39,13 @@ type MiddlewareTCPSpecApplyConfiguration struct {
 	InFlightConn *dynamic.TCPInFlightConn `json:"inFlightConn,omitempty"`
 	// IPWhiteList defines the IPWhiteList middleware configuration.
 	// This middleware accepts/refuses connections based on the client IP.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/middlewares/ipwhitelist/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/middlewares/ipwhitelist/
 	//
 	// Deprecated: please use IPAllowList instead.
 	IPWhiteList *dynamic.TCPIPWhiteList `json:"ipWhiteList,omitempty"`
 	// IPAllowList defines the IPAllowList middleware configuration.
 	// This middleware accepts/refuses connections based on the client IP.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/middlewares/ipallowlist/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/middlewares/ipallowlist/
 	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
 }
 

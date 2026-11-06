@@ -35,7 +35,7 @@ type IngressRouteUDPSpecApplyConfiguration struct {
 	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/install-configuration/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// Routes defines the list of routes.

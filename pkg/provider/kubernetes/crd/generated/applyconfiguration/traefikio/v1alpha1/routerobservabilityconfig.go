@@ -34,7 +34,7 @@ import (
 // with apply.
 //
 // RouterObservabilityConfig holds the observability configuration for a router.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/observability/
 type RouterObservabilityConfigApplyConfiguration struct {
 	// AccessLogs enables access logs for this router.
 	AccessLogs *bool `json:"accessLogs,omitempty"`

@@ -36,7 +36,7 @@ import (
 // with apply.
 //
 // Middleware is the CRD implementation of a Traefik Middleware.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/overview/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/overview/
 type MiddlewareApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

@@ -31,7 +31,7 @@ package v1alpha1
 //
 // Buffering holds the buffering middleware configuration.
 // This middleware retries or limits the size of requests that can be forwarded to backends.
-// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#maxrequestbodybytes
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#maxrequestbodybytes
 type BufferingApplyConfiguration struct {
 	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
 	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
@@ -49,7 +49,7 @@ type BufferingApplyConfiguration struct {
 	MemResponseBodyBytes *int64 `json:"memResponseBodyBytes,omitempty"`
 	// RetryExpression defines the retry conditions.
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
-	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#retryexpression
 	RetryExpression *string `json:"retryExpression,omitempty"`
 	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
 	// When true, MaxRequestBodyBytes is not enforced.

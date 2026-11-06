@@ -36,7 +36,7 @@ import (
 // with apply.
 //
 // MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/middlewares/overview/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/middlewares/overview/
 type MiddlewareTCPApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

@@ -31,7 +31,7 @@ package v1alpha1
 //
 // ForwardAuth holds the forward auth middleware configuration.
 // This middleware delegates the request authentication to a Service.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/forwardauth/
 type ForwardAuthApplyConfiguration struct {
 	// Address defines the authentication server address.
 	Address *string `json:"address,omitempty"`
@@ -42,7 +42,7 @@ type ForwardAuthApplyConfiguration struct {
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex *string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
@@ -54,7 +54,7 @@ type ForwardAuthApplyConfiguration struct {
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
 	HeaderField *string `json:"headerField,omitempty"`
 	// ForwardBody defines whether to send the request body to the authentication server.
 	ForwardBody *bool `json:"forwardBody,omitempty"`

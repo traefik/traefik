@@ -32,10 +32,10 @@ package v1alpha1
 // TLSOptionRef is a reference to a TLSOption resource.
 type TLSOptionRefApplyConfiguration struct {
 	// Name defines the name of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/tlsoption/
 	Name *string `json:"name,omitempty"`
 	// Namespace defines the namespace of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsoption/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/tlsoption/
 	Namespace *string `json:"namespace,omitempty"`
 }
 

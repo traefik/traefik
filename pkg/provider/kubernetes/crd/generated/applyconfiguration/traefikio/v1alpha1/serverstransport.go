@@ -38,7 +38,7 @@ import (
 // ServersTransport is the CRD implementation of a ServersTransport.
 // If no serversTransport is specified, the default@internal will be used.
 // The default@internal serversTransport is created from the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/serverstransport/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/load-balancing/serverstransport/
 type ServersTransportApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.

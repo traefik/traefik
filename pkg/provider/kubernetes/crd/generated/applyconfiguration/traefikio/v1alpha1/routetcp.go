@@ -32,13 +32,13 @@ package v1alpha1
 // RouteTCP holds the TCP route configuration.
 type RouteTCPApplyConfiguration struct {
 	// Match defines the router's rule.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/routing/rules-and-priority/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/routing/rules-and-priority/
 	Match *string `json:"match,omitempty"`
 	// Priority defines the router's priority.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/routing/rules-and-priority/#priority
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/routing/rules-and-priority/#priority
 	Priority *int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
 	//
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax *string `json:"syntax,omitempty"`

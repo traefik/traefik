@@ -40,17 +40,17 @@ type TLSOptionSpecApplyConfiguration struct {
 	// Default: None.
 	MaxVersion *string `json:"maxVersion,omitempty"`
 	// CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#cipher-suites
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#cipher-suites
 	CipherSuites []string `json:"cipherSuites,omitempty"`
 	// CurvePreferences defines the preferred elliptic curves.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#curve-preferences
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#curve-preferences
 	CurvePreferences []string `json:"curvePreferences,omitempty"`
 	// ClientAuth defines the server's policy for TLS Client Authentication.
 	ClientAuth *ClientAuthApplyConfiguration `json:"clientAuth,omitempty"`
 	// SniStrict defines whether Traefik allows connections from clients connections that do not specify a server_name extension.
 	SniStrict *bool `json:"sniStrict,omitempty"`
 	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#alpn-protocols
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#alpn-protocols
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
 	// DisableSessionTickets disables TLS session resumption via session tickets.
 	DisableSessionTickets *bool `json:"disableSessionTickets,omitempty"`

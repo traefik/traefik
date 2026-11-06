@@ -32,10 +32,10 @@ package v1alpha1
 // TLSStoreRef is a reference to a TLSStore resource.
 type TLSStoreRefApplyConfiguration struct {
 	// Name defines the name of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/tlsstore/
 	Name *string `json:"name,omitempty"`
 	// Namespace defines the namespace of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/tlsstore/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/tlsstore/
 	Namespace *string `json:"namespace,omitempty"`
 }
 

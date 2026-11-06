@@ -120,7 +120,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		logger.Warn().Msg("SafeNaming is not explicitly set: generated routers, middlewares and services will use the legacy naming scheme, " +
 			"under which names can collide across namespaces or resources. " +
 			"It is recommended to explicitly set the SafeNaming option, to `true` on new setups, or to `false` to keep the legacy behavior and silence this warning. " +
-			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migration/v3/#safe-naming-configuration-option")
+			"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.8/migrate/v3/#safe-naming-configuration-option")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
