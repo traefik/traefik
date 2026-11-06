@@ -44,6 +44,97 @@ func TestProviderAggregator_Provide(t *testing.T) {
 	require.NoError(t, <-errCh)
 }
 
+func TestProviderAggregator_Provide_throttled(t *testing.T) {
+	aggregator := ProviderAggregator{
+		internalProvider:          &unthrottledProviderMock{"internal"},
+		fileProvider:              &providerMock{"file"},
+		providersThrottleDuration: 10 * time.Millisecond,
+	}
+
+	// Buffered like the ConfigurationWatcher channel, so that the internal provider never waits for a reader.
+	cfgCh := make(chan dynamic.Message, 100)
+	pool := safe.NewPool(t.Context())
+
+	t.Cleanup(pool.Stop)
+
+	require.NoError(t, aggregator.Provide(cfgCh, pool))
+
+	// The file provider initial configuration must be sent before the internal provider one, even when throttled,
+	// as the ConfigurationWatcher only waits for the internal provider before applying the configuration.
+	requireReceivedMessageFromProviders(t, cfgCh, []string{"file"})
+	requireReceivedMessageFromProviders(t, cfgCh, []string{"internal"})
+}
+
+func TestMaybeThrottledProvide_startupMessages(t *testing.T) {
+	cfgCh := make(chan dynamic.Message)
+	errCh := make(chan error, 1)
+	pool := safe.NewPool(t.Context())
+
+	t.Cleanup(func() {
+		// Unblocks the routines still sending on cfgCh, so that the pool can stop.
+		done := make(chan struct{})
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				case <-cfgCh:
+				}
+			}
+		}()
+
+		pool.Stop()
+		close(done)
+	})
+
+	go func() {
+		errCh <- maybeThrottledProvide(&providerMock{"file"}, 10*time.Millisecond)(cfgCh, pool)
+	}()
+
+	// Provide must not return until the configuration sent while starting has been delivered.
+	select {
+	case <-errCh:
+		require.Fail(t, "Provide returned before the startup configuration was delivered.")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	msg := <-cfgCh
+	assert.Equal(t, "file", msg.ProviderName)
+
+	select {
+	case err := <-errCh:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		require.Fail(t, "Timeout while waiting for Provide to return.")
+	}
+}
+
+func TestMaybeThrottledProvide_throttlesAfterStartup(t *testing.T) {
+	throttleDuration := 100 * time.Millisecond
+
+	cfgCh := make(chan dynamic.Message, 10)
+	pool := safe.NewPool(t.Context())
+
+	t.Cleanup(pool.Stop)
+
+	prd := &watchingProviderMock{}
+	require.NoError(t, maybeThrottledProvide(prd, throttleDuration)(cfgCh, pool))
+
+	msg := <-cfgCh
+	assert.Equal(t, "startup", msg.ProviderName)
+	startupReceived := time.Now()
+
+	prd.send("update")
+
+	select {
+	case msg = <-cfgCh:
+		assert.Equal(t, "update", msg.ProviderName)
+		assert.GreaterOrEqual(t, time.Since(startupReceived), throttleDuration)
+	case <-time.After(time.Second):
+		require.Fail(t, "Timeout while waiting for configuration.")
+	}
+}
+
 func TestLaunchNamespacedProvider(t *testing.T) {
 	// Capture log output
 	var buf bytes.Buffer
@@ -107,6 +198,51 @@ func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *s
 	}
 
 	return nil
+}
+
+// watchingProviderMock sends a configuration while starting, and keeps the channel to send updates later.
+type watchingProviderMock struct {
+	configurationChan chan<- dynamic.Message
+}
+
+func (p *watchingProviderMock) Init() error {
+	return nil
+}
+
+func (p *watchingProviderMock) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	p.configurationChan = configurationChan
+	p.send("startup")
+
+	return nil
+}
+
+func (p *watchingProviderMock) send(name string) {
+	p.configurationChan <- dynamic.Message{
+		ProviderName:  name,
+		Configuration: &dynamic.Configuration{},
+	}
+}
+
+// unthrottledProviderMock mimics the internal provider, which disables throttling.
+type unthrottledProviderMock struct {
+	Name string
+}
+
+func (p *unthrottledProviderMock) Init() error {
+	return nil
+}
+
+func (p *unthrottledProviderMock) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	configurationChan <- dynamic.Message{
+		ProviderName:  p.Name,
+		Configuration: &dynamic.Configuration{},
+	}
+
+	return nil
+}
+
+func (p *unthrottledProviderMock) ThrottleDuration() time.Duration {
+	return 0
 }
 
 // mockNamespacedProvider is a mock implementation of NamespacedProvider for testing.
