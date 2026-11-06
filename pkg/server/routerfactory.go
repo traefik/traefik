@@ -125,7 +125,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	// TCP
 	svcTCPManager := tcpsvc.NewManager(rtConf, f.dialerManager)
 
-	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
+	tcpPluginBuilder, _ := f.pluginBuilder.(tcpmiddleware.PluginsBuilder)
+	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares, tcpPluginBuilder)
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager, f.providersPrecedence)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)

@@ -3,6 +3,7 @@ package tcpmiddleware
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/inflightconn"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/tcp/ipwhitelist"
+	"github.com/traefik/traefik/v3/pkg/plugins"
+	httpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
@@ -21,14 +24,20 @@ const (
 	middlewareStackKey middlewareStackType = iota
 )
 
+// PluginsBuilder the plugin's builder interface.
+type PluginsBuilder interface {
+	BuildTCP(pName string, config map[string]any, middlewareName string) (plugins.TCPConstructor, error)
+}
+
 // Builder the middleware builder.
 type Builder struct {
-	configs map[string]*runtime.TCPMiddlewareInfo
+	configs       map[string]*runtime.TCPMiddlewareInfo
+	pluginBuilder PluginsBuilder
 }
 
 // NewBuilder creates a new Builder.
-func NewBuilder(configs map[string]*runtime.TCPMiddlewareInfo) *Builder {
-	return &Builder{configs: configs}
+func NewBuilder(configs map[string]*runtime.TCPMiddlewareInfo, pluginBuilder PluginsBuilder) *Builder {
+	return &Builder{configs: configs, pluginBuilder: pluginBuilder}
 }
 
 // BuildChain creates a middleware chain.
@@ -110,6 +119,23 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	if config.IPAllowList != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
+		}
+	}
+
+	// Plugin
+	if config.Plugin != nil && b.pluginBuilder != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
+		pluginType, rawPluginConfig, err := httpmiddleware.FindPluginConfig(config.Plugin)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: %w", err)
+		}
+
+		plug, err := b.pluginBuilder.BuildTCP(pluginType, rawPluginConfig, middlewareName)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: %w", err)
+		}
+
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return plug(ctx, next)
 		}
 	}
 

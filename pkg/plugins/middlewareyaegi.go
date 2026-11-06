@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/traefik/yaegi/stdlib/syscall"
@@ -22,6 +24,7 @@ import (
 
 type yaegiMiddlewareBuilder struct {
 	fnNew          reflect.Value
+	fnNewTCP       reflect.Value
 	fnCreateConfig reflect.Value
 }
 
@@ -40,8 +43,12 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
 
+	// NewTCP is optional: only the plugins that can handle TCP connections export it.
+	fnNewTCP, _ := i.Eval(basePkg + `.NewTCP`)
+
 	return &yaegiMiddlewareBuilder{
 		fnNew:          fnNew,
+		fnNewTCP:       fnNewTCP,
 		fnCreateConfig: fnCreateConfig,
 	}, nil
 }
@@ -86,6 +93,62 @@ func (b yaegiMiddlewareBuilder) newPluginHandler(ctx context.Context, next http.
 	return handler, nil
 }
 
+// newTCPHandler only exchanges standard library types with the plugin,
+// so that the interpreter does not have to load Traefik's own packages.
+func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Handler, cfg reflect.Value, middlewareName string) (tcp.Handler, error) {
+	if !b.fnNewTCP.IsValid() {
+		return nil, errors.New("the plugin does not export a NewTCP function")
+	}
+
+	nextFunc := func(_ context.Context, conn net.Conn, closeWrite func() error) {
+		// A connection wrapped by the plugin loses CloseWrite when it crosses the interpreter boundary.
+		if wc, ok := conn.(tcp.WriteCloser); ok {
+			next.ServeTCP(wc)
+			return
+		}
+
+		next.ServeTCP(&closeWriteConn{Conn: conn, closeWrite: closeWrite})
+	}
+
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(nextFunc), cfg, reflect.ValueOf(middlewareName)}
+	results := b.fnNewTCP.Call(args)
+
+	if len(results) > 1 && results[1].Interface() != nil {
+		err, ok := reflect.TypeAssert[error](results[1])
+		if !ok {
+			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
+		}
+
+		return nil, err
+	}
+
+	handle, ok := reflect.TypeAssert[func(context.Context, net.Conn, func() error)](results[0])
+	if !ok {
+		return nil, fmt.Errorf("invalid TCP handler type: %T", results[0].Interface())
+	}
+
+	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		connCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		handle(connCtx, conn, conn.CloseWrite)
+	}), nil
+}
+
+type closeWriteConn struct {
+	net.Conn
+
+	closeWrite func() error
+}
+
+func (c *closeWriteConn) CloseWrite() error {
+	if c.closeWrite == nil {
+		return nil
+	}
+
+	return c.closeWrite()
+}
+
 func (b yaegiMiddlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := b.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
@@ -126,6 +189,11 @@ type YaegiMiddleware struct {
 // NewHandler creates a new HTTP handler.
 func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
+}
+
+// NewTCPHandler creates a new TCP handler.
+func (m *YaegiMiddleware) NewTCPHandler(ctx context.Context, next tcp.Handler) (tcp.Handler, error) {
+	return m.builder.newTCPHandler(ctx, next, m.config, m.middlewareName)
 }
 
 func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, settings Settings) (*interp.Interpreter, error) {

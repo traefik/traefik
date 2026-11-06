@@ -37,6 +37,26 @@ This approach eliminates the need for compilation and a complex toolchain, makin
 - Supports full Go feature set
 - Hot-reloadable during development
 
+#### TCP Middlewares
+
+A Yaegi middleware plugin can also run on TCP routers.
+Export a `NewTCP` function next to `New`, with standard library types only:
+
+```go
+func NewTCP(ctx context.Context, next func(context.Context, net.Conn, func() error), config *Config, name string) (func(context.Context, net.Conn, func() error), error)
+```
+
+Traefik calls `NewTCP` once when it builds the middleware, then calls the returned function for each connection with:
+
+- a context that is canceled once the function returns,
+- the connection,
+- the `CloseWrite` function of the connection.
+
+Call `next` to pass the connection on, or close the connection without calling `next` to drop it.
+If you wrap the connection before calling `next`, pass the `CloseWrite` function on as well, because Traefik cannot reach the `CloseWrite` method of a connection wrapped by the plugin.
+
+To use the plugin on a TCP router, see [TCP middlewares](../reference/routing-configuration/tcp/middlewares/overview.md#plugins).
+
 ### WebAssembly (WASM) Plugin System
 
 Traefik WASM plugins can be developed using any language that compiles to WebAssembly (WASM). This method is based on [http-wasm](https://http-wasm.io/).
@@ -49,7 +69,7 @@ WASM plugins compile to portable binary modules that execute with near-native pe
 - Compiled to WebAssembly binary
 - Near-native performance
 - Strong security isolation
-- Currently supports middleware only
+- Currently supports HTTP middleware only
 
 ## Build Your Own Plugins
 

@@ -1,11 +1,14 @@
 package plugins
 
 import (
+	"bytes"
 	"context"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/yaegi/interp"
 )
 
@@ -145,4 +148,105 @@ func verifyMiddlewareWorks(t *testing.T, builder *yaegiMiddlewareBuilder) {
 	require.NotNil(t, middleware, "Middleware should not be nil")
 
 	// The fact that we got here without crashing proves unsafe/syscall work!
+}
+
+func TestBuilder_BuildTCP(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		config          map[string]any
+		wantBanner      string
+		wantOriginal    bool
+		wantCloseWrites int
+	}{
+		{
+			desc:            "connection passed as is",
+			config:          map[string]any{"banner": "hello"},
+			wantBanner:      "hello",
+			wantOriginal:    true,
+			wantCloseWrites: 1,
+		},
+		{
+			desc:            "connection wrapped by the plugin",
+			config:          map[string]any{"banner": "hello", "wrap": true},
+			wantBanner:      "hello",
+			wantCloseWrites: 1,
+		},
+	}
+
+	builder := newTCPTestBuilder(t)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			plug, err := builder.BuildTCP("tcp", test.config, "test-tcp")
+			require.NoError(t, err)
+
+			var got tcp.WriteCloser
+			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+				got = conn
+			})
+
+			handler, err := plug(t.Context(), next)
+			require.NoError(t, err)
+
+			conn := &fakeWriteCloser{}
+			handler.ServeTCP(conn)
+
+			assert.Equal(t, test.wantBanner, conn.written.String())
+			require.NotNil(t, got)
+			if test.wantOriginal {
+				assert.Same(t, conn, got)
+			} else {
+				assert.NotSame(t, conn, got)
+			}
+
+			require.NoError(t, got.CloseWrite())
+			assert.Equal(t, test.wantCloseWrites, conn.closeWrites)
+		})
+	}
+}
+
+func TestBuilder_BuildTCP_errors(t *testing.T) {
+	builder := newTCPTestBuilder(t)
+
+	_, err := builder.BuildTCP("unknown", nil, "test-tcp")
+	require.ErrorContains(t, err, "unknown plugin type: unknown")
+
+	plug, err := builder.BuildTCP("httponly", nil, "test-tcp")
+	require.NoError(t, err)
+
+	_, err = plug(t.Context(), tcp.HandlerFunc(func(tcp.WriteCloser) {}))
+	require.ErrorContains(t, err, "does not export a NewTCP function")
+}
+
+func newTCPTestBuilder(t *testing.T) Builder {
+	t.Helper()
+
+	builders := map[string]middlewareBuilder{}
+	for name, pkg := range map[string]string{"tcp": "testplugintcp", "httponly": "testpluginsafe"} {
+		i, err := newInterpreter(t.Context(), "fixtures", &Manifest{Import: pkg}, Settings{})
+		require.NoError(t, err)
+
+		b, err := newYaegiMiddlewareBuilder(i, pkg, pkg)
+		require.NoError(t, err)
+
+		builders[name] = b
+	}
+
+	return Builder{middlewareBuilders: builders}
+}
+
+type fakeWriteCloser struct {
+	net.Conn
+
+	written     bytes.Buffer
+	closeWrites int
+}
+
+func (c *fakeWriteCloser) Write(b []byte) (int, error) {
+	return c.written.Write(b)
+}
+
+func (c *fakeWriteCloser) CloseWrite() error {
+	c.closeWrites++
+	return nil
 }

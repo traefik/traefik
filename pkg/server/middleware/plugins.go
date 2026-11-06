@@ -16,7 +16,8 @@ type PluginsBuilder interface {
 	Build(pName string, config map[string]any, middlewareName string) (plugins.Constructor, error)
 }
 
-func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]any, error) {
+// FindPluginConfig returns the plugin type and its raw configuration.
+func FindPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]any, error) {
 	if len(rawConfig) != 1 {
 		return "", nil, errors.New("invalid configuration: no configuration or too many plugin definition")
 	}

@@ -429,7 +429,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 
-		pluginType, rawPluginConfig, err := findPluginConfig(config.Plugin)
+		pluginType, rawPluginConfig, err := FindPluginConfig(config.Plugin)
 		if err != nil {
 			return nil, fmt.Errorf("plugin: %w", err)
 		}

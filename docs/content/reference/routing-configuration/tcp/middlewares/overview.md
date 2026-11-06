@@ -110,3 +110,31 @@ spec:
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
 | <a id="opt-InFlightConn" href="#opt-InFlightConn" title="#opt-InFlightConn">[InFlightConn](inflightconn.md)</a> | Limits the number of simultaneous connections.    | Security, Request lifecycle |
 | <a id="opt-IPAllowList" href="#opt-IPAllowList" title="#opt-IPAllowList">[IPAllowList](ipallowlist.md)</a> | Limit the allowed client IPs.                     | Security, Request lifecycle |
+
+## Plugins
+
+A TCP middleware can run a Yaegi plugin that exports a `NewTCP` function, as described in [Extend Traefik](../../../../extend/extend-traefik.md#tcp-middlewares).
+Declare the plugin in the [install configuration](../../../install-configuration/experimental/plugins.md), then reference it under `plugin` with the name it has there.
+The options under that name are the plugin's own options.
+
+```yaml tab="Structured (YAML)"
+tcp:
+  middlewares:
+    my-plugin:
+      plugin:
+        plugin-name:
+          banner: "hello"
+```
+
+```toml tab="Structured (TOML)"
+[tcp.middlewares]
+  [tcp.middlewares.my-plugin.plugin.plugin-name]
+    banner = "hello"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.tcp.middlewares.my-plugin.plugin.plugin-name.banner=hello"
+```
+
+Plugins are not available in the `MiddlewareTCP` Kubernetes resource.
