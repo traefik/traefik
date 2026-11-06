@@ -31,6 +31,7 @@ func Test_defaultRule(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			rule: "Host(`example.com`)",
@@ -90,6 +91,7 @@ func Test_defaultRule(t *testing.T) {
 					},
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			rule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
@@ -146,6 +148,7 @@ func Test_defaultRule(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			rule: `Host"{{ .Invalid }}")`,
@@ -196,6 +199,7 @@ func Test_defaultRule(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			rule: defaultTemplateRule,
@@ -275,6 +279,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -330,6 +335,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "192.168.1.101",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:        "id2",
@@ -338,6 +344,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "192.168.1.102",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -413,6 +420,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:        "id2",
@@ -422,6 +430,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -481,6 +490,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:        "id1",
@@ -490,6 +500,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -546,6 +557,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:        "id1",
@@ -555,6 +567,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -615,6 +628,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -674,6 +688,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -730,6 +745,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -766,6 +782,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -823,6 +840,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -881,6 +899,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -946,6 +965,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -956,6 +976,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -998,6 +1019,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1008,6 +1030,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id3",
@@ -1018,6 +1041,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1060,6 +1084,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1070,6 +1095,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1130,6 +1156,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1193,6 +1220,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1203,6 +1231,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1269,6 +1298,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1279,6 +1309,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1339,6 +1370,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1349,6 +1381,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1403,6 +1436,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -1413,6 +1447,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1472,6 +1507,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1530,6 +1566,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1587,6 +1624,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1645,6 +1683,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1704,6 +1743,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1741,6 +1781,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1778,6 +1819,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1841,6 +1883,7 @@ func Test_buildConfig(t *testing.T) {
 					Tags:      []string{},
 					Address:   "127.0.0.2",
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1876,6 +1919,7 @@ func Test_buildConfig(t *testing.T) {
 					},
 					Address:   "127.0.0.2",
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1912,6 +1956,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: false},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1948,6 +1993,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			constraints: `Tag("traefik.tags=bar")`,
@@ -1985,6 +2031,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			constraints: `Tag("traefik.tags=foo")`,
@@ -2044,6 +2091,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2113,6 +2161,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2172,6 +2221,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2224,6 +2274,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2275,6 +2326,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2323,6 +2375,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2378,6 +2431,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2432,6 +2486,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -2445,6 +2500,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2526,6 +2582,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:   "id2",
@@ -2538,6 +2595,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.2",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2616,6 +2674,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2662,6 +2721,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2709,6 +2769,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      80,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2756,6 +2817,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:    "127.0.0.1",
 					Port:       80,
 					ExtraConf:  configuration{Enable: true},
+					Healthy:    true,
 				},
 				{
 					ID:         "2",
@@ -2772,6 +2834,7 @@ func Test_buildConfig(t *testing.T) {
 						Enable: true,
 						Canary: true,
 					},
+					Healthy: true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2851,6 +2914,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      80,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:         "2",
@@ -2868,6 +2932,7 @@ func Test_buildConfig(t *testing.T) {
 						Enable: true,
 						Canary: true,
 					},
+					Healthy: true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2931,6 +2996,7 @@ func Test_buildConfig(t *testing.T) {
 					Address:   "127.0.0.1",
 					Port:      80,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 				{
 					ID:         "2",
@@ -2948,6 +3014,7 @@ func Test_buildConfig(t *testing.T) {
 						Enable: true,
 						Canary: true,
 					},
+					Healthy: true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3011,6 +3078,7 @@ func Test_buildConfig(t *testing.T) {
 						"traefik.tls.stores.default.defaultgeneratedcert.domain.main = foobar",
 						"traefik.tls.stores.default.defaultgeneratedcert.domain.sans = foobar, fiibar",
 					},
+					Healthy: true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3102,6 +3170,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3155,6 +3224,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3200,6 +3270,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3270,6 +3341,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3306,6 +3378,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3342,6 +3415,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					Address:   "",
 					Port:      -1,
 					ExtraConf: configuration{Enable: true},
+					Healthy:   true,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3392,12 +3466,12 @@ func Test_keepItem(t *testing.T) {
 	}{
 		{
 			name: "enable true",
-			i:    item{ExtraConf: configuration{Enable: true}},
+			i:    item{ExtraConf: configuration{Enable: true}, Healthy: true},
 			exp:  true,
 		},
 		{
 			name: "enable false",
-			i:    item{ExtraConf: configuration{Enable: false}},
+			i:    item{ExtraConf: configuration{Enable: false}, Healthy: true},
 			exp:  false,
 		},
 		{
@@ -3405,6 +3479,7 @@ func Test_keepItem(t *testing.T) {
 			i: item{
 				Tags:      []string{"traefik.tags=foo"},
 				ExtraConf: configuration{Enable: true},
+				Healthy:   true,
 			},
 			constraints: `Tag("traefik.tags=foo")`,
 			exp:         true,
@@ -3414,6 +3489,7 @@ func Test_keepItem(t *testing.T) {
 			i: item{
 				Tags:      []string{"traefik.tags=foo"},
 				ExtraConf: configuration{Enable: true},
+				Healthy:   true,
 			},
 			constraints: `Tag("traefik.tags=bar")`,
 			exp:         false,
