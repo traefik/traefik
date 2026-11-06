@@ -362,4 +362,125 @@ spec:
   disableSessionTickets: true
 ```
 
+### Encrypted Client Hello Keys
+
+_Optional_
+
+The `echKeys` option enables server-side Encrypted Client Hello (ECH), on both TCP (HTTP/1.1, HTTP/2) and HTTP/3 connections.
+Each value provides the private key and the ECH configuration list for a DNS public name: a PEM file path, inline PEM content, or, in Kubernetes, the name of a Secret.
+
+The file format follows [RFC 9934](https://www.rfc-editor.org/rfc/rfc9934.html): a PKCS#8 `PRIVATE KEY` block followed by an `ECHCONFIG` block containing an encoded `ECHConfigList`.
+Traefik currently supports X25519 ECH private keys.
+See [RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) for the ECH protocol.
+
+The `echDecryptOnlyKeys` option accepts the same file format for rotated-out keys: they are still used for decryption, but no longer advertised to clients.
+It requires at least one key in `echKeys`.
+
+!!! info "Provider availability"
+
+    The `echKeys` option can be set with the [File](../../other-providers/file.md) and [KV](../../other-providers/kv.md) providers,
+    and with the Kubernetes [TLSOption](../../kubernetes/crd/tls/tlsoption.md) resource,
+    where each entry references a Kubernetes Secret holding the PEM data under the `tls.ech` key.
+    A referenced Secret that cannot be resolved causes the TLS option to be rejected.
+
+Generate a key file for a public name:
+
+```bash
+traefik ech generate example.com > /etc/traefik/ech.pem
+```
+
+```text
+-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VuBCIE...
+-----END PRIVATE KEY-----
+-----BEGIN ECHCONFIG-----
+AD7+DQA65wAgACA...
+-----END ECHCONFIG-----
+```
+
+The [`openssl ech`](https://docs.openssl.org/master/man1/openssl-ech/) command (OpenSSL 4.0+) produces the same format.
+
+!!! warning "Generate your own key"
+
+    An ECH key must be private to the deployment: never copy key material from documentation or RFC examples, as anyone knowing the private key can decrypt the protected server names.
+    The examples on this page are truncated placeholders.
+
+An ECH connection starts with the public name as server name, so Traefik terminates it with the TLS option matching the public name — the `default` option unless a router matches the public name.
+The ECH keys must be configured on that option.
+If `minVersion` is set, it must be `VersionTLS13`; when it is omitted, ECH connections still use TLS 1.3 while clients without ECH can negotiate any TLS version allowed by the option's default policy.
+
+```yaml tab="Structured (YAML)"
+# Routing configuration
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13
+      echKeys:
+        - /etc/traefik/ech.pem
+```
+
+```toml tab="Structured (TOML)"
+# Routing configuration
+
+[tls.options]
+  [tls.options.default]
+    minVersion = "VersionTLS13"
+    echKeys = ["/etc/traefik/ech.pem"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ech-keys
+  namespace: default
+
+stringData:
+  tls.ech: |
+    -----BEGIN PRIVATE KEY-----
+    MC4CAQAwBQYDK2VuBCIE...
+    -----END PRIVATE KEY-----
+    -----BEGIN ECHCONFIG-----
+    AD7+DQA65wAgACA...
+    -----END ECHCONFIG-----
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  minVersion: VersionTLS13
+  echKeys:
+    - ech-keys
+```
+
+!!! info "TLS option of protected domains"
+
+    The public name's TLS option supplies the ECH keys. Once the ECH extension is decrypted,
+    the handshake re-selects the TLS option matching the protected (decrypted) server name, on both TCP and HTTP/3 connections.
+    On TCP connections, session tickets remain disabled if they are disabled on either the public name's or the protected domain's TLS option.
+    Raw TCP routers (`HostSNI` rules, including passthrough) are still selected using the public name because routing happens before ECH decryption; passthrough routers do not decrypt the connection at all.
+
+A certificate valid for the public name must also be configured: clients validate it whenever ECH is rejected and retried, for example while a key rotation propagates.
+Enabling `sniStrict` without such a certificate breaks this retry mechanism.
+
+#### DNS record
+
+Clients only send ECH once they discover the ECH configuration in the `HTTPS` DNS record of the protected domain (`ech` parameter, see [RFC 9848](https://www.rfc-editor.org/rfc/rfc9848.html)).
+The base64 payload of the `ECHCONFIG` block is the `ECHConfigList` value to publish:
+
+```text
+protected.example.com. 300 IN HTTPS 1 . ech=AD7+DQA65wAgACA...
+```
+
+When rotating keys, move the previous key file from `echKeys` to `echDecryptOnlyKeys` until DNS caches no longer serve the old configuration: the previous key still decrypts incoming handshakes, while only the current configurations are advertised to clients retrying after an ECH rejection ([RFC 9849](https://www.rfc-editor.org/rfc/rfc9849.html) requires retry configurations to carry up-to-date keys).
+
+!!! warning "Private key material"
+
+    ECH files contain private key material. Restrict file access to the Traefik process.
+
 {% include-markdown "includes/traefik-for-business-applications.md" %}
