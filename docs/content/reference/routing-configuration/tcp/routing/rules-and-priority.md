@@ -8,7 +8,7 @@ description: "In Traefik Proxy, a router is in charge of connecting incoming req
 
 !!! note
     - The character @ is not authorized in the router name
-    - If both HTTP routers and TCP routers listen to the same [EntryPoint](../../../install-configuration/entrypoints.md), the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
+    - If HTTP routers and TCP routers listen to the same [entry point](../../../install-configuration/entrypoints.md), the order in which they apply depends on whether the connection uses TLS. See [TCP and HTTP Routers on the Same Entry Point](#tcp-and-http-routers-on-the-same-entry-point).
 
 ## Rules
 
@@ -222,3 +222,33 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
     When two routes from **different providers** share the same numeric priority,
     Traefik uses the [`providers.precedence`](../../../install-configuration/providers/overview.md#providers-precedence) install configuration option to determine which route takes precedence.
     The provider listed first in `precedence` wins the tie.
+
+## TCP and HTTP Routers on the Same Entry Point
+
+When TCP routers and HTTP routers listen to the same entry point, Traefik sends each connection to either the TCP routers or the HTTP routers, before it reads an HTTP request.
+The order depends on whether the connection starts with a TLS handshake.
+
+For a non-TLS connection, the TCP routers without TLS apply first.
+If none of them matches, the HTTP routers handle the connection.
+
+TCP routers without TLS don't apply to TLS connections, unless the entry point has no HTTPS routers and no TCP routers with TLS.
+In that case, the TCP routers without TLS also get TLS connections, and Traefik forwards them without decrypting them.
+
+For a TLS connection, Traefik uses the first case that applies:
+
+1. The SNI matches a `Host` matcher of an HTTPS router (an HTTP router with TLS), including a wildcard value such as ``Host(`*.example.com`)``. A negated `!Host` matcher doesn't count, and ``Host(`*`)`` belongs to case 3. The HTTPS routers handle the connection.
+2. The highest-priority TCP router with TLS (including `tls.passthrough`) that matches the connection has a rule other than exactly ``HostSNI(`*`)``. The matching TCP router handles the connection. A rule with only a `ClientIP` matcher belongs to this case.
+3. At least one HTTPS router on the entry point has no `Host` matcher (a negated `!Host` doesn't count) or has ``Host(`*`)``, for example a rule with only `PathPrefix` or `HostRegexp` matchers. The HTTPS routers handle the connection.
+4. The highest-priority TCP router with TLS that matches the connection has the rule ``HostSNI(`*`)``. The ``HostSNI(`*`)`` router handles the connection.
+5. In any other case, the HTTPS routers handle the connection.
+
+A connection without SNI never matches case 1.
+Traefik doesn't match `HostRegexp` against the SNI.
+For example, an HTTPS router with the rule ``HostRegexp(`^.+\.example\.com$`) || Host(`example.com`)`` takes a connection at case 1 only when the SNI is `example.com`.
+
+When the HTTPS routers handle a connection, they match each request on its `Host` header, path, and other HTTP matchers.
+If no HTTPS router matches the request, Traefik returns a `404` and doesn't try the TCP routers.
+
+The `priority` option orders TCP routers among themselves and HTTP routers among themselves, so a TCP router with `priority: 1000` still applies after an HTTPS router that matches in case 1.
+A ``HostSNI(`*`)`` TCP router has the priority `-1` by default, so it comes after TCP routers with a default priority.
+If you give a ``HostSNI(`*`)`` TCP router a higher `priority` than another TCP router with TLS, Traefik matches it first, and connections for the other router go to case 3 or case 4.
