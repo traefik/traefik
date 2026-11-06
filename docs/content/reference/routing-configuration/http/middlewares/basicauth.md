@@ -69,6 +69,7 @@ spec:
 | <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
 | <a id="opt-removeHeader" href="#opt-removeHeader" title="#opt-removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
+| <a id="opt-allowCORSPreflight" href="#opt-allowCORSPreflight" title="#opt-allowCORSPreflight">`allowCORSPreflight`</a> | Forward CORS preflight requests without authentication. Requires an `OPTIONS` request with a non-empty `Access-Control-Request-Method` header. Other requests still require authentication. | false | No |
 
 ### Passwords format
 
