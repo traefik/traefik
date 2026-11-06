@@ -533,7 +533,7 @@ func TestHandler_Certificates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsManager := tlspkg.NewManager(nil)
+			tlsManager := tlspkg.NewManager(nil, nil)
 
 			if test.setup.loadCerts {
 				dynamicConfigs := []*tlspkg.CertAndStores{{

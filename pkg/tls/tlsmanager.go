@@ -64,15 +64,18 @@ type Manager struct {
 	// It would likely have been a Configuration listener but this implies that certs are re-parsed.
 	// But this would probably have impact on resource consumption.
 	ocspStapler *ocspStapler
+
+	crlManager *CRLManager
 }
 
 // NewManager creates a new Manager.
-func NewManager(ocspConfig *OCSPConfig) *Manager {
+func NewManager(ocspConfig *OCSPConfig, crlManager *CRLManager) *Manager {
 	manager := &Manager{
 		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{
 			"default": DefaultTLSOptions,
 		},
+		crlManager: crlManager,
 	}
 
 	if ocspConfig != nil {
@@ -202,6 +205,12 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	if m.ocspStapler != nil {
 		m.ocspStapler.ForceStapleUpdates()
 	}
+
+	// sanityze CRL cache
+	if m.crlManager != nil {
+		m.crlManager.Prune(configs)
+	}
+
 }
 
 // sanitizeDomains sanitizes the domain definition Main and SANS,
@@ -238,6 +247,10 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig, err := buildTLSConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("building TLS config: %w", err)
+	}
+
+	if err := m.applyExpiryEnforcement(configName, config, tlsConfig); err != nil {
+		return nil, fmt.Errorf("applying CRL enforcement for TLS options %q: %w", configName, err)
 	}
 
 	store := m.getStore(storeName)
@@ -343,6 +356,57 @@ func (m *Manager) GetServerCertificates() map[string]*x509.Certificate {
 	}
 
 	return certificates
+}
+
+// applyExpiryEnforcement wires a CRL enforcer into tlsConfig.VerifyConnection, based on the
+// ClientAuth.Expiry.CRL settings of opt. It is a no-op if CRL validation is disabled or
+// if no CRLManager was configured.
+func (m *Manager) applyExpiryEnforcement(configName string, opt Options, tlsConfig *tls.Config) error {
+	if opt.ClientAuth.ClientAuthType != RequireAndVerifyClientCertWithExpiry {
+		// if client auth level is insufficient, do not check certificate expiry
+		return nil
+	}
+	crlCfg := opt.ClientAuth.Expiry.CRL
+	if crlCfg.Mode == "" || crlCfg.Mode == CRLNOOP || m.crlManager == nil {
+		return nil
+	}
+
+	enforcer, err := m.crlManager.GetEnforcer(configName, crlCfg)
+	if err != nil {
+		return err
+	}
+
+	previousVerify := tlsConfig.VerifyConnection
+	strict := crlCfg.Mode == CRLStrict
+
+	tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+		if previousVerify != nil {
+			if err := previousVerify(cs); err != nil {
+				return err
+			}
+		}
+
+		if len(cs.VerifiedChains) == 0 {
+			if strict {
+				return errors.New("CRL strict mode: no verified certificate chain available")
+			}
+			return nil
+		}
+
+		for _, chain := range cs.VerifiedChains {
+			allowed, err := enforcer.IsChainAllowed(chain)
+			if err != nil {
+				return fmt.Errorf("CRL check failed: %w", err)
+			}
+			if !allowed {
+				return errors.New("certificate chain rejected: revoked according to CRL")
+			}
+		}
+
+		return nil
+	}
+
+	return nil
 }
 
 // GetStore gets the certificate store of a given name.
@@ -467,7 +531,8 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	clientAuthType := tlsOption.ClientAuth.ClientAuthType
 	if len(clientAuthType) > 0 {
 		if conf.ClientCAs == nil && (clientAuthType == "VerifyClientCertIfGiven" ||
-			clientAuthType == "RequireAndVerifyClientCert") {
+			clientAuthType == "RequireAndVerifyClientCert" ||
+			clientAuthType == "RequireAndVerifyClientCertWithExpiry") {
 			return nil, fmt.Errorf("invalid clientAuthType: %s, CAFiles is required", clientAuthType)
 		}
 
@@ -481,6 +546,8 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		case VerifyClientCertIfGiven:
 			conf.ClientAuth = tls.VerifyClientCertIfGiven
 		case RequireAndVerifyClientCert:
+			conf.ClientAuth = tls.RequireAndVerifyClientCert
+		case RequireAndVerifyClientCertWithExpiry:
 			conf.ClientAuth = tls.RequireAndVerifyClientCert
 		default:
 			return nil, fmt.Errorf("unknown client auth type %q", clientAuthType)
