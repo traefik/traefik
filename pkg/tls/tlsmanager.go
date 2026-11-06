@@ -164,6 +164,10 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			Hash:        certHash,
 		}
 
+		if conf.Hostname != "" {
+			certData.Hostnames = []string{conf.Hostname}
+		}
+
 		for _, store := range conf.Stores {
 			if _, ok := m.storesConfig[store]; !ok {
 				m.storesConfig[store] = Store{}
