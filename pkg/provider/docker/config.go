@@ -42,11 +42,15 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 			continue
 		}
 
-		confFromLabel, err := label.DecodeConfiguration(container.Labels)
+		decodableLabels := stripRouterConstraintLabels(container.Labels)
+
+		confFromLabel, err := label.DecodeConfiguration(decodableLabels)
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
+
+		p.filterRoutersByConstraint(ctxContainer, container.Labels, confFromLabel)
 
 		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
@@ -443,4 +447,105 @@ func (p *DynConfBuilder) extractLabels(container dockerData) (configuration, err
 		return p.Shared.extractSwarmLabels(container)
 	}
 	return p.Shared.extractDockerLabels(container)
+}
+
+// stripRouterConstraintLabels returns a copy of the labels map with the
+// per-router "traefik.<protocol>.routers.<name>.constraint" labels removed.
+//
+// These labels are consumed by filterRoutersByConstraint and are not part of
+// the dynamic configuration schema. Removing them before DecodeConfiguration
+// prevents paerser from failing the decode with "field not found, node: constraint",
+// which would otherwise drop every router on the service.
+func stripRouterConstraintLabels(labels map[string]string) map[string]string {
+	out := make(map[string]string, len(labels))
+	for k, v := range labels {
+		if isRouterConstraintLabel(k) {
+			continue
+		}
+		out[k] = v
+	}
+	return out
+}
+
+// isRouterConstraintLabel reports whether key matches
+// "traefik.{http,tcp,udp}.routers.<name>.constraint" (no nested attributes).
+func isRouterConstraintLabel(key string) bool {
+	if !strings.HasPrefix(key, "traefik.") || !strings.HasSuffix(key, ".constraint") {
+		return false
+	}
+	parts := strings.Split(key, ".")
+	if len(parts) != 5 {
+		return false
+	}
+	switch parts[1] {
+	case "http", "tcp", "udp":
+	default:
+		return false
+	}
+	return parts[2] == "routers"
+}
+
+// filterRoutersByConstraint removes routers from the dynamic configuration whose
+// per-router "constraint" label does not match this provider's RouterLabels.
+//
+// The expression syntax mirrors the service-level Constraints expression:
+// Label("key","value"), LabelRegex("key","regex"), and the boolean operators
+// AND, OR, NOT. The expression is evaluated against the provider's RouterLabels
+// (provider-side identity), not the service's labels.
+//
+// Routers without a "traefik.<protocol>.routers.<name>.constraint" label are
+// always kept (default-permit), preserving existing behavior. If the provider's
+// RouterLabels map is empty, no filtering is performed at all.
+func (p *DynConfBuilder) filterRoutersByConstraint(ctx context.Context, labels map[string]string, conf *dynamic.Configuration) {
+	logger := log.Ctx(ctx)
+
+	if len(p.RouterLabels) == 0 {
+		return
+	}
+
+	check := func(protocol, name string) bool {
+		expr := labels["traefik."+protocol+".routers."+name+".constraint"]
+		if expr == "" {
+			return true
+		}
+
+		matches, err := constraints.MatchLabels(p.RouterLabels, expr)
+		if err != nil {
+			logger.Error().Err(err).
+				Str("router", name).
+				Str("protocol", protocol).
+				Msgf("Router pruned: malformed constraint expression %q", expr)
+			return false
+		}
+		if !matches {
+			logger.Debug().
+				Str("router", name).
+				Str("protocol", protocol).
+				Msgf("Router pruned by constraint expression: %q", expr)
+			return false
+		}
+		return true
+	}
+
+	if conf.HTTP != nil {
+		for name := range conf.HTTP.Routers {
+			if !check("http", name) {
+				delete(conf.HTTP.Routers, name)
+			}
+		}
+	}
+	if conf.TCP != nil {
+		for name := range conf.TCP.Routers {
+			if !check("tcp", name) {
+				delete(conf.TCP.Routers, name)
+			}
+		}
+	}
+	if conf.UDP != nil {
+		for name := range conf.UDP.Routers {
+			if !check("udp", name) {
+				delete(conf.UDP.Routers, name)
+			}
+		}
+	}
 }
