@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/vulcand/oxy/v2/utils"
 	"golang.org/x/time/rate"
 )
@@ -166,13 +167,18 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	select {
-	case <-ctx.Done():
-		observability.SetStatusErrorf(ctx, "Context canceled")
-		http.Error(rw, "context canceled", http.StatusInternalServerError)
-		return
+	if *delay > 0 {
+		timer := time.NewTimer(*delay)
+		defer timer.Stop()
 
-	case <-time.After(*delay):
+		select {
+		case <-ctx.Done():
+			observability.SetStatusErrorf(ctx, "Context canceled")
+			rw.WriteHeader(httputil.StatusClientClosedRequest)
+			return
+
+		case <-timer.C:
+		}
 	}
 
 	rl.next.ServeHTTP(rw, req)

@@ -17,7 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
 	lua "github.com/yuin/gopher-lua"
@@ -682,4 +684,108 @@ func computeMinCount(wantCount int) int {
 	}
 
 	return wantCount * 95 / 100
+}
+
+type mockLimiter struct {
+	delay *time.Duration
+	err   error
+}
+
+func (m *mockLimiter) Allow(ctx context.Context, token string) (*time.Duration, error) {
+	return m.delay, m.err
+}
+
+func TestRateLimiter_ContextCanceled(t *testing.T) {
+	t.Run("zero delay with canceled context calls next handler", func(t *testing.T) {
+		t.Parallel()
+
+		called := false
+		next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			called = true
+			rw.WriteHeader(http.StatusOK)
+		})
+
+		handler, err := New(t.Context(), next, dynamic.RateLimit{
+			Average: 100,
+			Burst:   10,
+		}, "rate-limiter")
+		require.NoError(t, err)
+
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+		req.RemoteAddr = "127.0.0.1:1234"
+		ctx, cancel := context.WithCancel(req.Context())
+		cancel()
+		req = req.WithContext(ctx)
+
+		rw := httptest.NewRecorder()
+		handler.ServeHTTP(rw, req)
+
+		assert.True(t, called)
+		assert.Equal(t, http.StatusOK, rw.Code)
+	})
+
+	t.Run("positive delay with canceled context returns 499", func(t *testing.T) {
+		t.Parallel()
+
+		called := false
+		next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			called = true
+			rw.WriteHeader(http.StatusOK)
+		})
+
+		delay := 100 * time.Millisecond
+		rl := &rateLimiter{
+			name:          "test",
+			maxDelay:      500 * time.Millisecond,
+			sourceMatcher: utils.ExtractorFunc(func(r *http.Request) (string, int64, error) { return "127.0.0.1", 1, nil }),
+			next:          next,
+			logger:        middlewares.GetLogger(t.Context(), "test", typeName),
+			limiter:       &mockLimiter{delay: &delay},
+		}
+
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+		ctx, cancel := context.WithCancel(req.Context())
+		cancel()
+		req = req.WithContext(ctx)
+
+		rw := httptest.NewRecorder()
+		rl.ServeHTTP(rw, req)
+
+		assert.False(t, called)
+		assert.Equal(t, httputil.StatusClientClosedRequest, rw.Code)
+	})
+
+	t.Run("positive delay canceled in-flight returns 499", func(t *testing.T) {
+		t.Parallel()
+
+		called := false
+		next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			called = true
+			rw.WriteHeader(http.StatusOK)
+		})
+
+		delay := 500 * time.Millisecond
+		rl := &rateLimiter{
+			name:          "test",
+			maxDelay:      time.Second,
+			sourceMatcher: utils.ExtractorFunc(func(r *http.Request) (string, int64, error) { return "127.0.0.1", 1, nil }),
+			next:          next,
+			logger:        middlewares.GetLogger(t.Context(), "test", typeName),
+			limiter:       &mockLimiter{delay: &delay},
+		}
+
+		ctx, cancel := context.WithCancel(t.Context())
+		req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil).WithContext(ctx)
+
+		go func() {
+			time.Sleep(20 * time.Millisecond)
+			cancel()
+		}()
+
+		rw := httptest.NewRecorder()
+		rl.ServeHTTP(rw, req)
+
+		assert.False(t, called)
+		assert.Equal(t, httputil.StatusClientClosedRequest, rw.Code)
+	})
 }
