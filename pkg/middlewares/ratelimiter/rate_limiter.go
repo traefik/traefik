@@ -99,6 +99,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
+	// An expired bucket is recreated full,
+	// so never expire a bucket before it would have refilled completely.
+	// Otherwise, a client pausing between bursts would get the missing tokens for free.
+	if rtl > 0 {
+		if refill := int(math.Ceil(float64(burst) / rtl)); refill > ttl {
+			ttl = refill
+		}
+	}
 	var limiter limiter
 	if config.Redis != nil {
 		limiter, err = newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
