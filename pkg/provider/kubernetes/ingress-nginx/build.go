@@ -24,6 +24,9 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+// errNoCACertificate is returned for an auth-tls-secret without CA certificate, which ingress-nginx does not treat as an error.
+var errNoCACertificate = errors.New("secret does not contain a CA certificate")
+
 type ingressEntry struct {
 	*netv1.Ingress
 
@@ -96,7 +99,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	// First pass: collect all regular and canary ingresses.
 	var (
-		regularIngresses []ingressEntry
+		// orderedIngresses holds the regular and the canary ingresses, in the order ingress-nginx reads them.
+		orderedIngresses []ingressEntry
 		canaryIngresses  []ingressEntry
 	)
 
@@ -147,6 +151,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 		if ptr.Deref(cfg.Canary, false) {
 			canaryIngresses = append(canaryIngresses, entry)
+			orderedIngresses = append(orderedIngresses, entry)
 			continue
 		}
 
@@ -196,7 +201,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			}
 		}
 
-		regularIngresses = append(regularIngresses, entry)
+		orderedIngresses = append(orderedIngresses, entry)
 	}
 
 	// Second pass: resolve canary backends.
@@ -286,12 +291,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// location that needs it, to avoid emitting several routers with the same rule.
 	hostsWithAppRootRouter := make(map[string]bool)
 
-	for _, ing := range regularIngresses {
+	for _, ing := range orderedIngresses {
 		logger := log.Ctx(ctx).With().
 			Str("ingress", ing.Name).
 			Str("namespace", ing.Namespace).
 			Logger()
 		ctxIng := logger.WithContext(ctx)
+
+		// ingress-nginx reads the auth-tls annotations of a canary Ingress like the ones of any other Ingress, in the same order,
+		// and only then sets it aside: a canary Ingress can configure the client auth of its servers.
+		if ptr.Deref(ing.config.Canary, false) {
+			if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+				logger.Error().Err(err).Msg("Cannot build client auth TLS option")
+			}
+			continue
+		}
 
 		// ssl-passthrough only adds the TCP router forwarding the connection to the backend without decrypting it.
 		// The HTTP side of the ingress is built below like any other, ingress-nginx serving that host on the HTTP port from the regular location.
@@ -363,38 +377,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			continue
 		}
 
-		// Resolve TLS option (auth-tls-secret).
-		var clientAuthTLSOption *tls.Options
-		if ing.config.AuthTLSSecret != nil {
-			clientAuthTLSOption, err = p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionCache)
-			if err != nil {
-				logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
-				// Skipping the ingress entirely matches ingress-nginx behavior:
-				// when the configured client-auth secret cannot be resolved, no
-				// router/middleware/service should be exposed for the ingress.
-				continue
-			}
+		if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+			logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+			continue
 		}
 
 		for ri, rule := range ing.Spec.Rules {
 			srv := getOrCreateServer(mc.Servers, rule.Host)
-
-			// A rule without paths only names the host of the Ingress default backend:
-			// like ingress-nginx, it does not enable the client auth of its host, except on the default server.
-			if rule.HTTP == nil && srv.Hostname != "" {
-				continue
-			}
-
-			// The first Ingress declaring client auth wins the host, as ingress-nginx applies it to the whole server block.
-			if clientAuthTLSOption != nil {
-				switch {
-				case srv.clientAuthIngress == "":
-					srv.TLSOption = clientAuthTLSOption
-					srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
-				case srv.TLSOption != clientAuthTLSOption:
-					log.Ctx(ctxIng).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
-				}
-			}
 
 			if rule.HTTP == nil {
 				continue
@@ -648,6 +637,17 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 	}
 
+	// The client auth of a server is only known once every Ingress is read, as any of them may be the first declaring it.
+	for _, srv := range mc.Servers {
+		for _, loc := range srv.Locations {
+			buildAuthTLSPassCert(srv, loc)
+		}
+	}
+	// The default backend serves the requests no other location matches, which ingress-nginx handles in its default server.
+	if srv, ok := mc.Servers[""]; ok && mc.DefaultBackendLocation != nil {
+		buildAuthTLSPassCert(srv, mc.DefaultBackendLocation)
+	}
+
 	return mc
 }
 
@@ -898,6 +898,58 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 	return nil
 }
 
+// buildServersClientAuth configures the client certificate authentication of the servers of an Ingress from its auth-tls annotations.
+// It returns an error when the auth-tls-secret cannot be used.
+func (p *Provider) buildServersClientAuth(ctx context.Context, servers map[string]*server, hosts map[string]bool, ing ingressEntry, tlsOptionsCache map[string]*tls.Options) error {
+	if ing.config.AuthTLSSecret == nil {
+		return nil
+	}
+
+	clientAuthTLSOption, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionsCache)
+	if errors.Is(err, errNoCACertificate) {
+		// ingress-nginx serves the Ingress without client auth, and leaves it to the next Ingress of the host.
+		log.Ctx(ctx).Warn().Msgf("Secret %q has no CA certificate, client certificate authentication is disabled", *ing.config.AuthTLSSecret)
+		return nil
+	}
+	passCertificate := ptr.Deref(ing.config.AuthTLSPassCertificateToUpstream, false)
+
+	for _, rule := range ing.Spec.Rules {
+		// A rule without paths only names the host of the Ingress default backend:
+		// like ingress-nginx, it does not configure the client auth of its host, except on the default server.
+		if rule.HTTP == nil && rule.Host != "" {
+			continue
+		}
+
+		// ingress-nginx creates no server for a host only canary Ingresses declare, and falls back to its default server.
+		host := rule.Host
+		if !hosts[host] {
+			host = ""
+		}
+		srv := getOrCreateServer(servers, host)
+
+		// ingress-nginx answers 403 to every request of the servers of the Ingress,
+		// so none of its locations is exposed, and neither are the ones of the other Ingresses of these servers.
+		if err != nil {
+			if srv.AuthTLSError == "" {
+				srv.AuthTLSError = err.Error()
+			}
+			continue
+		}
+
+		// The first Ingress declaring client auth wins the host, as ingress-nginx applies it to the whole server block.
+		switch {
+		case srv.clientAuthIngress == "":
+			srv.TLSOption = clientAuthTLSOption
+			srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
+			srv.clientAuthPassCertificate = passCertificate
+		case srv.TLSOption != clientAuthTLSOption || srv.clientAuthPassCertificate != passCertificate:
+			log.Ctx(ctx).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
+		}
+	}
+
+	return err
+}
+
 // buildClientAuthTLSOption resolves the client-auth TLS option for the auth-tls-secret annotation.
 // Ingresses sharing a secret and client auth type get the same option, which the election of the server client auth relies on to detect conflicts.
 // The cross-namespace check runs before the cache lookup, as the cache key leaves out the Ingress namespace.
@@ -928,7 +980,7 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 	}
 
 	if blocks.ca == nil {
-		return nil, errors.New("secret does not contain a CA certificate")
+		return nil, errNoCACertificate
 	}
 
 	opt := &tls.Options{}
