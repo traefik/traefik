@@ -141,11 +141,11 @@ func (ec *EncodedCharacters) SetDefaults() {
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
 type HTTP2Config struct {
-	MaxReceiveBufferPerConnection int32 `description:"Specifies the maximum HTTP/2 request-body receive window per connection, in bytes." json:"maxReceiveBufferPerConnection,omitempty" toml:"maxReceiveBufferPerConnection,omitempty" yaml:"maxReceiveBufferPerConnection,omitempty" export:"true"`
-	MaxReceiveBufferPerStream     int32 `description:"Specifies the maximum HTTP/2 request-body receive window per stream, in bytes." json:"maxReceiveBufferPerStream,omitempty" toml:"maxReceiveBufferPerStream,omitempty" yaml:"maxReceiveBufferPerStream,omitempty" export:"true"`
 	MaxConcurrentStreams          int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
 	MaxDecoderHeaderTableSize     int32 `description:"Specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side." json:"maxDecoderHeaderTableSize,omitempty" toml:"maxDecoderHeaderTableSize,omitempty" yaml:"maxDecoderHeaderTableSize,omitempty" export:"true"`
 	MaxEncoderHeaderTableSize     int32 `description:"Specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side." json:"maxEncoderHeaderTableSize,omitempty" toml:"maxEncoderHeaderTableSize,omitempty" yaml:"maxEncoderHeaderTableSize,omitempty" export:"true"`
+	MaxReceiveBufferPerConnection int32 `description:"Specifies the maximum size of the HTTP2 receive window per connection, in bytes." json:"maxReceiveBufferPerConnection,omitempty" toml:"maxReceiveBufferPerConnection,omitempty" yaml:"maxReceiveBufferPerConnection,omitempty" export:"true"`
+	MaxReceiveBufferPerStream     int32 `description:"Specifies the maximum size of the HTTP2 receive window per stream, in bytes." json:"maxReceiveBufferPerStream,omitempty" toml:"maxReceiveBufferPerStream,omitempty" yaml:"maxReceiveBufferPerStream,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
