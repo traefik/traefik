@@ -915,6 +915,8 @@ func TestHTTP2Config(t *testing.T) {
 	expectedMaxConcurrentStreams := 42
 	expectedEncoderTableSize := 128
 	expectedDecoderTableSize := 256
+	expectedReceiveBufferPerConnection := 33554432
+	expectedReceiveBufferPerStream := 16777216
 
 	// Create a listener for the server.
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -929,6 +931,8 @@ func TestHTTP2Config(t *testing.T) {
 	configuration.HTTP2.MaxConcurrentStreams = int32(expectedMaxConcurrentStreams)
 	configuration.HTTP2.MaxEncoderHeaderTableSize = int32(expectedEncoderTableSize)
 	configuration.HTTP2.MaxDecoderHeaderTableSize = int32(expectedDecoderTableSize)
+	configuration.HTTP2.MaxReceiveBufferPerConnection = int32(expectedReceiveBufferPerConnection)
+	configuration.HTTP2.MaxReceiveBufferPerStream = int32(expectedReceiveBufferPerStream)
 
 	// Create the HTTP server using newHTTPServer.
 	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
@@ -940,6 +944,8 @@ func TestHTTP2Config(t *testing.T) {
 	assert.Equal(t, expectedMaxConcurrentStreams, httpServer.HTTP2.MaxConcurrentStreams)
 	assert.Equal(t, expectedEncoderTableSize, httpServer.HTTP2.MaxEncoderHeaderTableSize)
 	assert.Equal(t, expectedDecoderTableSize, httpServer.HTTP2.MaxDecoderHeaderTableSize)
+	assert.Equal(t, expectedReceiveBufferPerConnection, httpServer.HTTP2.MaxReceiveBufferPerConnection)
+	assert.Equal(t, expectedReceiveBufferPerStream, httpServer.HTTP2.MaxReceiveBufferPerStream)
 }
 
 // TestRequestTargetForms tests the handling of the request target forms through the whole entrypoint handler chain,
