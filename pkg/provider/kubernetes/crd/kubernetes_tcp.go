@@ -301,7 +301,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 			}
 
 			for _, endpoint := range endpointSlice.Endpoints {
-				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				if !ptr.Deref(endpoint.Conditions.Ready, true) {
 					continue
 				}
 

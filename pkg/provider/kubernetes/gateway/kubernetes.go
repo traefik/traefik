@@ -1072,7 +1072,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+			if !ptr.Deref(endpoint.Conditions.Ready, true) {
 				continue
 			}
 
