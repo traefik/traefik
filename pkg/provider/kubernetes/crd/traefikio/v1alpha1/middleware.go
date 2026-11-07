@@ -169,6 +169,9 @@ type BasicAuth struct {
 	// RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
 	// Default: false.
 	RemoveHeader bool `json:"removeHeader,omitempty"`
+	// AllowCORSPreflight allows OPTIONS requests with a non-empty Access-Control-Request-Method header to pass through without authentication.
+	// Default: false.
+	AllowCORSPreflight bool `json:"allowCORSPreflight,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`

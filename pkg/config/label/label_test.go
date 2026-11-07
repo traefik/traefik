@@ -1346,6 +1346,7 @@ func TestEncodeConfiguration(t *testing.T) {
 
 	expected := map[string]string{
 		"traefik.HTTP.Middlewares.Middleware0.AddPrefix.Prefix":                                    "foobar",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.AllowCORSPreflight":                        "false",
 		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.HeaderField":                               "foobar",
 		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.Realm":                                     "foobar",
 		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.RemoveHeader":                              "true",

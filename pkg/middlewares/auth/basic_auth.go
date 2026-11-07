@@ -24,12 +24,13 @@ const (
 )
 
 type basicAuth struct {
-	next         http.Handler
-	auth         *goauth.BasicAuth
-	users        map[string]string
-	headerField  string
-	removeHeader bool
-	name         string
+	next               http.Handler
+	auth               *goauth.BasicAuth
+	users              map[string]string
+	headerField        string
+	removeHeader       bool
+	allowCORSPreflight bool
+	name               string
 
 	notFoundSecret    string
 	checkSecret       func(password, secret string) bool
@@ -55,14 +56,15 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	notFoundSecret := slices.Collect(maps.Values(users))[0]
 
 	ba := &basicAuth{
-		next:              next,
-		users:             users,
-		headerField:       authConfig.HeaderField,
-		removeHeader:      authConfig.RemoveHeader,
-		name:              name,
-		notFoundSecret:    notFoundSecret,
-		checkSecret:       goauth.CheckSecret,
-		singleflightGroup: new(singleflight.Group),
+		next:               next,
+		users:              users,
+		headerField:        authConfig.HeaderField,
+		removeHeader:       authConfig.RemoveHeader,
+		allowCORSPreflight: authConfig.AllowCORSPreflight,
+		name:               name,
+		notFoundSecret:     notFoundSecret,
+		checkSecret:        goauth.CheckSecret,
+		singleflightGroup:  new(singleflight.Group),
 	}
 
 	realm := defaultRealm
@@ -80,6 +82,14 @@ func (b *basicAuth) GetTracingInformation() (string, string) {
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if b.allowCORSPreflight && req.Method == http.MethodOptions && req.Header.Get("Access-Control-Request-Method") != "" {
+		if b.removeHeader {
+			req.Header.Del(authorizationHeader)
+		}
+		b.next.ServeHTTP(rw, req)
+		return
+	}
+
 	logger := middlewares.GetLogger(req.Context(), b.name, typeNameBasic)
 
 	user, password, ok := req.BasicAuth()
