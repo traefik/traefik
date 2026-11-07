@@ -18,7 +18,7 @@ How to migrate from Ingress NGINX Controller to Traefik with zero downtime.
     - No security patches
     - No bug fixes
 
-    For more information, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
+    For more information, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
 
 ## What You Will Achieve
 
@@ -534,7 +534,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
         loadBalancerIP: "<your-static-ip>"
     ```
 
-    For more details, see the [GKE LoadBalancer Service parameters documentation](https://cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
+    For more details, see the [GKE LoadBalancer Service parameters documentation](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
 
 ??? note "OVHcloud"
 
