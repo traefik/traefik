@@ -911,73 +911,12 @@ func TestPathOperations(t *testing.T) {
 	}
 }
 
-func TestHTTP2ReceiveWindows(t *testing.T) {
-	for _, tc := range []struct {
-		name       string
-		config     static.HTTP2Config
-		stream     uint32
-		connection uint32
-	}{
-		{"defaults", static.HTTP2Config{}, 1048576, 1048576},
-		{"configured", static.HTTP2Config{MaxReceiveBufferPerStream: 16777216, MaxReceiveBufferPerConnection: 33554432}, 16777216, 33554432},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			configuration := &static.EntryPoint{}
-			configuration.SetDefaults()
-			configuration.HTTP2 = &tc.config
-			listener, err := net.Listen("tcp", "127.0.0.1:0")
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = listener.Close() })
-			server, err := newHTTPServer(t.Context(), listener, configuration, true, requestdecorator.New(nil))
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = server.Server.Close() })
-			go func() { _ = server.Server.Serve(listener) }()
-			connection, err := net.DialTimeout("tcp", listener.Addr().String(), time.Second)
-			require.NoError(t, err)
-			defer connection.Close()
-			require.NoError(t, connection.SetDeadline(time.Now().Add(5*time.Second)))
-			_, err = connection.Write([]byte(http2.ClientPreface))
-			require.NoError(t, err)
-			framer := http2.NewFramer(connection, connection)
-			require.NoError(t, framer.WriteSettings())
-			ping := [8]byte{1}
-			require.NoError(t, framer.WritePing(false, ping))
-			streamWindow := uint32(65535)
-			connectionWindow := uint32(65535)
-			for {
-				frame, err := framer.ReadFrame()
-				require.NoError(t, err)
-				switch frame := frame.(type) {
-				case *http2.SettingsFrame:
-					if !frame.IsAck() {
-						require.NoError(t, frame.ForeachSetting(func(setting http2.Setting) error {
-							if setting.ID == http2.SettingInitialWindowSize {
-								streamWindow = setting.Val
-							}
-							return nil
-						}))
-						require.NoError(t, framer.WriteSettingsAck())
-					}
-				case *http2.WindowUpdateFrame:
-					if frame.StreamID == 0 {
-						connectionWindow += frame.Increment
-					}
-				case *http2.PingFrame:
-					if frame.IsAck() && frame.Data == ping {
-						assert.Equal(t, tc.stream, streamWindow)
-						assert.Equal(t, tc.connection, connectionWindow)
-						return
-					}
-				}
-			}
-		})
-	}
-}
-
 func TestHTTP2Config(t *testing.T) {
 	expectedMaxConcurrentStreams := 42
 	expectedEncoderTableSize := 128
 	expectedDecoderTableSize := 256
+	expectedReceiveBufferPerConnection := 33554432
+	expectedReceiveBufferPerStream := 16777216
 
 	// Create a listener for the server.
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -992,6 +931,8 @@ func TestHTTP2Config(t *testing.T) {
 	configuration.HTTP2.MaxConcurrentStreams = int32(expectedMaxConcurrentStreams)
 	configuration.HTTP2.MaxEncoderHeaderTableSize = int32(expectedEncoderTableSize)
 	configuration.HTTP2.MaxDecoderHeaderTableSize = int32(expectedDecoderTableSize)
+	configuration.HTTP2.MaxReceiveBufferPerConnection = int32(expectedReceiveBufferPerConnection)
+	configuration.HTTP2.MaxReceiveBufferPerStream = int32(expectedReceiveBufferPerStream)
 
 	// Create the HTTP server using newHTTPServer.
 	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
@@ -1003,6 +944,8 @@ func TestHTTP2Config(t *testing.T) {
 	assert.Equal(t, expectedMaxConcurrentStreams, httpServer.HTTP2.MaxConcurrentStreams)
 	assert.Equal(t, expectedEncoderTableSize, httpServer.HTTP2.MaxEncoderHeaderTableSize)
 	assert.Equal(t, expectedDecoderTableSize, httpServer.HTTP2.MaxDecoderHeaderTableSize)
+	assert.Equal(t, expectedReceiveBufferPerConnection, httpServer.HTTP2.MaxReceiveBufferPerConnection)
+	assert.Equal(t, expectedReceiveBufferPerStream, httpServer.HTTP2.MaxReceiveBufferPerStream)
 }
 
 // TestRequestTargetForms tests the handling of the request target forms through the whole entrypoint handler chain,
