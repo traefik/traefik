@@ -641,6 +641,12 @@ type httpServer struct {
 }
 
 func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+	if configuration.HTTP2.MaxReceiveBufferPerConnection != 0 && configuration.HTTP2.MaxReceiveBufferPerConnection < 65535 {
+		return nil, errors.New("HTTP/2 connection receive buffer must be zero or at least 65535 bytes")
+	}
+	if configuration.HTTP2.MaxReceiveBufferPerStream < 0 {
+		return nil, errors.New("HTTP/2 stream receive buffer must be greater than or equal to zero")
+	}
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
@@ -795,9 +801,11 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
 		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
 		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
-			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
-			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
+			MaxReceiveBufferPerConnection: int(configuration.HTTP2.MaxReceiveBufferPerConnection),
+			MaxReceiveBufferPerStream:     int(configuration.HTTP2.MaxReceiveBufferPerStream),
+			MaxConcurrentStreams:          int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize:     int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize:     int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
 		ConnContext: connContext.Build(),
 		ConnState:   connState,
