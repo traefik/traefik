@@ -634,9 +634,9 @@ func Test_HostSNIV2(t *testing.T) {
 			buildErr: true,
 		},
 		{
-			desc:      "Non ASCII host",
-			ruleHosts: []string{"héhé"},
-			buildErr:  true,
+			desc:       "Non ASCII host (auto punycode)",
+			ruleHosts:  []string{"héhé"},
+			serverName: "xn--hh-bjab",
 		},
 		{
 			desc:       "Not Matching hosts",
