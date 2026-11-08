@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,7 +114,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `PathPrefix("/") && Header("foo","bar")`,
-			expectedPriority: 101,
+			expectedPriority: 4591,
 		},
 		{
 			desc:             "One HTTPRouteMatch with nil HTTPPathMatch",
@@ -129,7 +131,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `(Path("/foo") || PathPrefix("/foo/"))`,
-			expectedPriority: 10500,
+			expectedPriority: 780300,
 		},
 		{
 			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
@@ -140,7 +142,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Path("/")`,
-			expectedPriority: 100000,
+			expectedPriority: 159961500,
 		},
 		{
 			desc: "One Path",
@@ -151,7 +153,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Path("/foo/")`,
-			expectedPriority: 100000,
+			expectedPriority: 159961500,
 		},
 		{
 			desc: "Path && Header",
@@ -169,7 +171,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Path("/foo/") && Header("my-header","foo")`,
-			expectedPriority: 100100,
+			expectedPriority: 159966090,
 		},
 		{
 			desc:      "Host && Path && Header",
@@ -188,7 +190,7 @@ func Test_buildMatchRule(t *testing.T) {
 				},
 			},
 			expectedRule:     `Host("foo.com") && Path("/foo/") && Header("my-header","foo")`,
-			expectedPriority: 100107,
+			expectedPriority: 159966097,
 		},
 	}
 
@@ -199,6 +201,68 @@ func Test_buildMatchRule(t *testing.T) {
 			rule, priority := buildMatchRule(test.hostnames, test.match)
 			assert.Equal(t, test.expectedRule, rule)
 			assert.Equal(t, test.expectedPriority, priority)
+		})
+	}
+}
+
+func Test_buildMatchRule_precedence(t *testing.T) {
+	pathPrefix := func(value string) *gatev1.HTTPPathMatch {
+		return &gatev1.HTTPPathMatch{Type: new(gatev1.PathMatchPathPrefix), Value: new(value)}
+	}
+	headers := func(count int) []gatev1.HTTPHeaderMatch {
+		var matches []gatev1.HTTPHeaderMatch
+		for i := range count {
+			matches = append(matches, gatev1.HTTPHeaderMatch{Name: gatev1.HTTPHeaderName(fmt.Sprintf("X-Header-%d", i)), Value: "foo"})
+		}
+		return matches
+	}
+	queryParams := func(count int) []gatev1.HTTPQueryParamMatch {
+		var matches []gatev1.HTTPQueryParamMatch
+		for i := range count {
+			matches = append(matches, gatev1.HTTPQueryParamMatch{Name: gatev1.HTTPHeaderName(fmt.Sprintf("param%d", i)), Value: "foo"})
+		}
+		return matches
+	}
+
+	testCases := []struct {
+		desc   string
+		higher gatev1.HTTPRouteMatch
+		lower  gatev1.HTTPRouteMatch
+	}{
+		{
+			desc:   "Exact path over longest prefix path",
+			higher: gatev1.HTTPRouteMatch{Path: &gatev1.HTTPPathMatch{Type: new(gatev1.PathMatchExact), Value: new("/")}},
+			lower:  gatev1.HTTPRouteMatch{Path: pathPrefix("/" + strings.Repeat("a", 1023)), Method: new(gatev1.HTTPMethodGet), Headers: headers(16), QueryParams: queryParams(16)},
+		},
+		{
+			desc:   "Longer prefix path over method",
+			higher: gatev1.HTTPRouteMatch{Path: pathPrefix("/api/v1")},
+			lower:  gatev1.HTTPRouteMatch{Path: pathPrefix("/api"), Method: new(gatev1.HTTPMethodGet)},
+		},
+		{
+			desc:   "Longer prefix path over header matches",
+			higher: gatev1.HTTPRouteMatch{Path: pathPrefix("/app/v2")},
+			lower:  gatev1.HTTPRouteMatch{Path: pathPrefix("/app"), Headers: headers(3)},
+		},
+		{
+			desc:   "Method over header matches",
+			higher: gatev1.HTTPRouteMatch{Path: pathPrefix("/api"), Method: new(gatev1.HTTPMethodGet)},
+			lower:  gatev1.HTTPRouteMatch{Path: pathPrefix("/api"), Headers: headers(16), QueryParams: queryParams(16)},
+		},
+		{
+			desc:   "Header match over query param matches",
+			higher: gatev1.HTTPRouteMatch{Path: pathPrefix("/api"), Headers: headers(1)},
+			lower:  gatev1.HTTPRouteMatch{Path: pathPrefix("/api"), QueryParams: queryParams(16)},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, higherPriority := buildMatchRule(nil, test.higher)
+			_, lowerPriority := buildMatchRule(nil, test.lower)
+			assert.Greater(t, higherPriority, lowerPriority)
 		})
 	}
 }
