@@ -1298,8 +1298,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/volcengine/volc-sdk-golang v1.0.258 h1:75HALNNPeVm9Jvojft7CGS5PB7PN46h2oHuQOfdJ15w=
 github.com/volcengine/volc-sdk-golang v1.0.258/go.mod h1:zHJlaqiMbIB+0mcrsZPTwOb3FB7S/0MCfqlnO8R7hlM=
-github.com/vulcand/oxy/v2 v2.3.1 h1:xPtCFwm4djbf2mL3auyG4tBV5gemdIASd2ZFGeTGlEs=
-github.com/vulcand/oxy/v2 v2.3.1/go.mod h1:yh59ozagWxLpyQQ4Va6iDjMc1B8HzyW5vqxGjj9rUyQ=
+github.com/vulcand/oxy/v2 v2.3.2 h1:JhV9+cGjhMV2BhD8YWnFZ13tZW6UMIZhL2pdFHujUiI=
+github.com/vulcand/oxy/v2 v2.3.2/go.mod h1:yh59ozagWxLpyQQ4Va6iDjMc1B8HzyW5vqxGjj9rUyQ=
 github.com/vulcand/predicate v1.3.0 h1:jtNe4PHbLJ649dR7Gl+MSAzUhLGtLspAkWlSjoOiXg8=
 github.com/vulcand/predicate v1.3.0/go.mod h1:opzv9MetRuMNnuoPeTSWtwzjcXsxQC00/fuWzkPTn4s=
 github.com/vultr/govultr/v3 v3.33.2 h1:cgQk4rDLwKMk3FwXL73Rf/aZDnps8N29VPo000E1eBQ=
