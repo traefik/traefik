@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -116,6 +117,61 @@ func TestForwardAuthSuccess(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body))
+}
+
+func TestForwardAuthPreservesBackendCookies(t *testing.T) {
+	backendCookies := []string{
+		`prefs={"theme":"dark"}; Path=/`,
+		`greeting=hello world; Path=/`,
+		`list=a,b,c; Path=/`,
+		`sid=abc123; Path=/; Secure; HttpOnly; Priority=High`,
+		`authCookie=Backend; Path=/`,
+	}
+
+	testCases := []struct {
+		desc                     string
+		addAuthCookiesToResponse []string
+		expected                 []string
+	}{
+		{
+			desc:     "without addAuthCookiesToResponse",
+			expected: backendCookies,
+		},
+		{
+			desc:                     "with addAuthCookiesToResponse",
+			addAuthCookiesToResponse: []string{"authCookie"},
+			expected:                 append(slices.Clone(backendCookies[:4]), "authCookie=Auth"),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Set-Cookie", "authCookie=Auth")
+				w.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(server.Close)
+
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				for _, cookie := range backendCookies {
+					w.Header().Add("Set-Cookie", cookie)
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+
+			middleware, err := NewForward(t.Context(), next, dynamic.ForwardAuth{
+				Address:                  server.URL,
+				AddAuthCookiesToResponse: test.addAuthCookiesToResponse,
+			}, "authTest")
+			require.NoError(t, err)
+
+			rec := httptest.NewRecorder()
+			middleware.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://example.com/", nil))
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.Equal(t, test.expected, rec.Result().Header["Set-Cookie"])
+		})
+	}
 }
 
 func TestForwardAuthForwardBody(t *testing.T) {
