@@ -239,17 +239,26 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
-	meterProvider := sdkmetric.NewMeterProvider(
+	meterProviderOpts := []sdkmetric.Option{
 		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
-		// View to customize histogram buckets and rename a single histogram instrument.
-		sdkmetric.WithView(sdkmetric.NewView(
+	}
+
+	// The view applies the configured explicit boundaries to the Traefik histograms.
+	// As a view takes precedence over the exporter's aggregation,
+	// it is only added when the exporter uses explicit bucket histograms (the default).
+	// This lets OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram
+	// switch these histograms to exponential bucket histograms.
+	if _, ok := exporter.Aggregation(sdkmetric.InstrumentKindHistogram).(sdkmetric.AggregationExplicitBucketHistogram); ok {
+		meterProviderOpts = append(meterProviderOpts, sdkmetric.WithView(sdkmetric.NewView(
 			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
 			sdkmetric.Stream{Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
 				Boundaries: config.ExplicitBoundaries,
 			}},
-		)),
-	)
+		)))
+	}
+
+	meterProvider := sdkmetric.NewMeterProvider(meterProviderOpts...)
 
 	otel.SetMeterProvider(meterProvider)
 

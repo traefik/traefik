@@ -120,9 +120,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 	}
 
 	status := gatev1.HTTPRouteStatus{
-		RouteStatus: gatev1.RouteStatus{
-			Parents: parentStatuses,
-		},
+		Parents: parentStatuses,
 	}
 	if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, status); err != nil {
 		logger.Warn().
@@ -178,7 +176,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			router.Middlewares, err = p.loadMiddlewares(routerConf, route.Namespace, routerName, routeRule.Filters, match.Path)
 			switch {
 			case err != nil:
-				log.Ctx(ctx).Error().Err(err).Msg("Unable to load HTTPRoute filters")
+				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load HTTPRoute filters")
 
 				errWrrName := routerName + "-err-wrr"
 				routerConf.HTTP.Services[errWrrName] = &dynamic.Service{
@@ -259,7 +257,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
-			log.Ctx(ctx).Error().
+			log.Ctx(ctx).Debug().
 				Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
 
 			condition = errCondition
@@ -997,11 +995,8 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 	}
 
 	if portSpec.AppProtocol == nil {
-		protocol := schemeHTTP
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
-			protocol = schemeHTTPS
-		}
-		return protocol, nil
+		// Without an appProtocol the backend is assumed to serve plain HTTP.
+		return schemeHTTP, nil
 	}
 
 	switch ap := strings.ToLower(*portSpec.AppProtocol); ap {

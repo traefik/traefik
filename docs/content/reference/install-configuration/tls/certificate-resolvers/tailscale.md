@@ -9,7 +9,7 @@ Provision TLS certificates for your internal Tailscale services.
 {: .subtitle }
 
 To protect a service with TLS, a certificate from a public Certificate Authority is needed.
-In addition to its vpn role, Tailscale can also [provide certificates](https://tailscale.com/kb/1153/enabling-https/) for the machines in your Tailscale network.
+In addition to its vpn role, Tailscale can also [provide certificates](https://tailscale.com/docs/how-to/set-up-https-certificates) for the machines in your Tailscale network.
 
 ## Configuration Example
 

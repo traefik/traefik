@@ -65,7 +65,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/traefik/) docker image
+- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/traefik/traefik/) docker image
 
 ## Supported Backends
 
@@ -150,7 +150,7 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Credits
 
-Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
+Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!
 
 The gopher's logo of Traefik is licensed under the Creative Commons 3.0 Attributions license.
 

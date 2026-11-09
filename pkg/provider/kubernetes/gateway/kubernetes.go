@@ -965,10 +965,8 @@ func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*
 	}
 
 	certAndStore := &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: types.FileOrContent(cert),
-			KeyFile:  types.FileOrContent(key),
-		},
+		CertFile: types.FileOrContent(cert),
+		KeyFile:  types.FileOrContent(key),
 	}
 	if _, err := certAndStore.GetCertificate(); err != nil {
 		return nil, fmt.Errorf("validating certificate: %w", err)

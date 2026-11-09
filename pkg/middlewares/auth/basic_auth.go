@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
@@ -19,7 +20,8 @@ import (
 )
 
 const (
-	typeNameBasic = "BasicAuth"
+	typeNameBasic     = "BasicAuth"
+	maxPasswordLength = 1024
 )
 
 type basicAuth struct {
@@ -83,7 +85,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	user, password, ok := req.BasicAuth()
 	var authenticated bool
-	if ok {
+	if ok && len(password) <= maxPasswordLength {
 		authenticated = b.checkPassword(user, password)
 	}
 
@@ -152,7 +154,8 @@ func (b *basicAuth) secretBasic(user, _ string) string {
 func basicUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 2 {
-		return "", "", fmt.Errorf("error parsing BasicUser: %v", user)
+		// The user is not part of the error, as it may come from a secret.
+		return "", "", errors.New("expected user:hash format")
 	}
 	return split[0], split[1], nil
 }

@@ -12,8 +12,8 @@ Traefik provides metrics in the [OpenTelemetry](#open-telemetry) format as well 
 - [Prometheus](#prometheus)
 - [StatsD](#statsd)
 
-Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
-and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
+Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346-traefik-official-standalone-dashboard/)
+and [Kubernetes](https://grafana.com/grafana/dashboards/17347-traefik-official-kubernetes-dashboard/) deployments.
 
 ---
 
@@ -68,7 +68,7 @@ metrics:
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
 | <a id="opt-metrics-otlp-addServicesLabels" href="#opt-metrics-otlp-addServicesLabels" title="#opt-metrics-otlp-addServicesLabels">`metrics.otlp.addServicesLabels`</a> | Enable metrics on services.                                                                                                                                      | true                                               | No       |
-| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.                                                                                                                   | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
+| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.<br /> Only applies to explicit bucket histogram exports.                                                          | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
 | <a id="opt-metrics-otlp-pushInterval" href="#opt-metrics-otlp-pushInterval" title="#opt-metrics-otlp-pushInterval">`metrics.otlp.pushInterval`</a> | Interval at which metrics are sent to the OpenTelemetry Collector.                                                                                               | 10s                                                | No       |
 | <a id="opt-metrics-otlp-http" href="#opt-metrics-otlp-http" title="#opt-metrics-otlp-http">`metrics.otlp.http`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
 | <a id="opt-metrics-otlp-http-endpoint" href="#opt-metrics-otlp-http-endpoint" title="#opt-metrics-otlp-http-endpoint">`metrics.otlp.http.endpoint`</a> | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`"                                                           | "https://localhost:4318"                 | Yes      |
@@ -610,6 +610,6 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 !!! info "`method` label value"
 
-    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
     then the value for the method label becomes `EXTENSION_METHOD`.

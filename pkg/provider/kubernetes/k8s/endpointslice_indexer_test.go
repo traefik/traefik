@@ -25,34 +25,26 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-b",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-b",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-b",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-b",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 		},
@@ -62,11 +54,9 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "unknown",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{},
@@ -77,11 +67,9 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "other",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "other",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{},
@@ -92,11 +80,9 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "other"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "other"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{},
@@ -107,34 +93,26 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-b",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-b",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-a",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-a",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "slice-b",
-						Namespace: "default",
-						Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:      "slice-b",
+					Namespace: "default",
+					Labels:    map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 		},
@@ -144,38 +122,30 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-a",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-a",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-b",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-b",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-b",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-b",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-a",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-a",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 		},
@@ -185,38 +155,30 @@ func Test_EndpointSlicesByServiceName(t *testing.T) {
 			svcName:   "app",
 			endpointSlices: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-a",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-a",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-z",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-z",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 			expected: []*discoveryv1.EndpointSlice{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-z",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-z",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "slice-a",
-						Namespace:         "default",
-						CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
-						Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
-					},
+					Name:              "slice-a",
+					Namespace:         "default",
+					CreationTimestamp: metav1.NewTime(time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)),
+					Labels:            map[string]string{discoveryv1.LabelServiceName: "app"},
 				},
 			},
 		},

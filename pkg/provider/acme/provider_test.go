@@ -49,9 +49,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			domains: []string{"*.traefik.wtf"},
 			acmeCertificates: []*CertAndStore{
 				{
-					Certificate: Certificate{
-						Domain: types.Domain{Main: "*.traefik.wtf"},
-					},
+					Domain: types.Domain{Main: "*.traefik.wtf"},
 				},
 			},
 			expectedDomains: nil,
@@ -72,9 +70,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
 			acmeCertificates: []*CertAndStore{
 				{
-					Certificate: Certificate{
-						Domain: types.Domain{Main: "traefik.wtf"},
-					},
+					Domain: types.Domain{Main: "traefik.wtf"},
 				},
 			},
 			expectedDomains: []string{"foo.traefik.wtf"},
@@ -90,9 +86,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			domains: []string{"traefik.wtf"},
 			acmeCertificates: []*CertAndStore{
 				{
-					Certificate: Certificate{
-						Domain: types.Domain{Main: "traefik.wtf"},
-					},
+					Domain: types.Domain{Main: "traefik.wtf"},
 				},
 			},
 			expectedDomains: nil,
@@ -108,9 +102,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			domains: []string{"who.traefik.wtf", "foo.traefik.wtf"},
 			acmeCertificates: []*CertAndStore{
 				{
-					Certificate: Certificate{
-						Domain: types.Domain{Main: "*.traefik.wtf"},
-					},
+					Domain: types.Domain{Main: "*.traefik.wtf"},
 				},
 			},
 			expectedDomains: nil,
@@ -120,9 +112,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			domains: []string{"traefik.wtf", "foo.traefik.wtf"},
 			acmeCertificates: []*CertAndStore{
 				{
-					Certificate: Certificate{
-						Domain: types.Domain{Main: "*.traefik.wtf"},
-					},
+					Domain: types.Domain{Main: "*.traefik.wtf"},
 				},
 			},
 			expectedDomains: []string{"traefik.wtf"},

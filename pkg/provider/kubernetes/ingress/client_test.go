@@ -134,18 +134,14 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "secret",
-		},
+		Namespace: "default",
+		Name:      "secret",
 	}
 	helmSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "default",
-			Name:      "helm-secret",
-			Labels: map[string]string{
-				"owner": "helm",
-			},
+		Namespace: "default",
+		Name:      "helm-secret",
+		Labels: map[string]string{
+			"owner": "helm",
 		},
 	}
 
@@ -190,13 +186,11 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	emptyEndpointSlice := &discoveryv1.EndpointSlice{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "empty-endpointslice",
-			Namespace:       "test",
-			ResourceVersion: "1244",
-			Annotations: map[string]string{
-				"test-annotation": "_",
-			},
+		Name:            "empty-endpointslice",
+		Namespace:       "test",
+		ResourceVersion: "1244",
+		Annotations: map[string]string{
+			"test-annotation": "_",
 		},
 	}
 
@@ -205,12 +199,10 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	samplePortProtocol := corev1.ProtocolTCP
 	sampleAddressReady := true
 	filledEndpointSlice := &discoveryv1.EndpointSlice{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "filled-endpointslice",
-			Namespace:       "test",
-			ResourceVersion: "1234",
-		},
-		AddressType: discoveryv1.AddressTypeIPv4,
+		Name:            "filled-endpointslice",
+		Namespace:       "test",
+		ResourceVersion: "1234",
+		AddressType:     discoveryv1.AddressTypeIPv4,
 		Endpoints: []discoveryv1.Endpoint{{
 			Addresses: []string{"10.13.37.1"},
 			Conditions: discoveryv1.EndpointConditions{
