@@ -67,7 +67,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -115,7 +117,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -172,7 +176,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -220,7 +228,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -291,7 +301,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -339,7 +353,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-service-unavailable-default-backend-48-rule-0-path-0": {
 							EntryPoints: []string{"http"},
@@ -372,7 +388,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -468,7 +486,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -534,7 +556,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-cross-namespace-headers-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -551,7 +575,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cross-namespace.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -684,7 +710,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-namespace.localhost": hostTLSOption(),
+						"whoami.localhost":          hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -722,7 +753,9 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     unavailableServiceName,
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -780,7 +813,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -844,7 +881,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-cross-namespace-headers-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -860,7 +899,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cross-namespace.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -971,7 +1012,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-namespace.localhost": hostTLSOption(),
+						"whoami.localhost":          hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -1037,7 +1083,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-cross-namespace-headers-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -1054,7 +1102,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cross-namespace.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1187,7 +1237,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-namespace.localhost": hostTLSOption(),
+						"whoami.localhost":          hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -1209,7 +1264,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-with-no-annotation-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-no-annotation-26-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1318,6 +1375,9 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
 				},
 			},
 		},
@@ -1342,7 +1402,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/dash")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-my-ingress-10-rule-0-path-0-tls-retry"},
 							Service:     "default-7-my-ingress-10-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1375,7 +1437,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/dot")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-my.ingress-10-rule-0-path-0-tls-retry"},
 							Service:     "default-7-my.ingress-10-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1515,7 +1579,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -1538,7 +1606,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/dash")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"team-4-dev-web-7-rule-0-path-0-tls-retry"},
 							Service:     "team-4-dev-web-7-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1571,7 +1641,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/dot")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"team-dev-8-web-3-rule-0-path-0-tls-retry"},
 							Service:     "team-dev-8-web-3-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -1693,7 +1765,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -1741,7 +1817,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1835,7 +1913,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -1883,7 +1965,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1977,7 +2061,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2008,7 +2096,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -2056,7 +2146,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2142,7 +2234,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2174,7 +2270,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -2223,7 +2321,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2311,7 +2411,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2351,7 +2455,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-snippet", "default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -2430,7 +2536,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2470,7 +2580,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-global-auth-disabled-33-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-global-auth-disabled-33-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -2535,7 +2647,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2575,7 +2691,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-snippet", "default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-forwardauth-24-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -2660,7 +2778,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2699,7 +2821,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -2764,7 +2888,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -2786,7 +2914,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "sslredirect.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-with-ssl-redirect-25-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-ssl-redirect-25-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -2838,7 +2968,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("withoutsslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "withoutsslredirect.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-without-ssl-redirect-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-ssl-redirect-28-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -2885,7 +3017,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "forcesslredirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -3064,6 +3198,11 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{
+						"forcesslredirect.localhost":   hostTLSOption(),
+						"sslredirect.localhost":        hostTLSOption(),
+						"withoutsslredirect.localhost": hostTLSOption(),
+					},
 				},
 			},
 		},
@@ -3108,8 +3247,10 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("forcesslredirectnotls.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
-							Service:     "default-7-ingress-with-force-ssl-redirect-no-tls-38-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "forcesslredirectnotls.localhost",
+							},
+							Service: "default-7-ingress-with-force-ssl-redirect-no-tls-38-whoami-6-80-2",
 							Middlewares: []string{
 								"default-7-ingress-with-force-ssl-redirect-no-tls-38-rule-0-path-0-tls-retry",
 							},
@@ -3189,7 +3330,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"forcesslredirectnotls.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -3300,7 +3445,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -3442,7 +3589,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -3598,7 +3747,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -3732,7 +3883,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -3773,6 +3926,7 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -3824,7 +3978,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -3941,7 +4097,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4056,6 +4214,7 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -4109,7 +4268,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -4158,7 +4319,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "sticky.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4237,7 +4400,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"sticky.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4286,7 +4453,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "proxy-ssl.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4355,7 +4524,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"proxy-ssl.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4403,7 +4576,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cors.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4489,7 +4664,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cors.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4537,7 +4716,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cors-wildcard.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4625,7 +4806,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cors-wildcard.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4673,7 +4858,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "service-upstream.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4736,7 +4923,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"service-upstream.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4784,7 +4975,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "upstream-vhost.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4874,7 +5067,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"upstream-vhost.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -4922,7 +5119,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "x-forwarded-prefix.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4988,7 +5187,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"x-forwarded-prefix.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -5068,7 +5271,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "x-forwarded-prefix.localhost",
+							},
 						},
 						"default-7-ingress-with-x-forwarded-prefix-regex-37-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -5085,7 +5290,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "x-forwarded-prefix-regex.localhost",
+							},
 						},
 						"default-7-ingress-with-x-forwarded-prefix-three-groups-44-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -5102,7 +5309,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "x-forwarded-prefix-three-groups.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5304,7 +5513,13 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"x-forwarded-prefix-regex.localhost":        hostTLSOption(),
+						"x-forwarded-prefix-three-groups.localhost": hostTLSOption(),
+						"x-forwarded-prefix.localhost":              hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -5352,7 +5567,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "use-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5418,7 +5635,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"use-regex.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -5482,7 +5703,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "shared.localhost",
+							},
 						},
 						"default-7-ingress-b-without-use-regex-27-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -5499,7 +5722,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "shared.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5612,7 +5837,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"shared.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -5676,7 +5905,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "regex.localhost",
+							},
 						},
 						"default-7-ingress-b-without-use-regex-27-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -5693,7 +5924,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "no-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -5806,7 +6039,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"no-regex.localhost": hostTLSOption(),
+						"regex.localhost":    hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -5854,7 +6092,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-27-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-27-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target.localhost",
+							},
 						},
 						"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0": {
 							EntryPoints: []string{"http"},
@@ -5887,7 +6127,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target-no-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6012,7 +6254,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"rewrite-target-no-regex.localhost": hostTLSOption(),
+						"rewrite-target.localhost":          hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6060,7 +6307,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-absolute-url-40-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-absolute-url-40-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target-absolute-url.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6138,7 +6387,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"rewrite-target-absolute-url.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6186,7 +6439,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-trailing-group-42-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-trailing-group-42-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target-trailing-group.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6264,7 +6519,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"rewrite-target-trailing-group.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6318,7 +6577,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls-rewrite-target",
 								"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target-no-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6396,7 +6657,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"rewrite-target-no-regex.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6460,7 +6725,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-rewrite-target", "default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "shared.localhost",
+							},
 						},
 						"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -6477,7 +6744,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "shared.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6582,7 +6851,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"shared.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6646,7 +6919,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-rewrite-target", "default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite.localhost",
+							},
 						},
 						"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -6663,7 +6938,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "no-rewrite.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6768,7 +7045,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"no-rewrite.localhost": hostTLSOption(),
+						"rewrite.localhost":    hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6816,7 +7098,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-use-regex-false-43-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-use-regex-false-43-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "rewrite-target.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -6884,7 +7168,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"rewrite-target.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -6948,7 +7236,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-21-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-21-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 						"default-7-ingress-with-app-root-21-rule-0-path-0-tls-app-root-redirect": {
 							EntryPoints: []string{"https"},
@@ -6965,7 +7255,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-21-rule-0-path-0-tls-app-root"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -7041,7 +7333,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -7105,7 +7401,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 						"default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-app-root-redirect": {
 							EntryPoints: []string{"https"},
@@ -7122,7 +7420,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-app-root"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -7198,7 +7498,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -7246,7 +7550,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-root-path-31-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-root-path-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 						"default-7-ingress-with-app-root-root-path-31-rule-0-path-1": {
 							EntryPoints: []string{"http"},
@@ -7279,7 +7585,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-root-path-31-rule-0-path-1-tls-app-root", "default-7-ingress-with-app-root-root-path-31-rule-0-path-1-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -7377,7 +7685,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -7425,7 +7737,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-shared-host-root-38-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-shared-host-root-38-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 						"default-7-ingress-with-app-root-shared-host-33-rule-0-path-0": {
 							EntryPoints: []string{"http"},
@@ -7458,7 +7772,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-shared-host-33-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-shared-host-33-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -7591,7 +7907,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -7630,7 +7950,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-app-root-and-default-backend-41-default-backend",
 							Middlewares: []string{"default-7-ingress-with-app-root-and-default-backend-41-rule-0-default-backend-tls-app-root", "default-7-ingress-with-app-root-and-default-backend-41-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -7663,7 +7985,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-app-root-and-default-backend-41-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-and-default-backend-41-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-and-default-backend-41-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -7781,7 +8105,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -7845,7 +8173,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{Options: "default"},
 						},
 						"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root-redirect": {
 							EntryPoints: []string{"https"},
@@ -7862,7 +8190,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-app-root-no-host-29-rule-0-path-0-tls-app-root"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{Options: "default"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -7938,7 +8266,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -7986,7 +8316,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "app-root.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -8052,7 +8384,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"app-root.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -8116,7 +8452,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "www.host.localhost",
+							},
 						},
 						"default-7-ingress-with-www-host-21-rule-0-path-0-tls-from-to-www-redirect": {
 							EntryPoints: []string{"https"},
@@ -8133,7 +8471,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-www-host-21-rule-0-path-0-tls-from-to-www-redirect"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "www.host.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -8213,7 +8553,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"www.host.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -8277,7 +8621,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "host.localhost",
+							},
 						},
 						"default-7-ingress-with-host-17-rule-0-path-0-tls-from-to-www-redirect": {
 							EntryPoints: []string{"https"},
@@ -8294,7 +8640,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-host-17-rule-0-path-0-tls-from-to-www-redirect"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "host.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -8374,7 +8722,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"host.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -8438,7 +8790,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "host.localhost",
+							},
 						},
 						"default-7-ingress-with-www-host-21-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -8455,7 +8809,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "www.host.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -8568,7 +8924,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"host.localhost":     hostTLSOption(),
+						"www.host.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -8657,7 +9018,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -8789,7 +9152,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -8929,7 +9294,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -9052,14 +9419,15 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
-			desc: "Ingress default backend without rules inherits the client-auth TLS option on the catch-all TLS router",
+			desc: "Ingress default backend without rules ignores the auth-tls annotations, even with a missing secret",
 			paths: []string{
 				"services.yml",
-				"secrets.yml",
 				"ingressclasses.yml",
 				"ingresses/ingress-with-default-backend-no-rules-auth-tls.yml",
 			},
@@ -9094,9 +9462,7 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    math.MinInt32,
 							Service:     "default-backend",
 							Middlewares: []string{"default-backend-tls-retry"},
-							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
-							},
+							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9168,30 +9534,7 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
-							ClientAuth: tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-							},
-							CipherSuites: []string{
-								"TLS_AES_128_GCM_SHA256",
-								"TLS_AES_256_GCM_SHA384",
-								"TLS_CHACHA20_POLY1305_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
-							},
-							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
-						},
-					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -9231,7 +9574,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-basic-auth-48-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-default-backend-tls-basic-auth", "default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9264,7 +9609,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-basic-auth-48-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-path-0-tls-basic-auth", "default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9418,7 +9765,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -9458,7 +9809,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-headers-52-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-default-backend-tls-custom-headers", "default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9491,7 +9844,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-headers-52-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9617,7 +9972,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -9797,7 +10156,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -9836,7 +10197,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-default-backend-tls-custom-http-errors", "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -9869,7 +10232,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -10111,7 +10476,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -10237,6 +10606,7 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -10276,7 +10646,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-annotations-40-whoami-tls-10-443-3",
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotations-40-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -10311,7 +10683,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-annotations-40-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotations-40-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -10437,7 +10811,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -10476,7 +10854,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-multiple-hosts-43-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-multiple-hosts-43-rule-0-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "one.whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -10509,7 +10889,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-default-backend-multiple-hosts-43-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-multiple-hosts-43-rule-1-default-backend-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "two.whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -10592,7 +10974,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"one.whoami.localhost": hostTLSOption(),
+						"two.whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -10640,7 +11027,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whitelist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -10716,7 +11105,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whitelist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -10764,7 +11157,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whitelist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -10840,7 +11235,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whitelist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -10888,7 +11287,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whitelist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -10964,7 +11365,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whitelist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11012,7 +11417,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whitelist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -11078,7 +11485,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whitelist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11126,7 +11537,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "allowlist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -11192,7 +11605,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"allowlist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11240,7 +11657,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "allowlist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -11316,7 +11735,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"allowlist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11356,7 +11779,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-single-ip-32-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "allowlist-source-range.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -11447,7 +11872,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"allowlist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11495,7 +11924,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "allowlist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -11571,7 +12002,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"allowlist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11619,7 +12054,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "allowlist-source-range.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -11695,7 +12132,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"allowlist-source-range.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11735,7 +12176,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-access-log-enabled-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-enabled-31-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "accesslog-enabled.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								AccessLogs: new(true),
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -11770,7 +12213,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-access-log-disabled-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-disabled-32-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "accesslog-disabled.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								AccessLogs: new(false),
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -11804,7 +12249,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-access-log-default-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-default-31-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "accesslog-default.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -11931,7 +12378,13 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"accesslog-default.localhost":  hostTLSOption(),
+						"accesslog-disabled.localhost": hostTLSOption(),
+						"accesslog-enabled.localhost":  hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -11979,7 +12432,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "permanent-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12059,7 +12514,165 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"permanent-redirect.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc: "CORS with permanent redirect",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-cors-and-permanent-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("cors-permanent-redirect.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-cors-and-permanent-redirect",
+									},
+								},
+							},
+							Middlewares: []string{"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-cors", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-redirect", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-retry"},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("cors-permanent-redirect.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-cors-and-permanent-redirect",
+									},
+								},
+							},
+							Middlewares: []string{"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-cors", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-redirect", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-retry"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cors-permanent-redirect.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlAllowHeaders:     []string{"X-Foo"},
+								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
+								AccessControlMaxAge:           new(int64(42)),
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-cors": {
+							Headers: &dynamic.Headers{
+								AccessControlAllowCredentials: true,
+								AccessControlAllowHeaders:     []string{"X-Foo"},
+								AccessControlAllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
+								AccessControlAllowOriginList:  []string{"*"},
+								AccessControlExposeHeaders:    []string{"X-Forwarded-For", "X-Forwarded-Host"},
+								AccessControlMaxAge:           new(int64(42)),
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  new(http.StatusMovedPermanently),
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  new(http.StatusMovedPermanently),
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-cors-and-permanent-redirect-40",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-cors-and-permanent-redirect-40": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cors-permanent-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12107,7 +12720,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "permanent-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12187,7 +12802,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"permanent-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12235,7 +12854,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "permanent-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12315,7 +12936,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"permanent-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12363,7 +12988,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-redirect-21-rule-0-path-0-tls-redirect", "default-7-ingress-with-redirect-21-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12443,7 +13070,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12491,7 +13122,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "temporal-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12571,7 +13204,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"temporal-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12619,7 +13256,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "temporal-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12699,7 +13338,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"temporal-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12747,7 +13390,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "temporal-redirect.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12827,7 +13472,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"temporal-redirect.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -12875,7 +13524,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "redirect-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -12955,7 +13606,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"redirect-regex.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -13003,7 +13658,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -13065,7 +13722,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -13113,7 +13774,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -13175,7 +13838,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -13223,7 +13890,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -13285,7 +13954,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -13307,7 +13980,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-28-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13319,7 +13992,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "auth-tls-secret.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0": {
@@ -13328,6 +14001,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-retry",
 							},
 							Service: "default-7-ingress-with-auth-tls-secret-28-whoami-6-80-2",
@@ -13343,6 +14017,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-ingress-with-auth-tls-secret-28-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -13419,7 +14103,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
+						"auth-tls-secret.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -13469,7 +14153,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13481,14 +14165,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "a-1-1-b-3-require-and-verify-client-cert",
+								Options: "tls-option-collision-victim.localhost",
 							},
 						},
 						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-collision-victim.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13504,7 +14188,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-pass-certificate-to-upstream", "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-retry"},
 							Service:     "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13516,14 +14200,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "a-3-3-b-1-require-and-verify-client-cert",
+								Options: "tls-option-collision-attacker.localhost",
 							},
 						},
 						"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-collision-attacker.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-retry"},
+							Middlewares: []string{"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-pass-certificate-to-upstream", "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-retry"},
 							Service:     "a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13537,6 +14221,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-3-3-ingress-with-auth-tls-secret-namespace-collision-attacker-57-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"a-1-ingress-with-auth-tls-secret-namespace-collision-victim-55-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -13630,9 +14334,9 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"a-1-1-b-3-require-and-verify-client-cert": {
+						"tls-option-collision-attacker.localhost": {
 							ClientAuth: tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----VICTIM-----END CERTIFICATE-----"},
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----ATTACKER-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
@@ -13652,9 +14356,9 @@ func TestLoadIngresses(t *testing.T) {
 							},
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
-						"a-3-3-b-1-require-and-verify-client-cert": {
+						"tls-option-collision-victim.localhost": {
 							ClientAuth: tls.ClientAuth{
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----ATTACKER-----END CERTIFICATE-----"},
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----VICTIM-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
@@ -13696,7 +14400,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13708,14 +14412,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "a-1-ca-2-require-and-verify-client-cert",
+								Options: "tls-option-cross-namespace-owner.localhost",
 							},
 						},
 						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-cross-namespace-owner.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry"},
+							Middlewares: []string{"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-pass-certificate-to-upstream", "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry"},
 							Service:     "a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13727,8 +14431,35 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
+						"auth-tls-error-http-tls-option-cross-namespace-intruder.localhost": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("tls-option-cross-namespace-intruder.localhost")`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+						},
+						"auth-tls-error-https-tls-option-cross-namespace-intruder.localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("tls-option-cross-namespace-intruder.localhost")`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "tls-option-cross-namespace-intruder.localhost",
+							},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"a-1-ingress-with-auth-tls-secret-cross-namespace-owner-50-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -13749,6 +14480,17 @@ func TestLoadIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"forbidden-service": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "forbidden-service",
+										Status: new(http.StatusForbidden),
+										Weight: new(1),
+									},
 								},
 							},
 						},
@@ -13784,7 +14526,8 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"a-1-ca-2-require-and-verify-client-cert": {
+						"tls-option-cross-namespace-intruder.localhost": hostTLSOption(),
+						"tls-option-cross-namespace-owner.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----OWNER-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -13833,7 +14576,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-name-collision-dash.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13845,14 +14588,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-my-secret-9-require-and-verify-client-cert",
+								Options: "tls-option-name-collision-dash.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-name-collision-dash.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dash-48-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13868,7 +14611,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("tls-option-name-collision-dot.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13880,14 +14623,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-my.secret-9-require-and-verify-client-cert",
+								Options: "tls-option-name-collision-dot.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("tls-option-name-collision-dot.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-retry"},
 							Service:     "default-7-ingress-with-auth-tls-secret-name-collision-dot-47-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -13901,6 +14644,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-ingress-with-auth-tls-secret-name-collision-dot-47-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-ingress-with-auth-tls-secret-name-collision-dash-48-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -14012,7 +14775,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"default-7-my-secret-9-require-and-verify-client-cert": {
+						"tls-option-name-collision-dash.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----DASH-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -14034,7 +14797,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
-						"default-7-my.secret-9-require-and-verify-client-cert": {
+						"tls-option-name-collision-dot.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----DOT-----END CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -14079,7 +14842,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14091,7 +14854,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-verify-client-cert-if-given",
+								Options: "auth-tls-verify-client.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0": {
@@ -14100,6 +14863,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry",
 							},
 							Service: "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
@@ -14115,6 +14879,16 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
 						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -14191,7 +14965,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-verify-client-cert-if-given": {
+						"auth-tls-verify-client.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.VerifyClientCertIfGiven,
@@ -14236,7 +15010,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-conflict.localhost") && Path("/protected")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-protected-ingress-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14248,7 +15022,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "mtls-conflict.localhost",
 							},
 						},
 						"default-7-protected-ingress-17-rule-0-path-0": {
@@ -14257,6 +15031,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme",
+								"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-protected-ingress-17-rule-0-path-0-retry",
 							},
 							Service: "default-7-protected-ingress-17-whoami-6-80-2",
@@ -14274,7 +15049,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-conflict.localhost") && Path("/second")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-same-host-second-ingress-24-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-same-host-second-ingress-24-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-same-host-second-ingress-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-same-host-second-ingress-24-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14286,7 +15061,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "mtls-conflict.localhost",
 							},
 						},
 						"default-7-same-host-second-ingress-24-rule-0-path-0": {
@@ -14295,6 +15070,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-same-host-second-ingress-24-rule-0-path-0-redirect-scheme",
+								"default-7-same-host-second-ingress-24-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-same-host-second-ingress-24-rule-0-path-0-retry",
 							},
 							Service: "default-7-same-host-second-ingress-24-whoami-6-80-2",
@@ -14310,6 +15086,26 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-same-host-second-ingress-24-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-same-host-second-ingress-24-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -14439,7 +15235,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
+						"mtls-conflict.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -14484,7 +15280,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-tls-retry"},
 							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14496,14 +15292,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "mtls-mixed.localhost",
 							},
 						},
 						"default-7-public-ingress-14-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/public")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-retry"},
 							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14519,7 +15315,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/protected")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-protected-ingress-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-protected-ingress-17-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14531,7 +15327,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "mtls-mixed.localhost",
 							},
 						},
 						"default-7-protected-ingress-17-rule-0-path-0": {
@@ -14540,6 +15336,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{
 								"default-7-protected-ingress-17-rule-0-path-0-redirect-scheme",
+								"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream",
 								"default-7-protected-ingress-17-rule-0-path-0-retry",
 							},
 							Service: "default-7-protected-ingress-17-whoami-6-80-2",
@@ -14557,7 +15354,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-optional-ingress-16-rule-0-path-0-tls-retry"},
 							Service:     "default-7-optional-ingress-16-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14569,14 +15366,14 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "mtls-mixed.localhost",
 							},
 						},
 						"default-7-optional-ingress-16-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("mtls-mixed.localhost") && Path("/optional")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-retry"},
+							Middlewares: []string{"default-7-optional-ingress-16-rule-0-path-0-pass-certificate-to-upstream", "default-7-optional-ingress-16-rule-0-path-0-retry"},
 							Service:     "default-7-optional-ingress-16-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -14590,6 +15387,36 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-protected-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-optional-ingress-16-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-optional-ingress-16-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
 						"default-7-public-ingress-14-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts:            3,
@@ -14760,7 +15587,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
+						"mtls-mixed.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -14783,6 +15610,1656 @@ func TestLoadIngresses(t *testing.T) {
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS secret on a host-less rule configures the default TLS option",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-hostless.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-hostless-auth-tls-17-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
+							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "hostless-auth-tls",
+									},
+								},
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
+							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "hostless-auth-tls",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-hostless-auth-tls-17-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-hostless-auth-tls-17",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-hostless-auth-tls-17": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS secret on a host-less rule leaves the TLS options of the hosts",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-hostless.yml",
+				"ingresses/ingress-without-auth.yml",
+				"ingresses/ingress-with-auth-tls-verify-client.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-hostless-auth-tls-17-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-retry"},
+							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "hostless-auth-tls",
+									},
+								},
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry"},
+							Service:     "default-7-hostless-auth-tls-17-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "hostless-auth-tls",
+									},
+								},
+							},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-retry"},
+							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-without-auth",
+									},
+								},
+							},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
+							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-without-auth",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream",
+								"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry",
+							},
+							Service: "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-verify-client",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-verify-client.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry"},
+							Service:     "default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-verify-client.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-auth-tls-verify-client",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-hostless-auth-tls-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-hostless-auth-tls-17-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-hostless-auth-tls-17-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-hostless-auth-tls-17",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-without-auth-20-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-without-auth-20",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-auth-tls-verify-client-35",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-hostless-auth-tls-17": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-ingress-without-auth-20": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-ingress-with-auth-tls-verify-client-35": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
+						},
+					},
+					Options: map[string]tls.Options{
+						"default": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+						"whoami.localhost": hostTLSOption(),
+						"auth-tls-verify-client.localhost": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.VerifyClientCertIfGiven,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS pass certificate to upstream follows the Ingress owning client authentication on the same host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-pass-certificate-to-upstream-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/inheriting")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-inheriting-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-inheriting-ingress-18-rule-0-path-0-tls-retry"},
+							Service:     "default-7-inheriting-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "inheriting-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/inheriting")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-inheriting-ingress-18-rule-0-path-0-pass-certificate-to-upstream", "default-7-inheriting-ingress-18-rule-0-path-0-retry"},
+							Service:     "default-7-inheriting-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "inheriting-ingress",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-owner-ingress-13-rule-0-path-0-tls-retry"},
+							Service:     "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{
+								"default-7-owner-ingress-13-rule-0-path-0-redirect-scheme",
+								"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream",
+								"default-7-owner-ingress-13-rule-0-path-0-retry",
+							},
+							Service: "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/forwarded")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-forwarded-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-forwarded-ingress-17-rule-0-path-0-tls-retry"},
+							Service:     "default-7-forwarded-ingress-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "forwarded-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "pass-cert-shared-host.localhost",
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("pass-cert-shared-host.localhost") && Path("/forwarded")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-forwarded-ingress-17-rule-0-path-0-pass-certificate-to-upstream", "default-7-forwarded-ingress-17-rule-0-path-0-retry"},
+							Service:     "default-7-forwarded-ingress-17-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "forwarded-ingress",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-forwarded-ingress-17-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequestClientCert,
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+							},
+						},
+						"default-7-inheriting-ingress-18-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-forwarded-ingress-17-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-inheriting-ingress-18-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-inheriting-ingress-18",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-owner-ingress-13",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-forwarded-ingress-17-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-forwarded-ingress-17",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-inheriting-ingress-18": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-owner-ingress-13": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-forwarded-ingress-17": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							CertFile: "-----BEGIN CERTIFICATE-----",
+							KeyFile:  "-----BEGIN CERTIFICATE-----",
+						},
+					},
+					Options: map[string]tls.Options{
+						"pass-cert-shared-host.localhost": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequestClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// ingress-nginx skips a rule without paths before configuring the client authentication of its server.
+			desc: "Auth TLS secret on a rule without paths does not configure client authentication for the host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-rule-without-paths.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-public-ingress-14-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-rule-without-paths.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-retry"},
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-rule-without-paths.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-retry"},
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-rule-without-paths.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-public-ingress-14-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-public-ingress-14-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-public-ingress-14",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-public-ingress-14": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"auth-tls-rule-without-paths.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			// ingress-nginx disables the client authentication of an Ingress whose auth-tls-secret has no CA certificate,
+			// so the next Ingress declaring one configures it for the host, including whether the certificate is passed.
+			desc: "Auth TLS secret without CA certificate serves the Ingress and leaves client authentication to the next Ingress of the host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-without-ca-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-without-ca-ingress-18-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-without-ca.localhost") && Path("/without-ca")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-without-ca-ingress-18-rule-0-path-0-pass-certificate-to-upstream", "default-7-without-ca-ingress-18-rule-0-path-0-retry"},
+							Service:     "default-7-without-ca-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "without-ca-ingress",
+									},
+								},
+							},
+						},
+						"default-7-without-ca-ingress-18-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-without-ca.localhost") && Path("/without-ca")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-without-ca-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-without-ca-ingress-18-rule-0-path-0-tls-retry"},
+							Service:     "default-7-without-ca-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "without-ca-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-without-ca.localhost",
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-without-ca.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream", "default-7-owner-ingress-13-rule-0-path-0-retry"},
+							Service:     "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-without-ca.localhost") && Path("/owner")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-owner-ingress-13-rule-0-path-0-tls-retry"},
+							Service:     "default-7-owner-ingress-13-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "owner-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-without-ca.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-without-ca-ingress-18-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-without-ca-ingress-18-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-without-ca-ingress-18-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-without-ca-ingress-18-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-owner-ingress-13-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-without-ca-ingress-18-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-without-ca-ingress-18",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-owner-ingress-13-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-owner-ingress-13",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-without-ca-ingress-18": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-owner-ingress-13": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"auth-tls-without-ca.localhost": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// ingress-nginx answers 403 to every request for a host where an Ingress declares an auth-tls-secret that cannot be used,
+			// before selecting a location, so no Ingress of the host, nor its server aliases, serves anything.
+			desc: "Auth TLS secret missing on a shared host makes the whole host answer 403",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-missing-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"auth-tls-error-http-auth-tls-missing-shared-host.localhost": {
+							EntryPoints: []string{"http"},
+							Rule:        `(Host("auth-tls-missing-shared-host.localhost") || Host("auth-tls-missing-alias.localhost"))`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+						},
+						"auth-tls-error-https-auth-tls-missing-shared-host.localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `(Host("auth-tls-missing-shared-host.localhost") || Host("auth-tls-missing-alias.localhost"))`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-missing-shared-host.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"forbidden-service": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "forbidden-service",
+										Status: new(http.StatusForbidden),
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"auth-tls-missing-shared-host.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			// A rule without host belongs to the ingress-nginx default server, which only receives the requests for the hosts
+			// no other server matches: its 403 leaves the known hosts and their server aliases to their own routers.
+			desc: "Auth TLS secret missing on a rule without host makes only the unknown hosts answer 403",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-missing-default-server.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"auth-tls-error-http": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/") && !(Host("known-host-alias.localhost") || Host("known-host.localhost"))`,
+							RuleSyntax:  "default",
+							Priority:    1,
+							Service:     "forbidden-service",
+						},
+						"auth-tls-error-https": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/") && !(Host("known-host-alias.localhost") || Host("known-host.localhost"))`,
+							RuleSyntax:  "default",
+							Priority:    1,
+							Service:     "forbidden-service",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default",
+							},
+						},
+						"default-7-known-host-ingress-18-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `(Host("known-host.localhost") || Host("known-host-alias.localhost")) && Path("/known")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-known-host-ingress-18-rule-0-path-0-retry"},
+							Service:     "default-7-known-host-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "known-host-ingress",
+									},
+								},
+							},
+						},
+						"default-7-known-host-ingress-18-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `(Host("known-host.localhost") || Host("known-host-alias.localhost")) && Path("/known")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-known-host-ingress-18-rule-0-path-0-tls-retry"},
+							Service:     "default-7-known-host-ingress-18-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "known-host-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "known-host.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-known-host-ingress-18-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-known-host-ingress-18-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"forbidden-service": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "forbidden-service",
+										Status: new(http.StatusForbidden),
+										Weight: new(1),
+									},
+								},
+							},
+						},
+						"default-7-known-host-ingress-18-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-known-host-ingress-18",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-known-host-ingress-18": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"known-host.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			// ingress-nginx reads the auth-tls annotations of a canary Ingress like the ones of any other Ingress,
+			// so they configure the client authentication of the host, including whether the certificate is passed.
+			desc: "Auth TLS secret on a canary Ingress configures client authentication for the host",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-canary.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-public-ingress-14-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-canary.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-retry"},
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-canary.localhost") && Path("/public")`,
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-public-ingress-14-rule-0-path-0-tls-retry"},
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-canary.localhost",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-public-ingress-14-rule-0-path-0-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls-pass-certificate-to-upstream": {
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-public-ingress-14-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-public-ingress-14",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-public-ingress-14": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"auth-tls-canary.localhost": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+		{
+			// ingress-nginx creates no server for a host only canary Ingresses declare,
+			// so the auth-tls-secret that cannot be used is reported on its default server.
+			desc: "Auth TLS secret missing on a canary Ingress alone on its host makes the unknown hosts answer 403",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-auth-tls-secret-missing-canary-only-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"auth-tls-error-http": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    1,
+							Service:     "forbidden-service",
+						},
+						"auth-tls-error-https": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    1,
+							Service:     "forbidden-service",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"forbidden-service": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "forbidden-service",
+										Status: new(http.StatusForbidden),
+										Weight: new(1),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -14831,7 +17308,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-custom-http-errors-and-default-backend-51-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-with-custom-http-errors-and-default-backend-51-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -14968,7 +17447,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15024,7 +17507,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-custom-http-errors-31-rule-0-path-0-tls-custom-http-errors",
 								"default-7-ingress-with-custom-http-errors-31-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-backend": {
 							EntryPoints: []string{"http"},
@@ -15171,7 +17656,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15219,7 +17708,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-custom-http-errors-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15279,7 +17770,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15327,7 +17822,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotation-39-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15393,7 +17890,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15441,7 +17942,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15523,7 +18026,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15572,7 +18079,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-request-buffering-off-40-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15638,7 +18147,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15686,7 +18199,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15752,7 +18267,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15800,7 +18319,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15866,7 +18387,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -15914,7 +18439,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -15982,7 +18509,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16030,7 +18561,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16112,7 +18645,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16160,7 +18697,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16242,7 +18781,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16290,7 +18833,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16374,7 +18919,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16422,7 +18971,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16506,7 +19057,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16554,7 +19109,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16638,7 +19195,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16686,7 +19247,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "hostname.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16770,7 +19333,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"hostname.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16825,7 +19392,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-snippet",
 								"default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -16897,7 +19466,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -16952,7 +19525,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-snippet",
 								"default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -17024,7 +19599,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -17079,7 +19658,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-snippet",
 								"default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -17153,7 +19734,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -17185,7 +19770,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -17217,7 +19804,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -17249,7 +19838,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -17298,7 +19889,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-snippet", "default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -17370,7 +19963,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -17419,7 +20016,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-snippet", "default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -17491,7 +20090,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -17540,7 +20143,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-snippet", "default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -17614,7 +20219,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -17648,7 +20257,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "auth-tls-pass-certificate-to-upstream.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0": {
@@ -17675,15 +20284,15 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-50-rule-0-path-0-redirect-scheme": {
@@ -17762,7 +20371,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
+						"auth-tls-pass-certificate-to-upstream.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -17819,7 +20428,7 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-require-and-verify-client-cert",
+								Options: "auth-tls-pass-cert-ssl-redirect-disabled.localhost",
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0": {
@@ -17845,15 +20454,15 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequireAndVerifyClientCert,
-								CAFiles:        nil,
+								ClientAuthType:  tls.RequireAndVerifyClientCert,
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-cert-ssl-redirect-disabled-53-rule-0-path-0-retry": {
@@ -17926,7 +20535,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-require-and-verify-client-cert": {
+						"auth-tls-pass-cert-ssl-redirect-disabled.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -18012,7 +20621,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-proxy-next-upstream-off-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -18028,7 +20639,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18125,7 +20738,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18173,7 +20790,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18239,7 +20858,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18312,7 +20935,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-proxy-next-upstream-32-rule-0-path-0-tls-buffering",
 								"default-7-ingress-with-proxy-next-upstream-32-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-proxy-next-upstream-off-36-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -18331,7 +20956,9 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{
 								"default-7-ingress-with-proxy-next-upstream-off-36-rule-0-path-0-tls-buffering",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18460,7 +21087,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18524,7 +21155,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-tries-unlimited-48-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-proxy-next-upstream-tries-38-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -18541,7 +21174,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-tries-38-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18646,7 +21281,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18694,7 +21333,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-timeout-40-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18758,7 +21399,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18806,7 +21451,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "original.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -18873,7 +21520,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"original.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -18937,7 +21588,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "conflict.localhost",
+							},
 						},
 						"default-7-alias-ingress-13-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -18954,7 +21607,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "original.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19059,7 +21714,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"conflict.localhost": hostTLSOption(),
+						"original.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19123,7 +21783,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "first.localhost",
+							},
 						},
 						"default-7-second-ingress-14-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -19140,7 +21802,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "second.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19245,7 +21909,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"first.localhost":  hostTLSOption(),
+						"second.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19293,7 +21962,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-http-version-31-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "proxy-http-version.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19356,7 +22027,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"proxy-http-version.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19404,7 +22079,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-proxy-http-version-unsupported-43-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "proxy-http-version-unsupported.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19466,7 +22143,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"proxy-http-version-unsupported.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19514,7 +22195,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-upstream-hash-by-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19577,7 +22260,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19625,7 +22312,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-19-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19732,7 +22421,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19780,7 +22473,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-and-sticky-30-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -19926,7 +22621,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -19974,7 +22673,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-weight-26-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -20081,7 +22782,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -20145,7 +22850,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -20162,7 +22869,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -20281,7 +22990,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -20345,7 +23058,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-value-35-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-value-35-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -20362,7 +23077,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-value-35-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -20481,7 +23198,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -20545,7 +23266,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-pattern-37-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-pattern-37-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -20562,7 +23285,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-pattern-37-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -20681,7 +23406,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -20729,7 +23458,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-misconfigured-43-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -20836,7 +23567,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -20900,7 +23635,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-cookie-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-cookie-29-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -20917,7 +23654,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-cookie-29-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -21036,7 +23775,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -21078,7 +23821,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -21113,7 +23858,9 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    48,
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-limit-allowlist-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -21146,7 +23893,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-limit-rps", "default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -21181,7 +23930,9 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    112,
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-limit-allowlist-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -21313,7 +24064,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -21393,7 +24148,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -21410,7 +24167,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-non-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -21427,7 +24186,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-non-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -21558,7 +24319,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -21631,7 +24396,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-tls-app-root",
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -21651,7 +24418,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-canary-tls-app-root",
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-canary-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -21790,7 +24559,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -21838,7 +24611,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-non-matching-canary-32-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -21904,7 +24679,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -21980,7 +24759,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-tls-app-root",
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -22000,7 +24781,9 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-canary-tls-app-root",
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-canary-tls-retry",
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -22144,6 +24927,9 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
 				},
 			},
 		},
@@ -22208,7 +24994,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-limit-rps-zero-27-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -22225,7 +25013,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami-zero.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -22344,7 +25134,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami-zero.localhost": hostTLSOption(),
+						"whoami.localhost":      hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -22383,7 +25178,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-whitelist-28-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -22418,7 +25215,9 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    38,
 							Middlewares: []string{"default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-7-ingress-with-limit-whitelist-28-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -22503,7 +25302,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -22542,7 +25345,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-connections", "default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-28-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -22577,7 +25382,9 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    38,
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-28-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -22678,7 +25485,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -22717,7 +25528,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-no-limit-37-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-no-limit-37-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -22782,7 +25595,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -22955,7 +25772,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -23019,7 +25838,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 						},
 						"default-7-ingress-with-limit-rpm-zero-27-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
@@ -23036,7 +25857,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami-zero.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -23155,7 +25978,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami-zero.localhost": hostTLSOption(),
+						"whoami.localhost":      hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -23191,7 +26019,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-burst-multiplier-35-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-burst-multiplier-35-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-burst-multiplier-35-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami-burst.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23224,7 +26054,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-burst-multiplier-zero-40-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-burst-multiplier-zero-40-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-burst-multiplier-zero-40-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami-burst-zero.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23310,7 +26142,12 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami-burst-zero.localhost": hostTLSOption(),
+						"whoami-burst.localhost":      hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -23349,7 +26186,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-limit-connections-30-rule-0-path-0-tls-limit-connections", "default-7-ingress-with-limit-connections-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-connections-30-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23426,7 +26265,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -23457,7 +26300,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -23506,7 +26351,9 @@ func TestLoadIngresses(t *testing.T) {
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "use-regex.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -23562,7 +26409,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"use-regex.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -23599,7 +26450,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "*.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-with-wildcard-host-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-wildcard-host-26-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -23672,7 +26525,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"*.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -23713,7 +26570,9 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "*.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-with-wildcard-host-tls-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-wildcard-host-tls-30-whoami-6-80-2",
 							Observability: &dynamic.RouterObservabilityConfig{
@@ -23799,6 +26658,9 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{
+						"*.localhost": hostTLSOption(),
+					},
 				},
 			},
 		},
@@ -23830,7 +26692,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -23869,7 +26733,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "external.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23902,7 +26768,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-1-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-http-4",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "external.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23935,7 +26803,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-2-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-3000-4",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "external.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -23968,7 +26838,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-3-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-foo-3",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "external.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -24148,7 +27020,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"external.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -24193,7 +27069,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-tls-multi-secrets-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-tls-multi-secrets-30-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "first.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -24229,7 +27107,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-7-ingress-with-tls-multi-secrets-30-rule-1-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-tls-multi-secrets-30-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "second.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -24334,6 +27214,10 @@ func TestLoadIngresses(t *testing.T) {
 							CertFile: "-----BEGIN CERTIFICATE-----",
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
+					},
+					Options: map[string]tls.Options{
+						"first.localhost":  hostTLSOption(),
+						"second.localhost": hostTLSOption(),
 					},
 				},
 			},
@@ -24458,6 +27342,7 @@ func TestLoadIngresses(t *testing.T) {
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -24505,7 +27390,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-pass-certificate-to-upstream", "default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "default-7-ca-secret-9-request-client-cert",
+								Options: "auth-tls-pass-cert-optional-no-ca.localhost",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -24521,8 +27406,9 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequestClientCert,
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-redirect-scheme": {
@@ -24539,8 +27425,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								ClientAuthType: tls.RequestClientCert,
-								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType:  tls.RequestClientCert,
+								CAFiles:         []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								PassCertificate: true,
 							},
 						},
 						"default-7-ingress-with-auth-tls-pass-certificate-to-upstream-optional-no-ca-65-rule-0-path-0-tls-retry": {
@@ -24603,7 +27490,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"default-7-ca-secret-9-request-client-cert": {
+						"auth-tls-pass-cert-optional-no-ca.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 								ClientAuthType: tls.RequestClientCert,
@@ -24670,7 +27557,9 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-custom-http-errors-and-upstream-hash-by-52-whoami-6-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{
 								"default-7-ingress-with-custom-http-errors-and-upstream-hash-by-52-rule-0-path-0-tls-custom-http-errors",
 								"default-7-ingress-with-custom-http-errors-and-upstream-hash-by-52-rule-0-path-0-tls-retry",
@@ -24816,7 +27705,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -24854,7 +27747,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-endpoint-conditions-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-endpoint-conditions-32-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -24925,7 +27820,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -24949,7 +27848,9 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-disable-http-entrypoint-31-service1-8-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-31-rule-0-path-0-tls-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -25010,7 +27911,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -25034,7 +27939,9 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-service1-8-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-limit-rps", "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -25052,7 +27959,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Priority:    44,
 							Service:     "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-service1-8-80-2",
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-limit-allowlist-retry"},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
@@ -25126,7 +28035,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -25159,7 +28072,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 						"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -25176,7 +28091,9 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -25283,7 +28200,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -25383,11 +28304,13 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
-			desc: "Auth TLS secret missing — ingress is skipped entirely",
+			desc: "Auth TLS secret missing — ingress is skipped and its host answers 403",
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
@@ -25400,7 +28323,25 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"auth-tls-error-http-auth-tls-secret-missing.localhost": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("auth-tls-secret-missing.localhost")`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+						},
+						"auth-tls-error-https-auth-tls-secret-missing.localhost": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("auth-tls-secret-missing.localhost")`,
+							RuleSyntax:  "default",
+							Priority:    math.MaxInt32,
+							Service:     "forbidden-service",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "auth-tls-secret-missing.localhost",
+							},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"unavailable-service": {
@@ -25409,6 +28350,17 @@ func TestLoadIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"forbidden-service": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "forbidden-service",
+										Status: new(http.StatusForbidden),
+										Weight: new(1),
+									},
 								},
 							},
 						},
@@ -25421,6 +28373,9 @@ func TestLoadIngresses(t *testing.T) {
 							CertFile: "-----BEGIN CERTIFICATE-----",
 							KeyFile:  "-----BEGIN CERTIFICATE-----",
 						},
+					},
+					Options: map[string]tls.Options{
+						"auth-tls-secret-missing.localhost": hostTLSOption(),
 					},
 				},
 			},
@@ -25461,7 +28416,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-nil-endpointslice-port-name-40-whoami-nil-port-name-20-80-2",
 							Middlewares: []string{"default-7-ingress-with-nil-endpointslice-port-name-40-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -25527,7 +28484,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 		{
@@ -25566,7 +28527,9 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-nil-endpointslice-port-value-41-whoami-nil-port-value-21-80-2",
 							Middlewares: []string{"default-7-ingress-with-nil-endpointslice-port-value-41-rule-0-path-0-tls-retry"},
-							TLS:         &dynamic.RouterTLSConfig{},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
 									Ingress: &dynamic.KubernetesMetadata{
@@ -25632,7 +28595,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
 			},
 		},
 	}
@@ -26052,4 +29019,12 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
+}
+
+// hostTLSOption returns the TLS option of a host without client certificate authentication.
+func hostTLSOption() tls.Options {
+	opt := tls.Options{}
+	opt.SetDefaults()
+
+	return opt
 }

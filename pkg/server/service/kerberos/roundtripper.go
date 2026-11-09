@@ -114,7 +114,9 @@ func (k *roundTripper) RoundTrip(request *http.Request) (*http.Response, error) 
 	// Such a request must never be dispatched through the shared original round tripper, otherwise the
 	// now authenticated connection would stay in the globally shared pool where an unrelated frontend
 	// connection could later be handed the same socket and inherit the identity.
-	if containsNTLMorNegotiate(request.Header.Values("Authorization")) {
+	// Proxy-Authorization is checked as well, as ForwardAuth forwards it to the auth server.
+	if containsNTLMorNegotiate(request.Header.Values("Authorization")) ||
+		containsNTLMorNegotiate(request.Header.Values("Proxy-Authorization")) {
 		return connRoundTrippers.stick(k).RoundTrip(request)
 	}
 

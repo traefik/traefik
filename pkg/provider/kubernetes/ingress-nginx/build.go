@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"net"
-	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -24,6 +23,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 )
+
+// errNoCACertificate is returned for an auth-tls-secret without CA certificate, which ingress-nginx does not treat as an error.
+var errNoCACertificate = errors.New("secret does not contain a CA certificate")
 
 type ingressEntry struct {
 	*netv1.Ingress
@@ -97,7 +99,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 	// First pass: collect all regular and canary ingresses.
 	var (
-		regularIngresses []ingressEntry
+		// orderedIngresses holds the regular and the canary ingresses, in the order ingress-nginx reads them.
+		orderedIngresses []ingressEntry
 		canaryIngresses  []ingressEntry
 	)
 
@@ -134,6 +137,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Logger()
 
 		cfg := parseIngressConfig(ingress)
+		// ingress-nginx only enables client certificate authentication from the Ingress rules.
+		if len(ingress.Spec.Rules) == 0 {
+			cfg.AuthTLSSecret = nil
+		}
+
 		entry := ingressEntry{Ingress: ingress, config: cfg}
 
 		if err := p.validateIngress(entry.Ingress, entry.config); err != nil {
@@ -143,6 +151,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 		if ptr.Deref(cfg.Canary, false) {
 			canaryIngresses = append(canaryIngresses, entry)
+			orderedIngresses = append(orderedIngresses, entry)
 			continue
 		}
 
@@ -192,7 +201,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			}
 		}
 
-		regularIngresses = append(regularIngresses, entry)
+		orderedIngresses = append(orderedIngresses, entry)
 	}
 
 	// Second pass: resolve canary backends.
@@ -282,12 +291,21 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// location that needs it, to avoid emitting several routers with the same rule.
 	hostsWithAppRootRouter := make(map[string]bool)
 
-	for _, ing := range regularIngresses {
+	for _, ing := range orderedIngresses {
 		logger := log.Ctx(ctx).With().
 			Str("ingress", ing.Name).
 			Str("namespace", ing.Namespace).
 			Logger()
 		ctxIng := logger.WithContext(ctx)
+
+		// ingress-nginx reads the auth-tls annotations of a canary Ingress like the ones of any other Ingress, in the same order,
+		// and only then sets it aside: a canary Ingress can configure the client auth of its servers.
+		if ptr.Deref(ing.config.Canary, false) {
+			if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+				logger.Error().Err(err).Msg("Cannot build client auth TLS option")
+			}
+			continue
+		}
 
 		// ssl-passthrough only adds the TCP router forwarding the connection to the backend without decrypting it.
 		// The HTTP side of the ingress is built below like any other, ingress-nginx serving that host on the HTTP port from the regular location.
@@ -359,20 +377,9 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			continue
 		}
 
-		// Resolve TLS option (auth-tls-secret).
-		var (
-			tlsOptionName string
-			tlsOption     *tls.Options
-		)
-		if ing.config.AuthTLSSecret != nil {
-			tlsOptionName, tlsOption, err = p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionCache)
-			if err != nil {
-				logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
-				// Skipping the ingress entirely matches ingress-nginx behavior:
-				// when the configured client-auth secret cannot be resolved, no
-				// router/middleware/service should be exposed for the ingress.
-				continue
-			}
+		if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+			logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+			continue
 		}
 
 		for ri, rule := range ing.Spec.Rules {
@@ -419,8 +426,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					LocationIndex:        pi,
 					RuleIndex:            ri,
 					Config:               ing.config,
-					TLSOptionName:        tlsOptionName,
-					TLSOption:            tlsOption,
 					HasTLS:               hasTLS,
 					ServerSnippet:        serverSnippets[rule.Host],
 					Namespace:            ing.Namespace,
@@ -539,8 +544,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServersTransportName: nst.name,
 						ServersTransport:     nst.ServersTransport,
 						Config:               ing.config,
-						TLSOptionName:        tlsOptionName,
-						TLSOption:            tlsOption,
 						HasTLS:               hasTLS,
 						Namespace:            ing.Namespace,
 						IngressName:          ing.Name,
@@ -599,8 +602,6 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServersTransportName:    nst.name,
 					ServersTransport:        nst.ServersTransport,
 					Config:                  ing.config,
-					TLSOptionName:           tlsOptionName,
-					TLSOption:               tlsOption,
 					HasTLS:                  hasTLS,
 					ServerSnippet:           serverSnippets[rule.Host],
 					Namespace:               ing.Namespace,
@@ -636,37 +637,18 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 	}
 
-	applyServerClientAuth(ctx, mc.Servers)
-
-	return mc
-}
-
-// applyServerClientAuth applies the client-auth TLS option (auth-tls-secret) of the first location declaring one for a host to every location of that host.
-// ingress-nginx enforces client certificate authentication for the whole server block, configured by the first Ingress declaring it for the host.
-// It also keeps every router serving the host on the same TLS option.
-func applyServerClientAuth(ctx context.Context, servers map[string]*server) {
-	for _, srv := range servers {
-		idx := slices.IndexFunc(srv.Locations, func(loc *location) bool { return loc.TLSOption != nil })
-		if idx < 0 {
-			continue
-		}
-
-		owner := srv.Locations[idx]
-		ignoredIngresses := make(map[string]struct{})
+	// The client auth of a server is only known once every Ingress is read, as any of them may be the first declaring it.
+	for _, srv := range mc.Servers {
 		for _, loc := range srv.Locations {
-			ingressKey := loc.Namespace + "/" + loc.IngressName
-			if _, ignored := ignoredIngresses[ingressKey]; !ignored && loc.TLSOption != nil && loc.TLSOptionName != owner.TLSOptionName {
-				ignoredIngresses[ingressKey] = struct{}{}
-				log.Ctx(ctx).Warn().
-					Str("ingress", loc.IngressName).
-					Str("namespace", loc.Namespace).
-					Msgf("Host %q is already configured for client certificate authentication by Ingress %s/%s, ignoring auth-tls annotations", srv.Hostname, owner.Namespace, owner.IngressName)
-			}
-
-			loc.TLSOptionName = owner.TLSOptionName
-			loc.TLSOption = owner.TLSOption
+			buildAuthTLSPassCert(srv, loc)
 		}
 	}
+	// The default backend serves the requests no other location matches, which ingress-nginx handles in its default server.
+	if srv, ok := mc.Servers[""]; ok && mc.DefaultBackendLocation != nil {
+		buildAuthTLSPassCert(srv, mc.DefaultBackendLocation)
+	}
+
+	return mc
 }
 
 // ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
@@ -916,41 +898,89 @@ func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcC
 	return nil
 }
 
-// buildClientAuthTLSOption resolves the TLS option name and content for the auth-tls-secret annotation.
-// The option name only depends on the secret and the client auth type, so that Ingresses sharing one mTLS policy
-// resolve to the same TLS option. The cross-namespace check depends on the Ingress namespace, which the name
-// leaves out. It must run before the cache lookup, so that a cached option does not bypass it.
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig, tlsOptionsCache map[string]*tls.Options) (string, *tls.Options, error) {
+// buildServersClientAuth configures the client certificate authentication of the servers of an Ingress from its auth-tls annotations.
+// It returns an error when the auth-tls-secret cannot be used.
+func (p *Provider) buildServersClientAuth(ctx context.Context, servers map[string]*server, hosts map[string]bool, ing ingressEntry, tlsOptionsCache map[string]*tls.Options) error {
+	if ing.config.AuthTLSSecret == nil {
+		return nil
+	}
+
+	clientAuthTLSOption, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionsCache)
+	if errors.Is(err, errNoCACertificate) {
+		// ingress-nginx serves the Ingress without client auth, and leaves it to the next Ingress of the host.
+		log.Ctx(ctx).Warn().Msgf("Secret %q has no CA certificate, client certificate authentication is disabled", *ing.config.AuthTLSSecret)
+		return nil
+	}
+	passCertificate := ptr.Deref(ing.config.AuthTLSPassCertificateToUpstream, false)
+
+	for _, rule := range ing.Spec.Rules {
+		// A rule without paths only names the host of the Ingress default backend:
+		// like ingress-nginx, it does not configure the client auth of its host, except on the default server.
+		if rule.HTTP == nil && rule.Host != "" {
+			continue
+		}
+
+		// ingress-nginx creates no server for a host only canary Ingresses declare, and falls back to its default server.
+		host := rule.Host
+		if !hosts[host] {
+			host = ""
+		}
+		srv := getOrCreateServer(servers, host)
+
+		// ingress-nginx answers 403 to every request of the servers of the Ingress,
+		// so none of its locations is exposed, and neither are the ones of the other Ingresses of these servers.
+		if err != nil {
+			if srv.AuthTLSError == "" {
+				srv.AuthTLSError = err.Error()
+			}
+			continue
+		}
+
+		// The first Ingress declaring client auth wins the host, as ingress-nginx applies it to the whole server block.
+		switch {
+		case srv.clientAuthIngress == "":
+			srv.TLSOption = clientAuthTLSOption
+			srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
+			srv.clientAuthPassCertificate = passCertificate
+		case srv.TLSOption != clientAuthTLSOption || srv.clientAuthPassCertificate != passCertificate:
+			log.Ctx(ctx).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
+		}
+	}
+
+	return err
+}
+
+// buildClientAuthTLSOption resolves the client-auth TLS option for the auth-tls-secret annotation.
+// Ingresses sharing a secret and client auth type get the same option, which the election of the server client auth relies on to detect conflicts.
+// The cross-namespace check runs before the cache lookup, as the cache key leaves out the Ingress namespace.
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig, tlsOptionsCache map[string]*tls.Options) (*tls.Options, error) {
 	if cfg.AuthTLSSecret == nil {
-		return "", nil, errors.New("auth-tls-secret is nil")
+		return nil, errors.New("auth-tls-secret is nil")
 	}
 
 	secretNamespace, secretName, found := strings.Cut(*cfg.AuthTLSSecret, "/")
 	if !found || secretNamespace == "" || secretName == "" {
-		return "", nil, errors.New("auth-tls-secret must be in namespace/name format")
+		return nil, errors.New("auth-tls-secret must be in namespace/name format")
 	}
 
 	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return "", nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
 	}
 
-	// The namespace and the secret name are suffixed by their own length so that the name unambiguously encodes the pair.
-	pascalCaseWordBoundaryRegexp := regexp.MustCompile(`([a-z0-9])([A-Z])`)
 	clientAuthType := clientAuthTypeFromString(cfg.AuthTLSVerifyClient)
-	clientAuthTypeKey := strings.ToLower(pascalCaseWordBoundaryRegexp.ReplaceAllString(clientAuthType, "$1-$2"))
-	optName := makeKey(secretNamespace, secretName) + "-" + clientAuthTypeKey
+	cacheKey := makeKey(secretNamespace, secretName, clientAuthType)
 
-	if opt, exists := tlsOptionsCache[optName]; exists {
-		return optName, opt, nil
+	if opt, exists := tlsOptionsCache[cacheKey]; exists {
+		return opt, nil
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return "", nil, fmt.Errorf("reading client certificate: %w", err)
+		return nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.ca == nil {
-		return "", nil, errors.New("secret does not contain a CA certificate")
+		return nil, errNoCACertificate
 	}
 
 	opt := &tls.Options{}
@@ -959,9 +989,9 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 		CAFiles:        []types.FileOrContent{types.FileOrContent(blocks.ca)},
 		ClientAuthType: clientAuthType,
 	}
-	tlsOptionsCache[optName] = opt
+	tlsOptionsCache[cacheKey] = opt
 
-	return optName, opt, nil
+	return opt, nil
 }
 
 // applyDefaultBackendAuth pre-resolves the access-control annotations that are
@@ -1187,7 +1217,19 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	if srv, ok := m[hostname]; ok {
 		return srv
 	}
-	srv := &server{Hostname: hostname}
+	tlsOptionName := tls.DefaultTLSConfigName
+	var tlsOption *tls.Options
+	if hostname != "" {
+		tlsOptionName = hostname
+		tlsOption = &tls.Options{}
+		tlsOption.SetDefaults()
+	}
+
+	srv := &server{
+		Hostname:      hostname,
+		TLSOptionName: tlsOptionName,
+		TLSOption:     tlsOption,
+	}
 	m[hostname] = srv
 	return srv
 }
