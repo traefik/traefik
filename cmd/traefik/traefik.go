@@ -479,6 +479,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 			ResolverName:          name,
 			HTTPChallengeProvider: httpChallengeProvider,
 			TLSChallengeProvider:  tlsChallengeProvider,
+			CNAMEFlattening:       c.HostResolver != nil && c.HostResolver.CnameFlattening,
 		}
 
 		if err := providerAggregator.AddProvider(p); err != nil {

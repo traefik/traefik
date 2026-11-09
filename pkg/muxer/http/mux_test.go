@@ -591,6 +591,39 @@ func TestParseDomains(t *testing.T) {
 	}
 }
 
+func TestParseBoundedDomains(t *testing.T) {
+	testCases := []struct {
+		expression string
+		domains    []string
+		bounded    bool
+	}{
+		{expression: "Host(`foo.bar`)", domains: []string{"foo.bar"}, bounded: true},
+		{expression: "Host(`foo.bar`) && PathPrefix(`/x`)", domains: []string{"foo.bar"}, bounded: true},
+		{expression: "Host(`foo.bar`) || PathPrefix(`/x`)", domains: []string{"foo.bar"}},
+		{expression: "Host(`*.foo.bar`)", domains: []string{"*.foo.bar"}, bounded: true},
+		{expression: "Host(`*`)", domains: []string{"*"}},
+		{expression: "HostHeader(`foo.bar`)", domains: []string{"foo.bar"}, bounded: true},
+		{expression: "!Host(`foo.bar`)"},
+		{expression: "PathPrefix(`/`)"},
+		{expression: "HostRegexp(`^foo\\.bar$`)"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.expression, func(t *testing.T) {
+			t.Parallel()
+
+			domains, bounded, err := ParseBoundedDomains(test.expression)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.domains, domains)
+			assert.Equal(t, test.bounded, bounded)
+		})
+	}
+
+	_, _, err := ParseBoundedDomains("Foobar(`foo.bar`)")
+	require.Error(t, err)
+}
+
 // TestEmptyHost is a non regression test for
 // https://github.com/traefik/traefik/pull/9131
 func TestEmptyHost(t *testing.T) {
