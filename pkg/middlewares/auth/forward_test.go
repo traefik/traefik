@@ -73,7 +73,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		w.Header().Add("Foo-Bar", "auth-value")
 		w.Header().Add("Set-Cookie", "authCookie=Auth")
 		w.Header().Add("Set-Cookie", "authCookieNotAdded=Auth")
-		w.Header().Add("Set-Cookie", "authCookieRegex1=Auth")
+		w.Header().Add("Set-Cookie", "authCookieRegex1=Auth; Path=/; Priority=High")
 		w.Header().Add("Set-Cookie", "authCookieRegex2=Auth")
 		fmt.Fprintln(w, "Success")
 	}))
@@ -112,7 +112,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, []string{"backendCookie=Backend", "authCookie=Auth", "authCookieRegex1=Auth", "authCookieRegex2=Auth"}, res.Header["Set-Cookie"])
+	assert.Equal(t, []string{"backendCookie=Backend", "authCookie=Auth", "authCookieRegex1=Auth; Path=/; Priority=High", "authCookieRegex2=Auth"}, res.Header["Set-Cookie"])
 	assert.Equal(t, []string{"BackendHeaderValue"}, res.Header["Other-Header"])
 
 	body, err := io.ReadAll(res.Body)
@@ -1598,12 +1598,13 @@ func TestForwardAuthCookiesWithoutAuthCookies(t *testing.T) {
 		},
 		{
 			desc:        "unset regex preserves existing behavior without auth cookies",
-			wantCookies: []string{"auth_session=Backend", "backendCookie=Backend; Path=/; Priority=High"},
+			wantCookies: []string{"auth_session=Backend", "auth_invalid=a\\b", "backendCookie=Backend; Path=/; Priority=High"},
 		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Add("Set-Cookie", "auth_session=Backend")
+				w.Header().Add("Set-Cookie", "auth_invalid=a\\b")
 				w.Header().Add("Set-Cookie", "backendCookie=Backend; Path=/; Priority=High")
 				w.WriteHeader(http.StatusOK)
 			})

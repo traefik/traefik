@@ -413,17 +413,17 @@ func (fa *forwardAuth) buildModifier(authCookies []string) func(res *http.Respon
 
 // isAuthCookie works on the raw Set-Cookie line,
 // because re-serializing a parsed cookie drops the attributes unknown to net/http.
+// Only the name is read, so a backend cookie with a value net/http rejects is still removed.
 func (fa *forwardAuth) isAuthCookie(setCookie string) bool {
-	cookie, err := http.ParseSetCookie(setCookie)
-	if err != nil {
-		return false
-	}
+	nameValue, _, _ := strings.Cut(setCookie, ";")
+	name, _, _ := strings.Cut(nameValue, "=")
+	name = strings.TrimSpace(name)
 
-	if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
+	if _, found := fa.addAuthCookiesToResponse[name]; found {
 		return true
 	}
 
-	return fa.addAuthCookiesToResponseRegex != nil && fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
+	return fa.addAuthCookiesToResponseRegex != nil && fa.addAuthCookiesToResponseRegex.MatchString(name)
 }
 
 var errBodyTooLarge = errors.New("request body too large")
