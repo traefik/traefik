@@ -605,6 +605,8 @@ type PassTLSClientCert struct {
 type AuthTLSPassCertificateToUpstream struct {
 	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
 	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
+	// PassCertificate sets the Ssl-Client-Cert header with the client certificate.
+	PassCertificate bool `json:"passCertificate,omitempty" toml:"passCertificate,omitempty" yaml:"passCertificate,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

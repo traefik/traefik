@@ -12,7 +12,7 @@ Checking the Health of your Traefik Instances
 
 The CLI can be used to make a request to the `/ping` endpoint to check the health of Traefik. Its exit status is `0` if Traefik is healthy and `1` otherwise.
 
-This can be used with [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
+This can be used with [HEALTHCHECK](https://docs.docker.com/reference/dockerfile#healthcheck) instruction or any other health check orchestration mechanism.
 
 ### Usage 
 

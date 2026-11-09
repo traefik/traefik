@@ -27,6 +27,8 @@ var httpFuncs = matcherBuilderFuncs{
 	"QueryRegexp":  expectNParameters(queryRegexp, 1, 2),
 }
 
+var hostOrIP = regexp.MustCompile(`^(\*\*?\.)?[[:word:]\.\-\:]+$`)
+
 func expectNParameters(fn func(*matchersTree, ...string) error, n ...int) func(*matchersTree, ...string) error {
 	return func(tree *matchersTree, s ...string) error {
 		if !slices.Contains(n, len(s)) {
@@ -81,8 +83,8 @@ func host(tree *matchersTree, hosts ...string) error {
 		return nil
 	}
 
-	if !muxer.IsASCII(hostExpr) {
-		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
+	if !hostOrIP.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value for Host matcher, %q is not a valid hostname", hostExpr)
 	}
 
 	if strings.Contains(hostExpr, "*") && !wildcardHost.MatchString(hostExpr) {
