@@ -175,7 +175,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB2]
-    address: http://localhost:8086
+    address = "http://localhost:8086"
 ```
 
 ```bash tab="CLI"
@@ -216,11 +216,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    [metrics.prometheus.buckets]
-      - 0.1
-      - 0.3
-      - 1.2
-      - 5.0
+    buckets = [0.1, 0.3, 1.2, 5.0]
 ```
 
 ```bash tab="CLI"
@@ -293,7 +289,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsD]
-    address: localhost:8125
+    address = "localhost:8125"
 ```
 
 ```bash tab="CLI"
@@ -308,8 +304,8 @@ metrics:
 | <a id="opt-metrics-statsD-addEntryPointsLabels" href="#opt-metrics-statsD-addEntryPointsLabels" title="#opt-metrics-statsD-addEntryPointsLabels">`metrics.statsD.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-statsD-addRoutersLabels" href="#opt-metrics-statsD-addRoutersLabels" title="#opt-metrics-statsD-addRoutersLabels">`metrics.statsD.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-statsD-addServicesLabels" href="#opt-metrics-statsD-addServicesLabels" title="#opt-metrics-statsD-addServicesLabels">`metrics.statsD.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
-| <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to DataDog server. | 10s      | No      |
-| <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "127.0.0.1:8125"     | Yes      |
+| <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to StatsD server. | 10s      | No      |
+| <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "localhost:8125"     | Yes      |
 | <a id="opt-metrics-statsD-prefix" href="#opt-metrics-statsD-prefix" title="#opt-metrics-statsD-prefix">`metrics.statsD.prefix`</a> | The prefix to use for metrics collection. | "traefik"      | No      |
 
 ## Metrics Provided
