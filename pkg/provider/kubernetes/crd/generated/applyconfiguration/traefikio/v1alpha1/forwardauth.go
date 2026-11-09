@@ -53,6 +53,8 @@ type ForwardAuthApplyConfiguration struct {
 	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
+	// AddAuthCookiesToResponseRegex defines a regex pattern used to match cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponseRegex *string `json:"addAuthCookiesToResponseRegex,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
 	HeaderField *string `json:"headerField,omitempty"`
@@ -141,6 +143,14 @@ func (b *ForwardAuthApplyConfiguration) WithAddAuthCookiesToResponse(values ...s
 	for i := range values {
 		b.AddAuthCookiesToResponse = append(b.AddAuthCookiesToResponse, values[i])
 	}
+	return b
+}
+
+// WithAddAuthCookiesToResponseRegex sets the AddAuthCookiesToResponseRegex field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AddAuthCookiesToResponseRegex field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithAddAuthCookiesToResponseRegex(value string) *ForwardAuthApplyConfiguration {
+	b.AddAuthCookiesToResponseRegex = &value
 	return b
 }
 
