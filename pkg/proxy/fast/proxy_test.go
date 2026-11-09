@@ -670,12 +670,12 @@ func TestStickyConnPool(t *testing.T) {
 	require.NoError(t, err)
 
 	// Each context stands for a distinct frontend connection, as the entrypoint would set it up.
-	backendConnFor := func(ctx context.Context, authorization string) string {
+	backendConnFor := func(ctx context.Context, header, credential string) string {
 		t.Helper()
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(ctx)
-		if authorization != "" {
-			req.Header.Set("Authorization", authorization)
+		if credential != "" {
+			req.Header.Set(header, credential)
 		}
 
 		res := httptest.NewRecorder()
@@ -687,22 +687,28 @@ func TestStickyConnPool(t *testing.T) {
 
 	firstConn := AddConnPoolsOnContext(context.Background())
 	secondConn := AddConnPoolsOnContext(context.Background())
+	thirdConn := AddConnPoolsOnContext(context.Background())
 
 	// Credential-less requests are served from the shared pool, so they reuse the same backend connection.
-	sharedConn := backendConnFor(firstConn, "")
-	assert.Equal(t, sharedConn, backendConnFor(secondConn, ""))
+	sharedConn := backendConnFor(firstConn, "", "")
+	assert.Equal(t, sharedConn, backendConnFor(secondConn, "", ""))
 
 	// A request carrying an NTLM credential is moved onto a pool dedicated to its frontend connection.
-	firstStickyConn := backendConnFor(firstConn, "NTLM TlRMTVNTUAAB")
+	firstStickyConn := backendConnFor(firstConn, "Authorization", "NTLM TlRMTVNTUAAB")
 	assert.NotEqual(t, sharedConn, firstStickyConn)
 	// That dedicated connection is then reused even by a later credential-less request, which is what a
 	// connection-bound authentication relies on.
-	assert.Equal(t, firstStickyConn, backendConnFor(firstConn, ""))
+	assert.Equal(t, firstStickyConn, backendConnFor(firstConn, "", ""))
 
 	// A client must never be served by the connection another one authenticated on.
-	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, ""))
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "", ""))
 	// Authenticated clients each get their own dedicated connection, never shared with one another.
-	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "NTLM TlRMTVNTUAAB"))
+	assert.NotEqual(t, firstStickyConn, backendConnFor(secondConn, "Authorization", "NTLM TlRMTVNTUAAB"))
+
+	// A credential carried in Proxy-Authorization binds the connection the same way.
+	thirdStickyConn := backendConnFor(thirdConn, "Proxy-Authorization", "NTLM TlRMTVNTUAAB")
+	assert.NotEqual(t, sharedConn, thirdStickyConn)
+	assert.Equal(t, thirdStickyConn, backendConnFor(thirdConn, "", ""))
 }
 
 func TestReleaseConnPoolsOnContext(t *testing.T) {
