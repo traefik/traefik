@@ -1,3 +1,16 @@
+## [v2.11.62](https://github.com/traefik/traefik/tree/v2.11.62) (2026-11-09)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.61...v2.11.62)
+
+**Bug fixes:**
+- **[authentication]** Limit BasicAuth password length ([#14168](https://github.com/traefik/traefik/pull/14168) @Neffi42)
+- **[authentication]** Support connection-bound authentication schemes in Proxy-Authorization ([#14203](https://github.com/traefik/traefik/pull/14203) @Neffi42)
+- **[plugins]** Bump github.com/traefik/yaegi to v0.16.3 ([#14231](https://github.com/traefik/traefik/pull/14231) @juliens)
+- **[server]** Resolve dot-segments and empty segments with path parameters ([#14188](https://github.com/traefik/traefik/pull/14188) @Neffi42)
+
+**Documentation:**
+- Add version to the dot-segments migration note ([#14248](https://github.com/traefik/traefik/pull/14248) @kevinpollet)
+- Fix Docker Hub link in README ([#14198](https://github.com/traefik/traefik/pull/14198) @GUOZIJAN)
+
 ## [v2.11.61](https://github.com/traefik/traefik/tree/v2.11.61) (2026-10-29)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.60...v2.11.61)
 
