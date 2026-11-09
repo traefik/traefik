@@ -167,6 +167,15 @@ works **without** that opt-in, or defeats it, it is in scope. Equally, a report 
 create or edit the Kubernetes objects involved is not a boundary crossing: that actor already controls
 routing in the namespace.
 
+**Gateways served by a single instance.** A single Traefik instance serves every Gateway it watches
+from one shared routing configuration, so a route attached to one Gateway can match requests intended
+for another Gateway on the same instance. Gateways served by the same instance are not isolated from
+each other: a report showing a route crossing Gateways on a single instance describes a documented
+limit, not a vulnerability. For isolation between Gateways, the
+[Traefik Operator](../security/multi-tenant-kubernetes.md#traefik-operator) provisions a dedicated data
+plane for each Gateway, as described in
+[Multi-Tenancy in Kubernetes](../security/multi-tenant-kubernetes.md#gateway-api).
+
 **Decided in this class.**
 [GHSA-62fc-8686-hfmq](https://github.com/traefik/traefik/security/advisories/GHSA-62fc-8686-hfmq) (CVE-2026-71325, `allowCrossNamespace=false` bypassed
 via `@kubernetescrd`), [GHSA-3g6v-2r68-prfc](https://github.com/traefik/traefik/security/advisories/GHSA-3g6v-2r68-prfc) (CVE-2026-54761, `crossProviderNamespaces` allow-list defeated),
