@@ -361,7 +361,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.RequestURI = req.URL.RequestURI()
 
 	authCookies := forwardResponse.Cookies()
-	if len(authCookies) == 0 {
+	if len(authCookies) == 0 || len(fa.addAuthCookiesToResponse) == 0 {
 		fa.next.ServeHTTP(rw, req)
 		return
 	}
@@ -383,12 +383,13 @@ func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, er
 
 func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
 	return func(res *http.Response) error {
-		cookies := res.Cookies()
+		setCookies := res.Header.Values("Set-Cookie")
 		res.Header.Del("Set-Cookie")
 
-		for _, cookie := range cookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
-				res.Header.Add("Set-Cookie", cookie.String())
+		for _, setCookie := range setCookies {
+			name, _, _ := strings.Cut(setCookie, "=")
+			if _, found := fa.addAuthCookiesToResponse[strings.TrimSpace(name)]; !found {
+				res.Header.Add("Set-Cookie", setCookie)
 			}
 		}
 
