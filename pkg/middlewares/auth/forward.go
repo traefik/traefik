@@ -369,7 +369,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	req.RequestURI = req.URL.RequestURI()
 
-	authCookies := forwardResponse.Cookies()
+	authCookies := forwardResponse.Header.Values("Set-Cookie")
 	if len(authCookies) == 0 && fa.addAuthCookiesToResponseRegex == nil {
 		fa.next.ServeHTTP(rw, req)
 		return
@@ -390,35 +390,40 @@ func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, er
 	return nil, http.ErrNoLocation
 }
 
-func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
+func (fa *forwardAuth) buildModifier(authCookies []string) func(res *http.Response) error {
 	return func(res *http.Response) error {
-		cookies := res.Cookies()
+		cookies := res.Header.Values("Set-Cookie")
 		res.Header.Del("Set-Cookie")
 
 		for _, cookie := range cookies {
-			_, found := fa.addAuthCookiesToResponse[cookie.Name]
-			var matches bool
-			if fa.addAuthCookiesToResponseRegex != nil {
-				matches = fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
-			}
-			if !found && !matches {
-				res.Header.Add("Set-Cookie", cookie.String())
+			if !fa.isAuthCookie(cookie) {
+				res.Header.Add("Set-Cookie", cookie)
 			}
 		}
 
 		for _, cookie := range authCookies {
-			_, found := fa.addAuthCookiesToResponse[cookie.Name]
-			var matches bool
-			if fa.addAuthCookiesToResponseRegex != nil {
-				matches = fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
-			}
-			if found || matches {
-				res.Header.Add("Set-Cookie", cookie.String())
+			if fa.isAuthCookie(cookie) {
+				res.Header.Add("Set-Cookie", cookie)
 			}
 		}
 
 		return nil
 	}
+}
+
+// isAuthCookie works on the raw Set-Cookie line,
+// because re-serializing a parsed cookie drops the attributes unknown to net/http.
+func (fa *forwardAuth) isAuthCookie(setCookie string) bool {
+	cookie, err := http.ParseSetCookie(setCookie)
+	if err != nil {
+		return false
+	}
+
+	if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
+		return true
+	}
+
+	return fa.addAuthCookiesToResponseRegex != nil && fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
 }
 
 var errBodyTooLarge = errors.New("request body too large")

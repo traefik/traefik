@@ -1594,17 +1594,17 @@ func TestForwardAuthCookiesWithoutAuthCookies(t *testing.T) {
 		{
 			desc:        "regex strips matching backend cookies without auth cookies",
 			regex:       "^auth_",
-			wantCookies: []string{"backendCookie=Backend"},
+			wantCookies: []string{"backendCookie=Backend; Path=/; Priority=High"},
 		},
 		{
 			desc:        "unset regex preserves existing behavior without auth cookies",
-			wantCookies: []string{"auth_session=Backend", "backendCookie=Backend"},
+			wantCookies: []string{"auth_session=Backend", "backendCookie=Backend; Path=/; Priority=High"},
 		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Add("Set-Cookie", "auth_session=Backend")
-				w.Header().Add("Set-Cookie", "backendCookie=Backend")
+				w.Header().Add("Set-Cookie", "backendCookie=Backend; Path=/; Priority=High")
 				w.WriteHeader(http.StatusOK)
 			})
 			middleware, err := NewForward(t.Context(), next, dynamic.ForwardAuth{
