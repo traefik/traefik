@@ -81,7 +81,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/valyala/fasthttp v1.73.0
-	github.com/vulcand/oxy/v2 v2.3.0
+	github.com/vulcand/oxy/v2 v2.3.2
 	github.com/vulcand/predicate v1.3.0
 	github.com/yuin/gopher-lua v1.1.1
 	go.opentelemetry.io/collector/pdata v1.41.0
@@ -285,7 +285,6 @@ require (
 	github.com/liquidweb/liquidweb-go v1.6.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/magiconair/properties v1.18.12 // indirect
-	github.com/mailgun/multibuf v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mimuret/golang-iij-dpf v0.9.1 // indirect
@@ -391,7 +390,7 @@ require (
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
