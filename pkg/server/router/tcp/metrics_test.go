@@ -1,146 +1,123 @@
 package tcp
 
 import (
-	"context"
-	"net"
 	"testing"
-	"time"
 
-	"github.com/go-kit/kit/metrics"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	traefikmetrics "github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
-type mockRegistry struct {
-	traefikmetrics.Registry
-	routerTCPOpenConnectionsGauge *mockGauge
-}
+func TestManager_routerMetrics(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		router *dynamic.TCPRouter
+	}{
+		{
+			desc: "non-TLS router",
+			router: &dynamic.TCPRouter{
+				EntryPoints: []string{"web"},
+				Service:     "bar",
+				Rule:        "HostSNI(`*`)",
+			},
+		},
+		{
+			desc: "TLS passthrough router",
+			router: &dynamic.TCPRouter{
+				EntryPoints: []string{"web"},
+				Service:     "bar",
+				Rule:        "HostSNI(`foo.bar`)",
+				TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
+			},
+		},
+		{
+			desc: "TLS router",
+			router: &dynamic.TCPRouter{
+				EntryPoints: []string{"web"},
+				Service:     "bar",
+				Rule:        "HostSNI(`foo.bar`)",
+				TLS:         &dynamic.RouterTCPTLSConfig{},
+			},
+		},
+	}
 
-func (m *mockRegistry) IsRouterEnabled() bool {
-	return true
-}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-func (m *mockRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
-	return m.routerTCPOpenConnectionsGauge
-}
-
-type mockGauge struct {
-	value       float64
-	labelValues []string
-}
-
-func (m *mockGauge) With(labelValues ...string) metrics.Gauge {
-	m.labelValues = labelValues
-	return m
-}
-
-func (m *mockGauge) Set(value float64) {
-	m.value = value
-}
-
-func (m *mockGauge) Add(delta float64) {
-	m.value += delta
-}
-
-func TestRouterTCPOpenConnectionsMetrics(t *testing.T) {
-	routerName := "test-router"
-	serviceName := "test-service"
-	entryPointName := "web"
-
-	conf := &runtime.Configuration{
-		TCPServices: map[string]*runtime.TCPServiceInfo{
-			serviceName: {
-				TCPService: &dynamic.TCPService{
-					LoadBalancer: &dynamic.TCPServersLoadBalancer{
-						Servers: []dynamic.TCPServer{
-							{Address: "127.0.0.1:9999"},
+			conf := &runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
+					"bar@file": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{{Address: "127.0.0.1:9999"}},
+							},
 						},
 					},
 				},
-			},
-		},
-		TCPRouters: map[string]*runtime.TCPRouterInfo{
-			routerName: {
-				TCPRouter: &dynamic.TCPRouter{
-					EntryPoints: []string{entryPointName},
-					Service:     serviceName,
-					Rule:        "HostSNI(`*`)",
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"foo@file": {TCPRouter: test.router},
 				},
-			},
-		},
+			}
+
+			dialerManager := tcp2.NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+			serviceManager := tcp.NewManager(conf, dialerManager)
+
+			tlsManager := traefiktls.NewManager(nil)
+			tlsManager.UpdateConfigs(t.Context(),
+				map[string]traefiktls.Store{},
+				map[string]traefiktls.Options{"default": {}},
+				[]*traefiktls.CertAndStores{})
+
+			gauge := &gaugeMock{}
+			observabilityMgr := middleware.NewObservabilityMgr(static.Configuration{}, &registryMock{gauge: gauge}, nil, nil, nil, nil)
+
+			manager := NewManager(conf, serviceManager, tcpmiddleware.NewBuilder(conf.TCPMiddlewares),
+				observabilityMgr, nil, nil, tlsManager, nil)
+
+			handlers := manager.BuildHandlers(t.Context(), []string{"web"})
+			require.Contains(t, handlers, "web")
+			require.Empty(t, conf.TCPRouters["foo@file"].Err)
+
+			// The service name is qualified, as for the HTTP router metrics.
+			assert.Equal(t, []string{"router", "foo@file", "service", "bar@file"}, gauge.labelValues)
+		})
 	}
-
-	gauge := &mockGauge{}
-	registry := &mockRegistry{
-		routerTCPOpenConnectionsGauge: gauge,
-	}
-
-	dialerManager := tcp2.NewDialerManager(nil)
-	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-	svcManager := tcp.NewManager(conf, dialerManager)
-
-	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
-
-	manager := NewManager(conf,
-		svcManager,
-		middlewaresBuilder, nil, nil,
-		traefiktls.NewManager(nil),
-		nil,
-		registry,
-	)
-
-	handlers := manager.BuildHandlers(context.Background(), []string{entryPointName})
-	_, ok := handlers[entryPointName]
-	require.True(t, ok)
-
-	// Verify that the gauge's With method was called with the correct labels
-	// during handler construction. The With method on our mock stores the label values.
-	assert.Equal(t, []string{"router", routerName, "service", serviceName}, gauge.labelValues)
 }
 
-func TestRouterTCPOpenConnectionsMetrics_ServeTCP(t *testing.T) {
-	// Test the metricsMiddleware directly to verify increment/decrement behavior.
-	gauge := &mockGauge{}
+type registryMock struct {
+	metrics.Registry
 
-	mockHandler := &mockTCPHandler{}
-	middleware := &metricsMiddleware{
-		next:                 mockHandler,
-		openConnectionsGauge: gauge,
-	}
-
-	conn := &mockConn{}
-	middleware.ServeTCP(conn)
-
-	// After ServeTCP completes, the gauge should have been incremented and decremented.
-	assert.Equal(t, float64(0), gauge.value)
-	assert.True(t, mockHandler.called, "next handler should have been called")
+	gauge *gaugeMock
 }
 
-type mockTCPHandler struct {
-	called bool
+func (r *registryMock) IsRouterEnabled() bool {
+	return true
 }
 
-func (m *mockTCPHandler) ServeTCP(conn tcp2.WriteCloser) {
-	m.called = true
+func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
+	return r.gauge
 }
 
-type mockConn struct {
-	tcp2.WriteCloser
+type gaugeMock struct {
+	labelValues []string
 }
 
-func (m *mockConn) Close() error                       { return nil }
-func (m *mockConn) CloseWrite() error                  { return nil }
-func (m *mockConn) Read(b []byte) (n int, err error)   { return 0, nil }
-func (m *mockConn) Write(b []byte) (n int, err error)  { return 0, nil }
-func (m *mockConn) RemoteAddr() net.Addr               { return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 1234} }
-func (m *mockConn) LocalAddr() net.Addr                { return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 80} }
-func (m *mockConn) SetDeadline(t time.Time) error      { return nil }
-func (m *mockConn) SetReadDeadline(t time.Time) error  { return nil }
-func (m *mockConn) SetWriteDeadline(t time.Time) error { return nil }
+func (g *gaugeMock) With(labelValues ...string) gokitmetrics.Gauge {
+	g.labelValues = labelValues
+	return g
+}
+
+func (g *gaugeMock) Set(_ float64) {}
+
+func (g *gaugeMock) Add(_ float64) {}

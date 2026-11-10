@@ -8,14 +8,14 @@ import (
 	"net/http"
 	"strings"
 
-	kitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tcp/metrics"
 	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -32,33 +32,33 @@ type middlewareBuilder interface {
 type Manager struct {
 	serviceManager      *tcpservice.Manager
 	middlewaresBuilder  middlewareBuilder
+	observabilityMgr    *middleware.ObservabilityMgr
 	httpHandlers        map[string]http.Handler
 	httpsHandlers       map[string]http.Handler
 	tlsManager          *traefiktls.Manager
 	conf                *runtime.Configuration
 	providersPrecedence []string
-	metricsRegistry     metrics.Registry
 }
 
 // NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	middlewaresBuilder middlewareBuilder,
+	observabilityMgr *middleware.ObservabilityMgr,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
 	providersPrecedence []string,
-	metricsRegistry metrics.Registry,
 ) *Manager {
 	return &Manager{
 		serviceManager:      serviceManager,
 		middlewaresBuilder:  middlewaresBuilder,
+		observabilityMgr:    observabilityMgr,
 		httpHandlers:        httpHandlers,
 		httpsHandlers:       httpsHandlers,
 		tlsManager:          tlsManager,
 		conf:                conf,
 		providersPrecedence: providersPrecedence,
-		metricsRegistry:     metricsRegistry,
 	}
 }
 
@@ -220,9 +220,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
 func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
-		ctxRouter := provider.AddInContext(ctx, routerName)
-		logger := log.Ctx(ctxRouter).With().Str(logs.RouterName, routerName).Logger()
-		ctxRouter = logger.WithContext(provider.AddInContext(ctx, routerName))
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
 		if routerConfig.Priority == 0 {
 			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
@@ -268,7 +267,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		var handler tcp.Handler
 		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
-			handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+			handler, err = m.buildTCPHandler(ctxRouter, routerName, routerConfig)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -279,14 +278,6 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if routerConfig.TLS == nil {
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
 
-			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-				gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
-				handler = &metricsMiddleware{
-					next:                 handler,
-					openConnectionsGauge: gauge,
-				}
-			}
-
 			if err := router.muxerTCP.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -296,14 +287,6 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
-
-			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-				gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
-				handler = &metricsMiddleware{
-					next:                 handler,
-					openConnectionsGauge: gauge,
-				}
-			}
 
 			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
 				routerConfig.AddError(err, true)
@@ -359,19 +342,11 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		// This seems to be the case so far with the existing matchers (HostSNI, and ClientIP), so it's all good.
 		// Otherwise, we would have to do as for HTTPS, i.e. disallow different TLS configs for the same HostSNIs.
 
-		handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+		handler, err = m.buildTCPHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
-		}
-
-		if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-			gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
-			handler = &metricsMiddleware{
-				next:                 handler,
-				openConnectionsGauge: gauge,
-			}
 		}
 
 		handler = &tcp.TLSHandler{
@@ -390,7 +365,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 	}
 }
 
-func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
+func (m *Manager) buildTCPHandler(ctx context.Context, routerName string, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -406,9 +381,13 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 		return nil, err
 	}
 
+	// The metrics middleware is idempotent if the routers metrics are disabled.
+	qualifiedService := provider.GetQualifiedName(ctx, router.Service)
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService)
+
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
+	return tcp.NewChain(metricsHandler).Extend(*mHandler).Then(sHandler)
 }
 
 func providerName(routerName string) string {
@@ -417,15 +396,4 @@ func providerName(routerName string) string {
 		return parts[1]
 	}
 	return ""
-}
-
-type metricsMiddleware struct {
-	next                 tcp.Handler
-	openConnectionsGauge kitmetrics.Gauge
-}
-
-func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
-	m.openConnectionsGauge.Add(1)
-	defer m.openConnectionsGauge.Add(-1)
-	m.next.ServeTCP(conn)
 }
