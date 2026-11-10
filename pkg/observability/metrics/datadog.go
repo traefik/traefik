@@ -45,6 +45,7 @@ const (
 	ddRouterReqsDurationName = "router.request.duration"
 	ddRouterReqsBytesName    = "router.requests.bytes.total"
 	ddRouterRespsBytesName   = "router.responses.bytes.total"
+
 	ddRouterTCPOpenConnsName = "router.tcp.open.connections"
 
 	ddServiceReqsName         = "service.request.total"

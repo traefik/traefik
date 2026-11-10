@@ -42,6 +42,7 @@ const (
 	influxDBRouterReqsDurationName = "traefik.router.request.duration"
 	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
 	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
+
 	influxDBRouterTCPOpenConnsName = "traefik.router.tcp.open.connections"
 
 	influxDBServiceReqsName         = "traefik.service.requests.total"
