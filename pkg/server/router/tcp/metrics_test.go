@@ -20,15 +20,15 @@ import (
 
 type mockRegistry struct {
 	traefikmetrics.Registry
-	routerOpenConnectionsGauge *mockGauge
+	routerTCPOpenConnectionsGauge *mockGauge
 }
 
 func (m *mockRegistry) IsRouterEnabled() bool {
 	return true
 }
 
-func (m *mockRegistry) RouterOpenConnectionsGauge() metrics.Gauge {
-	return m.routerOpenConnectionsGauge
+func (m *mockRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
+	return m.routerTCPOpenConnectionsGauge
 }
 
 type mockGauge struct {
@@ -49,7 +49,7 @@ func (m *mockGauge) Add(delta float64) {
 	m.value += delta
 }
 
-func TestRouterOpenConnectionsMetrics(t *testing.T) {
+func TestRouterTCPOpenConnectionsMetrics(t *testing.T) {
 	routerName := "test-router"
 	serviceName := "test-service"
 	entryPointName := "web"
@@ -79,7 +79,7 @@ func TestRouterOpenConnectionsMetrics(t *testing.T) {
 
 	gauge := &mockGauge{}
 	registry := &mockRegistry{
-		routerOpenConnectionsGauge: gauge,
+		routerTCPOpenConnectionsGauge: gauge,
 	}
 
 	dialerManager := tcp2.NewDialerManager(nil)
@@ -105,7 +105,7 @@ func TestRouterOpenConnectionsMetrics(t *testing.T) {
 	assert.Equal(t, []string{"router", routerName, "service", serviceName}, gauge.labelValues)
 }
 
-func TestRouterOpenConnectionsMetrics_ServeTCP(t *testing.T) {
+func TestRouterTCPOpenConnectionsMetrics_ServeTCP(t *testing.T) {
 	// Test the metricsMiddleware directly to verify increment/decrement behavior.
 	gauge := &mockGauge{}
 

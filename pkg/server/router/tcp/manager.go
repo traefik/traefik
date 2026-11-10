@@ -280,7 +280,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
 
 			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-				gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+				gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
 				handler = &metricsMiddleware{
 					next:                 handler,
 					openConnectionsGauge: gauge,
@@ -298,7 +298,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
 
 			if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-				gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+				gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
 				handler = &metricsMiddleware{
 					next:                 handler,
 					openConnectionsGauge: gauge,
@@ -367,7 +367,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		}
 
 		if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-			gauge := m.metricsRegistry.RouterOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
+			gauge := m.metricsRegistry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", routerConfig.Service)
 			handler = &metricsMiddleware{
 				next:                 handler,
 				openConnectionsGauge: gauge,

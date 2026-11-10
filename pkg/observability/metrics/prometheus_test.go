@@ -152,7 +152,7 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		RouterOpenConnectionsGauge().
+		RouterTCPOpenConnectionsGauge().
 		With("router", "demo", "service", "service1").
 		Set(1)
 
@@ -316,12 +316,12 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
 		},
 		{
-			name: routerOpenConnectionsName,
+			name: routerTCPOpenConnectionsName,
 			labels: map[string]string{
 				"router":  "demo",
 				"service": "service1",
 			},
-			assert: buildGaugeAssert(t, routerOpenConnectionsName, 1),
+			assert: buildGaugeAssert(t, routerTCPOpenConnectionsName, 1),
 		},
 		{
 			name: serviceReqsTotalName,

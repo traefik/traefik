@@ -151,8 +151,8 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
 		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
 			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
-		reg.routerOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerOpenConnectionsName,
-			"How many open connections exist on a router, partitioned by service.",
+		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPOpenConnectionsName,
+			"How many open connections exist on a TCP router, partitioned by service.",
 			"1")
 	}
 

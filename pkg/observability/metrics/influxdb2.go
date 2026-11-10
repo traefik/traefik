@@ -42,7 +42,7 @@ const (
 	influxDBRouterReqsDurationName = "traefik.router.request.duration"
 	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
 	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
-	influxDBRouterOpenConnsName    = "traefik.router.open.connections"
+	influxDBRouterTCPOpenConnsName = "traefik.router.tcp.open.connections"
 
 	influxDBServiceReqsName         = "traefik.service.requests.total"
 	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
@@ -103,7 +103,7 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBRouterReqsDurationName), time.Second)
 		registry.routerReqsBytesCounter = influxDB2Store.NewCounter(influxDBRouterReqsBytesName)
 		registry.routerRespsBytesCounter = influxDB2Store.NewCounter(influxDBRouterRespsBytesName)
-		registry.routerOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterOpenConnsName)
+		registry.routerTCPOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName)
 	}
 
 	if config.AddServicesLabels {
