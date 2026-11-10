@@ -101,7 +101,7 @@ type registryMock struct {
 	gauge *gaugeMock
 }
 
-func (r *registryMock) IsRouterEnabled() bool {
+func (r *registryMock) IsTCPRouterEnabled() bool {
 	return true
 }
 

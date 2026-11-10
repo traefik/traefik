@@ -139,6 +139,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	reg := &standardRegistry{
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
+		tcpRouterEnabled:               config.EnableTCPRouterMetrics,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           configReloads,
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
@@ -206,10 +207,6 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: routerRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by a router, partitioned by service, status code, protocol, and method.",
 		}, []string{"code", "method", "protocol", "router", "service"})
-		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: routerTCPOpenConnectionsName,
-			Help: "How many open connections exist on a TCP router, partitioned by service.",
-		}, []string{"router", "service"})
 
 		promState.vectors = append(promState.vectors,
 			routerReqs.cv,
@@ -218,16 +215,25 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			routerReqsBytesTotal.cv,
 			routerRespsBytesTotal.cv,
 		)
-		// TCP metrics are tracked apart from the HTTP ones,
-		// because HTTP and TCP routers can share the same name.
-		promState.tcpVectors = append(promState.tcpVectors,
-			routerTCPOpenConns.gv,
-		)
 		reg.routerReqsCounter = routerReqs
 		reg.routerReqsTLSCounter = routerReqsTLS
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
 		reg.routerReqsBytesCounter = routerReqsBytesTotal
 		reg.routerRespsBytesCounter = routerRespsBytesTotal
+	}
+
+	if config.EnableTCPRouterMetrics {
+		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPOpenConnectionsName,
+			Help: "How many open connections exist on a TCP router, partitioned by service.",
+		}, []string{"router", "service"})
+
+		// TCP metrics are tracked apart from the HTTP ones,
+		// because HTTP and TCP routers can share the same name.
+		promState.tcpVectors = append(promState.tcpVectors,
+			routerTCPOpenConns.gv,
+		)
+
 		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
 	}
 

@@ -32,7 +32,7 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 // RouterMetricsHandler returns the metrics TCP router handler.
 func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) tcp.Constructor {
 	return func(next tcp.Handler) (tcp.Handler, error) {
-		if registry == nil || !registry.IsRouterEnabled() {
+		if registry == nil || !registry.IsTCPRouterEnabled() {
 			return next, nil
 		}
 
