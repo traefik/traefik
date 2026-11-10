@@ -34,6 +34,7 @@ const (
 	statsdRouterReqsDurationName = "router.request.duration"
 	statsdRouterReqsBytesName    = "router.requests.bytes.total"
 	statsdRouterRespsBytesName   = "router.responses.bytes.total"
+
 	statsdRouterTCPOpenConnsName = "router.tcp.open.connections"
 
 	statsdServiceReqsName         = "service.request.total"
