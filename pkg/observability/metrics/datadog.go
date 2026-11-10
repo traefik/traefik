@@ -46,8 +46,6 @@ const (
 	ddRouterReqsBytesName    = "router.requests.bytes.total"
 	ddRouterRespsBytesName   = "router.responses.bytes.total"
 
-	ddRouterTCPOpenConnsName = "router.tcp.open.connections"
-
 	ddServiceReqsName         = "service.request.total"
 	ddServiceReqsTLSName      = "service.request.tls.total"
 	ddServiceReqsDurationName = "service.request.duration"
@@ -55,6 +53,8 @@ const (
 	ddServiceServerUpName     = "service.server.up"
 	ddServiceReqsBytesName    = "service.requests.bytes.total"
 	ddServiceRespsBytesName   = "service.responses.bytes.total"
+
+	ddRouterTCPOpenConnsName = "router.tcp.open.connections"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -97,11 +97,6 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
 	}
 
-	if config.EnableTCPRouterMetrics {
-		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		registry.routerTCPOpenConnectionsGauge = datadogClient.NewGauge(ddRouterTCPOpenConnsName)
-	}
-
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddServiceReqsName, 1.0))
@@ -111,6 +106,11 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
 		registry.serviceReqsBytesCounter = datadogClient.NewCounter(ddServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = datadogClient.NewCounter(ddServiceRespsBytesName, 1.0)
+	}
+
+	if config.EnableTCPRouterMetrics {
+		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		registry.routerTCPOpenConnectionsGauge = datadogClient.NewGauge(ddRouterTCPOpenConnsName)
 	}
 
 	return registry

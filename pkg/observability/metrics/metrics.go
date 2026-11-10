@@ -16,10 +16,11 @@ type Registry interface {
 	IsEpEnabled() bool
 	// IsRouterEnabled shows whether metrics instrumentation is enabled on routers.
 	IsRouterEnabled() bool
-	// IsTCPRouterEnabled shows whether metrics instrumentation is enabled on TCP routers.
-	IsTCPRouterEnabled() bool
 	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
 	IsSvcEnabled() bool
+
+	// IsTCPRouterEnabled shows whether metrics instrumentation is enabled on TCP routers.
+	IsTCPRouterEnabled() bool
 
 	// server metrics
 
@@ -47,10 +48,6 @@ type Registry interface {
 	RouterReqsBytesCounter() metrics.Counter
 	RouterRespsBytesCounter() metrics.Counter
 
-	// TCP router metrics
-
-	RouterTCPOpenConnectionsGauge() metrics.Gauge
-
 	// service metrics
 
 	ServiceReqsCounter() CounterWithHeaders
@@ -60,6 +57,10 @@ type Registry interface {
 	ServiceServerUpGauge() metrics.Gauge
 	ServiceReqsBytesCounter() metrics.Counter
 	ServiceRespsBytesCounter() metrics.Counter
+
+	// TCP router metrics
+
+	RouterTCPOpenConnectionsGauge() metrics.Gauge
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -86,7 +87,6 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var routerReqDurationHistogram []ScalableHistogram
 	var routerReqsBytesCounter []metrics.Counter
 	var routerRespsBytesCounter []metrics.Counter
-	var routerTCPOpenConnectionsGauge []metrics.Gauge
 	var serviceReqsCounter []CounterWithHeaders
 	var serviceReqsTLSCounter []metrics.Counter
 	var serviceReqDurationHistogram []ScalableHistogram
@@ -94,6 +94,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceServerUpGauge []metrics.Gauge
 	var serviceReqsBytesCounter []metrics.Counter
 	var serviceRespsBytesCounter []metrics.Counter
+
+	var routerTCPOpenConnectionsGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -138,9 +140,6 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.RouterRespsBytesCounter() != nil {
 			routerRespsBytesCounter = append(routerRespsBytesCounter, r.RouterRespsBytesCounter())
 		}
-		if r.RouterTCPOpenConnectionsGauge() != nil {
-			routerTCPOpenConnectionsGauge = append(routerTCPOpenConnectionsGauge, r.RouterTCPOpenConnectionsGauge())
-		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
 		}
@@ -162,13 +161,16 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.ServiceRespsBytesCounter() != nil {
 			serviceRespsBytesCounter = append(serviceRespsBytesCounter, r.ServiceRespsBytesCounter())
 		}
+
+		if r.RouterTCPOpenConnectionsGauge() != nil {
+			routerTCPOpenConnectionsGauge = append(routerTCPOpenConnectionsGauge, r.RouterTCPOpenConnectionsGauge())
+		}
 	}
 
 	return &standardRegistry{
 		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0,
 		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0,
-		tcpRouterEnabled:               len(routerTCPOpenConnectionsGauge) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		openConnectionsGauge:           multi.NewGauge(openConnectionsGauge...),
@@ -183,7 +185,6 @@ func NewMultiRegistry(registries []Registry) Registry {
 		routerReqDurationHistogram:     MultiHistogram(routerReqDurationHistogram),
 		routerReqsBytesCounter:         multi.NewCounter(routerReqsBytesCounter...),
 		routerRespsBytesCounter:        multi.NewCounter(routerRespsBytesCounter...),
-		routerTCPOpenConnectionsGauge:  multi.NewGauge(routerTCPOpenConnectionsGauge...),
 		serviceReqsCounter:             NewMultiCounterWithHeaders(serviceReqsCounter...),
 		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
 		serviceReqDurationHistogram:    MultiHistogram(serviceReqDurationHistogram),
@@ -191,13 +192,15 @@ func NewMultiRegistry(registries []Registry) Registry {
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
 		serviceReqsBytesCounter:        multi.NewCounter(serviceReqsBytesCounter...),
 		serviceRespsBytesCounter:       multi.NewCounter(serviceRespsBytesCounter...),
+
+		tcpRouterEnabled:              len(routerTCPOpenConnectionsGauge) > 0,
+		routerTCPOpenConnectionsGauge: multi.NewGauge(routerTCPOpenConnectionsGauge...),
 	}
 }
 
 type standardRegistry struct {
 	epEnabled                      bool
 	routerEnabled                  bool
-	tcpRouterEnabled               bool
 	svcEnabled                     bool
 	configReloadsCounter           metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
@@ -213,7 +216,6 @@ type standardRegistry struct {
 	routerReqDurationHistogram     ScalableHistogram
 	routerReqsBytesCounter         metrics.Counter
 	routerRespsBytesCounter        metrics.Counter
-	routerTCPOpenConnectionsGauge  metrics.Gauge
 	serviceReqsCounter             CounterWithHeaders
 	serviceReqsTLSCounter          metrics.Counter
 	serviceReqDurationHistogram    ScalableHistogram
@@ -221,6 +223,9 @@ type standardRegistry struct {
 	serviceServerUpGauge           metrics.Gauge
 	serviceReqsBytesCounter        metrics.Counter
 	serviceRespsBytesCounter       metrics.Counter
+
+	tcpRouterEnabled              bool
+	routerTCPOpenConnectionsGauge metrics.Gauge
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -231,12 +236,12 @@ func (r *standardRegistry) IsRouterEnabled() bool {
 	return r.routerEnabled
 }
 
-func (r *standardRegistry) IsTCPRouterEnabled() bool {
-	return r.tcpRouterEnabled
-}
-
 func (r *standardRegistry) IsSvcEnabled() bool {
 	return r.svcEnabled
+}
+
+func (r *standardRegistry) IsTCPRouterEnabled() bool {
+	return r.tcpRouterEnabled
 }
 
 func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {
@@ -295,10 +300,6 @@ func (r *standardRegistry) RouterRespsBytesCounter() metrics.Counter {
 	return r.routerRespsBytesCounter
 }
 
-func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
-	return r.routerTCPOpenConnectionsGauge
-}
-
 func (r *standardRegistry) ServiceReqsCounter() CounterWithHeaders {
 	return r.serviceReqsCounter
 }
@@ -325,6 +326,10 @@ func (r *standardRegistry) ServiceReqsBytesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceRespsBytesCounter() metrics.Counter {
 	return r.serviceRespsBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
+	return r.routerTCPOpenConnectionsGauge
 }
 
 // ScalableHistogram is a Histogram with a predefined time unit,
