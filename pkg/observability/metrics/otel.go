@@ -118,6 +118,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 	reg := &standardRegistry{
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
+		tcpRouterEnabled:               config.EnableTCPRouterMetrics,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
 		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", "ms"),
@@ -151,6 +152,9 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
 		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
 			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
+	}
+
+	if config.EnableTCPRouterMetrics {
 		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by service.",
 			"1")

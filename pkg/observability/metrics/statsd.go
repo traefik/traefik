@@ -82,6 +82,10 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterReqsDurationName, 1.0), time.Millisecond)
 		registry.routerReqsBytesCounter = statsdClient.NewCounter(statsdRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = statsdClient.NewCounter(statsdRouterRespsBytesName, 1.0)
+	}
+
+	if config.EnableTCPRouterMetrics {
+		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
 		registry.routerTCPOpenConnectionsGauge = statsdClient.NewGauge(statsdRouterTCPOpenConnsName)
 	}
 

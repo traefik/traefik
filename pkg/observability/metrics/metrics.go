@@ -16,6 +16,8 @@ type Registry interface {
 	IsEpEnabled() bool
 	// IsRouterEnabled shows whether metrics instrumentation is enabled on routers.
 	IsRouterEnabled() bool
+	// IsTCPRouterEnabled shows whether metrics instrumentation is enabled on TCP routers.
+	IsTCPRouterEnabled() bool
 	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
 	IsSvcEnabled() bool
 
@@ -44,6 +46,9 @@ type Registry interface {
 	RouterReqDurationHistogram() ScalableHistogram
 	RouterReqsBytesCounter() metrics.Counter
 	RouterRespsBytesCounter() metrics.Counter
+
+	// TCP router metrics
+
 	RouterTCPOpenConnectionsGauge() metrics.Gauge
 
 	// service metrics
@@ -163,6 +168,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0,
 		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0,
+		tcpRouterEnabled:               len(routerTCPOpenConnectionsGauge) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		openConnectionsGauge:           multi.NewGauge(openConnectionsGauge...),
@@ -191,6 +197,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 type standardRegistry struct {
 	epEnabled                      bool
 	routerEnabled                  bool
+	tcpRouterEnabled               bool
 	svcEnabled                     bool
 	configReloadsCounter           metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
@@ -222,6 +229,10 @@ func (r *standardRegistry) IsEpEnabled() bool {
 
 func (r *standardRegistry) IsRouterEnabled() bool {
 	return r.routerEnabled
+}
+
+func (r *standardRegistry) IsTCPRouterEnabled() bool {
+	return r.tcpRouterEnabled
 }
 
 func (r *standardRegistry) IsSvcEnabled() bool {

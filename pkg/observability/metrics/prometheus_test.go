@@ -91,15 +91,20 @@ func TestPrometheus(t *testing.T) {
 	t.Cleanup(promState.reset)
 
 	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{
-		AddEntryPointsLabels: true,
-		AddRoutersLabels:     true,
-		AddServicesLabels:    true,
-		HeaderLabels:         map[string]string{"useragent": "User-Agent"},
+		AddEntryPointsLabels:   true,
+		AddRoutersLabels:       true,
+		AddServicesLabels:      true,
+		EnableTCPRouterMetrics: true,
+		HeaderLabels:           map[string]string{"useragent": "User-Agent"},
 	})
 	defer promRegistry.Unregister(promState)
 
 	if !prometheusRegistry.IsEpEnabled() || !prometheusRegistry.IsRouterEnabled() || !prometheusRegistry.IsSvcEnabled() {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
+	}
+
+	if !prometheusRegistry.IsTCPRouterEnabled() {
+		t.Errorf("PrometheusRegistry should return true for IsTCPRouterEnabled()")
 	}
 
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
@@ -507,7 +512,7 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{AddRoutersLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{EnableTCPRouterMetrics: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{

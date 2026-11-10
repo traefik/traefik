@@ -381,7 +381,7 @@ func (m *Manager) buildTCPHandler(ctx context.Context, routerName string, router
 		return nil, err
 	}
 
-	// The metrics middleware is idempotent if the routers metrics are disabled.
+	// The metrics middleware is idempotent if the TCP routers metrics are disabled.
 	qualifiedService := provider.GetQualifiedName(ctx, router.Service)
 	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService)
 

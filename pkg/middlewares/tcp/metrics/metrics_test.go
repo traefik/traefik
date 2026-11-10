@@ -20,11 +20,11 @@ func TestRouterMetricsHandler(t *testing.T) {
 			desc: "no registry",
 		},
 		{
-			desc:     "routers metrics disabled",
+			desc:     "TCP routers metrics disabled",
 			registry: &registryMock{gauge: &gaugeMock{}},
 		},
 		{
-			desc:     "routers metrics enabled",
+			desc:     "TCP routers metrics enabled",
 			registry: &registryMock{routerEnabled: true, gauge: &gaugeMock{}},
 			wrapped:  true,
 		},
@@ -72,7 +72,7 @@ type registryMock struct {
 	gauge         *gaugeMock
 }
 
-func (r *registryMock) IsRouterEnabled() bool {
+func (r *registryMock) IsTCPRouterEnabled() bool {
 	return r.routerEnabled
 }
 
