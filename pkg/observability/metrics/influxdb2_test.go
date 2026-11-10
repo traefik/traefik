@@ -140,10 +140,10 @@ func TestInfluxDB2(t *testing.T) {
 	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
 
 	expectedTCPRouter := []string{
-		`(traefik\.router\.tcp\.open\.connections,router=demo,service=test value=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.open\.connections,traefik\.router\.name=demo,traefik\.service\.name=test value=1) [\d]{19}`,
 	}
 
-	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Set(1)
+	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test").Set(1)
 
 	msgTCPRouter := <-c
 

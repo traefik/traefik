@@ -56,7 +56,7 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 
 	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file")
 
-	assert.Equal(t, []string{"router", "router@file", "service", "service@file"}, gauge.labelValues)
+	assert.Equal(t, []string{"traefik.router.name", "router@file", "traefik.service.name", "service@file"}, gauge.labelValues)
 
 	handler.ServeTCP(nil)
 

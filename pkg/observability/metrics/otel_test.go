@@ -438,10 +438,10 @@ func TestOpenTelemetry(t *testing.T) {
 			tryAssertMessage(t, c, expectedServicesRetries)
 
 			expectedTCPRouters := []string{
-				`({"name":"traefik_router_tcp_open_connections","description":"How many open connections exist on a TCP router, partitioned by service.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"router","value":{"stringValue":"demo"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
+				`({"name":"traefik_router_tcp_open_connections","description":"How many open connections exist on a TCP router, partitioned by service.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 			}
 
-			registry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Set(1)
+			registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test").Set(1)
 
 			tryAssertMessage(t, c, expectedTCPRouters)
 
