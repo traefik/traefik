@@ -502,6 +502,60 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
 }
 
+func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
+	t.Cleanup(promState.reset)
+
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{AddRoutersLabels: true})
+	defer promRegistry.Unregister(promState)
+
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(
+				th.WithRouter("kept@providerName", th.WithServiceName("bar")),
+			),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
+				"kept@providerName":    {Service: "bar"},
+				"removed@providerName": {Service: "bar"},
+			},
+		},
+	}
+
+	// The HTTP router is removed, but the TCP router with the same name is kept.
+	conf2 := dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
+				"kept@providerName": {Service: "bar"},
+			},
+		},
+	}
+
+	OnConfigurationUpdate(conf1, nil)
+	OnConfigurationUpdate(conf2, nil)
+
+	prometheusRegistry.
+		RouterTCPOpenConnectionsGauge().
+		With("router", "kept@providerName", "service", "bar").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPOpenConnectionsGauge().
+		With("router", "removed@providerName", "service", "bar").
+		Add(1)
+
+	// The metric of the removed router is exported on the first scrape,
+	// and removed after that scrape.
+	family := findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "router", "kept@providerName", "service", "bar"))
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "router", "removed@providerName", "service", "bar"))
+
+	family = findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "router", "kept@providerName", "service", "bar"))
+	assert.Nil(t, findMetricByLabelNamesValues(family, "router", "removed@providerName", "service", "bar"))
+}
+
 func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
@@ -596,8 +650,10 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 func (ps *prometheusState) reset() {
 	ps.dynamicConfig = newDynamicConfig()
 	ps.vectors = nil
+	ps.tcpVectors = nil
 	ps.deletedEP = nil
 	ps.deletedRouters = nil
+	ps.deletedTCPRouters = nil
 	ps.deletedServices = nil
 	ps.deletedURLs = make(map[string][]string)
 }
