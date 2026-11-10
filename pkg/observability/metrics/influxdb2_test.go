@@ -27,14 +27,15 @@ func TestInfluxDB2(t *testing.T) {
 
 	influxDB2Registry := RegisterInfluxDB2(t.Context(),
 		&otypes.InfluxDB2{
-			Address:              ts.URL,
-			Token:                "test-token",
-			PushInterval:         ptypes.Duration(10 * time.Millisecond),
-			Org:                  "test-org",
-			Bucket:               "test-bucket",
-			AddEntryPointsLabels: true,
-			AddRoutersLabels:     true,
-			AddServicesLabels:    true,
+			Address:                ts.URL,
+			Token:                  "test-token",
+			PushInterval:           ptypes.Duration(10 * time.Millisecond),
+			Org:                    "test-org",
+			Bucket:                 "test-bucket",
+			AddEntryPointsLabels:   true,
+			AddRoutersLabels:       true,
+			AddServicesLabels:      true,
+			EnableTCPRouterMetrics: true,
 		})
 
 	t.Cleanup(func() {
@@ -44,6 +45,10 @@ func TestInfluxDB2(t *testing.T) {
 
 	if !influxDB2Registry.IsEpEnabled() || !influxDB2Registry.IsRouterEnabled() || !influxDB2Registry.IsSvcEnabled() {
 		t.Fatalf("InfluxDB2Registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
+	}
+
+	if !influxDB2Registry.IsTCPRouterEnabled() {
+		t.Fatalf("InfluxDB2Registry should return true for IsTCPRouterEnabled()")
 	}
 
 	expectedServer := []string{
@@ -137,4 +142,14 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceRetries := <-c
 
 	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
+
+	expectedTCPRouter := []string{
+		`(traefik\.router\.tcp\.open\.connections,router=demo,service=test value=1) [\d]{19}`,
+	}
+
+	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Set(1)
+
+	msgTCPRouter := <-c
+
+	assertMessage(t, *msgTCPRouter, expectedTCPRouter)
 }
