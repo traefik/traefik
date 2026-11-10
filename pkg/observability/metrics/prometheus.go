@@ -44,8 +44,10 @@ const (
 	routerReqsTLSTotalName    = metricRouterPrefix + "requests_tls_total"
 	routerReqDurationName     = metricRouterPrefix + "request_duration_seconds"
 	routerReqsBytesTotalName  = metricRouterPrefix + "requests_bytes_total"
-	routerRespsBytesTotalName  = metricRouterPrefix + "responses_bytes_total"
-	routerOpenConnectionsName = metricRouterPrefix + "open_connections"
+	routerRespsBytesTotalName = metricRouterPrefix + "responses_bytes_total"
+
+	// router TCP level.
+	routerTCPOpenConnectionsName = metricRouterPrefix + "tcp_open_connections"
 
 	// service level.
 	metricServicePrefix        = MetricNamePrefix + "service_"
@@ -203,9 +205,9 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: routerRespsBytesTotalName,
 			Help: "The total size of responses in bytes handled by a router, partitioned by service, status code, protocol, and method.",
 		}, []string{"code", "method", "protocol", "router", "service"})
-		routerOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: routerOpenConnectionsName,
-			Help: "How many open connections exist on a router, partitioned by service.",
+		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPOpenConnectionsName,
+			Help: "How many open connections exist on a TCP router, partitioned by service.",
 		}, []string{"router", "service"})
 
 		promState.vectors = append(promState.vectors,
@@ -214,14 +216,14 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			routerReqDurations.hv,
 			routerReqsBytesTotal.cv,
 			routerRespsBytesTotal.cv,
-			routerOpenConns.gv,
+			routerTCPOpenConns.gv,
 		)
 		reg.routerReqsCounter = routerReqs
 		reg.routerReqsTLSCounter = routerReqsTLS
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
 		reg.routerReqsBytesCounter = routerReqsBytesTotal
 		reg.routerRespsBytesCounter = routerRespsBytesTotal
-		reg.routerOpenConnectionsGauge = routerOpenConns
+		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
 	}
 
 	if config.AddServicesLabels {

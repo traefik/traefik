@@ -34,7 +34,7 @@ const (
 	statsdRouterReqsDurationName = "router.request.duration"
 	statsdRouterReqsBytesName    = "router.requests.bytes.total"
 	statsdRouterRespsBytesName   = "router.responses.bytes.total"
-	statsdRouterOpenConnsName    = "router.open.connections"
+	statsdRouterTCPOpenConnsName = "router.tcp.open.connections"
 
 	statsdServiceReqsName         = "service.request.total"
 	statsdServiceReqsTLSName      = "service.request.tls.total"
@@ -81,7 +81,7 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterReqsDurationName, 1.0), time.Millisecond)
 		registry.routerReqsBytesCounter = statsdClient.NewCounter(statsdRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = statsdClient.NewCounter(statsdRouterRespsBytesName, 1.0)
-		registry.routerOpenConnectionsGauge = statsdClient.NewGauge(statsdRouterOpenConnsName)
+		registry.routerTCPOpenConnectionsGauge = statsdClient.NewGauge(statsdRouterTCPOpenConnsName)
 	}
 
 	if config.AddServicesLabels {
