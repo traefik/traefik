@@ -350,6 +350,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    enableTCPRouterMetrics = true
     entryPoint = "foobar"
     manualRouting = true
     [metrics.prometheus.headerLabels]
@@ -361,6 +362,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    enableTCPRouterMetrics = true
     prefix = "foobar"
   [metrics.statsD]
     address = "foobar"
@@ -368,6 +370,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    enableTCPRouterMetrics = true
     prefix = "foobar"
   [metrics.influxDB2]
     address = "foobar"
@@ -378,6 +381,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    enableTCPRouterMetrics = true
     [metrics.influxDB2.additionalLabels]
       name0 = "foobar"
       name1 = "foobar"
@@ -385,6 +389,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    enableTCPRouterMetrics = true
     explicitBoundaries = [42.0, 42.0]
     pushInterval = "42s"
     serviceName = "foobar"

@@ -388,6 +388,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    enableTCPRouterMetrics: true
     entryPoint: foobar
     manualRouting: true
     headerLabels:
@@ -399,6 +400,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    enableTCPRouterMetrics: true
     prefix: foobar
   statsD:
     address: foobar
@@ -406,6 +408,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    enableTCPRouterMetrics: true
     prefix: foobar
   influxDB2:
     address: foobar
@@ -416,6 +419,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    enableTCPRouterMetrics: true
     additionalLabels:
       name0: foobar
       name1: foobar
@@ -444,6 +448,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    enableTCPRouterMetrics: true
     explicitBoundaries:
       - 42
       - 42
