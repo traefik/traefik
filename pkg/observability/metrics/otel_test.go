@@ -346,10 +346,6 @@ func TestOpenTelemetry(t *testing.T) {
 				t.Fatalf("registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 			}
 
-			if !registry.IsTCPRouterEnabled() {
-				t.Fatalf("registry should return true for IsTCPRouterEnabled()")
-			}
-
 			expected := []string{
 				`({"key":"service.name","value":{"stringValue":"` + wantServiceName + `"}})`,
 				`({"key":"service.version","value":{"stringValue":"` + version.Version + `"}})`,

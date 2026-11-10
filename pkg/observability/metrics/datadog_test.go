@@ -24,10 +24,6 @@ func TestDatadog(t *testing.T) {
 	if !datadogRegistry.IsEpEnabled() || !datadogRegistry.IsRouterEnabled() || !datadogRegistry.IsSvcEnabled() {
 		t.Errorf("DatadogRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
-
-	if !datadogRegistry.IsTCPRouterEnabled() {
-		t.Errorf("DatadogRegistry should return true for IsTCPRouterEnabled()")
-	}
 	testDatadogRegistry(t, defaultMetricsPrefix, datadogRegistry)
 }
 

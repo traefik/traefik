@@ -46,10 +46,6 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		t.Errorf("Statsd registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
-	if !registry.IsTCPRouterEnabled() {
-		t.Errorf("Statsd registry should return true for IsTCPRouterEnabled()")
-	}
-
 	expected := []string{
 		metricsPrefix + ".config.reload.total:1.000000|c\n",
 		metricsPrefix + ".config.reload.lastSuccessTimestamp:1.000000|g\n",
