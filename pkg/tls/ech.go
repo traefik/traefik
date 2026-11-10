@@ -364,7 +364,11 @@ func validECHPublicName(name []byte) bool {
 			return false
 		}
 		for _, c := range label {
-			if (c < '0' || c > '9') && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && c != '-' {
+			isDigit := c >= '0' && c <= '9'
+			isLowercase := c >= 'a' && c <= 'z'
+			isUppercase := c >= 'A' && c <= 'Z'
+
+			if !isDigit && !isLowercase && !isUppercase && c != '-' {
 				return false
 			}
 		}
