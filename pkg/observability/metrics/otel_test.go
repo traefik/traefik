@@ -327,6 +327,7 @@ func TestOpenTelemetry(t *testing.T) {
 			var cfg otypes.OTLP
 			(&cfg).SetDefaults()
 			cfg.AddRoutersLabels = true
+			cfg.EnableTCPRouterMetrics = true
 			cfg.HTTP = &otypes.OTelHTTP{
 				Endpoint: ts.URL,
 			}
@@ -343,6 +344,10 @@ func TestOpenTelemetry(t *testing.T) {
 
 			if !registry.IsEpEnabled() || !registry.IsRouterEnabled() || !registry.IsSvcEnabled() {
 				t.Fatalf("registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
+			}
+
+			if !registry.IsTCPRouterEnabled() {
+				t.Fatalf("registry should return true for IsTCPRouterEnabled()")
 			}
 
 			expected := []string{
@@ -435,6 +440,14 @@ func TestOpenTelemetry(t *testing.T) {
 			registry.ServiceRetriesCounter().With("service", "foobar").Add(1)
 
 			tryAssertMessage(t, c, expectedServicesRetries)
+
+			expectedTCPRouters := []string{
+				`({"name":"traefik_router_tcp_open_connections","description":"How many open connections exist on a TCP router, partitioned by service.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"router","value":{"stringValue":"demo"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
+			}
+
+			registry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Set(1)
+
+			tryAssertMessage(t, c, expectedTCPRouters)
 
 			// We cannot rely on the previous expected pattern,
 			// because this pattern was for matching only one dataPoint in the histogram,
