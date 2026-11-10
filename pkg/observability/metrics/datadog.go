@@ -95,6 +95,10 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
 		registry.routerReqsBytesCounter = datadogClient.NewCounter(ddRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
+	}
+
+	if config.EnableTCPRouterMetrics {
+		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
 		registry.routerTCPOpenConnectionsGauge = datadogClient.NewGauge(ddRouterTCPOpenConnsName)
 	}
 
