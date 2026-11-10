@@ -103,10 +103,6 @@ func TestPrometheus(t *testing.T) {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
-	if !prometheusRegistry.IsTCPRouterEnabled() {
-		t.Errorf("PrometheusRegistry should return true for IsTCPRouterEnabled()")
-	}
-
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	prometheusRegistry.

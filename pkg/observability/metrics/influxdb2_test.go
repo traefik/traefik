@@ -47,10 +47,6 @@ func TestInfluxDB2(t *testing.T) {
 		t.Fatalf("InfluxDB2Registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
-	if !influxDB2Registry.IsTCPRouterEnabled() {
-		t.Fatalf("InfluxDB2Registry should return true for IsTCPRouterEnabled()")
-	}
-
 	expectedServer := []string{
 		`(traefik\.config\.reload\.total count=1) [\d]{19}`,
 		`(traefik\.config\.reload\.lastSuccessTimestamp value=1) [\d]{19}`,

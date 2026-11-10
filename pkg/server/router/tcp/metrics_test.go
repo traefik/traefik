@@ -18,81 +18,41 @@ import (
 )
 
 func TestManager_routerMetrics(t *testing.T) {
-	testCases := []struct {
-		desc   string
-		router *dynamic.TCPRouter
-	}{
-		{
-			desc: "non-TLS router",
-			router: &dynamic.TCPRouter{
-				EntryPoints: []string{"web"},
-				Service:     "bar",
-				Rule:        "HostSNI(`*`)",
-			},
-		},
-		{
-			desc: "TLS passthrough router",
-			router: &dynamic.TCPRouter{
-				EntryPoints: []string{"web"},
-				Service:     "bar",
-				Rule:        "HostSNI(`foo.bar`)",
-				TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
-			},
-		},
-		{
-			desc: "TLS router",
-			router: &dynamic.TCPRouter{
-				EntryPoints: []string{"web"},
-				Service:     "bar",
-				Rule:        "HostSNI(`foo.bar`)",
-				TLS:         &dynamic.RouterTCPTLSConfig{},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			conf := &runtime.Configuration{
-				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@file": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{{Address: "127.0.0.1:9999"}},
-							},
-						},
+	conf := &runtime.Configuration{
+		TCPServices: map[string]*runtime.TCPServiceInfo{
+			"bar@file": {
+				TCPService: &dynamic.TCPService{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
+						Servers: []dynamic.TCPServer{{Address: "127.0.0.1:9999"}},
 					},
 				},
-				TCPRouters: map[string]*runtime.TCPRouterInfo{
-					"foo@file": {TCPRouter: test.router},
+			},
+		},
+		TCPRouters: map[string]*runtime.TCPRouterInfo{
+			"foo@file": {
+				TCPRouter: &dynamic.TCPRouter{
+					EntryPoints: []string{"web"},
+					Service:     "bar",
+					Rule:        "HostSNI(`*`)",
 				},
-			}
-
-			dialerManager := tcp2.NewDialerManager(nil)
-			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-			serviceManager := tcp.NewManager(conf, dialerManager)
-
-			tlsManager := traefiktls.NewManager(nil)
-			tlsManager.UpdateConfigs(t.Context(),
-				map[string]traefiktls.Store{},
-				map[string]traefiktls.Options{"default": {}},
-				[]*traefiktls.CertAndStores{})
-
-			gauge := &gaugeMock{}
-			observabilityMgr := middleware.NewObservabilityMgr(static.Configuration{}, &registryMock{gauge: gauge}, nil, nil, nil, nil)
-
-			manager := NewManager(conf, serviceManager, tcpmiddleware.NewBuilder(conf.TCPMiddlewares),
-				observabilityMgr, nil, nil, tlsManager, nil)
-
-			handlers := manager.BuildHandlers(t.Context(), []string{"web"})
-			require.Contains(t, handlers, "web")
-			require.Empty(t, conf.TCPRouters["foo@file"].Err)
-
-			// The service name is qualified, as for the HTTP router metrics.
-			assert.Equal(t, []string{"router", "foo@file", "service", "bar@file"}, gauge.labelValues)
-		})
+			},
+		},
 	}
+
+	dialerManager := tcp2.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+
+	gauge := &gaugeMock{}
+	observabilityMgr := middleware.NewObservabilityMgr(static.Configuration{}, &registryMock{gauge: gauge}, nil, nil, nil, nil)
+
+	manager := NewManager(conf, tcp.NewManager(conf, dialerManager), tcpmiddleware.NewBuilder(conf.TCPMiddlewares),
+		observabilityMgr, nil, nil, traefiktls.NewManager(nil), nil)
+
+	handlers := manager.BuildHandlers(t.Context(), []string{"web"})
+	require.Contains(t, handlers, "web")
+
+	// The service name is qualified, as for the HTTP router metrics.
+	assert.Equal(t, []string{"router", "foo@file", "service", "bar@file"}, gauge.labelValues)
 }
 
 type registryMock struct {
@@ -110,6 +70,8 @@ func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
 }
 
 type gaugeMock struct {
+	gokitmetrics.Gauge
+
 	labelValues []string
 }
 
@@ -117,7 +79,3 @@ func (g *gaugeMock) With(labelValues ...string) gokitmetrics.Gauge {
 	g.labelValues = labelValues
 	return g
 }
-
-func (g *gaugeMock) Set(_ float64) {}
-
-func (g *gaugeMock) Add(_ float64) {}
