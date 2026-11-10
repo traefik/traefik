@@ -636,31 +636,31 @@ they have to be enabled with the `enableTCPRouterMetrics` option of the metrics 
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik_router_tcp_open_connections`</a> | Gauge | `router`, `service` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name` | The current count of open connections on a TCP router. |
 
 === "Prometheus"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `router`, `service` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name` | The current count of open connections on a TCP router. |
 
 === "Datadog"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `router`, `service` | The current count of open connections on a TCP router. |
+    | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name` | The current count of open connections on a TCP router. |
 
 === "InfluxDB2"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `router`, `service` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name` | The current count of open connections on a TCP router. |
 
 === "StatsD"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | `router`, `service` | The current count of open connections on a TCP router. |
+    | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections on a TCP router. |
 
 !!! note "\{prefix\} Default Value"
         By default, \{prefix\} value is `traefik`.
@@ -671,5 +671,11 @@ Here is a comprehensive list of labels that are provided by the TCP metrics:
 
 | Label | Description | example |
 |-------|-------------|---------|
-| <a id="opt-router-2" href="#opt-router-2" title="#opt-router-2">`router`</a> | TCP router that handled the connection | "example_router@provider" |
-| <a id="opt-service-2" href="#opt-service-2" title="#opt-service-2">`service`</a> | TCP service the connection is routed to | "example_service@provider" |
+| <a id="opt-traefik-router-name" href="#opt-traefik-router-name" title="#opt-traefik-router-name">`traefik.router.name`</a> | TCP router that handled the connection | "example_router@provider" |
+| <a id="opt-traefik-service-name" href="#opt-traefik-service-name" title="#opt-traefik-service-name">`traefik.service.name`</a> | TCP service the connection is routed to | "example_service@provider" |
+
+!!! note "Labels names"
+
+    The labels are named after the attributes of the tracing spans.
+    With Prometheus, the dots are replaced by underscores (e.g. `traefik_router_name`),
+    and StatsD does not support labels.

@@ -106,6 +106,6 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		registry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		registry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
-		registry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Set(1)
+		registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test").Set(1)
 	})
 }
