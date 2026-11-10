@@ -121,7 +121,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		metricsPrefix + ".service.requests.bytes.total:1.000000|c|#service:test,code:200,method:GET\n",
 		metricsPrefix + ".service.responses.bytes.total:1.000000|c|#service:test,code:200,method:GET\n",
 
-		metricsPrefix + ".router.tcp.open.connections:1.000000|g|#router:demo,service:test\n",
+		metricsPrefix + ".router.tcp.open.connections:1.000000|g|#traefik.router.name:demo,traefik.service.name:test\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -154,6 +154,6 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		datadogRegistry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		datadogRegistry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
-		datadogRegistry.RouterTCPOpenConnectionsGauge().With("router", "demo", "service", "test").Add(1)
+		datadogRegistry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test").Add(1)
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,6 +59,11 @@ const (
 
 	// TCP router level.
 	routerTCPOpenConnectionsName = metricRouterPrefix + "tcp_open_connections"
+
+	// The TCP metrics labels are named after the traefik.router.name and traefik.service.name attributes,
+	// with the dots replaced by underscores to comply with the Prometheus naming rules.
+	tcpRouterNameLabel  = "traefik_router_name"
+	tcpServiceNameLabel = "traefik_service_name"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -275,7 +281,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenConnectionsName,
 			Help: "How many open connections exist on a TCP router, partitioned by service.",
-		}, []string{"router", "service"})
+		}, []string{tcpRouterNameLabel, tcpServiceNameLabel})
 
 		// TCP metrics are tracked apart from the HTTP ones,
 		// because HTTP and TCP routers can share the same name.
@@ -466,7 +472,7 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 		}
 
 		for _, v := range ps.tcpVectors {
-			v.DeletePartialMatch(map[string]string{"router": router})
+			v.DeletePartialMatch(map[string]string{tcpRouterNameLabel: router})
 		}
 	}
 
@@ -507,8 +513,7 @@ type dynamicConfig struct {
 	entryPoints map[string]bool
 	routers     map[string]bool
 	services    map[string]map[string]bool
-
-	tcpRouters map[string]bool
+	tcpRouters  map[string]bool
 }
 
 func (d *dynamicConfig) hasEntryPoint(entrypointName string) bool {
@@ -722,10 +727,11 @@ func (lvs labelNamesValues) With(labelValues ...string) labelNamesValues {
 
 // ToLabels is a convenience method to convert a labelNamesValues
 // to the native prometheus.Labels.
+// The dots in the label names are replaced by underscores to comply with the Prometheus naming rules.
 func (lvs labelNamesValues) ToLabels() stdprometheus.Labels {
 	labels := make(map[string]string, len(lvs)/2)
 	for i := 0; i < len(lvs); i += 2 {
-		labels[lvs[i]] = lvs[i+1]
+		labels[strings.ReplaceAll(lvs[i], ".", "_")] = lvs[i+1]
 	}
 	return labels
 }

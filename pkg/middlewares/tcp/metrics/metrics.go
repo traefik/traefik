@@ -14,6 +14,12 @@ const (
 	nameRouter = "metrics-router"
 )
 
+// The labels are named after the attributes set on the tracing spans.
+const (
+	routerNameLabel  = "traefik.router.name"
+	serviceNameLabel = "traefik.service.name"
+)
+
 type metricsMiddleware struct {
 	next                 tcp.Handler
 	openConnectionsGauge gokitmetrics.Gauge
@@ -25,7 +31,7 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 
 	return &metricsMiddleware{
 		next:                 next,
-		openConnectionsGauge: registry.RouterTCPOpenConnectionsGauge().With("router", routerName, "service", serviceName),
+		openConnectionsGauge: registry.RouterTCPOpenConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName),
 	}
 }
 
