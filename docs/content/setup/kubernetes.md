@@ -258,7 +258,7 @@ Apply the manifest:
 kubectl apply -f whoami.yaml
 ```
 
-After deploying the application, you can expose the application by creating a [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/). To do this, create a file named `whoami-route.yaml` and paste the following:
+After deploying the application, you can expose the application by creating a [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/). To do this, create a file named `whoami-route.yaml` and paste the following:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
