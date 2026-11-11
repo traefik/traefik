@@ -20,12 +20,18 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+// Configuration holds the Tailscale certificate resolver configuration.
+type Configuration struct {
+	Socket string `description:"Defines the socket path to the tailscaled process, overriding the default platform location." json:"socket,omitempty" toml:"socket,omitempty" yaml:"socket,omitempty" export:"true"`
+}
+
 // Provider is the Tailscale certificates provider implementation. It receives
 // configuration updates (e.g. new router, with new domain) from Traefik core,
 // fetches the corresponding TLS certificates from the Tailscale daemon, and
 // sends back to Traefik core a configuration updated with the certificates.
 type Provider struct {
 	ResolverName string
+	Socket       string
 
 	dynConfigs  chan dynamic.Configuration // updates from Traefik core
 	dynMessages chan<- dynamic.Message     // update to Traefik core
@@ -44,6 +50,14 @@ func (p *Provider) ThrottleDuration() time.Duration {
 func (p *Provider) Init() error {
 	p.dynConfigs = make(chan dynamic.Configuration)
 	p.certByDomain = make(map[string]traefiktls.Certificate)
+
+	// The tscert library resolves the tailscaled socket from a package-level
+	// variable defaulting to the platform standard location, and it offers no
+	// per-call override, so a custom socket path has to be set here.
+	if p.Socket != "" {
+		tscert.TailscaledSocket = p.Socket
+		tscert.TailscaledSocketSetExplicitly = true
+	}
 
 	return nil
 }

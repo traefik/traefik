@@ -32,6 +32,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	tailscaleprovider "github.com/traefik/traefik/v3/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -132,8 +133,8 @@ type SpiffeClientConfig struct {
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
 type CertificateResolver struct {
-	ACME      *acmeprovider.Configuration `description:"Enables ACME (Let's Encrypt) automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
-	Tailscale *struct{}                   `description:"Enables Tailscale certificate resolution." json:"tailscale,omitempty" toml:"tailscale,omitempty" yaml:"tailscale,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ACME      *acmeprovider.Configuration      `description:"Enables ACME (Let's Encrypt) automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+	Tailscale *tailscaleprovider.Configuration `description:"Enables Tailscale certificate resolution." json:"tailscale,omitempty" toml:"tailscale,omitempty" yaml:"tailscale,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Global holds the global configuration.
