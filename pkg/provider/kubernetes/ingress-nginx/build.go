@@ -215,11 +215,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			Str("namespace", canaryIngress.Namespace).
 			Logger()
 
-		for _, rule := range canaryIngress.Spec.Rules {
+		for ri, rule := range canaryIngress.Spec.Rules {
 			if rule.HTTP == nil {
 				continue
 			}
-			for _, pa := range rule.HTTP.Paths {
+			for pi, pa := range rule.HTTP.Paths {
 				pathKey := ingressPathKey(canaryIngress.Namespace, rule.Host, pa)
 				prodIngressPath, ok := ingressPaths[pathKey]
 				if !ok {
@@ -246,7 +246,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				// The canary backend's addresses are checked using the original ingress config.
-				endpoints, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
+				endpoints, serviceSources, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
 				if err != nil || len(endpoints) == 0 {
 					continue
 				}
@@ -265,19 +265,24 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: pa.Backend.Service.Name,
 						ServicePort: portString(pa.Backend.Service.Port),
 						Endpoints:   endpoints,
+						Sources:     serviceSources,
 					}
 				}
+
+				pathSource := fmt.Sprintf("/spec/rules/%d/http/paths/%d", ri, pi)
 
 				// Primary backend key for the original ingress path.
 				primaryKey := canaryPrimaryKey(canaryIngress.Namespace, *prodIngressPath.Backend.Service)
 				canaryConfigs[primaryKey] = canaryConfig{
-					BackendName:   canaryBackendName,
-					Weight:        weight,
-					WeightTotal:   weightTotal,
-					Header:        ptr.Deref(canaryIngress.config.CanaryHeader, ""),
-					HeaderValue:   ptr.Deref(canaryIngress.config.CanaryHeaderValue, ""),
-					HeaderPattern: ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
-					Cookie:        ptr.Deref(canaryIngress.config.CanaryCookie, ""),
+					BackendName:    canaryBackendName,
+					Weight:         weight,
+					WeightTotal:    weightTotal,
+					Header:         ptr.Deref(canaryIngress.config.CanaryHeader, ""),
+					HeaderValue:    ptr.Deref(canaryIngress.config.CanaryHeaderValue, ""),
+					HeaderPattern:  ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
+					Cookie:         ptr.Deref(canaryIngress.config.CanaryCookie, ""),
+					Sources:        makeIngressSources(canaryIngress.Ingress, pathSource),
+					BackendSources: makeIngressSources(canaryIngress.Ingress, pathSource+"/backend"),
 				}
 				markProcessedIngress(canaryIngress.Ingress)
 			}
@@ -311,22 +316,25 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// The HTTP side of the ingress is built below like any other, ingress-nginx serving that host on the HTTP port from the regular location.
 		sslPassthrough := ptr.Deref(ing.config.SSLPassthrough, false)
 		if sslPassthrough {
-			for _, rule := range ing.Spec.Rules {
+			for ri, rule := range ing.Spec.Rules {
 				if rule.Host == "" {
 					logger.Error().Msg("Cannot process ssl-passthrough: rule has no host")
 					continue
 				}
 
 				var ingBackend *netv1.IngressBackend
+				var backendSource string
 				if rule.HTTP != nil {
-					for _, pa := range rule.HTTP.Paths {
+					for pi, pa := range rule.HTTP.Paths {
 						if pa.Path == "/" {
 							ingBackend = &pa.Backend
+							backendSource = fmt.Sprintf("/spec/rules/%d/http/paths/%d/backend", ri, pi)
 							break
 						}
 					}
 				} else if ing.Spec.DefaultBackend != nil {
 					ingBackend = ing.Spec.DefaultBackend
+					backendSource = "/spec/defaultBackend"
 				}
 
 				if ingBackend == nil || ingBackend.Service == nil {
@@ -334,7 +342,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				endpoints, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
+				endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot resolve passthrough backend for host %q", rule.Host)
 					continue
@@ -348,13 +356,16 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: ingBackend.Service.Name,
 						ServicePort: portString(ingBackend.Service.Port),
 						Endpoints:   endpoints,
+						Sources:     serviceSources,
 					}
 				}
 
 				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
-					BackendName: ptBackendName,
-					Hostname:    rule.Host,
-					RouterKey:   makeKey(ing.Namespace, ing.Name, rule.Host),
+					BackendName:    ptBackendName,
+					Hostname:       rule.Host,
+					RouterKey:      makeKey(ing.Namespace, ing.Name, rule.Host),
+					Sources:        makeIngressSources(ing.Ingress, fmt.Sprintf("/spec/rules/%d/host", ri)),
+					BackendSources: makeIngressSources(ing.Ingress, backendSource),
 				})
 				markProcessedIngress(ing.Ingress)
 			}
@@ -397,7 +408,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// the location is still emitted with an empty backend so the router
 				// (and its middlewares) exist, mirroring ingress-nginx's 503-on-no-servers
 				// behavior.
-				endpoints, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
+				endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
 				if err != nil {
 					logger.Warn().
 						Str("service", pa.Backend.Service.Name).
@@ -414,8 +425,11 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: pa.Backend.Service.Name,
 						ServicePort: portString(pa.Backend.Service.Port),
 						Endpoints:   endpoints,
+						Sources:     serviceSources,
 					}
 				}
+
+				pathSource := fmt.Sprintf("/spec/rules/%d/http/paths/%d", ri, pi)
 
 				loc := &location{
 					Path:                 pa.Path,
@@ -433,6 +447,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServiceName:          pa.Backend.Service.Name,
 					ServicePort:          portString(pa.Backend.Service.Port),
 					SSLPassthrough:       sslPassthrough,
+					Sources:              makeIngressSources(ing.Ingress, pathSource),
+					BackendSources:       makeIngressSources(ing.Ingress, pathSource+"/backend"),
 				}
 
 				// Attach canary config if one exists for this primary backend.
@@ -460,12 +476,13 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				// Pre-resolve custom headers ConfigMap.
 				if ing.config.CustomHeaders != nil {
-					headers, err := p.resolveCustomHeaders(ing.Namespace, *ing.config.CustomHeaders)
+					headers, headersSource, err := p.resolveCustomHeaders(ing.Namespace, *ing.config.CustomHeaders)
 					if err != nil {
 						logger.Error().Err(err).Msg("Cannot resolve custom-headers ConfigMap")
 						loc.Error = true
 					} else {
 						loc.ResolvedCustomHeaders = headers
+						loc.CustomHeadersSources = []dynamic.KubernetesRef{headersSource}
 					}
 				}
 
@@ -478,7 +495,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 							// Build the error backend using defaultBackend annotation or provider default.
 							defaultSvcName := ptr.Deref(ing.config.DefaultBackend, "")
 							if defaultSvcName != "" {
-								endpoints, err := p.getBackendEndpoints(ing.Namespace,
+								endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace,
 									netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
 									ing.config)
 								if err == nil {
@@ -488,6 +505,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 										ServiceName: defaultSvcName,
 										ServicePort: "0",
 										Endpoints:   endpoints,
+										Sources:     serviceSources,
 									}
 								}
 							}
@@ -528,7 +546,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// (default-backend / default-backend-tls routers) so it still serves traffic.
 		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
 			db := ing.Spec.DefaultBackend
-			endpoints, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
+			endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
 			if err != nil {
 				logger.Warn().
 					Str("service", db.Service.Name).
@@ -549,6 +567,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						IngressName:          ing.Name,
 						ServiceName:          db.Service.Name,
 						ServicePort:          portString(db.Service.Port),
+						Sources:              makeIngressSources(ing.Ingress, "/spec/defaultBackend"),
+						BackendSources:       makeIngressSources(ing.Ingress, "/spec/defaultBackend"),
 					}
 
 					// Inherit basic/digest auth and custom headers like the rule
@@ -565,6 +585,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: db.Service.Name,
 						ServicePort: portString(db.Service.Port),
 						Endpoints:   endpoints,
+						Sources:     serviceSources,
 					}
 					mc.Backends[defaultBackendName] = bk
 					mc.DefaultBackend = bk
@@ -584,6 +605,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServiceName: db.Service.Name,
 					ServicePort: portString(db.Service.Port),
 					Endpoints:   endpoints,
+					Sources:     serviceSources,
 				}
 			}
 
@@ -611,6 +633,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					RuleIndex:               ri,
 					IsIngressDefaultBackend: true,
 					SSLPassthrough:          sslPassthrough,
+					Sources:                 makeIngressSources(ing.Ingress, "/spec/defaultBackend", fmt.Sprintf("/spec/rules/%d/host", ri)),
+					BackendSources:          makeIngressSources(ing.Ingress, "/spec/defaultBackend"),
 				}
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
@@ -720,55 +744,89 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 	return nst, nil
 }
 
-func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, error) {
+func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, []dynamic.KubernetesRef, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting service: %w", err)
+		return nil, nil, fmt.Errorf("getting service: %w", err)
 	}
 
 	if p.DisableSvcExternalName && service.Spec.Type == corev1.ServiceTypeExternalName {
-		return nil, errors.New("externalName services not allowed")
+		return nil, nil, errors.New("externalName services not allowed")
 	}
 
 	servicePort, match := getServicePort(service, backend)
 	if !match {
-		return nil, errors.New("service port not found")
+		return nil, nil, errors.New("service port not found")
 	}
 
+	sources := []dynamic.KubernetesRef{makeServicePortRef(service, servicePort)}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, sources, nil
 	}
 
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, sources, nil
 	}
 
 	endpoints, err := p.getEndpointsFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting backend endpoints: %w", err)
+		return nil, nil, fmt.Errorf("getting backend endpoints: %w", err)
 	}
 
 	// Fall back to default-backend annotation if no endpoints.
 	defaultBackend := ptr.Deref(cfg.DefaultBackend, "")
 	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(endpoints) > 0 {
-		return endpoints, nil
+		return endpoints, sources, nil
 	}
 
 	fallbackSvc, err := p.k8sClient.GetService(namespace, defaultBackend)
 	if err != nil {
-		return nil, fmt.Errorf("getting fallback service: %w", err)
+		return nil, nil, fmt.Errorf("getting fallback service: %w", err)
 	}
 
 	if p.DisableSvcExternalName && fallbackSvc.Spec.Type == corev1.ServiceTypeExternalName {
-		return nil, errors.New("externalName services not allowed")
+		return nil, nil, errors.New("externalName services not allowed")
 	}
 
 	servicePort, match = getServicePort(fallbackSvc, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
 	if !match {
-		return nil, errors.New("fallback service port not found")
+		return nil, nil, errors.New("fallback service port not found")
 	}
 
-	return p.getEndpointsFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
+	sources = append(sources, makeServicePortRef(fallbackSvc, servicePort))
+
+	endpoints, err = p.getEndpointsFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return endpoints, sources, nil
+}
+
+// makeIngressSources returns the references to the parts of the Ingress at the given paths, and to its annotations.
+// The annotations are a single source: an object does not record which of them it reads.
+func makeIngressSources(ing *netv1.Ingress, paths ...string) []dynamic.KubernetesRef {
+	sources := make([]dynamic.KubernetesRef, 0, len(paths)+1)
+	for _, path := range paths {
+		sources = append(sources, dynamic.MakeKubernetesRef(ing, path))
+	}
+
+	if len(ing.Annotations) > 0 {
+		sources = append(sources, dynamic.MakeKubernetesRef(ing, "/metadata/annotations"))
+	}
+
+	return sources
+}
+
+// makeServicePortRef returns the reference to the given port of the service.
+func makeServicePortRef(service *corev1.Service, port corev1.ServicePort) dynamic.KubernetesRef {
+	if i := slices.Index(service.Spec.Ports, port); i >= 0 {
+		return dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", i))
+	}
+
+	// An ExternalName service does not have to declare the port of the backend.
+	return dynamic.MakeKubernetesRef(service, "/spec/externalName")
 }
 
 func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName string) ([]endpoint, error) {
@@ -814,7 +872,7 @@ func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName stri
 }
 
 func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig) (*backend, error) {
-	endpoints, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
+	endpoints, sources, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -826,6 +884,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		ServiceName: ingBackend.Service.Name,
 		ServicePort: portString(ingBackend.Service.Port),
 		Endpoints:   endpoints,
+		Sources:     sources,
 	}, nil
 }
 
@@ -1012,11 +1071,12 @@ func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, 
 	}
 
 	if cfg.CustomHeaders != nil {
-		headers, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
+		headers, headersSource, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
 		if err != nil {
 			loc.Error = true
 		} else {
 			loc.ResolvedCustomHeaders = headers
+			loc.CustomHeadersSources = []dynamic.KubernetesRef{headersSource}
 		}
 	}
 
@@ -1048,7 +1108,7 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 		return
 	}
 
-	endpoints, err := p.getBackendEndpoints(namespace,
+	endpoints, sources, err := p.getBackendEndpoints(namespace,
 		netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
 		cfg)
 	if err != nil {
@@ -1059,6 +1119,7 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 		Name:      errBackendName,
 		Namespace: namespace,
 		Endpoints: endpoints,
+		Sources:   sources,
 	}
 }
 
@@ -1129,33 +1190,33 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
 }
 
-func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
+func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, dynamic.KubernetesRef, error) {
 	parts := strings.Split(customHeadersRef, "/")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid custom-headers configmap reference %q", customHeadersRef)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("invalid custom-headers configmap reference %q", customHeadersRef)
 	}
 
 	configMapNamespace := parts[0]
 	configMapName := parts[1]
 
 	if !p.AllowCrossNamespaceResources && configMapNamespace != namespace {
-		return nil, fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, namespace)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, namespace)
 	}
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
 	if err != nil {
-		return nil, fmt.Errorf("getting configmap %s: %w", customHeadersRef, err)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting configmap %s: %w", customHeadersRef, err)
 	}
 
 	headers := make(map[string]string)
 	for key, value := range configMap.Data {
 		if !slices.Contains(p.allowedHeaders, key) {
-			return nil, fmt.Errorf("header %q is not in GlobalAllowedResponseHeaders", key)
+			return nil, dynamic.KubernetesRef{}, fmt.Errorf("header %q is not in GlobalAllowedResponseHeaders", key)
 		}
 		headers[key] = value
 	}
 
-	return headers, nil
+	return headers, dynamic.MakeKubernetesRef(configMap, "/data"), nil
 }
 
 // resolveHTTPErrorBackend returns the metamodel backend key for a per-ingress
