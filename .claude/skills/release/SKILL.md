@@ -161,9 +161,10 @@ git commit -m "Update release codename to <new_codename>"
 GITHUB_TOKEN=${GITHUB_TOKEN} git cliff --config script/release/cliff.toml --tag ${NEW_TAG} ${PREV_TAG}..${RANGE_END}
 ```
 
-**[RC1 only]** The `tag_pattern` of `cliff.toml` matches the patch tags of the previous minor (e.g. `v3.7.16`), which are merged into master.
+**[RC1 only]** On master, the `tag_pattern` of `cliff.toml` still matches the previous minor (`v3\.7.*`), so it matches the patch tags of the previous minor (e.g. `v3.7.16`), which are merged into master.
 git-cliff would start a new release block at each of them.
-Ignore them so that the output is a single `${NEW_TAG}` block:
+Ignore them so that the output is a single `${NEW_TAG}` block.
+Do not bump `tag_pattern` before this command: `${PREV_TAG}` would no longer match, and the `[All Commits]` link would be missing.
 
 ```bash
 GITHUB_TOKEN=${GITHUB_TOKEN} git cliff --config script/release/cliff.toml \
@@ -174,7 +175,20 @@ GITHUB_TOKEN=${GITHUB_TOKEN} git cliff --config script/release/cliff.toml \
 Check that the output contains exactly one `## [` header, and that its `[All Commits]` link compares `${PREV_TAG}...${NEW_TAG}`.
 If git-cliff panics or prints nothing, check its stderr (e.g. a 404 from the GitHub API).
 
-## Step 7 — Process changelog output
+## Step 7 — [RC1 only] Bump the git-cliff tag pattern
+
+The `v${MAJOR}.${MINOR}` branch is cut from master after this release, and inherits `cliff.toml`.
+Its `tag_pattern` must match the new minor, otherwise the maintenance tags merged into the branch (e.g. `v3.7.18` into `v3.8`) split the RC2+ changelogs.
+
+In `script/release/cliff.toml`, replace the `tag_pattern` line with the new minor:
+
+```toml
+tag_pattern = "v${MAJOR}\\.${MINOR}.*"
+```
+
+Keep `ignore_tags` as it is. The file is committed with `CHANGELOG.md` in the next step.
+
+## Step 8 — Process changelog output
 
 Apply to the raw git-cliff output:
 
@@ -190,11 +204,11 @@ Show the added lines (first ~30 lines of the new block).
 **Pause 2** — ask: "CHANGELOG.md updated. Review in your editor, adjust if needed. (y to commit)"
 
 ```bash
-git add CHANGELOG.md
+git add CHANGELOG.md script/release/cliff.toml
 git commit -m "Prepare release ${NEW_TAG}"
 ```
 
-## Step 8 — Push
+## Step 9 — Push
 
 **Pause 3** — ask: "Ready to push branch ${RELEASE_BRANCH} to ${FORK_REMOTE}. (y to push)"
 
@@ -202,7 +216,7 @@ git commit -m "Prepare release ${NEW_TAG}"
 git push ${FORK_REMOTE} ${RELEASE_BRANCH}
 ```
 
-## Step 9 — Open pull request
+## Step 10 — Open pull request
 
 **Pause 4** — ask: "Ready to open PR against traefik/traefik:${BRANCH}. (y to open PR)"
 

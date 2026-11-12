@@ -166,9 +166,22 @@ PREV_TAG=$(git tag --sort=-version:refname | grep -E "^v3\.7\.0-(rc|ea)\." | hea
 git cliff --config script/release/cliff.toml --ignore-tags 'v2\..*|v3\.7\.[0-9]+$' --tag v3.8.0-rc.1 ${PREV_TAG}..${RANGE_END}
 ```
 
-**5. Update CHANGELOG.md, commit, push and open PR**
+**5. Bump the git-cliff tag pattern**
+
+The `v3.8` branch inherits `cliff.toml` from master.
+Its `tag_pattern` must match the new minor, otherwise the `v3.7.x` tags merged into `v3.8` split the RC2+ changelogs.
+Do this after the changelog generation: with the new pattern, `${PREV_TAG}` no longer matches and the `[All Commits]` link is missing.
+
+In `script/release/cliff.toml`:
+
+```toml
+tag_pattern = "v3\\.8.*"
+```
+
+**6. Update CHANGELOG.md, commit, push and open PR**
 
 Same as patch procedure above, with:
+- `git add CHANGELOG.md script/release/cliff.toml`
 - Commit message: `Prepare release v3.8.0-rc.1`
 - PR base: `master`
 - PR title: `Prepare release v3.8.0-rc.1`
