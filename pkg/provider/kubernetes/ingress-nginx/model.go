@@ -63,6 +63,9 @@ type backend struct {
 
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
+
+	// Sources are the parts of the Kubernetes Services the endpoints come from.
+	Sources []dynamic.KubernetesRef
 }
 
 // endpoint is a single resolved pod address.
@@ -183,6 +186,16 @@ type location struct {
 	ServiceName string
 	ServicePort string
 
+	// Sources are the parts of the Ingress declaring this location:
+	// its path, or its default backend, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the Ingress declaring the backend of this location, and its annotations.
+	BackendSources []dynamic.KubernetesRef
+
+	// CustomHeadersSources are the parts of the ConfigMap holding ResolvedCustomHeaders.
+	CustomHeadersSources []dynamic.KubernetesRef
+
 	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
 	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
 	SSLPassthrough bool
@@ -302,6 +315,12 @@ type canaryConfig struct {
 	HeaderValue   string
 	HeaderPattern string
 	Cookie        string
+
+	// Sources are the parts of the canary Ingress declaring the canary: its path, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the canary Ingress declaring the canary backend, and its annotations.
+	BackendSources []dynamic.KubernetesRef
 }
 
 // RequiresCanaryRouter returns true when a dedicated canary router is needed
@@ -326,4 +345,10 @@ type sslPassthroughBackend struct {
 
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
+
+	// Sources are the parts of the Ingress declaring the passthrough: the host of its rule, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the Ingress declaring the backend, and its annotations.
+	BackendSources []dynamic.KubernetesRef
 }

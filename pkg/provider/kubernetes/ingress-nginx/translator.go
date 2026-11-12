@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	netv1 "k8s.io/api/networking/v1"
@@ -40,7 +41,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
-	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb}
+	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb, Metadata: k8s.NewServiceMetadata()}
 
 	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
 		cp := mc.Certs[k]
@@ -60,16 +61,20 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			},
 		}
 
-		var serversTransportName string
+		var (
+			serversTransportName string
+			backendSources       []dynamic.KubernetesRef
+		)
 		if loc := mc.DefaultBackendLocation; loc != nil {
 			obs.Metadata.Ingress.Name = loc.IngressName
+			backendSources = loc.BackendSources
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
 				serversTransportName = loc.ServersTransportName
-				conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
+				addServersTransport(conf, loc)
 			}
 		}
 
-		defaultBackendSvc := buildService(mc.DefaultBackend, serversTransportName)
+		defaultBackendSvc := buildService(mc.DefaultBackend, serversTransportName, backendSources...)
 		defaultBackendSvc.Observability = buildServiceObservability(mc.DefaultBackend)
 		conf.HTTP.Services[defaultBackendName] = defaultBackendSvc
 
@@ -80,6 +85,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Priority:      math.MinInt32,
 			Service:       defaultBackendName,
 			Observability: obs,
+			Metadata:      k8s.NewMetadata(),
 		}
 		rtTLS := &dynamic.Router{
 			EntryPoints:   p.TLSEntryPoints,
@@ -89,6 +95,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Service:       defaultBackendName,
 			TLS:           &dynamic.RouterTLSConfig{},
 			Observability: obs,
+			Metadata:      k8s.NewMetadata(),
 		}
 
 		registered := p.addNonTLSRouter(conf, defaultBackendName, rt)
@@ -99,6 +106,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
 		// ingress reach its catch-all routers.
 		if loc := mc.DefaultBackendLocation; loc != nil {
+			rt.Metadata = loc.metadata()
+			rtTLS.Metadata = loc.metadata()
+
 			if registered {
 				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
 			}
@@ -118,13 +128,14 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			lb.Servers = append(lb.Servers, dynamic.TCPServer{Address: ep.Address})
 		}
 
-		conf.TCP.Services[pt.BackendName] = &dynamic.TCPService{LoadBalancer: lb}
+		addTCPService(conf, pt.BackendName, &dynamic.TCPService{LoadBalancer: lb, Metadata: buildServiceMetadata(backend, pt.BackendSources...)})
 		conf.TCP.Routers[pt.RouterKey] = &dynamic.TCPRouter{
 			EntryPoints: p.TLSEntryPoints,
 			Rule:        fmt.Sprintf("HostSNI(%q)", pt.Hostname),
 			RuleSyntax:  "default",
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
+			Metadata:    k8s.NewMetadata(pt.Sources...),
 		}
 	}
 
@@ -136,9 +147,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 		for _, loc := range srv.Locations {
 			if loc.ServersTransport != nil && loc.ServersTransportName != "" {
-				if _, exists := conf.HTTP.ServersTransports[loc.ServersTransportName]; !exists {
-					conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
-				}
+				addServersTransport(conf, loc)
 			}
 
 			backend, ok := mc.Backends[loc.BackendName]
@@ -148,9 +157,9 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			primarySvcName := loc.BackendName
-			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config)
+			primarySvc := buildServiceWithLocConfig(backend, loc.ServersTransportName, loc.Config, loc.BackendSources...)
 			primarySvc.Observability = buildServiceObservability(backend)
-			conf.HTTP.Services[primarySvcName] = primarySvc
+			addService(conf, primarySvcName, primarySvc)
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
@@ -164,16 +173,17 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			routerSvcName := primarySvcName
 			canarySvcName := primarySvcName + "-canary"
+			var routerSources []dynamic.KubernetesRef
 			if loc.Canary != nil {
 				canaryBackend, ok := mc.Backends[loc.Canary.BackendName]
 				if ok {
 					canaryWRRName := primarySvcName + "-wrr"
 
-					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config)
+					canarySvc := buildServiceWithLocConfig(canaryBackend, loc.ServersTransportName, loc.Config, slices.Concat(loc.BackendSources, loc.Canary.BackendSources)...)
 					canarySvc.Observability = buildServiceObservability(canaryBackend)
-					conf.HTTP.Services[canarySvcName] = canarySvc
+					addService(conf, canarySvcName, canarySvc)
 
-					conf.HTTP.Services[canaryWRRName] = &dynamic.Service{
+					addService(conf, canaryWRRName, &dynamic.Service{
 						Weighted: &dynamic.WeightedRoundRobin{
 							Sticky: buildSticky(loc.Config, "wrr"),
 							Services: []dynamic.WRRService{
@@ -181,8 +191,10 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 								{Name: canarySvcName, Weight: new(loc.Canary.Weight)},
 							},
 						},
-					}
+						Metadata: k8s.NewServiceMetadata(slices.Concat(loc.BackendSources, loc.Canary.Sources)...),
+					})
 					routerSvcName = canaryWRRName
+					routerSources = loc.Canary.Sources
 				}
 			}
 
@@ -201,6 +213,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				RuleSyntax:    "default",
 				Service:       routerSvcName,
 				Observability: obs,
+				Metadata:      loc.metadata(routerSources...),
 			}
 
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
@@ -228,6 +241,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						Options: srv.TLSOptionName,
 					},
 					Observability: obs,
+					Metadata:      loc.metadata(routerSources...),
 				}
 
 				if srv.TLSOption != nil {
@@ -255,6 +269,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       canarySvcName,
 					Observability: obs,
+					Metadata:      buildDerivedMetadata(rt, loc.Canary.Sources...),
 				}
 				if p.addNonTLSRouter(conf, canaryKey, canaryRouter) {
 					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
@@ -269,6 +284,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						Service:       canarySvcName,
 						TLS:           rtTLS.TLS,
 						Observability: obs,
+						Metadata:      buildDerivedMetadata(rtTLS, loc.Canary.Sources...),
 					}
 					conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
 					p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
@@ -283,6 +299,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					RuleSyntax:    rt.RuleSyntax,
 					Service:       primarySvcName,
 					Observability: obs,
+					Metadata:      buildDerivedMetadata(rt, loc.Canary.Sources...),
 				}
 				if p.addNonTLSRouter(conf, nonCanaryKey, nonCanaryRouter) {
 					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
@@ -297,6 +314,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						Service:       primarySvcName,
 						TLS:           rtTLS.TLS,
 						Observability: obs,
+						Metadata:      buildDerivedMetadata(rtTLS, loc.Canary.Sources...),
 					}
 					conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
 					p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
@@ -318,6 +336,58 @@ func (p *Provider) addNonTLSRouter(conf *dynamic.Configuration, key string, rt *
 	return true
 }
 
+// addService registers the service, and keeps the sources of the service it replaces:
+// the locations of an Ingress sharing a backend share its services.
+func addService(conf *dynamic.Configuration, name string, svc *dynamic.Service) {
+	if existing, ok := conf.HTTP.Services[name]; ok && existing.Metadata != nil {
+		svc.Metadata.Merge(existing.Metadata)
+	}
+
+	conf.HTTP.Services[name] = svc
+}
+
+// addTCPService registers the service, and keeps the sources of the service it replaces:
+// the passthrough hosts sharing a backend share its service.
+func addTCPService(conf *dynamic.Configuration, name string, svc *dynamic.TCPService) {
+	if existing, ok := conf.TCP.Services[name]; ok && existing.Metadata != nil {
+		svc.Metadata.Merge(existing.Metadata)
+	}
+
+	conf.TCP.Services[name] = svc
+}
+
+// addServersTransport registers the serversTransport of the location, which the locations of an Ingress share.
+func addServersTransport(conf *dynamic.Configuration, loc *location) {
+	if loc.ServersTransport.Metadata == nil {
+		loc.ServersTransport.Metadata = k8s.NewMetadata()
+	}
+	loc.ServersTransport.Metadata.Kubernetes.Sources.Add(loc.BackendSources...)
+
+	conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
+}
+
+// metadata returns the metadata of an object built from the location, and from the given parts of Kubernetes resources.
+func (l *location) metadata(sources ...dynamic.KubernetesRef) *dynamic.Metadata {
+	return k8s.NewMetadata(slices.Concat(l.Sources, sources)...)
+}
+
+// buildDerivedMetadata returns the metadata of a router derived from rt, and from the given parts of Kubernetes resources.
+func buildDerivedMetadata(rt *dynamic.Router, sources ...dynamic.KubernetesRef) *dynamic.Metadata {
+	metadata := k8s.NewMetadata(sources...)
+	if rt.Metadata != nil {
+		metadata.Merge(rt.Metadata)
+	}
+
+	return metadata
+}
+
+func buildServiceMetadata(b *backend, sources ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
+	metadata := k8s.NewServiceMetadata(slices.Concat(b.Sources, sources)...)
+	metadata.Kubernetes.ServicePort = b.ServicePort
+
+	return metadata
+}
+
 func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
 	if b == nil {
 		return nil
@@ -333,7 +403,7 @@ func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
 	}
 }
 
-func buildService(backend *backend, serversTransportName string) *dynamic.Service {
+func buildService(backend *backend, serversTransportName string, sources ...dynamic.KubernetesRef) *dynamic.Service {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -341,7 +411,10 @@ func buildService(backend *backend, serversTransportName string) *dynamic.Servic
 		lb.ServersTransport = serversTransportName
 	}
 
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		LoadBalancer: lb,
+		Metadata:     buildServiceMetadata(backend, sources...),
+	}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 			URL:    fmt.Sprintf("http://%s", ep.Address),
@@ -352,7 +425,7 @@ func buildService(backend *backend, serversTransportName string) *dynamic.Servic
 	return svc
 }
 
-func buildServiceWithLocConfig(backend *backend, serversTransportName string, locCfg IngressConfig) *dynamic.Service {
+func buildServiceWithLocConfig(backend *backend, serversTransportName string, locCfg IngressConfig, sources ...dynamic.KubernetesRef) *dynamic.Service {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -368,7 +441,10 @@ func buildServiceWithLocConfig(backend *backend, serversTransportName string, lo
 	}
 
 	scheme := parseBackendProtocol(ptr.Deref(locCfg.BackendProtocol, "HTTP"))
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		LoadBalancer: lb,
+		Metadata:     buildServiceMetadata(backend, sources...),
+	}
 	for _, ep := range backend.Endpoints {
 		svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 			URL:    fmt.Sprintf("%s://%s", scheme, ep.Address),
@@ -476,6 +552,7 @@ func (p *Provider) applyLimitAllowlist(mc *model, loc *location, routerKey strin
 		Service:       rt.Service,
 		TLS:           rt.TLS,
 		Observability: rt.Observability,
+		Metadata:      rt.Metadata.DeepCopy(),
 	}
 
 	// The rule wrapping makes the allowlist rule longer than the rule it exempts, and
@@ -497,6 +574,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 		name := routerKey + "-redirect-scheme"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
 			RedirectScheme: &dynamic.RedirectScheme{Scheme: "https", ForcePermanentRedirect: true},
+			Metadata:       loc.metadata(),
 		}
 		rt.Middlewares = []string{name}
 	}
@@ -514,7 +592,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 		if e.ErrorBackendName != "" {
 			errorSvcName = "default-backend-" + routerKey
 			if errBackend, ok := mc.Backends[e.ErrorBackendName]; ok {
-				errSvc := buildServiceWithLocConfig(errBackend, "", loc.Config)
+				errSvc := buildServiceWithLocConfig(errBackend, "", loc.Config, loc.Sources...)
 				errSvc.Observability = buildServiceObservability(errBackend)
 				conf.HTTP.Services[errorSvcName] = errSvc
 			}
@@ -532,37 +610,38 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 				Service:      errorSvcName,
 				NginxHeaders: &headers,
 			},
+			Metadata: loc.metadata(),
 		}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.AppRoot != nil {
 		name := routerKey + "-app-root"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.CORS != nil {
 		name := routerKey + "-cors"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Headers: loc.CORS}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Headers: loc.CORS, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.Redirect != nil {
 		name := routerKey + "-redirect"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RedirectRegex: loc.Redirect}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RedirectRegex: loc.Redirect, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.BasicAuth != nil {
 		name := routerKey + "-basic-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth, URNRefs: loc.AuthURNRefs}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{BasicAuth: loc.BasicAuth, URNRefs: loc.AuthURNRefs, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.DigestAuth != nil {
 		name := routerKey + "-digest-auth"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth, URNRefs: loc.AuthURNRefs}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{DigestAuth: loc.DigestAuth, URNRefs: loc.AuthURNRefs, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -572,9 +651,15 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 	if loc.BasicAuth != nil || loc.DigestAuth != nil {
 		if svc, ok := conf.HTTP.Services[rt.Service]; ok {
 			name := rt.Service + "-remove-authorization-header"
-			conf.HTTP.Middlewares[name] = &dynamic.Middleware{
-				Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Authorization": ""}},
+			middleware := &dynamic.Middleware{
+				Headers:  &dynamic.Headers{CustomRequestHeaders: map[string]string{"Authorization": ""}},
+				Metadata: loc.metadata(),
 			}
+
+			if existing, ok := conf.HTTP.Middlewares[name]; ok && existing.Metadata != nil {
+				middleware.Metadata.Merge(existing.Metadata)
+			}
+			conf.HTTP.Middlewares[name] = middleware
 
 			// The TLS and non-TLS routers of a location share the same service.
 			if !slices.Contains(svc.Middlewares, name) {
@@ -585,43 +670,43 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 
 	if loc.Buffering != nil {
 		name := routerKey + "-buffering"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Buffering: loc.Buffering}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Buffering: loc.Buffering, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.IPAllowList != nil {
 		name := routerKey + "-allowed-source-range"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{IPAllowList: loc.IPAllowList}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{IPAllowList: loc.IPAllowList, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.RewriteTarget != nil {
 		name := routerKey + "-rewrite-target"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RewriteTarget: loc.RewriteTarget}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RewriteTarget: loc.RewriteTarget, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.UpstreamVhost != nil {
 		name := routerKey + "-vhost"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{UpstreamVHost: loc.UpstreamVhost}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{UpstreamVHost: loc.UpstreamVhost, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if withLimits {
 		if loc.RateLimitRPM != nil {
 			name := routerKey + "-limit-rpm"
-			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPM}
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPM, Metadata: loc.metadata()}
 			rt.Middlewares = append(rt.Middlewares, name)
 		}
 		if loc.RateLimitRPS != nil {
 			name := routerKey + "-limit-rps"
-			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPS}
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{RateLimit: loc.RateLimitRPS, Metadata: loc.metadata()}
 			rt.Middlewares = append(rt.Middlewares, name)
 		}
 
 		if loc.LimitConnections != nil {
 			name := routerKey + "-limit-connections"
-			conf.HTTP.Middlewares[name] = &dynamic.Middleware{InFlightReq: loc.LimitConnections}
+			conf.HTTP.Middlewares[name] = &dynamic.Middleware{InFlightReq: loc.LimitConnections, Metadata: loc.metadata()}
 			rt.Middlewares = append(rt.Middlewares, name)
 		}
 	}
@@ -630,27 +715,28 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 	// it owns the Ssl-Client-* headers, and is what removes the values a client supplied for them.
 	if loc.AuthTLSPassCert != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if len(loc.ResolvedCustomHeaders) > 0 {
 		name := routerKey + "-custom-headers"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
-			Headers: &dynamic.Headers{CustomResponseHeaders: loc.ResolvedCustomHeaders},
+			Headers:  &dynamic.Headers{CustomResponseHeaders: loc.ResolvedCustomHeaders},
+			Metadata: loc.metadata(loc.CustomHeadersSources...),
 		}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.SnippetAuth != nil {
 		name := routerKey + "-snippet"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Snippet: loc.SnippetAuth}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Snippet: loc.SnippetAuth, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
 	if loc.Retry != nil {
 		name := routerKey + "-retry"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Retry: loc.Retry}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Retry: loc.Retry, Metadata: loc.metadata()}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -681,6 +767,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 			Replacement: fmt.Sprintf("$1://%s$2/$3", f.TargetHostname),
 			StatusCode:  new(http.StatusPermanentRedirect),
 		},
+		Metadata: loc.metadata(),
 	}
 
 	// The redirect router does not carry the location middlewares (auth included),
@@ -694,6 +781,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
+		Metadata:      rt.Metadata.DeepCopy(),
 	}
 }
 
@@ -715,6 +803,7 @@ func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, o
 		Service:       unavailableServiceName,
 		TLS:           rt.TLS,
 		Observability: obs,
+		Metadata:      rt.Metadata.DeepCopy(),
 	}
 }
 

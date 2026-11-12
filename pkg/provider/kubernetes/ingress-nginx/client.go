@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -157,7 +158,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 	}
 
 	for _, ns := range c.watchedNamespaces {
-		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFieldsAndSetGVK(kscheme.Scheme)))
 
 		_, err := factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -166,7 +167,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 
 		c.factoriesIngress[ns] = factoryIngress
 
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFieldsAndSetGVK(kscheme.Scheme)))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -188,7 +189,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		}
 		c.factoriesSecret[ns] = factorySecret
 
-		factoryConfigMap := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
+		factoryConfigMap := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFieldsAndSetGVK(kscheme.Scheme)))
 		_, err = factoryConfigMap.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
