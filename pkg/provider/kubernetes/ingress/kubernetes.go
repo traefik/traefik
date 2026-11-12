@@ -296,7 +296,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 				Service:    "default-backend",
 				Observability: &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
-						Ingress: &dynamic.KubernetesMetadata{
+						Ingress: &dynamic.ObservabilityKubernetesMetadata{
 							Kind:      "Ingress",
 							Namespace: ingress.Namespace,
 							Name:      ingress.Name,
@@ -616,7 +616,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		LoadBalancer: lb,
 		Observability: &dynamic.ServiceObservabilityConfig{
 			Metadata: &dynamic.ServiceObservabilityMetadata{
-				Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
 					Namespace: namespace,
 					Name:      backend.Service.Name,
 					Port:      portString(backend.Service.Port),
@@ -774,7 +774,7 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 		Service: serviceName,
 		Observability: &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesMetadata{
+				Ingress: &dynamic.ObservabilityKubernetesMetadata{
 					Kind:      "Ingress",
 					Namespace: ingress.Namespace,
 					Name:      ingress.Name,

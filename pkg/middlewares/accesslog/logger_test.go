@@ -1382,7 +1382,7 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing,
 
 		if metadata {
 			obs.Metadata = &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesMetadata{
+				Ingress: &dynamic.ObservabilityKubernetesMetadata{
 					Kind:      "Ingress",
 					Namespace: "test-namespace",
 					Name:      "test-ingress",
@@ -1402,7 +1402,7 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing,
 				ctx := observability.WithServiceObservabilityState(r.Context())
 				state := observability.GetServiceObservabilityState(ctx)
 				state.Metadata = &dynamic.ServiceObservabilityMetadata{
-					Kubernetes: &dynamic.KubernetesServiceMetadata{
+					Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
 						Namespace: "test-namespace",
 						Name:      "test-service",
 						Port:      "test-port",
