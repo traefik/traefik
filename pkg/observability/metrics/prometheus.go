@@ -65,6 +65,7 @@ const (
 	// with the dots replaced by underscores to comply with the Prometheus naming rules.
 	tcpRouterNameLabel         = "traefik_router_name"
 	tcpServiceNameLabel        = "traefik_service_name"
+	tcpTLSModeLabel            = "traefik_tls_mode"
 	tcpNetworkTypeLabel        = "network_type"
 	tcpServerPortLabel         = "server_port"
 	tcpTLSProtocolVersionLabel = "tls_protocol_version"
@@ -285,8 +286,8 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	if config.EnableTCPRouterMetrics {
 		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenConnectionsName,
-			Help: "How many open connections exist on a TCP router, partitioned by service, network type, and server port.",
-		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpServerPortLabel})
+			Help: "How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
+		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel, tcpServerPortLabel})
 		routerTCPOpenTLSConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenTLSConnectionsName,
 			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",

@@ -43,7 +43,7 @@ func TestRouterMetricsHandler(t *testing.T) {
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
 
-			handler, err := RouterMetricsHandler(t.Context(), test.registry, "router@file", "service@file")(next)
+			handler, err := RouterMetricsHandler(t.Context(), test.registry, "router@file", "service@file", TLSModeNone)(next)
 			require.NoError(t, err)
 
 			_, wrapped := handler.(*metricsMiddleware)
@@ -60,11 +60,11 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 		openConnections = maps.Clone(registry.gauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file")
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", TLSModeNone)
 
 	handler.ServeTCP(connMock{localAddr: &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 8080}})
 
-	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=ipv4,server.port=8080"
+	labels := "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=none,network.type=ipv4,server.port=8080"
 
 	// The connection is counted while it is served, and released afterwards.
 	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
@@ -99,7 +99,7 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 		afterHandshake = maps.Clone(registry.tlsGauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file")
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", TLSModeTerminated)
 
 	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
 		Certificates: []tls.Certificate{*cert},

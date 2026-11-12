@@ -52,7 +52,7 @@ func TestManager_routerMetrics(t *testing.T) {
 	require.Contains(t, handlers, "web")
 
 	// The service name is qualified, as for the HTTP router metrics.
-	assert.Equal(t, []string{"traefik.router.name", "foo@file", "traefik.service.name", "bar@file"}, gauge.labelValues)
+	assert.Equal(t, []string{"traefik.router.name", "foo@file", "traefik.service.name", "bar@file", "traefik.tls.mode", "none"}, gauge.labelValues)
 }
 
 type registryMock struct {

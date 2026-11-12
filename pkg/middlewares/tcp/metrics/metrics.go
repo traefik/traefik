@@ -25,10 +25,21 @@ const (
 const (
 	routerNameLabel         = "traefik.router.name"
 	serviceNameLabel        = "traefik.service.name"
+	tlsModeLabel            = "traefik.tls.mode"
 	networkTypeLabel        = "network.type"
 	serverPortLabel         = "server.port"
 	tlsProtocolVersionLabel = "tls.protocol.version"
 	tlsCipherLabel          = "tls.cipher"
+)
+
+// The TLS modes of a TCP router.
+const (
+	// TLSModeNone is the mode of a router without TLS.
+	TLSModeNone = "none"
+	// TLSModeTerminated is the mode of a router whose TLS is terminated by Traefik.
+	TLSModeTerminated = "terminated"
+	// TLSModePassthrough is the mode of a router that forwards the TLS connections as is.
+	TLSModePassthrough = "passthrough"
 )
 
 type metricsMiddleware struct {
@@ -38,24 +49,24 @@ type metricsMiddleware struct {
 }
 
 // NewRouterMiddleware creates a new metrics middleware for a TCP Router.
-func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics.Registry, routerName string, serviceName string) tcp.Handler {
+func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics.Registry, routerName string, serviceName string, tlsMode string) tcp.Handler {
 	middlewares.GetLogger(ctx, nameRouter, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                    next,
-		openConnectionsGauge:    registry.RouterTCPOpenConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName),
+		openConnectionsGauge:    registry.RouterTCPOpenConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode),
 		openTLSConnectionsGauge: registry.RouterTCPOpenTLSConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName),
 	}
 }
 
 // RouterMetricsHandler returns the metrics TCP router handler.
-func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) tcp.Constructor {
+func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string, tlsMode string) tcp.Constructor {
 	return func(next tcp.Handler) (tcp.Handler, error) {
 		if registry == nil || !registry.IsTCPRouterEnabled() {
 			return next, nil
 		}
 
-		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName), nil
+		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName, tlsMode), nil
 	}
 }
 

@@ -154,7 +154,7 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443").
+		With("traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").
 		Set(1)
 	prometheusRegistry.
 		RouterTCPOpenTLSConnectionsGauge().
@@ -325,6 +325,7 @@ func TestPrometheus(t *testing.T) {
 			labels: map[string]string{
 				"traefik_router_name":  "demo",
 				"traefik_service_name": "service1",
+				"traefik_tls_mode":     "terminated",
 				"network_type":         "ipv4",
 				"server_port":          "443",
 			},
@@ -557,11 +558,11 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "network.type", "ipv4", "server.port", "443").
+		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "network.type", "ipv4", "server.port", "443").
+		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
 		Add(1)
 
 	// The metric of the removed router is exported on the first scrape,
