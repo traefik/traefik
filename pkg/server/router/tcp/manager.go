@@ -383,14 +383,7 @@ func (m *Manager) buildTCPHandler(ctx context.Context, routerName string, router
 
 	// The metrics middleware is idempotent if the TCP routers metrics are disabled.
 	qualifiedService := provider.GetQualifiedName(ctx, router.Service)
-	tlsMode := metricsMiddle.TLSModeTerminated
-	switch {
-	case router.TLS == nil:
-		tlsMode = metricsMiddle.TLSModeNone
-	case router.TLS.Passthrough:
-		tlsMode = metricsMiddle.TLSModePassthrough
-	}
-	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService, tlsMode)
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService, router.TLS)
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 

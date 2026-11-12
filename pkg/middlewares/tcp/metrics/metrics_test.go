@@ -12,6 +12,7 @@ import (
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
@@ -43,7 +44,7 @@ func TestRouterMetricsHandler(t *testing.T) {
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
 
-			handler, err := RouterMetricsHandler(t.Context(), test.registry, "router@file", "service@file", TLSModeNone)(next)
+			handler, err := RouterMetricsHandler(t.Context(), test.registry, "router@file", "service@file", nil)(next)
 			require.NoError(t, err)
 
 			_, wrapped := handler.(*metricsMiddleware)
@@ -60,11 +61,11 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 		openConnections = maps.Clone(registry.gauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", TLSModeNone)
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{Passthrough: true})
 
 	handler.ServeTCP(connMock{localAddr: &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 8080}})
 
-	labels := "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=none,network.type=ipv4,server.port=8080"
+	labels := "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=passthrough,network.type=ipv4,server.port=8080"
 
 	// The connection is counted while it is served, and released afterwards.
 	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
@@ -99,7 +100,7 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 		afterHandshake = maps.Clone(registry.tlsGauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", TLSModeTerminated)
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
 
 	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
 		Certificates: []tls.Certificate{*cert},
@@ -109,6 +110,8 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 
 	// The network labels are empty because the local address of a pipe is not a TCP one.
 	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=,server.port=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+
+	assert.Contains(t, registry.gauge.values, "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=,server.port=")
 
 	// The TLS connection is counted once the handshake is done, and released afterwards.
 	assert.Empty(t, beforeHandshake)
