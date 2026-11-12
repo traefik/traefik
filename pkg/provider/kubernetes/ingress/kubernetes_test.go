@@ -71,14 +71,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -102,15 +94,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -160,12 +143,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Tracing:        new(true),
 								Metrics:        new(true),
 								TraceVerbosity: otypes.MinimalVerbosity,
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -202,15 +179,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								},
 								ServersTransport: "foobar@file",
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -234,14 +202,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -253,14 +213,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -284,15 +236,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -320,14 +263,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar-bar-41871576e140babe40bd": {
 							Rule:    `Host("*.bar") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -339,14 +274,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar-bar-605945111a3c9f84dc65": {
 							Rule:    `Host("bar") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -370,15 +297,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -406,14 +324,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo-bar-930f0e8b221e60bc7ab7": {
 							Rule:    `PathPrefix("/foo/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -425,14 +335,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo-bar-207cc2245cb31ba18e29": {
 							Rule:    `PathPrefix("/foo-bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -456,15 +358,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -492,14 +385,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -511,14 +396,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -542,15 +419,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -578,14 +446,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -609,15 +469,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -644,14 +495,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com": {
 							Rule:    `Host("example.com")`,
 							Service: "testing-example-com-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -672,15 +515,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:80",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "example-com",
-										Port:      "80",
 									},
 								},
 							},
@@ -707,14 +541,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -726,14 +552,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-foo": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -757,15 +575,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -793,14 +602,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -812,14 +613,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-courgette-carotte": {
 							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -843,15 +636,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -879,14 +663,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -898,14 +674,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-courgette-carotte": {
 							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
 							Service: "testing-service2-8082",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -929,15 +697,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -967,15 +726,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service2",
-										Port:      "8082",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1000,14 +750,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1024,15 +766,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
 								},
 							},
 							Metadata: &dynamic.ServiceMetadata{
@@ -1112,14 +845,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Service:    "default-backend",
 							Priority:   math.MinInt32,
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1146,15 +871,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1178,14 +894,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1212,15 +920,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1244,14 +943,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1278,15 +969,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1310,14 +992,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1341,15 +1015,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8089",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
 									},
 								},
 							},
@@ -1376,14 +1041,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1395,14 +1052,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-foo": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
 							Service: "testing-service1-carotte",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1426,15 +1075,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8089",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
 									},
 								},
 							},
@@ -1464,15 +1104,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "carotte",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1496,14 +1127,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1527,15 +1150,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8089",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
 									},
 								},
 							},
@@ -1562,14 +1176,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1581,14 +1187,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"toto-toto-traefik-tchouk-bar": {
 							Rule:    `Host("toto.traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "toto-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "toto",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1615,15 +1213,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1647,15 +1236,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.11.0.2:8089",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "toto",
-										Name:      "service1",
-										Port:      "tchouk",
 									},
 								},
 							},
@@ -1702,14 +1282,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-port-port": {
 							Rule:    `Host("traefik.port") && PathPrefix("/port")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1730,15 +1302,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -1765,15 +1328,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com": {
 							Rule:    `Host("example.com")`,
 							Service: "testing-example-com-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
-							TLS: &dynamic.RouterTLSConfig{},
+							TLS:     &dynamic.RouterTLSConfig{},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1794,15 +1349,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:80",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "example-com",
-										Port:      "80",
 									},
 								},
 							},
@@ -1837,14 +1383,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1871,15 +1409,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "443",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1903,14 +1432,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-8443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1934,15 +1455,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "https://10.21.0.1:8443",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8443",
 									},
 								},
 							},
@@ -1970,14 +1482,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-8443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2001,15 +1505,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "https://10.21.0.1:8443",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8443",
 									},
 								},
 							},
@@ -2038,14 +1533,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Service:    "default-backend",
 							Priority:   math.MinInt32,
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2072,15 +1559,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2104,14 +1582,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2132,15 +1602,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2210,14 +1671,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foobar-com-bar": {
 							Rule:    `Host("*.foobar.com") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2240,15 +1693,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										URL:    "http://10.10.0.1:8080",
 										Scheme: "",
 										Port:   "",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2276,14 +1720,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foobar-com-bar": {
 							Rule:    `HostRegexp("{subdomain:[a-zA-Z0-9-]+}.foobar.com") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2306,15 +1742,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										URL:    "http://10.10.0.1:8080",
 										Scheme: "",
 										Port:   "",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2341,14 +1768,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2360,14 +1779,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2388,15 +1799,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2424,14 +1826,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2452,15 +1846,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2487,14 +1872,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2515,15 +1892,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2550,14 +1918,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2578,15 +1938,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2613,14 +1964,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2641,15 +1984,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2676,14 +2010,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2704,15 +2030,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2739,14 +2056,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2767,15 +2076,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2805,14 +2105,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2833,15 +2125,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2871,14 +2154,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2899,15 +2174,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -2934,14 +2200,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -2962,15 +2220,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -3023,14 +2272,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-foobar",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3051,15 +2292,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:4711",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "foobar",
 									},
 								},
 							},
@@ -3098,15 +2330,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Priority:   math.MinInt32,
 							Service:    "default-backend",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "defaultbackend",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3127,15 +2350,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "defaultservice",
-										Port:      "8080",
 									},
 								},
 							},
@@ -3162,14 +2376,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3204,15 +2410,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3236,14 +2433,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `(Path("/bar") || PathPrefix("/bar/"))`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3267,15 +2456,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
 									},
 								},
 							},
@@ -3314,15 +2494,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
-									},
-								},
-							},
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3347,15 +2518,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-name-whoami-localhost": {
 							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
 							Service: "default-whoami-nil-port-name-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "ingress-with-nil-endpointslice-port-name",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3372,15 +2534,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami-nil-port-name",
-										Port:      "80",
-									},
 								},
 							},
 							Metadata: &dynamic.ServiceMetadata{
@@ -3407,15 +2560,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-value-whoami-localhost": {
 							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
 							Service: "default-whoami-nil-port-value-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "ingress-with-nil-endpointslice-port-value",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3432,15 +2576,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami-nil-port-value",
-										Port:      "80",
-									},
 								},
 							},
 							Metadata: &dynamic.ServiceMetadata{
@@ -3506,14 +2641,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3534,15 +2661,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://traefik.wtf:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -3569,15 +2687,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-example-com-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service-bar-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "example.com",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3599,15 +2708,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service-bar",
-										Port:      "8080",
-									},
 								},
 							},
 							Metadata: &dynamic.ServiceMetadata{
@@ -3634,15 +2734,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-example-com-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service-foo-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "example.com",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3664,15 +2755,6 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service-foo",
-										Port:      "8080",
-									},
 								},
 							},
 							Metadata: &dynamic.ServiceMetadata{
@@ -3721,14 +2803,6 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3747,15 +2821,6 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -3804,14 +2869,6 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -3830,15 +2887,6 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://172.16.4.4:32456",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -4244,14 +3292,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -4270,15 +3310,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -4305,15 +3336,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"default-global-native-lb-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "default-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "global-native-lb",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -4332,15 +3354,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "service1",
-										Port:      "8080",
 									},
 								},
 							},
@@ -4367,15 +3380,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"default-global-native-lb-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "default-native-disabled-svc-web",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.ObservabilityKubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "global-native-lb",
-									},
-								},
-							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -4397,15 +3401,6 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.21:8080",
-									},
-								},
-							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "native-disabled-svc",
-										Port:      "web",
 									},
 								},
 							},

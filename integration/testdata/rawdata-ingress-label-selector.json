@@ -53,14 +53,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test.ingress",
-						"kind": "Ingress"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -135,15 +128,6 @@
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
-				}
-			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "http"
-					}
 				}
 			},
 			"metadata": {

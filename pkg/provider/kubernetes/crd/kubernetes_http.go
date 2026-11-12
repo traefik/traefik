@@ -165,18 +165,15 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					dynamic.MakeKubernetesRef(ingressRoute, "/spec/parentRefs"),
 					dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d", ri)),
 				),
-				Observability: &dynamic.RouterObservabilityConfig{
-					Metadata: &dynamic.ObservabilityMetadata{
-						Ingress: buildIngressRouteMetadata(ingressRoute),
-					},
-				},
 			}
 
 			if route.Observability != nil {
-				r.Observability.AccessLogs = route.Observability.AccessLogs
-				r.Observability.Metrics = route.Observability.Metrics
-				r.Observability.Tracing = route.Observability.Tracing
-				r.Observability.TraceVerbosity = route.Observability.TraceVerbosity
+				r.Observability = &dynamic.RouterObservabilityConfig{
+					AccessLogs:     route.Observability.AccessLogs,
+					Metrics:        route.Observability.Metrics,
+					Tracing:        route.Observability.Tracing,
+					TraceVerbosity: route.Observability.TraceVerbosity,
+				}
 			}
 
 			if route.RespondingTimeouts != nil {
@@ -212,20 +209,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	}
 
 	return conf
-}
-
-// buildIngressRouteMetadata returns the IngressRoute identity attached to
-// generated routers so that access logs can expose the originating IngressRoute
-// kind, name and namespace. The backing Kubernetes Service identity is
-// intentionally not carried here: under multi-service routes, TraefikService
-// weighted/mirroring/HRW/failover, the actual backend is only known per request
-// and is stamped at runtime from the leaf Service.Observability.
-func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dynamic.ObservabilityKubernetesMetadata {
-	return &dynamic.ObservabilityKubernetesMetadata{
-		Kind:      "IngressRoute",
-		Namespace: ingressRoute.Namespace,
-		Name:      ingressRoute.Name,
-	}
 }
 
 // buildRouterRespondingTimeouts returns the router responding timeouts, or nil when none is set.
@@ -605,15 +588,6 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 	service := &dynamic.Service{
 		LoadBalancer: lb,
 		Metadata:     metadata,
-		Observability: &dynamic.ServiceObservabilityConfig{
-			Metadata: &dynamic.ServiceObservabilityMetadata{
-				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-					Namespace: svc.Namespace,
-					Name:      svc.Name,
-					Port:      svc.Port.String(),
-				},
-			},
-		},
 	}
 	if len(svc.Middlewares) > 0 {
 		mds, err := makeMiddlewareKeys(ctx, svc.Namespace, svc.Middlewares, c.crossProviderNamespaces, c.allowCrossNamespace, c.nameBuilder)

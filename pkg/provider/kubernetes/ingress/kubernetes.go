@@ -343,30 +343,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
-				Observability: &dynamic.RouterObservabilityConfig{
-					Metadata: &dynamic.ObservabilityMetadata{
-						Ingress: &dynamic.ObservabilityKubernetesMetadata{
-							Kind:      "Ingress",
-							Namespace: ingress.Namespace,
-							Name:      ingress.Name,
-						},
-					},
-				},
-				Metadata: k8s.NewMetadata(dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend")),
+				Metadata:   k8s.NewMetadata(dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend")),
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
+				rt.Observability = rtConfig.Router.Observability
 				rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
-
-				if rtConfig.Router.Observability != nil {
-					rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
-					rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
-					rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
-					rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
-				}
 			}
 
 			p.applyRouterTransform(ctxIngress, rt, ingress)
@@ -423,7 +408,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				service.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingress, pathSource+"/backend"))
 
-				rt, err := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
+				rt, err := p.loadRouter(rule, pa, rtConfig, serviceName)
 				if err != nil {
 					logger.Error().Err(err).
 						Str("serviceName", pa.Backend.Service.Name).
@@ -631,15 +616,6 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	svc := &dynamic.Service{
 		LoadBalancer: lb,
 		Metadata:     metadata,
-		Observability: &dynamic.ServiceObservabilityConfig{
-			Metadata: &dynamic.ServiceObservabilityMetadata{
-				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
-					Namespace: namespace,
-					Name:      backend.Service.Name,
-					Port:      portString(backend.Service.Port),
-				},
-			},
-		},
 	}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
@@ -786,18 +762,9 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	return svc, nil
 }
 
-func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
+func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
 	rt := &dynamic.Router{
-		Service: serviceName,
-		Observability: &dynamic.RouterObservabilityConfig{
-			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.ObservabilityKubernetesMetadata{
-					Kind:      "Ingress",
-					Namespace: ingress.Namespace,
-					Name:      ingress.Name,
-				},
-			},
-		},
+		Service:  serviceName,
 		Metadata: k8s.NewMetadata(),
 	}
 
@@ -807,14 +774,8 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 		rt.EntryPoints = rtConfig.Router.EntryPoints
 		rt.Middlewares = rtConfig.Router.Middlewares
 		rt.TLS = rtConfig.Router.TLS
+		rt.Observability = rtConfig.Router.Observability
 		rt.RespondingTimeouts = rtConfig.Router.RespondingTimeouts
-
-		if rtConfig.Router.Observability != nil {
-			rt.Observability.AccessLogs = rtConfig.Router.Observability.AccessLogs
-			rt.Observability.Metrics = rtConfig.Router.Observability.Metrics
-			rt.Observability.Tracing = rtConfig.Router.Observability.Tracing
-			rt.Observability.TraceVerbosity = rtConfig.Router.Observability.TraceVerbosity
-		}
 	}
 
 	var rules []string
