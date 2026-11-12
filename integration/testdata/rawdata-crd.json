@@ -11,14 +11,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "api.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -81,14 +74,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -151,14 +137,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test2.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -218,14 +197,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test3.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -285,14 +257,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test4.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -352,14 +317,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "testst.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -419,14 +377,7 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "other-ns",
-						"name": "test6.route",
-						"kind": "IngressRoute"
-					}
-				}
+				"traceVerbosity": "minimal"
 			},
 			"metadata": {
 				"kubernetes": {
@@ -638,15 +589,6 @@
 					"flushInterval": "100ms"
 				}
 			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
-				}
-			},
 			"metadata": {
 				"kubernetes": {
 					"sources": [
@@ -694,15 +636,6 @@
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
-				}
-			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
 				}
 			},
 			"metadata": {
@@ -755,15 +688,6 @@
 				},
 				"serversTransport": "default-mytransport@kubernetescrd"
 			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
-				}
-			},
 			"metadata": {
 				"kubernetes": {
 					"sources": [
@@ -811,15 +735,6 @@
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
-				}
-			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
 				}
 			},
 			"metadata": {

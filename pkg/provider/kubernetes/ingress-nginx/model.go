@@ -180,7 +180,7 @@ type location struct {
 	// RuleIndex is the spec.rules index (ri) this location was generated from.
 	RuleIndex int
 
-	// Observability metadata.
+	// Identity of the Ingress and of the backend Service of this location.
 	Namespace   string
 	IngressName string
 	ServiceName string

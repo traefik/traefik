@@ -66,10 +66,6 @@ type Service struct {
 	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Mirroring           *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
-	// Observability carries provider-populated metadata surfaced per request
-	// in access logs and future metric labels. Mirrors the Router.Observability
-	// shape. Not user-configurable.
-	Observability *ServiceObservabilityConfig `json:"observability,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 
 	Metadata *ServiceMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
@@ -192,67 +188,11 @@ type RouterObservabilityConfig struct {
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
 	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
-
-	// Metadata holds the metadata for this router.
-	// Metadata cannot be user-defined for now.
-	Metadata *ObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
-}
-
-// IsMetadataOnly returns whether the observability configuration only holds metadata,
-// without any access logs, metrics or tracing settings.
-func (r *RouterObservabilityConfig) IsMetadataOnly() bool {
-	return r.Metadata != nil &&
-		r.AccessLogs == nil &&
-		r.Metrics == nil &&
-		r.Tracing == nil &&
-		r.TraceVerbosity == ""
-}
-
-// +k8s:deepcopy-gen=true
-
-// ObservabilityMetadata holds the observability metadata configuration.
-type ObservabilityMetadata struct {
-	Ingress *ObservabilityKubernetesMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ObservabilityKubernetesMetadata holds the Kubernetes Ingress metadata.
-type ObservabilityKubernetesMetadata struct {
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Kind      string `json:"kind,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ServiceObservabilityConfig holds the observability configuration of a service.
-type ServiceObservabilityConfig struct {
-	// Metadata carries provider-populated identity for the leaf service.
-	Metadata *ServiceObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ServiceObservabilityMetadata carries provider-populated identity for a leaf service.
-type ServiceObservabilityMetadata struct {
-	Kubernetes *ObservabilityKubernetesServiceMetadata `json:"kubernetes,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ObservabilityKubernetesServiceMetadata holds the Kubernetes Service identity backing a
-// leaf load balancer (name, namespace and port after cross-namespace resolution).
-// Populated by Kubernetes providers.
-type ObservabilityKubernetesServiceMetadata struct {
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Port      string `json:"port,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
