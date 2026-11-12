@@ -160,13 +160,13 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 	case runtimeYaegi, "":
 		version, err := resolveYaegiVersion(defaultYaegiVersion, manifest)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("resolving Yaegi version: %w", err)
 		}
 
 		if version == YaegiV2 {
 			plugin, err := loadYaegiV2Plugin(ctx, goPath, manifest, moduleName, settings, local)
 			if err != nil {
-				return nil, fmt.Errorf("failed to load plugin with Yaegi v2: %w", err)
+				return nil, fmt.Errorf("loading plugin with Yaegi v2: %w", err)
 			}
 
 			return yaegiV2MiddlewareBuilder{plugin: plugin}, nil
@@ -189,13 +189,13 @@ func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath, moduleN
 	case runtimeYaegi, "":
 		version, err := resolveYaegiVersion(defaultYaegiVersion, manifest)
 		if err != nil {
-			return providerBuilder{}, err
+			return providerBuilder{}, fmt.Errorf("resolving Yaegi version: %w", err)
 		}
 
 		if version == YaegiV2 {
 			plugin, err := loadYaegiV2Plugin(ctx, goPath, manifest, moduleName, settings, local)
 			if err != nil {
-				return providerBuilder{}, fmt.Errorf("failed to load plugin with Yaegi v2: %w", err)
+				return providerBuilder{}, fmt.Errorf("loading plugin with Yaegi v2: %w", err)
 			}
 
 			return providerBuilder{plugin: plugin}, nil
