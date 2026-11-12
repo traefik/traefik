@@ -85,3 +85,29 @@ experimental:
 | <a id="opt-settings-envs-2" href="#opt-settings-envs-2" title="#opt-settings-envs-2">`settings.envs`</a> | Environment variables to forward to the wasm guest. | []string | No |
 | <a id="opt-settings-mounts-2" href="#opt-settings-mounts-2" title="#opt-settings-mounts-2">`settings.mounts`</a> | Directory to mount to the wasm guest. | []string | No |
 | <a id="opt-settings-useUnsafe-2" href="#opt-settings-useUnsafe-2" title="#opt-settings-useUnsafe-2">`settings.useUnsafe`</a> | Allow the plugin to use unsafe and syscall packages. | bool | No |
+
+## Yaegi Version
+
+Yaegi plugins run with Yaegi v1 by default.
+The `defaultYaegiVersion` option selects the version of the Yaegi interpreter, `v1` (default) or `v2`, for all the Yaegi plugins.
+
+```yaml tab="File (YAML)"
+experimental:
+  defaultYaegiVersion: v2
+```
+
+```toml tab="File (TOML)"
+[experimental]
+  defaultYaegiVersion = "v2"
+```
+
+```bash tab="CLI"
+--experimental.defaultyaegiversion=v2
+```
+
+A plugin can also ask for Yaegi v2 in its manifest (`.traefik.yml`), with `runtimeVersion: v2`.
+Such a plugin always runs with Yaegi v2, whatever the value of the `defaultYaegiVersion` option.
+A manifest cannot ask for Yaegi v1.
+
+Yaegi v2 only loads plugins that the Go compiler accepts, and limits the CPU time, the memory and the number of goroutines of a plugin.
+A plugin that Yaegi v2 cannot load is reported as a plugin load failure.

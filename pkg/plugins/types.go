@@ -5,6 +5,12 @@ const (
 	runtimeWasm  = "wasm"
 )
 
+// Versions of the Yaegi interpreter.
+const (
+	YaegiV1 = "v1"
+	YaegiV2 = "v2"
+)
+
 const (
 	typeMiddleware = "middleware"
 	typeProvider   = "provider"
@@ -52,6 +58,9 @@ type Manifest struct {
 	Summary       string         `yaml:"summary"`
 	UseUnsafe     bool           `yaml:"useUnsafe"`
 	TestData      map[string]any `yaml:"testData"`
+
+	// RuntimeVersion only accepts v2: a plugin cannot ask for Yaegi v1.
+	RuntimeVersion string `yaml:"runtimeVersion"`
 }
 
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.

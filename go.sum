@@ -1262,6 +1262,8 @@ github.com/traefik/paerser v0.2.2 h1:cpzW/ZrQrBh3mdwD/jnp6aXASiUFKOVr6ldP+keJTcQ
 github.com/traefik/paerser v0.2.2/go.mod h1:7BBDd4FANoVgaTZG+yh26jI6CA2nds7D/4VTEdIsh24=
 github.com/traefik/yaegi v0.16.3 h1:s/8IcuvcVsOAiWCLemTcxUe0qtMtXl66osMt3YXFIeM=
 github.com/traefik/yaegi v0.16.3/go.mod h1:4eVhbPb3LnD2VigQjhYbEJ69vDRFdT2HQNrXx8eEwUY=
+github.com/traefik/yaegi/v2 v2.0.0-20261112132425-b76896158fba h1:LW+ywocYYS015rBkcFv6E4A10/cjp1Aazm9jtRjpAoI=
+github.com/traefik/yaegi/v2 v2.0.0-20261112132425-b76896158fba/go.mod h1:l6xl0XvNeHVEk9aZM4B+YioMyyouGke0CD3Dgl3APiI=
 github.com/transip/gotransip/v6 v6.28.0 h1:m7DGEMlCygJQZAduPnOGbM0s39uhofPAKMqDA/r8TrQ=
 github.com/transip/gotransip/v6 v6.28.0/go.mod h1:oXUgrMa9ZfYlQ77RYQukwO2hQwew6HCJbXC0XBn0ZmY=
 github.com/tufanbarisyildirim/gonginx v0.0.0-20250620092546-c3e307e36701 h1:JgeHIJzRSEdcuLXufZrni5+a4yDnBhQG+DdKhqCFhq0=
