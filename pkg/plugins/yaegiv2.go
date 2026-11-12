@@ -57,7 +57,7 @@ func loadYaegiV2Plugin(ctx context.Context, goPath string, manifest *Manifest, m
 func createYaegiV2Config(plugin *vm.Plugin, config map[string]any) (*vm.Object, error) {
 	results, err := plugin.Call(context.Background(), "CreateConfig")
 	if err != nil {
-		return nil, fmt.Errorf("failed to call CreateConfig: %w", err)
+		return nil, fmt.Errorf("calling CreateConfig: %w", err)
 	}
 
 	if len(results) != 1 {
@@ -78,13 +78,13 @@ func createYaegiV2Config(plugin *vm.Plugin, config map[string]any) (*vm.Object, 
 
 		decoder, err := mapstructure.NewDecoder(cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create configuration decoder: %w", err)
+			return fmt.Errorf("creating configuration decoder: %w", err)
 		}
 
 		return decoder.Decode(config)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode configuration: %w", err)
+		return nil, fmt.Errorf("decoding configuration: %w", err)
 	}
 
 	return vConfig, nil
@@ -94,7 +94,7 @@ func createYaegiV2Config(plugin *vm.Plugin, config map[string]any) (*vm.Object, 
 func yaegiV2New(ctx context.Context, plugin *vm.Plugin, args ...any) (*vm.Object, error) {
 	results, err := plugin.Call(ctx, "New", args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call New: %w", err)
+		return nil, fmt.Errorf("calling New: %w", err)
 	}
 
 	if len(results) == 0 {
@@ -211,7 +211,7 @@ func (p yaegiV2PP) Stop() error {
 func (p yaegiV2PP) call(name string, args ...any) error {
 	results, err := p.object.Call(context.Background(), name, args...)
 	if err != nil {
-		return fmt.Errorf("failed to call %s: %w", name, err)
+		return fmt.Errorf("calling %s: %w", name, err)
 	}
 
 	if len(results) != 1 {
