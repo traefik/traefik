@@ -48,19 +48,17 @@ type LocalDescriptor struct {
 
 // Manifest The plugin manifest.
 type Manifest struct {
-	DisplayName   string         `yaml:"displayName"`
-	Type          string         `yaml:"type"`
-	Runtime       string         `yaml:"runtime"`
-	WasmPath      string         `yaml:"wasmPath"`
-	Import        string         `yaml:"import"`
-	BasePkg       string         `yaml:"basePkg"`
-	Compatibility string         `yaml:"compatibility"`
-	Summary       string         `yaml:"summary"`
-	UseUnsafe     bool           `yaml:"useUnsafe"`
-	TestData      map[string]any `yaml:"testData"`
-
-	// RuntimeVersion only accepts v2: a plugin cannot ask for Yaegi v1.
-	RuntimeVersion string `yaml:"runtimeVersion"`
+	DisplayName    string         `yaml:"displayName"`
+	Type           string         `yaml:"type"`
+	Runtime        string         `yaml:"runtime"`
+	RuntimeVersion string         `yaml:"runtimeVersion"`
+	WasmPath       string         `yaml:"wasmPath"`
+	Import         string         `yaml:"import"`
+	BasePkg        string         `yaml:"basePkg"`
+	Compatibility  string         `yaml:"compatibility"`
+	Summary        string         `yaml:"summary"`
+	UseUnsafe      bool           `yaml:"useUnsafe"`
+	TestData       map[string]any `yaml:"testData"`
 }
 
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.
