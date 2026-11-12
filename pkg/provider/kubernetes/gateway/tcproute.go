@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -46,6 +47,8 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 		}
 
 		for _, match := range routeParentRefs {
+			routeParentRef := dynamic.MakeKubernetesRef(route, fmt.Sprintf("/spec/parentRefs/%d", match.ParentRefIndex))
+
 			acceptedCondition := metav1.Condition{
 				Type:               string(gatev1.RouteConditionAccepted),
 				Status:             metav1.ConditionFalse,
@@ -72,7 +75,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 
 				// The ResolvedRefs condition must be reported for every parentRef,
 				// even when the route does not attach to the listener.
-				routerConfs, condition := p.loadTCPRoute(match.GatewayName, match.GatewayNamespace, listener, route)
+				routerConfs, condition := p.loadTCPRoute(match.GatewayName, match.GatewayNamespace, listener, route, routeParentRef)
 				if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 					resolvedRefCondition = new(condition)
 				}
@@ -120,7 +123,7 @@ type tcpRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TCPRoute) ([]tcpRouteRouter, metav1.Condition) {
+func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.TCPRoute, routeParentRef dynamic.KubernetesRef) ([]tcpRouteRouter, metav1.Condition) {
 	var routers []tcpRouteRouter
 
 	condition := metav1.Condition{
@@ -138,10 +141,17 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 			continue
 		}
 
+		ruleSource := dynamic.MakeKubernetesRef(route, fmt.Sprintf("/spec/rules/%d", ri))
+
 		router := dynamic.TCPRouter{
 			Rule:        `HostSNI("*")`,
 			EntryPoints: []string{listener.EPName},
 			RuleSyntax:  "default",
+			Metadata: k8s.NewMetadata(
+				routeParentRef,
+				ruleSource,
+				listener.ListenerSource,
+			),
 		}
 
 		if listener.Protocol == gatev1.TLSProtocolType && listener.TLS != nil {
@@ -183,7 +193,7 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 		}
 
 		var serviceCondition *metav1.Condition
-		router.Service, serviceCondition = p.loadTCPWRRService(routerConf, routerName, rule.BackendRefs, route)
+		router.Service, serviceCondition = p.loadTCPWRRService(routerConf, routerName, rule.BackendRefs, route, ruleSource)
 		if serviceCondition != nil {
 			condition = *serviceCondition
 		}
@@ -196,16 +206,20 @@ func (p *Provider) loadTCPRoute(gatewayName, gatewayNamespace string, listener g
 }
 
 // loadTCPWRRService is generating a WRR service, even when there is only one target.
-func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1.TCPRoute) (string, *metav1.Condition) {
+func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName string, backendRefs []gatev1.BackendRef, route *gatev1.TCPRoute, ruleSource dynamic.KubernetesRef) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.TCP.Services[name]; ok {
 		return name, nil
 	}
 
+	backendsSource := dynamic.MakeKubernetesRef(route, ruleSource.Path+"/backendRefs")
+
 	var wrr dynamic.TCPWeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range backendRefs {
-		svcName, svc, errCondition := p.loadTCPService(routerName, route, bi, backendRef)
+		backendSource := dynamic.MakeKubernetesRef(route, fmt.Sprintf("%s/%d", backendsSource.Path, bi))
+
+		svcName, svc, errCondition := p.loadTCPService(routerName, route, bi, backendRef, backendSource)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 
 		if errCondition != nil {
@@ -216,6 +230,7 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName str
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{
 					Servers: []dynamic.TCPServer{},
 				},
+				Metadata: k8s.NewServiceMetadata(backendsSource),
 			}
 
 			wrr.Services = append(wrr.Services, dynamic.TCPWRRService{
@@ -235,11 +250,11 @@ func (p *Provider) loadTCPWRRService(conf *dynamic.Configuration, routerName str
 		})
 	}
 
-	conf.TCP.Services[name] = &dynamic.TCPService{Weighted: &wrr}
+	conf.TCP.Services[name] = &dynamic.TCPService{Weighted: &wrr, Metadata: k8s.NewServiceMetadata(backendsSource)}
 	return name, condition
 }
 
-func (p *Provider) loadTCPService(routerName string, route *gatev1.TCPRoute, backendIndex int, backendRef gatev1.BackendRef) (string, *dynamic.TCPService, *metav1.Condition) {
+func (p *Provider) loadTCPService(routerName string, route *gatev1.TCPRoute, backendIndex int, backendRef gatev1.BackendRef, backendSource dynamic.KubernetesRef) (string, *dynamic.TCPService, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -304,18 +319,21 @@ func (p *Provider) loadTCPService(routerName string, route *gatev1.TCPRoute, bac
 		}
 	}
 
-	lb, errCondition := p.loadTCPServers(namespace, route, backendRef)
+	lb, serviceSource, errCondition := p.loadTCPServers(namespace, route, backendRef)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
 
-	return serviceName, &dynamic.TCPService{LoadBalancer: lb}, nil
+	metadata := k8s.NewServiceMetadata(serviceSource, backendSource)
+	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
+
+	return serviceName, &dynamic.TCPService{LoadBalancer: lb, Metadata: metadata}, nil
 }
 
-func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *metav1.Condition) {
-	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef)
+func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, dynamic.KubernetesRef, *metav1.Condition) {
+	backendAddresses, svcPort, serviceSource, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
-		return nil, &metav1.Condition{
+		return nil, dynamic.KubernetesRef{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -326,7 +344,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, back
 	}
 
 	if svcPort.Protocol != corev1.ProtocolTCP {
-		return nil, &metav1.Condition{
+		return nil, dynamic.KubernetesRef{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -343,7 +361,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, back
 			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
-	return lb, nil
+	return lb, serviceSource, nil
 }
 
 func (p *Provider) loadTCPBackendRef(routeNamespace string, backendRef gatev1.BackendRef) (string, error) {
