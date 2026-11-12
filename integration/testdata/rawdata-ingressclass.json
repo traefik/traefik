@@ -62,6 +62,21 @@
 					}
 				}
 			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"resourceVersion": "474",
+							"namespace": "default",
+							"name": "whoami-keep-route",
+							"path": "/spec/rules/0/http/paths/0"
+						}
+					]
+				}
+			},
 			"status": "enabled",
 			"using": [
 				"web"
@@ -110,10 +125,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.8:80"
 					}
 				],
 				"strategy": "wrr",
@@ -131,12 +146,36 @@
 					}
 				}
 			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "311",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"resourceVersion": "474",
+							"namespace": "default",
+							"name": "whoami-keep-route",
+							"path": "/spec/rules/0/http/paths/0/backend"
+						}
+					],
+					"servicePort": "80"
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.8:80": "UP"
 			}
 		},
