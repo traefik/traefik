@@ -357,7 +357,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP))
 
 	// Metrics
-	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsRouterEnabled() || metricsRegistry.IsTCPRouterEnabled() || metricsRegistry.IsSvcEnabled() {
+	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsRouterEnabled() || metricsRegistry.IsSvcEnabled() || metricsRegistry.IsTCPRouterEnabled() {
 		var eps []string
 		for key := range serverEntryPointsTCP {
 			eps = append(eps, key)
