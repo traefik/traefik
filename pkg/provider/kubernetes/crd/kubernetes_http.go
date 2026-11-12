@@ -209,8 +209,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 // intentionally not carried here: under multi-service routes, TraefikService
 // weighted/mirroring/HRW/failover, the actual backend is only known per request
 // and is stamped at runtime from the leaf Service.Observability.
-func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dynamic.KubernetesMetadata {
-	return &dynamic.KubernetesMetadata{
+func buildIngressRouteMetadata(ingressRoute *traefikv1alpha1.IngressRoute) *dynamic.ObservabilityKubernetesMetadata {
+	return &dynamic.ObservabilityKubernetesMetadata{
 		Kind:      "IngressRoute",
 		Namespace: ingressRoute.Namespace,
 		Name:      ingressRoute.Name,
@@ -579,7 +579,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 		LoadBalancer: lb,
 		Observability: &dynamic.ServiceObservabilityConfig{
 			Metadata: &dynamic.ServiceObservabilityMetadata{
-				Kubernetes: &dynamic.KubernetesServiceMetadata{
+				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
 					Namespace: svc.Namespace,
 					Name:      svc.Name,
 					Port:      svc.Port.String(),

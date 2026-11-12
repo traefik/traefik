@@ -213,13 +213,13 @@ func (r *RouterObservabilityConfig) IsMetadataOnly() bool {
 
 // ObservabilityMetadata holds the observability metadata configuration.
 type ObservabilityMetadata struct {
-	Ingress *KubernetesMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+	Ingress *ObservabilityKubernetesMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// KubernetesMetadata holds the Kubernetes Ingress metadata.
-type KubernetesMetadata struct {
+// ObservabilityKubernetesMetadata holds the Kubernetes Ingress metadata.
+type ObservabilityKubernetesMetadata struct {
 	Namespace string `json:"namespace,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Kind      string `json:"kind,omitempty"`
@@ -237,15 +237,15 @@ type ServiceObservabilityConfig struct {
 
 // ServiceObservabilityMetadata carries provider-populated identity for a leaf service.
 type ServiceObservabilityMetadata struct {
-	Kubernetes *KubernetesServiceMetadata `json:"kubernetes,omitempty"`
+	Kubernetes *ObservabilityKubernetesServiceMetadata `json:"kubernetes,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// KubernetesServiceMetadata holds the Kubernetes Service identity backing a
+// ObservabilityKubernetesServiceMetadata holds the Kubernetes Service identity backing a
 // leaf load balancer (name, namespace and port after cross-namespace resolution).
 // Populated by Kubernetes providers.
-type KubernetesServiceMetadata struct {
+type ObservabilityKubernetesServiceMetadata struct {
 	Namespace string `json:"namespace,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Port      string `json:"port,omitempty"`

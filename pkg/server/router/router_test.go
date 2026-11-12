@@ -1192,7 +1192,7 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 					Service:    "B-service",
 					Observability: &dynamic.RouterObservabilityConfig{
 						Metadata: &dynamic.ObservabilityMetadata{
-							Ingress: &dynamic.KubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
+							Ingress: &dynamic.ObservabilityKubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
 						},
 					},
 				},
@@ -1216,7 +1216,7 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 					Observability: &dynamic.RouterObservabilityConfig{
 						AccessLogs: new(false),
 						Metadata: &dynamic.ObservabilityMetadata{
-							Ingress: &dynamic.KubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
+							Ingress: &dynamic.ObservabilityKubernetesMetadata{Kind: "IngressRoute", Namespace: "default", Name: "child"},
 						},
 					},
 				},

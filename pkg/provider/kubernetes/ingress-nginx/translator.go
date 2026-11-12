@@ -53,7 +53,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 	if mc.DefaultBackend != nil {
 		obs := &dynamic.RouterObservabilityConfig{
 			Metadata: &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesMetadata{
+				Ingress: &dynamic.ObservabilityKubernetesMetadata{
 					Kind:      "Ingress",
 					Namespace: mc.DefaultBackend.Namespace,
 				},
@@ -154,7 +154,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 			obs := &dynamic.RouterObservabilityConfig{
 				Metadata: &dynamic.ObservabilityMetadata{
-					Ingress: &dynamic.KubernetesMetadata{
+					Ingress: &dynamic.ObservabilityKubernetesMetadata{
 						Kind:      "Ingress",
 						Namespace: loc.Namespace,
 						Name:      loc.IngressName,
@@ -324,7 +324,7 @@ func buildServiceObservability(b *backend) *dynamic.ServiceObservabilityConfig {
 	}
 	return &dynamic.ServiceObservabilityConfig{
 		Metadata: &dynamic.ServiceObservabilityMetadata{
-			Kubernetes: &dynamic.KubernetesServiceMetadata{
+			Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
 				Namespace: b.Namespace,
 				Name:      b.ServiceName,
 				Port:      b.ServicePort,
