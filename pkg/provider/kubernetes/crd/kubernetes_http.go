@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -111,7 +112,9 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					serviceName = makeSafeKey(wrrKey...)
 				}
 
-				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services)
+				servicesRef := dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d/services", ri))
+
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services, servicesRef, servicesRef)
 				if errBuild != nil {
 					logger.Error().Err(errBuild).Send()
 					continue
@@ -129,6 +132,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if serversLB != nil {
+					serversLB.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d/services/0", ri)))
+
 					// Legacy naming stores the generated Kubernetes Service under the route's own name
 					// (services are shared by identity, not scoped to their parent).
 					if p.nameBuilder.safe {
@@ -154,6 +159,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:        route.Match,
 				Service:     serviceName,
 				ParentRefs:  parentRouterNames,
+				Metadata: k8s.NewMetadata(
+					dynamic.MakeKubernetesRef(ingressRoute, "/spec/entryPoints"),
+					dynamic.MakeKubernetesRef(ingressRoute, "/spec/tls"),
+					dynamic.MakeKubernetesRef(ingressRoute, "/spec/parentRefs"),
+					dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d", ri)),
+				),
 				Observability: &dynamic.RouterObservabilityConfig{
 					Metadata: &dynamic.ObservabilityMetadata{
 						Ingress: buildIngressRouteMetadata(ingressRoute),
@@ -333,7 +344,10 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 
 	switch {
 	case tService.Spec.Weighted != nil:
-		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, []string{tService.Namespace, tService.Name, roleWRR}, conf)
+		wrrServiceRef := dynamic.MakeKubernetesRef(tService, "/spec")
+		baseServiceRef := dynamic.MakeKubernetesRef(tService, "/spec/weighted/services")
+
+		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, []string{tService.Namespace, tService.Name, roleWRR}, conf, wrrServiceRef, baseServiceRef)
 	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
 	case tService.Spec.HighestRandomWeight != nil:
@@ -350,7 +364,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 // When SafeNaming is enabled, the Kubernetes Services it references are named after parentKey, to keep them scoped
 // to their parent. Otherwise, they are named after their own identity.
 // It adds it to the given conf map.
-func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, parentKey []string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, parentKey []string, conf map[string]*dynamic.Service, wrrServiceRef, serviceRef dynamic.KubernetesRef) error {
 	var wrrServices []dynamic.WRRService
 
 	for si, service := range tService.Weighted.Services {
@@ -362,6 +376,10 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		}
 
 		if k8sService != nil {
+			ref := serviceRef
+			ref.Path = fmt.Sprintf("%s/%d", serviceRef.Path, si)
+
+			k8sService.Metadata.Kubernetes.Sources.Add(ref)
 			addToConfig(log.Ctx(ctx), "service", fullName, conf, k8sService)
 		}
 
@@ -395,12 +413,15 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		}
 	}
 
-	addToConfig(log.Ctx(ctx), "service", id, conf, &dynamic.Service{
+	wrr := &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
 			Sticky:   sticky,
 		},
-	})
+		Metadata: k8s.NewServiceMetadata(wrrServiceRef),
+	}
+	addToConfig(log.Ctx(ctx), "service", id, conf, wrr)
+
 	return nil
 }
 
@@ -416,6 +437,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 	}
 
 	if k8sService != nil {
+		k8sService.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(tService, "/spec/mirroring"))
 		addToConfig(log.Ctx(ctx), "service", fullNameMain, conf, k8sService)
 	}
 
@@ -429,6 +451,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 		}
 
 		if k8sService != nil {
+			k8sService.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(tService, fmt.Sprintf("/spec/mirroring/mirrors/%d", mi)))
 			addToConfig(log.Ctx(ctx), "service", mirroredName, conf, k8sService)
 		}
 
@@ -446,6 +469,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 			MaxBodySize: mirroring.MaxBodySize,
 			StreamBody:  mirroring.StreamBody,
 		},
+		Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(tService, "/spec")),
 	})
 
 	return nil
@@ -475,12 +499,15 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 		}
 	}
 
-	servers, err := c.loadServers(svc)
+	servers, ref, err := c.loadServers(svc)
 	if err != nil {
 		return nil, err
 	}
 
 	lb.Servers = servers
+
+	metadata := k8s.NewServiceMetadata(ref)
+	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	if svc.HealthCheck != nil {
 		lb.HealthCheck = &dynamic.ServerHealthCheck{
@@ -577,6 +604,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 
 	service := &dynamic.Service{
 		LoadBalancer: lb,
+		Metadata:     metadata,
 		Observability: &dynamic.ServiceObservabilityConfig{
 			Metadata: &dynamic.ServiceObservabilityMetadata{
 				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
@@ -621,37 +649,39 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 	return c.nameBuilder.makeID(parentNamespace, serversTransportName), nil
 }
 
-func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, dynamic.KubernetesRef, error) {
 	service, exists, err := c.client.GetService(svc.Namespace, svc.Name)
 	if err != nil {
-		return nil, err
+		return nil, dynamic.KubernetesRef{}, err
 	}
 	if !exists {
-		return nil, fmt.Errorf("kubernetes service not found: %s/%s", svc.Namespace, svc.Name)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("kubernetes service not found: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, err
+		return nil, dynamic.KubernetesRef{}, err
 	}
 
+	ref := dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort))
+
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", svc.Namespace, svc.Name)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
-			return nil, fmt.Errorf("externalName services not allowed: %s/%s", svc.Namespace, svc.Name)
+			return nil, dynamic.KubernetesRef{}, fmt.Errorf("externalName services not allowed: %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, dynamic.KubernetesRef{}, err
 		}
 
 		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port)))
 
-		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, ref, nil
 	}
 
 	nativeLB := c.nativeLBByDefault
@@ -661,34 +691,34 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 	if nativeLB {
 		address, err := getNativeServiceAddress(*service, *svcPort)
 		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, dynamic.KubernetesRef{}, err
 		}
 
-		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, ref, nil
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		if c.disableClusterScopeResources {
-			return nil, errors.New("nodes lookup is disabled")
+			return nil, dynamic.KubernetesRef{}, errors.New("nodes lookup is disabled")
 		}
 
 		nodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
-			return nil, nodesErr
+			return nil, dynamic.KubernetesRef{}, nodesErr
 		}
 		if !nodesExists || len(nodes) == 0 {
-			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+			return nil, dynamic.KubernetesRef{}, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, dynamic.KubernetesRef{}, err
 		}
 
 		for _, node := range nodes {
@@ -704,15 +734,15 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 		}
 
 		if len(servers) == 0 {
-			return nil, fmt.Errorf("no servers were generated for service %s in namespace", svc.Name)
+			return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers were generated for service %s in namespace", svc.Name)
 		}
 
-		return servers, nil
+		return servers, ref, nil
 	}
 
 	endpointSlices, err := c.client.GetEndpointSlicesForService(svc.Namespace, svc.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting endpointslices: %w", err)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
 	addresses := map[string]struct{}{}
@@ -730,7 +760,7 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, dynamic.KubernetesRef{}, err
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
@@ -756,10 +786,10 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 	}
 
 	if len(servers) == 0 && !c.allowEmptyServices {
-		return nil, fmt.Errorf("no servers found for %s/%s", svc.Namespace, svc.Name)
+		return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers found for %s/%s", svc.Namespace, svc.Name)
 	}
 
-	return servers, nil
+	return servers, ref, nil
 }
 
 // nameAndService returns the name that should be used for the svc service in the generated config.
@@ -825,6 +855,7 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 		}
 
 		if k8sService != nil {
+			k8sService.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(tService, fmt.Sprintf("/spec/highestRandomWeight/services/%d", si)))
 			addToConfig(log.Ctx(ctx), "service", hrwServiceName, conf, k8sService)
 		}
 
@@ -843,6 +874,7 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 		HighestRandomWeight: &dynamic.HighestRandomWeight{
 			Services: hrwServices,
 		},
+		Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(tService, "/spec")),
 	})
 
 	return nil
@@ -870,16 +902,33 @@ func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alp
 		},
 	}
 
-	conf[id] = &dynamic.Service{Failover: failover}
+	addToConfig(log.Ctx(ctx), "service", id, conf, &dynamic.Service{
+		Failover: failover,
+		Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(tService, "/spec")),
+	})
+
 	if failoverService != nil {
-		conf[failoverName] = failoverService
+		failoverService.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(tService, "/spec/failover/service"))
+		addToConfig(log.Ctx(ctx), "service", failoverName, conf, failoverService)
 	}
 
 	if fallback != nil {
-		conf[fallbackName] = fallback
+		fallback.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(tService, "/spec/failover/fallback"))
+		addToConfig(log.Ctx(ctx), "service", fallbackName, conf, fallback)
 	}
 
 	return nil
+}
+
+// servicePortPath returns the JSON Pointer of port in the service ports,
+// or the one of the service spec for an ExternalName Service port that is not declared, as any port is then allowed.
+func servicePortPath(service *corev1.Service, port *corev1.ServicePort) string {
+	i := slices.Index(service.Spec.Ports, *port)
+	if i < 0 {
+		return "/spec"
+	}
+
+	return fmt.Sprintf("/spec/ports/%d", i)
 }
 
 func splitSvcNameProvider(name string) (string, string) {
