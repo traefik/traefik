@@ -28,7 +28,6 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Builder.
-// defaultYaegiVersion is the version of the Yaegi interpreter for the plugins that do not ask for Yaegi v2 in their manifest.
 func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor, defaultYaegiVersion string) (*Builder, error) {
 	ctx := context.Background()
 
