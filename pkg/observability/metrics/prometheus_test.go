@@ -154,7 +154,11 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "demo", "traefik.service.name", "service1").
+		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443").
+		Set(1)
+	prometheusRegistry.
+		RouterTCPOpenTLSConnectionsGauge().
+		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
 		Set(1)
 
 	prometheusRegistry.
@@ -321,8 +325,22 @@ func TestPrometheus(t *testing.T) {
 			labels: map[string]string{
 				"traefik_router_name":  "demo",
 				"traefik_service_name": "service1",
+				"network_type":         "ipv4",
+				"server_port":          "443",
 			},
 			assert: buildGaugeAssert(t, routerTCPOpenConnectionsName, 1),
+		},
+		{
+			name: routerTCPOpenTLSConnectionsName,
+			labels: map[string]string{
+				"traefik_router_name":  "demo",
+				"traefik_service_name": "service1",
+				"network_type":         "ipv4",
+				"server_port":          "443",
+				"tls_protocol_version": "1.3",
+				"tls_cipher":           "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildGaugeAssert(t, routerTCPOpenTLSConnectionsName, 1),
 		},
 		{
 			name: serviceReqsTotalName,
@@ -539,11 +557,11 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar").
+		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "network.type", "ipv4", "server.port", "443").
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar").
+		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "network.type", "ipv4", "server.port", "443").
 		Add(1)
 
 	// The metric of the removed router is exported on the first scrape,
