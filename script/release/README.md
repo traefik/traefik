@@ -2,6 +2,16 @@
 
 This directory contains tooling for preparing Traefik releases.
 
+## Third-party attribution
+
+Before preparing a release, run **Third-party attribution** in Actions from the release branch using the **Use workflow from** dropdown, then review and merge the generated PR before creating the release tag. Make sure to check that `AIKIDO_REPO_CODE` matches the Aikido source for that branch.
+
+The workflow prepares dependency sources, calls `make refresh-third-party`, commits the generated files locally, and runs `make validate-third-party` before opening a PR.
+
+If generation fails, the workflow fails without opening a PR. The generated files and generation log remain available as workflow artifacts.
+
+Local generation remains available with credentials from the environment or the optional `script/.third-party.env` file.
+
 ## Automated (preferred)
 
 Use the Claude Code skill:

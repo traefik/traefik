@@ -92,12 +92,7 @@ AIKIDO_REPO_CODE ?= 1325139
 .PHONY: third-party
 #? third-party: Generate third party license files
 third-party:
-	@test -f "$(THIRD_PARTY_ENV_FILE)" || { \
-		echo "error: credentials file not found: $(THIRD_PARTY_ENV_FILE)" >&2; \
-		echo "It can be initiated by running: cp script/.third-party.env.example script/.third-party.env" >&2; \
-		exit 1; \
-	}
-	@set -a; . "$(THIRD_PARTY_ENV_FILE)"; set +a; \
+	@set -a; if [ -f "$(THIRD_PARTY_ENV_FILE)" ]; then . "$(THIRD_PARTY_ENV_FILE)"; fi; set +a; \
 	go run github.com/traefik/assimilis/v2/cmd/assimilis@$(ASSIMILIS_VERSION) \
 		fetch --repo-code "$(AIKIDO_REPO_CODE)" \
 		--repo-name traefik
