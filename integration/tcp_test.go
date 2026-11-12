@@ -438,6 +438,83 @@ func (s *TCPSuite) TestPostgresSTARTTLSPassthrough() {
 	assert.Equal(s.T(), byte('R'), header[0])
 }
 
+func (s *TCPSuite) TestRouterMetrics() {
+	file := s.adaptFile("fixtures/tcp/router-metrics.toml", struct {
+		WhoamiA      string
+		WhoamiNoCert string
+		WhoamiNoTLS  string
+	}{
+		WhoamiA:      s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
+		WhoamiNoTLS:  s.getComposeServiceIP("whoami-no-tls") + ":8080",
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// The TLS version and cipher are pinned to get deterministic labels.
+	tlsConfig := func(serverName string) *tls.Config {
+		return &tls.Config{
+			ServerName:         serverName,
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS12,
+			CipherSuites:       []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+		}
+	}
+
+	noTLSConn, err := net.Dial("tcp", "127.0.0.1:8093")
+	require.NoError(s.T(), err)
+
+	passthroughConn, err := tls.Dial("tcp", "127.0.0.1:8093", tlsConfig("whoami-a.test"))
+	require.NoError(s.T(), err)
+
+	terminatedConn, err := tls.Dial("tcp", "127.0.0.1:8093", tlsConfig("whoami-c.test"))
+	require.NoError(s.T(), err)
+
+	conns := []net.Conn{noTLSConn, passthroughConn, terminatedConn}
+
+	// A round trip on each connection makes sure that it reached its router, and that it is kept open.
+	for _, conn := range conns {
+		_, err = conn.Write([]byte("WHO"))
+		require.NoError(s.T(), err)
+
+		_, err = conn.Read(make([]byte, 2048))
+		require.NoError(s.T(), err)
+	}
+
+	openConnections := []string{
+		`traefik_router_tcp_open_connections{network_type="ipv4",server_port="8093",traefik_router_name="to-whoami-no-tls@file",traefik_service_name="whoami-no-tls@file",traefik_tls_mode="none"} `,
+		`traefik_router_tcp_open_connections{network_type="ipv4",server_port="8093",traefik_router_name="to-whoami-a@file",traefik_service_name="whoami-a@file",traefik_tls_mode="passthrough"} `,
+		`traefik_router_tcp_open_connections{network_type="ipv4",server_port="8093",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file",traefik_tls_mode="terminated"} `,
+		`traefik_router_tcp_open_tls_connections{network_type="ipv4",server_port="8093",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file"} `,
+	}
+
+	withValue := func(value string) []string {
+		var metrics []string
+		for _, metric := range openConnections {
+			metrics = append(metrics, metric+value+"\n")
+		}
+
+		return metrics
+	}
+
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(withValue("1")...))
+	require.NoError(s.T(), err)
+
+	// Only the connection whose TLS is terminated by Traefik is counted as a TLS connection.
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.BodyNotContains(`traefik_router_tcp_open_tls_connections{network_type="ipv4",server_port="8093",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_router_name="to-whoami-a@file"`))
+	require.NoError(s.T(), err)
+
+	for _, conn := range conns {
+		require.NoError(s.T(), conn.Close())
+	}
+
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.BodyContains(withValue("0")...))
+	require.NoError(s.T(), err)
+}
+
 // TestTCPWildcardHostSNI verifies that a wildcard HostSNI rule HostSNI(`*.snitest.com`)
 // routes TLS connections for any matching subdomain to the configured backend.
 func (s *SimpleSuite) TestTCPWildcardHostSNI() {
