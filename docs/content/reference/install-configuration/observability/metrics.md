@@ -68,6 +68,7 @@ metrics:
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
 | <a id="opt-metrics-otlp-addServicesLabels" href="#opt-metrics-otlp-addServicesLabels" title="#opt-metrics-otlp-addServicesLabels">`metrics.otlp.addServicesLabels`</a> | Enable metrics on services.                                                                                                                                      | true                                               | No       |
+| <a id="opt-metrics-otlp-enableTCPRouterMetrics" href="#opt-metrics-otlp-enableTCPRouterMetrics" title="#opt-metrics-otlp-enableTCPRouterMetrics">`metrics.otlp.enableTCPRouterMetrics`</a> | Enable metrics on TCP routers. | false | No |
 | <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.<br /> Only applies to explicit bucket histogram exports.                                                          | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
 | <a id="opt-metrics-otlp-pushInterval" href="#opt-metrics-otlp-pushInterval" title="#opt-metrics-otlp-pushInterval">`metrics.otlp.pushInterval`</a> | Interval at which metrics are sent to the OpenTelemetry Collector.                                                                                               | 10s                                                | No       |
 | <a id="opt-metrics-otlp-http" href="#opt-metrics-otlp-http" title="#opt-metrics-otlp-http">`metrics.otlp.http`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
@@ -133,6 +134,7 @@ metrics:
 | <a id="opt-datadog-addEntryPointsLabels" href="#opt-datadog-addEntryPointsLabels" title="#opt-datadog-addEntryPointsLabels">`datadog.addEntryPointsLabels`</a> | Enable metrics on entry points. |  true   | No   |
 | <a id="opt-datadog-addRoutersLabels" href="#opt-datadog-addRoutersLabels" title="#opt-datadog-addRoutersLabels">`datadog.addRoutersLabels`</a> | Enable metrics on routers. |  false   | No   |
 | <a id="opt-datadog-addServicesLabels" href="#opt-datadog-addServicesLabels" title="#opt-datadog-addServicesLabels">`datadog.addServicesLabels`</a> | Enable metrics on services. |  true   | No   |
+| <a id="opt-datadog-enableTCPRouterMetrics" href="#opt-datadog-enableTCPRouterMetrics" title="#opt-datadog-enableTCPRouterMetrics">`datadog.enableTCPRouterMetrics`</a> | Enable metrics on TCP routers. |  false   | No   |
 | <a id="opt-datadog-pushInterval" href="#opt-datadog-pushInterval" title="#opt-datadog-pushInterval">`datadog.pushInterval`</a> | Defines the interval used by the exporter to push metrics to datadog-agent. |  10s   | No   |
 | <a id="opt-datadog-prefix" href="#opt-datadog-prefix" title="#opt-datadog-prefix">`datadog.prefix`</a> | Defines the prefix to use for metrics collection. |  "traefik"   | No   |
 
@@ -190,6 +192,7 @@ metrics:
 | <a id="opt-metrics-influxDB2-addEntryPointsLabels" href="#opt-metrics-influxDB2-addEntryPointsLabels" title="#opt-metrics-influxDB2-addEntryPointsLabels">`metrics.influxDB2.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-influxDB2-addRoutersLabels" href="#opt-metrics-influxDB2-addRoutersLabels" title="#opt-metrics-influxDB2-addRoutersLabels">`metrics.influxDB2.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-influxDB2-addServicesLabels" href="#opt-metrics-influxDB2-addServicesLabels" title="#opt-metrics-influxDB2-addServicesLabels">`metrics.influxDB2.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
+| <a id="opt-metrics-influxDB2-enableTCPRouterMetrics" href="#opt-metrics-influxDB2-enableTCPRouterMetrics" title="#opt-metrics-influxDB2-enableTCPRouterMetrics">`metrics.influxDB2.enableTCPRouterMetrics`</a> | Enable metrics on TCP routers. | false      | No      |
 | <a id="opt-metrics-influxDB2-additionalLabels" href="#opt-metrics-influxDB2-additionalLabels" title="#opt-metrics-influxDB2-additionalLabels">`metrics.influxDB2.additionalLabels`</a> | Additional labels (InfluxDB tags) on all metrics. | - | No      |
 | <a id="opt-metrics-influxDB2-pushInterval" href="#opt-metrics-influxDB2-pushInterval" title="#opt-metrics-influxDB2-pushInterval">`metrics.influxDB2.pushInterval`</a> | The interval used by the exporter to push metrics to InfluxDB server. | 10s      | No      |
 | <a id="opt-metrics-influxDB2-address" href="#opt-metrics-influxDB2-address" title="#opt-metrics-influxDB2-address">`metrics.influxDB2.address`</a> | Address of the InfluxDB v2 instance. | "http://localhost:8086"     | Yes      |
@@ -235,6 +238,7 @@ metrics:
 | <a id="opt-metrics-prometheus-addEntryPointsLabels" href="#opt-metrics-prometheus-addEntryPointsLabels" title="#opt-metrics-prometheus-addEntryPointsLabels">`metrics.prometheus.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-prometheus-addRoutersLabels" href="#opt-metrics-prometheus-addRoutersLabels" title="#opt-metrics-prometheus-addRoutersLabels">`metrics.prometheus.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-prometheus-addServicesLabels" href="#opt-metrics-prometheus-addServicesLabels" title="#opt-metrics-prometheus-addServicesLabels">`metrics.prometheus.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
+| <a id="opt-metrics-prometheus-enableTCPRouterMetrics" href="#opt-metrics-prometheus-enableTCPRouterMetrics" title="#opt-metrics-prometheus-enableTCPRouterMetrics">`metrics.prometheus.enableTCPRouterMetrics`</a> | Enable metrics on TCP routers. | false      | No      |
 | <a id="opt-metrics-prometheus-buckets" href="#opt-metrics-prometheus-buckets" title="#opt-metrics-prometheus-buckets">`metrics.prometheus.buckets`</a> | Buckets for latency metrics. |"0.100000, 0.300000, 1.200000, 5.000000"  | No      |
 | <a id="opt-metrics-prometheus-manualRouting" href="#opt-metrics-prometheus-manualRouting" title="#opt-metrics-prometheus-manualRouting">`metrics.prometheus.manualRouting`</a> | Set to _true_, it disables the default internal router in order to allow creating a custom router for the `prometheus@internal` service. | false    | No      |
 | <a id="opt-metrics-prometheus-entryPoint" href="#opt-metrics-prometheus-entryPoint" title="#opt-metrics-prometheus-entryPoint">`metrics.prometheus.entryPoint`</a> | Traefik Entrypoint name used to expose metrics. | "traefik"     | No      |
@@ -308,6 +312,7 @@ metrics:
 | <a id="opt-metrics-statsD-addEntryPointsLabels" href="#opt-metrics-statsD-addEntryPointsLabels" title="#opt-metrics-statsD-addEntryPointsLabels">`metrics.statsD.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-statsD-addRoutersLabels" href="#opt-metrics-statsD-addRoutersLabels" title="#opt-metrics-statsD-addRoutersLabels">`metrics.statsD.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-statsD-addServicesLabels" href="#opt-metrics-statsD-addServicesLabels" title="#opt-metrics-statsD-addServicesLabels">`metrics.statsD.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
+| <a id="opt-metrics-statsD-enableTCPRouterMetrics" href="#opt-metrics-statsD-enableTCPRouterMetrics" title="#opt-metrics-statsD-enableTCPRouterMetrics">`metrics.statsD.enableTCPRouterMetrics`</a> | Enable metrics on TCP routers. | false      | No      |
 | <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to DataDog server. | 10s      | No      |
 | <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "127.0.0.1:8125"     | Yes      |
 | <a id="opt-metrics-statsD-prefix" href="#opt-metrics-statsD-prefix" title="#opt-metrics-statsD-prefix">`metrics.statsD.prefix`</a> | The prefix to use for metrics collection. | "traefik"      | No      |
@@ -617,3 +622,79 @@ Here is a comprehensive list of labels that are provided by the metrics:
     If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
     then the value for the method label becomes `EXTENSION_METHOD`.
+
+### TCP Metrics
+
+Traefik also provides metrics to monitor the TCP traffic.
+
+#### TCP Router Metrics
+
+The TCP router metrics are not enabled by default,
+they have to be enabled with the `enableTCPRouterMetrics` option of the metrics exporter.
+
+=== "OpenTelemetry"
+
+    | Metric | Type | Labels | Description |
+    |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-tls-connections" href="#opt-traefik-router-tcp-open-tls-connections" title="#opt-traefik-router-tcp-open-tls-connections">`traefik_router_tcp_open_tls_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+
+=== "Prometheus"
+
+    | Metric | Type | Labels | Description |
+    |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `traefik_tls_mode`, `network_type`, `server_port` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-tls-connections-2" href="#opt-traefik-router-tcp-open-tls-connections-2" title="#opt-traefik-router-tcp-open-tls-connections-2">`traefik_router_tcp_open_tls_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `network_type`, `server_port`, `tls_protocol_version`, `tls_cipher` | The current count of open TLS connections on a TCP router. |
+
+=== "Datadog"
+
+    | Metric | Type | Labels | Description |
+    |--------|------|--------|-------------|
+    | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
+    | <a id="opt-router-tcp-open-tls-connections" href="#opt-router-tcp-open-tls-connections" title="#opt-router-tcp-open-tls-connections">`router.tcp.open.tls.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+
+=== "InfluxDB2"
+
+    | Metric | Type | Labels | Description |
+    |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-tls-connections-3" href="#opt-traefik-router-tcp-open-tls-connections-3" title="#opt-traefik-router-tcp-open-tls-connections-3">`traefik.router.tcp.open.tls.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+
+=== "StatsD"
+
+    | Metric | Type | Labels | Description |
+    |--------|------|--------|-------------|
+    | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections on a TCP router. |
+    | <a id="opt-prefix-router-tcp-open-tls-connections" href="#opt-prefix-router-tcp-open-tls-connections" title="#opt-prefix-router-tcp-open-tls-connections">`{prefix}.router.tcp.open.tls.connections`</a> | Gauge | | The current count of open TLS connections on a TCP router. |
+
+!!! note "\{prefix\} Default Value"
+        By default, \{prefix\} value is `traefik`.
+
+!!! info "TLS connections"
+
+    The TLS connections metric only counts the connections whose TLS is terminated by Traefik,
+    once the TLS handshake is done.
+    These connections are also counted by the open connections metric.
+    The connections of a router with TLS passthrough are only counted by the open connections metric,
+    because Traefik forwards them without knowing the negotiated TLS version and cipher.
+
+##### Labels
+
+Here is a comprehensive list of labels that are provided by the TCP metrics:
+
+| Label | Description | example |
+|-------|-------------|---------|
+| <a id="opt-traefik-router-name" href="#opt-traefik-router-name" title="#opt-traefik-router-name">`traefik.router.name`</a> | TCP router that handled the connection | "example_router@provider" |
+| <a id="opt-traefik-service-name" href="#opt-traefik-service-name" title="#opt-traefik-service-name">`traefik.service.name`</a> | TCP service the connection is routed to | "example_service@provider" |
+| <a id="opt-traefik-tls-mode" href="#opt-traefik-tls-mode" title="#opt-traefik-tls-mode">`traefik.tls.mode`</a> | TLS mode of the TCP router: `none` without TLS, `terminated` when Traefik terminates the TLS, `passthrough` when the TLS connection is forwarded as is | "terminated" |
+| <a id="opt-network-type" href="#opt-network-type" title="#opt-network-type">`network.type`</a> | Network layer protocol of the connection, `ipv4` or `ipv6` | "ipv4" |
+| <a id="opt-server-port-3" href="#opt-server-port-3" title="#opt-server-port-3">`server.port`</a> | Local port the connection was received on | "443" |
+| <a id="opt-tls-protocol-version" href="#opt-tls-protocol-version" title="#opt-tls-protocol-version">`tls.protocol.version`</a> | TLS version negotiated for the connection | "1.3" |
+| <a id="opt-tls-cipher-2" href="#opt-tls-cipher-2" title="#opt-tls-cipher-2">`tls.cipher`</a> | TLS cipher negotiated for the connection | "TLS_AES_128_GCM_SHA256" |
+
+!!! note "Labels names"
+
+    The router and service labels are named after the attributes of the tracing spans,
+    and the other ones after the [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/) attributes.
+    With Prometheus, the dots are replaced by underscores (e.g. `traefik_router_name`),
+    and StatsD does not support labels.

@@ -199,6 +199,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-datadog-address" href="#opt-metrics-datadog-address" title="#opt-metrics-datadog-address">metrics.datadog.address</a> | Datadog's address. | localhost:8125 |
 | <a id="opt-metrics-datadog-addrouterslabels" href="#opt-metrics-datadog-addrouterslabels" title="#opt-metrics-datadog-addrouterslabels">metrics.datadog.addrouterslabels</a> | Enable metrics on routers. | false |
 | <a id="opt-metrics-datadog-addserviceslabels" href="#opt-metrics-datadog-addserviceslabels" title="#opt-metrics-datadog-addserviceslabels">metrics.datadog.addserviceslabels</a> | Enable metrics on services. | true |
+| <a id="opt-metrics-datadog-enabletcproutermetrics" href="#opt-metrics-datadog-enabletcproutermetrics" title="#opt-metrics-datadog-enabletcproutermetrics">metrics.datadog.enabletcproutermetrics</a> | Enable metrics on TCP routers. | false |
 | <a id="opt-metrics-datadog-prefix" href="#opt-metrics-datadog-prefix" title="#opt-metrics-datadog-prefix">metrics.datadog.prefix</a> | Prefix to use for metrics collection. | traefik |
 | <a id="opt-metrics-datadog-pushinterval" href="#opt-metrics-datadog-pushinterval" title="#opt-metrics-datadog-pushinterval">metrics.datadog.pushinterval</a> | Datadog push interval. | 10 |
 | <a id="opt-metrics-influxdb2" href="#opt-metrics-influxdb2" title="#opt-metrics-influxdb2">metrics.influxdb2</a> | InfluxDB v2 metrics exporter type. | false |
@@ -208,6 +209,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-influxdb2-addrouterslabels" href="#opt-metrics-influxdb2-addrouterslabels" title="#opt-metrics-influxdb2-addrouterslabels">metrics.influxdb2.addrouterslabels</a> | Enable metrics on routers. | false |
 | <a id="opt-metrics-influxdb2-addserviceslabels" href="#opt-metrics-influxdb2-addserviceslabels" title="#opt-metrics-influxdb2-addserviceslabels">metrics.influxdb2.addserviceslabels</a> | Enable metrics on services. | true |
 | <a id="opt-metrics-influxdb2-bucket" href="#opt-metrics-influxdb2-bucket" title="#opt-metrics-influxdb2-bucket">metrics.influxdb2.bucket</a> | InfluxDB v2 bucket ID. | |
+| <a id="opt-metrics-influxdb2-enabletcproutermetrics" href="#opt-metrics-influxdb2-enabletcproutermetrics" title="#opt-metrics-influxdb2-enabletcproutermetrics">metrics.influxdb2.enabletcproutermetrics</a> | Enable metrics on TCP routers. | false |
 | <a id="opt-metrics-influxdb2-org" href="#opt-metrics-influxdb2-org" title="#opt-metrics-influxdb2-org">metrics.influxdb2.org</a> | InfluxDB v2 org ID. | |
 | <a id="opt-metrics-influxdb2-pushinterval" href="#opt-metrics-influxdb2-pushinterval" title="#opt-metrics-influxdb2-pushinterval">metrics.influxdb2.pushinterval</a> | InfluxDB v2 push interval. | 10 |
 | <a id="opt-metrics-influxdb2-token" href="#opt-metrics-influxdb2-token" title="#opt-metrics-influxdb2-token">metrics.influxdb2.token</a> | InfluxDB v2 access token. It accepts either a token value or a file path to the token. | |
@@ -215,6 +217,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-otlp-addentrypointslabels" href="#opt-metrics-otlp-addentrypointslabels" title="#opt-metrics-otlp-addentrypointslabels">metrics.otlp.addentrypointslabels</a> | Enable metrics on entry points. | true |
 | <a id="opt-metrics-otlp-addrouterslabels" href="#opt-metrics-otlp-addrouterslabels" title="#opt-metrics-otlp-addrouterslabels">metrics.otlp.addrouterslabels</a> | Enable metrics on routers. | false |
 | <a id="opt-metrics-otlp-addserviceslabels" href="#opt-metrics-otlp-addserviceslabels" title="#opt-metrics-otlp-addserviceslabels">metrics.otlp.addserviceslabels</a> | Enable metrics on services. | true |
+| <a id="opt-metrics-otlp-enabletcproutermetrics" href="#opt-metrics-otlp-enabletcproutermetrics" title="#opt-metrics-otlp-enabletcproutermetrics">metrics.otlp.enabletcproutermetrics</a> | Enable metrics on TCP routers. | false |
 | <a id="opt-metrics-otlp-explicitboundaries" href="#opt-metrics-otlp-explicitboundaries" title="#opt-metrics-otlp-explicitboundaries">metrics.otlp.explicitboundaries</a> | Boundaries for latency metrics. | 0.005000, 0.010000, 0.025000, 0.050000, 0.075000, 0.100000, 0.250000, 0.500000, 0.750000, 1.000000, 2.500000, 5.000000, 7.500000, 10.000000 |
 | <a id="opt-metrics-otlp-grpc" href="#opt-metrics-otlp-grpc" title="#opt-metrics-otlp-grpc">metrics.otlp.grpc</a> | gRPC configuration for the OpenTelemetry collector. | false |
 | <a id="opt-metrics-otlp-grpc-endpoint" href="#opt-metrics-otlp-grpc-endpoint" title="#opt-metrics-otlp-grpc-endpoint">metrics.otlp.grpc.endpoint</a> | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |
@@ -239,6 +242,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-prometheus-addrouterslabels" href="#opt-metrics-prometheus-addrouterslabels" title="#opt-metrics-prometheus-addrouterslabels">metrics.prometheus.addrouterslabels</a> | Enable metrics on routers. | false |
 | <a id="opt-metrics-prometheus-addserviceslabels" href="#opt-metrics-prometheus-addserviceslabels" title="#opt-metrics-prometheus-addserviceslabels">metrics.prometheus.addserviceslabels</a> | Enable metrics on services. | true |
 | <a id="opt-metrics-prometheus-buckets" href="#opt-metrics-prometheus-buckets" title="#opt-metrics-prometheus-buckets">metrics.prometheus.buckets</a> | Buckets for latency metrics. | 0.100000, 0.300000, 1.200000, 5.000000 |
+| <a id="opt-metrics-prometheus-enabletcproutermetrics" href="#opt-metrics-prometheus-enabletcproutermetrics" title="#opt-metrics-prometheus-enabletcproutermetrics">metrics.prometheus.enabletcproutermetrics</a> | Enable metrics on TCP routers. | false |
 | <a id="opt-metrics-prometheus-entrypoint" href="#opt-metrics-prometheus-entrypoint" title="#opt-metrics-prometheus-entrypoint">metrics.prometheus.entrypoint</a> | EntryPoint | traefik |
 | <a id="opt-metrics-prometheus-headerlabels-name" href="#opt-metrics-prometheus-headerlabels-name" title="#opt-metrics-prometheus-headerlabels-name">metrics.prometheus.headerlabels._name_</a> | Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label. | |
 | <a id="opt-metrics-prometheus-manualrouting" href="#opt-metrics-prometheus-manualrouting" title="#opt-metrics-prometheus-manualrouting">metrics.prometheus.manualrouting</a> | Manual routing | false |
@@ -247,6 +251,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-statsd-address" href="#opt-metrics-statsd-address" title="#opt-metrics-statsd-address">metrics.statsd.address</a> | StatsD address. | localhost:8125 |
 | <a id="opt-metrics-statsd-addrouterslabels" href="#opt-metrics-statsd-addrouterslabels" title="#opt-metrics-statsd-addrouterslabels">metrics.statsd.addrouterslabels</a> | Enable metrics on routers. | false |
 | <a id="opt-metrics-statsd-addserviceslabels" href="#opt-metrics-statsd-addserviceslabels" title="#opt-metrics-statsd-addserviceslabels">metrics.statsd.addserviceslabels</a> | Enable metrics on services. | true |
+| <a id="opt-metrics-statsd-enabletcproutermetrics" href="#opt-metrics-statsd-enabletcproutermetrics" title="#opt-metrics-statsd-enabletcproutermetrics">metrics.statsd.enabletcproutermetrics</a> | Enable metrics on TCP routers. | false |
 | <a id="opt-metrics-statsd-prefix" href="#opt-metrics-statsd-prefix" title="#opt-metrics-statsd-prefix">metrics.statsd.prefix</a> | Prefix to use for metrics collection. | traefik |
 | <a id="opt-metrics-statsd-pushinterval" href="#opt-metrics-statsd-pushinterval" title="#opt-metrics-statsd-pushinterval">metrics.statsd.pushinterval</a> | StatsD push interval. | 10 |
 | <a id="opt-ocsp" href="#opt-ocsp" title="#opt-ocsp">ocsp</a> | OCSP configuration. | false |

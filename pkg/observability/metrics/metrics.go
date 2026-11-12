@@ -19,6 +19,9 @@ type Registry interface {
 	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
 	IsSvcEnabled() bool
 
+	// IsTCPRouterEnabled shows whether metrics instrumentation is enabled on TCP routers.
+	IsTCPRouterEnabled() bool
+
 	// server metrics
 
 	ConfigReloadsCounter() metrics.Counter
@@ -54,6 +57,11 @@ type Registry interface {
 	ServiceServerUpGauge() metrics.Gauge
 	ServiceReqsBytesCounter() metrics.Counter
 	ServiceRespsBytesCounter() metrics.Counter
+
+	// TCP router metrics
+
+	RouterTCPOpenConnectionsGauge() metrics.Gauge
+	RouterTCPOpenTLSConnectionsGauge() metrics.Gauge
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -87,6 +95,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceServerUpGauge []metrics.Gauge
 	var serviceReqsBytesCounter []metrics.Counter
 	var serviceRespsBytesCounter []metrics.Counter
+
+	var routerTCPOpenConnectionsGauge []metrics.Gauge
+	var routerTCPOpenTLSConnectionsGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -152,6 +163,13 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.ServiceRespsBytesCounter() != nil {
 			serviceRespsBytesCounter = append(serviceRespsBytesCounter, r.ServiceRespsBytesCounter())
 		}
+
+		if r.RouterTCPOpenConnectionsGauge() != nil {
+			routerTCPOpenConnectionsGauge = append(routerTCPOpenConnectionsGauge, r.RouterTCPOpenConnectionsGauge())
+		}
+		if r.RouterTCPOpenTLSConnectionsGauge() != nil {
+			routerTCPOpenTLSConnectionsGauge = append(routerTCPOpenTLSConnectionsGauge, r.RouterTCPOpenTLSConnectionsGauge())
+		}
 	}
 
 	return &standardRegistry{
@@ -179,6 +197,10 @@ func NewMultiRegistry(registries []Registry) Registry {
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
 		serviceReqsBytesCounter:        multi.NewCounter(serviceReqsBytesCounter...),
 		serviceRespsBytesCounter:       multi.NewCounter(serviceRespsBytesCounter...),
+
+		tcpRouterEnabled:                 len(routerTCPOpenConnectionsGauge) > 0,
+		routerTCPOpenConnectionsGauge:    multi.NewGauge(routerTCPOpenConnectionsGauge...),
+		routerTCPOpenTLSConnectionsGauge: multi.NewGauge(routerTCPOpenTLSConnectionsGauge...),
 	}
 }
 
@@ -207,6 +229,10 @@ type standardRegistry struct {
 	serviceServerUpGauge           metrics.Gauge
 	serviceReqsBytesCounter        metrics.Counter
 	serviceRespsBytesCounter       metrics.Counter
+
+	tcpRouterEnabled                 bool
+	routerTCPOpenConnectionsGauge    metrics.Gauge
+	routerTCPOpenTLSConnectionsGauge metrics.Gauge
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -219,6 +245,10 @@ func (r *standardRegistry) IsRouterEnabled() bool {
 
 func (r *standardRegistry) IsSvcEnabled() bool {
 	return r.svcEnabled
+}
+
+func (r *standardRegistry) IsTCPRouterEnabled() bool {
+	return r.tcpRouterEnabled
 }
 
 func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {
@@ -303,6 +333,14 @@ func (r *standardRegistry) ServiceReqsBytesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceRespsBytesCounter() metrics.Counter {
 	return r.serviceRespsBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
+	return r.routerTCPOpenConnectionsGauge
+}
+
+func (r *standardRegistry) RouterTCPOpenTLSConnectionsGauge() metrics.Gauge {
+	return r.routerTCPOpenTLSConnectionsGauge
 }
 
 // ScalableHistogram is a Histogram with a predefined time unit,
