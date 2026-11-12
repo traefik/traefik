@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+	"slices"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -40,10 +41,16 @@ const (
 	tlsModePassthrough = "passthrough"
 )
 
+// The gauges are given all their labels at once, when a connection is served,
+// because the Prometheus gauge does not support being given its labels in several steps.
 type metricsMiddleware struct {
-	next                    tcp.Handler
-	openConnectionsGauge    gokitmetrics.Gauge
-	openTLSConnectionsGauge gokitmetrics.Gauge
+	next tcp.Handler
+
+	openConnectionsGauge  gokitmetrics.Gauge
+	openConnectionsLabels []string
+
+	openTLSConnectionsGauge  gokitmetrics.Gauge
+	openTLSConnectionsLabels []string
 }
 
 // NewRouterMiddleware creates a new metrics middleware for a TCP Router.
@@ -51,9 +58,11 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 	middlewares.GetLogger(ctx, nameRouter, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
-		next:                    next,
-		openConnectionsGauge:    registry.RouterTCPOpenConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, getTLSMode(tlsConfig)),
-		openTLSConnectionsGauge: registry.RouterTCPOpenTLSConnectionsGauge().With(routerNameLabel, routerName, serviceNameLabel, serviceName),
+		next:                     next,
+		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
+		openConnectionsLabels:    []string{routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, getTLSMode(tlsConfig)},
+		openTLSConnectionsGauge:  registry.RouterTCPOpenTLSConnectionsGauge(),
+		openTLSConnectionsLabels: []string{routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
 }
 
@@ -83,14 +92,18 @@ func getTLSMode(tlsConfig *dynamic.RouterTCPTLSConfig) string {
 func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	networkLabels := getNetworkLabels(conn)
 
-	openConnectionsGauge := m.openConnectionsGauge.With(networkLabels...)
+	openConnectionsGauge := m.openConnectionsGauge.With(slices.Concat(m.openConnectionsLabels, networkLabels)...)
 	openConnectionsGauge.Add(1)
 	defer openConnectionsGauge.Add(-1)
 
 	// Only the connections whose TLS is terminated by Traefik are TLS connections here,
 	// the passthrough ones are forwarded without their TLS parameters being known.
 	if tlsConn, ok := conn.(*tls.Conn); ok {
-		mConn := &tlsMetricsConn{Conn: tlsConn, gauge: m.openTLSConnectionsGauge.With(networkLabels...)}
+		mConn := &tlsMetricsConn{
+			Conn:   tlsConn,
+			gauge:  m.openTLSConnectionsGauge,
+			labels: slices.Concat(m.openTLSConnectionsLabels, networkLabels),
+		}
 		defer mConn.release()
 
 		conn = mConn
@@ -122,7 +135,8 @@ func getNetworkLabels(conn net.Conn) []string {
 type tlsMetricsConn struct {
 	*tls.Conn
 
-	gauge gokitmetrics.Gauge
+	gauge  gokitmetrics.Gauge
+	labels []string
 
 	settled     atomic.Bool
 	mu          sync.Mutex
@@ -160,7 +174,7 @@ func (c *tlsMetricsConn) observe() {
 		return
 	}
 
-	c.established = c.gauge.With(tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state))
+	c.established = c.gauge.With(append(c.labels, tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state))...)
 	c.established.Add(1)
 	c.settled.Store(true)
 }
