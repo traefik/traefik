@@ -44,7 +44,7 @@ func loadYaegiV2Plugin(ctx context.Context, goPath string, manifest *Manifest, m
 
 	plugin, err := host.LoadContext(ctx, opts, manifest.Import)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading context: %w", err)
 	}
 
 	for _, note := range plugin.Notes {
