@@ -288,6 +288,8 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 				continue
 			}
 
+			service.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend"))
+
 			rt := &dynamic.Router{
 				Rule: `PathPrefix("/")`,
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
@@ -303,6 +305,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 						},
 					},
 				},
+				Metadata: k8s.NewMetadata(dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend")),
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
@@ -327,12 +330,12 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 
 		routers := map[string][]*dynamic.Router{}
 
-		for _, rule := range ingress.Spec.Rules {
+		for ri, rule := range ingress.Spec.Rules {
 			if rule.HTTP == nil {
 				continue
 			}
 
-			for _, pa := range rule.HTTP.Paths {
+			for pi, pa := range rule.HTTP.Paths {
 				if pa.Backend.Resource != nil {
 					// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
 					logger.Error().Msg("Resource backends are not supported")
@@ -346,8 +349,11 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString(pa.Backend.Service.Port))
 
-				if _, exists := conf.HTTP.Services[serviceName]; !exists {
-					service, err := p.loadService(client, ingress.Namespace, pa.Backend)
+				pathSource := fmt.Sprintf("/spec/rules/%d/http/paths/%d", ri, pi)
+
+				service, exists := conf.HTTP.Services[serviceName]
+				if !exists {
+					service, err = p.loadService(client, ingress.Namespace, pa.Backend)
 					if err != nil {
 						logger.Error().
 							Str("serviceName", pa.Backend.Service.Name).
@@ -368,6 +374,8 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 					conf.HTTP.Services[serviceName] = service
 				}
 
+				service.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingress, pathSource+"/backend"))
+
 				rt, err := p.loadRouter(ingress, rule, pa, rtConfig, serviceName)
 				if err != nil {
 					logger.Error().Err(err).
@@ -376,6 +384,8 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 						Msg("Skipping path.")
 					continue
 				}
+
+				rt.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingress, pathSource))
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -595,11 +605,13 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 	var portName string
 	var portSpec corev1.ServicePort
+	var portIndex int
 	var match bool
-	for _, p := range service.Spec.Ports {
+	for i, p := range service.Spec.Ports {
 		if backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0) {
 			portName = p.Name
 			portSpec = p
+			portIndex = i
 			match = true
 			break
 		}
@@ -612,8 +624,12 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
+	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", portIndex)))
+	metadata.Kubernetes.ServicePort = portString(backend.Service.Port)
+
 	svc := &dynamic.Service{
 		LoadBalancer: lb,
+		Metadata:     metadata,
 		Observability: &dynamic.ServiceObservabilityConfig{
 			Metadata: &dynamic.ServiceObservabilityMetadata{
 				Kubernetes: &dynamic.ObservabilityKubernetesServiceMetadata{
@@ -781,6 +797,7 @@ func (p *Provider) loadRouter(ingress *netv1.Ingress, rule netv1.IngressRule, pa
 				},
 			},
 		},
+		Metadata: k8s.NewMetadata(),
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {
