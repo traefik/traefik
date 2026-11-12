@@ -129,7 +129,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	var count int
 	for i := range value.NumField() {
 		name := value.Type().Field(i).Name
-		if name == "Middlewares" || name == "Observability" {
+		if name == "Middlewares" || name == "Observability" || name == "Metadata" {
 			continue
 		}
 		if !value.Field(i).IsNil() {
