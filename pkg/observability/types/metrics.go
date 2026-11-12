@@ -22,15 +22,14 @@ type Metrics struct {
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter.
 type Prometheus struct {
-	Buckets              []float64         `description:"Buckets for latency metrics." json:"buckets,omitempty" toml:"buckets,omitempty" yaml:"buckets,omitempty" export:"true"`
-	AddEntryPointsLabels bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	EntryPoint           string            `description:"EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	ManualRouting        bool              `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty" export:"true"`
-	HeaderLabels         map[string]string `description:"Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label." json:"headerLabels,omitempty" toml:"headerLabels,omitempty" yaml:"headerLabels,omitempty" export:"true"`
-
-	EnableTCPRouterMetrics bool `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Buckets                []float64         `description:"Buckets for latency metrics." json:"buckets,omitempty" toml:"buckets,omitempty" yaml:"buckets,omitempty" export:"true"`
+	AddEntryPointsLabels   bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels       bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels      bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EnableTCPRouterMetrics bool              `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	EntryPoint             string            `description:"EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	ManualRouting          bool              `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty" export:"true"`
+	HeaderLabels           map[string]string `description:"Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label." json:"headerLabels,omitempty" toml:"headerLabels,omitempty" yaml:"headerLabels,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -43,14 +42,13 @@ func (p *Prometheus) SetDefaults() {
 
 // Datadog contains address and metrics pushing interval configuration.
 type Datadog struct {
-	Address              string         `description:"Datadog's address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	PushInterval         types.Duration `description:"Datadog push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
-	AddEntryPointsLabels bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool           `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	Prefix               string         `description:"Prefix to use for metrics collection." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-
-	EnableTCPRouterMetrics bool `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Address                string         `description:"Datadog's address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	PushInterval           types.Duration `description:"Datadog push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+	AddEntryPointsLabels   bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels       bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels      bool           `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EnableTCPRouterMetrics bool           `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Prefix                 string         `description:"Prefix to use for metrics collection." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -73,14 +71,13 @@ func (d *Datadog) SetDefaults() {
 
 // Statsd contains address and metrics pushing interval configuration.
 type Statsd struct {
-	Address              string         `description:"StatsD address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	PushInterval         types.Duration `description:"StatsD push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
-	AddEntryPointsLabels bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool           `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	Prefix               string         `description:"Prefix to use for metrics collection." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-
-	EnableTCPRouterMetrics bool `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Address                string         `description:"StatsD address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	PushInterval           types.Duration `description:"StatsD push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+	AddEntryPointsLabels   bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels       bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels      bool           `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EnableTCPRouterMetrics bool           `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Prefix                 string         `description:"Prefix to use for metrics collection." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -94,17 +91,16 @@ func (s *Statsd) SetDefaults() {
 
 // InfluxDB2 contains address, token and metrics pushing interval configuration.
 type InfluxDB2 struct {
-	Address              string               `description:"InfluxDB v2 address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	Token                tTypes.FileOrContent `description:"InfluxDB v2 access token. It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	PushInterval         types.Duration       `description:"InfluxDB v2 push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
-	Org                  string               `description:"InfluxDB v2 org ID." json:"org,omitempty" toml:"org,omitempty" yaml:"org,omitempty" export:"true"`
-	Bucket               string               `description:"InfluxDB v2 bucket ID." json:"bucket,omitempty" toml:"bucket,omitempty" yaml:"bucket,omitempty" export:"true"`
-	AddEntryPointsLabels bool                 `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool                 `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool                 `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	AdditionalLabels     map[string]string    `description:"Additional labels (influxdb tags) on all metrics" json:"additionalLabels,omitempty" toml:"additionalLabels,omitempty" yaml:"additionalLabels,omitempty" export:"true"`
-
-	EnableTCPRouterMetrics bool `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	Address                string               `description:"InfluxDB v2 address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	Token                  tTypes.FileOrContent `description:"InfluxDB v2 access token. It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	PushInterval           types.Duration       `description:"InfluxDB v2 push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+	Org                    string               `description:"InfluxDB v2 org ID." json:"org,omitempty" toml:"org,omitempty" yaml:"org,omitempty" export:"true"`
+	Bucket                 string               `description:"InfluxDB v2 bucket ID." json:"bucket,omitempty" toml:"bucket,omitempty" yaml:"bucket,omitempty" export:"true"`
+	AddEntryPointsLabels   bool                 `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels       bool                 `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels      bool                 `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EnableTCPRouterMetrics bool                 `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	AdditionalLabels       map[string]string    `description:"Additional labels (influxdb tags) on all metrics" json:"additionalLabels,omitempty" toml:"additionalLabels,omitempty" yaml:"additionalLabels,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -120,15 +116,14 @@ type OTLP struct {
 	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTP *OTelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
-	AddEntryPointsLabels bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	ExplicitBoundaries   []float64         `description:"Boundaries for latency metrics." json:"explicitBoundaries,omitempty" toml:"explicitBoundaries,omitempty" yaml:"explicitBoundaries,omitempty" export:"true"`
-	PushInterval         types.Duration    `description:"Period between calls to collect a checkpoint." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
-	ServiceName          string            `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	ResourceAttributes   map[string]string `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty" export:"true"`
-
-	EnableTCPRouterMetrics bool `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	AddEntryPointsLabels   bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels       bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels      bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EnableTCPRouterMetrics bool              `description:"Enable metrics on TCP routers." json:"enableTCPRouterMetrics,omitempty" toml:"enableTCPRouterMetrics,omitempty" yaml:"enableTCPRouterMetrics,omitempty" export:"true"`
+	ExplicitBoundaries     []float64         `description:"Boundaries for latency metrics." json:"explicitBoundaries,omitempty" toml:"explicitBoundaries,omitempty" yaml:"explicitBoundaries,omitempty" export:"true"`
+	PushInterval           types.Duration    `description:"Period between calls to collect a checkpoint." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+	ServiceName            string            `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ResourceAttributes     map[string]string `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

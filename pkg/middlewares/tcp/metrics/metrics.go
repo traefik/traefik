@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strconv"
 	"sync"
-	"sync/atomic"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -20,11 +19,9 @@ import (
 const (
 	typeName   = "MetricsTCP"
 	nameRouter = "metrics-router"
-)
 
-// The labels are named after the attributes set on the tracing spans,
-// and after the OpenTelemetry semantic conventions attributes.
-const (
+	// The labels are named after the attributes set on the tracing spans,
+	// and after the OpenTelemetry semantic conventions attributes.
 	routerNameLabel         = "traefik.router.name"
 	serviceNameLabel        = "traefik.service.name"
 	tlsModeLabel            = "traefik.tls.mode"
@@ -32,10 +29,8 @@ const (
 	serverPortLabel         = "server.port"
 	tlsProtocolVersionLabel = "tls.protocol.version"
 	tlsCipherLabel          = "tls.cipher"
-)
 
-// The values of the TLS mode label.
-const (
+	// The values of the TLS mode label.
 	tlsModeNone        = "none"
 	tlsModeTerminated  = "terminated"
 	tlsModePassthrough = "passthrough"
@@ -138,55 +133,41 @@ type tlsMetricsConn struct {
 	gauge  gokitmetrics.Gauge
 	labels []string
 
-	settled     atomic.Bool
-	mu          sync.Mutex
+	once        sync.Once
 	established gokitmetrics.Gauge
 }
 
+// A read or a write of a TLS connection only succeeds once the handshake is done.
 func (c *tlsMetricsConn) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
-	c.observe()
+	if err == nil {
+		c.once.Do(c.observe)
+	}
 
 	return n, err
 }
 
 func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
-	c.observe()
+	if err == nil {
+		c.once.Do(c.observe)
+	}
 
 	return n, err
 }
 
 func (c *tlsMetricsConn) observe() {
-	if c.settled.Load() {
-		return
-	}
-
 	state := c.Conn.ConnectionState()
-	if !state.HandshakeComplete {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.settled.Load() {
-		return
-	}
 
 	c.established = c.gauge.With(append(c.labels, tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state))...)
 	c.established.Add(1)
-	c.settled.Store(true)
 }
 
 func (c *tlsMetricsConn) release() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	// Waits for an ongoing observation, and prevents the connection from being counted afterwards.
+	c.once.Do(func() {})
 
 	if c.established != nil {
 		c.established.Add(-1)
-		c.established = nil
 	}
-
-	c.settled.Store(true)
 }
