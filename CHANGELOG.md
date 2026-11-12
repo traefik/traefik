@@ -31,6 +31,13 @@
 - Move AI assistance disclosure to the pull request description ([#14194](https://github.com/traefik/traefik/pull/14194) @Neffi42)
 - Update download and GitHub star counts ([#14193](https://github.com/traefik/traefik/pull/14193) @tomatokoolaid)
 
+## [v2.11.63](https://github.com/traefik/traefik/tree/v2.11.63) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.62...v2.11.63)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
 ## [v2.11.62](https://github.com/traefik/traefik/tree/v2.11.62) (2026-11-09)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.61...v2.11.62)
 
