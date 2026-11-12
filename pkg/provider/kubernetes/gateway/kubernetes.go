@@ -181,6 +181,12 @@ type gatewayListener struct {
 
 	// BackendClientCertificates are the client certificates the Gateway presents to the backends using TLS.
 	BackendClientCertificates tls.Certificates
+
+	// ListenerSource  is the part of the Gateway, or of the ListenerSet, declaring this listener.
+	ListenerSource dynamic.KubernetesRef
+
+	// BackendTLSSource is the part of the Gateway declaring the BackendClientCertificates.
+	BackendTLSSource dynamic.KubernetesRef
 }
 
 type gatewayWithListeners struct {
@@ -488,6 +494,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 		backendClientCertificates, errResolvedRefsCondition := p.loadGatewayBackendTLS(gateway)
 		for i := range listeners {
 			listeners[i].BackendClientCertificates = backendClientCertificates
+			listeners[i].BackendTLSSource = dynamic.MakeKubernetesRef(gateway, "/spec/tls/backend")
 		}
 
 		gatewaysWithListeners = append(gatewaysWithListeners, gatewayWithListeners{
@@ -610,6 +617,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	// The resource declaring the listeners drives the ReferenceGrant checks,
 	// and the namespace "Same" resolves to in allowedRoutes.
 	ownerKind, ownerNamespace := kindGateway, gateway.Namespace
+	listenersSource := dynamic.MakeKubernetesRef(gateway, "/spec/listeners")
 
 	if listenerSet != nil {
 		// A ListenerEntry mirrors a Gateway Listener field for field.
@@ -619,6 +627,7 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		}
 		generation = listenerSet.Generation
 		ownerKind, ownerNamespace = kindListenerSet, listenerSet.Namespace
+		listenersSource = dynamic.MakeKubernetesRef(listenerSet, "/spec/listeners")
 	}
 
 	tlsCerts := make(map[string]*tls.CertAndStores)
@@ -635,13 +644,17 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 	}
 
 	for i, listener := range listeners {
+		listenerSource := listenersSource
+		listenerSource.Path = fmt.Sprintf("%s/%d", listenersSource.Path, i)
+
 		gatewayListeners[i] = gatewayListener{
-			SectionName: string(listener.Name),
-			Port:        listener.Port,
-			Protocol:    listener.Protocol,
-			TLS:         listener.TLS,
-			Hostname:    listener.Hostname,
-			ListenerSet: listenerSet,
+			SectionName:    string(listener.Name),
+			Port:           listener.Port,
+			Protocol:       listener.Protocol,
+			TLS:            listener.TLS,
+			Hostname:       listener.Hostname,
+			ListenerSet:    listenerSet,
+			ListenerSource: listenerSource,
 			Status: &gatev1.ListenerStatus{
 				Name:           listener.Name,
 				SupportedKinds: []gatev1.RouteGroupKind{},
@@ -952,6 +965,12 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, fronten
 			listenerRouter := &dynamic.Router{
 				Rule:        buildListenerRule(hostname, hostnames),
 				EntryPoints: []string{uniq.epName},
+				Metadata:    k8s.NewMetadata(),
+			}
+
+			var validation *tls.ClientAuth
+			if uniq.protocol == gatev1.HTTPSProtocolType {
+				validation = frontendValidations[uniq.port]
 			}
 
 			for _, gateway := range gateways {
@@ -961,13 +980,19 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, fronten
 				}
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
+
+				listenerRouter.Metadata.Kubernetes.Sources.Add(listener.ListenerSource)
+				// The Gateways sharing a port declare the same frontend validation.
+				if validation != nil {
+					listenerRouter.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(gateway.gateway, "/spec/tls/frontend"))
+				}
 			}
 
 			if uniq.protocol == gatev1.HTTPSProtocolType {
 				listenerTLSOptions := tls.Options{}
 				listenerTLSOptions.SetDefaults()
 
-				if validation := frontendValidations[uniq.port]; validation != nil {
+				if validation != nil {
 					listenerTLSOptions.ClientAuth = *validation
 				}
 
@@ -1616,33 +1641,35 @@ type backendAddress struct {
 	Port int32
 }
 
-func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
+func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, dynamic.KubernetesRef, error) {
 	if ref.Port == nil {
-		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("port is required for Kubernetes Service reference")
 	}
 
 	service, err := p.client.GetService(namespace, string(ref.Name))
 	if err != nil {
-		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("getting service: %w", err)
 	}
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
 	}
 
 	var svcPort *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
+	var serviceSource dynamic.KubernetesRef
+	for i, p := range service.Spec.Ports {
 		if p.Port == *ref.Port {
 			svcPort = &p
+			serviceSource = dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", i))
 			break
 		}
 	}
 	if svcPort == nil {
-		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("service port %d not found", *ref.Port)
 	}
 
 	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
 	if err != nil {
-		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
 	nativeLB := p.NativeLBByDefault
@@ -1652,21 +1679,21 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 	if nativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
-			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+			return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}
 
 		return []backendAddress{{
 			IP:   service.Spec.ClusterIP,
 			Port: svcPort.Port,
-		}}, *svcPort, nil
+		}}, *svcPort, serviceSource, nil
 	}
 
 	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
 	if err != nil {
-		return nil, corev1.ServicePort{}, fmt.Errorf("getting endpointslices: %w", err)
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
 	}
 	if len(endpointSlices) == 0 {
-		return nil, corev1.ServicePort{}, errors.New("endpointslices not found")
+		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("endpointslices not found")
 	}
 
 	uniqAddresses := map[string]struct{}{}
@@ -1702,7 +1729,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}
 	}
 
-	return backendServers, *svcPort, nil
+	return backendServers, *svcPort, serviceSource, nil
 }
 
 // hasInsecureFrontendValidationMode reports whether a validation of the Gateway allows an insecure fallback.
@@ -1939,7 +1966,8 @@ func (ar attachedRoutes) Conflicts(ref listenerRef, kind string, hostnames []gat
 // gatewayListenersForParentRef associates a route ParentRef with the Listeners of
 // the Gateway it refers to, among the Gateways managed by this controller.
 type gatewayListenersForParentRef struct {
-	ParentRef gatev1.ParentReference
+	ParentRef      gatev1.ParentReference
+	ParentRefIndex int
 
 	GatewayName      string
 	GatewayNamespace string
@@ -1953,7 +1981,7 @@ type gatewayListenersForParentRef struct {
 func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListenersForParentRef {
 	var matches []gatewayListenersForParentRef
 
-	for _, parentRef := range parentRefs {
+	for i, parentRef := range parentRefs {
 		if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
 			continue
 		}
@@ -1987,6 +2015,7 @@ func matchingGatewayListenersForParentRef(gateways []gatewayWithListeners, route
 
 		matches = append(matches, gatewayListenersForParentRef{
 			ParentRef:        parentRef,
+			ParentRefIndex:   i,
 			GatewayName:      gateway.gateway.Name,
 			GatewayNamespace: gateway.gateway.Namespace,
 			Listeners:        listeners,

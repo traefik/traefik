@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -320,7 +321,10 @@ func Test_createCORS(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, test.expected, createCORS(test.filter))
+			filterSource := dynamic.KubernetesRef{Kind: "HTTPRoute", Name: "route", Path: "/spec/rules/0/filters/0"}
+			test.expected.Metadata = k8s.NewMetadata(filterSource)
+
+			assert.Equal(t, test.expected, createCORS(test.filter, filterSource))
 		})
 	}
 }
@@ -391,8 +395,10 @@ func Test_loadRequestMirror(t *testing.T) {
 				Services:    map[string]*dynamic.Service{},
 			}}
 
+			filterSource := dynamic.KubernetesRef{Kind: "HTTPRoute", Name: "route", Path: "/spec/rules/0/filters/0"}
+
 			var p Provider
-			middleware, err := p.loadRequestMirror(t.Context(), "gateway", "default", gatewayListener{}, conf, "mirror", route, &test.filter, nil, nil)
+			middleware, err := p.loadRequestMirror(t.Context(), "gateway", "default", gatewayListener{}, conf, "mirror", route, filterSource, &test.filter, nil, nil)
 			require.NoError(t, err)
 
 			expected := &dynamic.Middleware{
@@ -401,6 +407,7 @@ func Test_loadRequestMirror(t *testing.T) {
 					Numerator:   test.expectedNumerator,
 					Denominator: test.expectedDenominator,
 				},
+				Metadata: k8s.NewMetadata(filterSource),
 			}
 			assert.Equal(t, expected, middleware)
 		})
