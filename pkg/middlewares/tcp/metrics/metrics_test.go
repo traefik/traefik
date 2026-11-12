@@ -1,6 +1,12 @@
 package metrics
 
 import (
+	"crypto/tls"
+	"io"
+	"maps"
+	"net"
+	"slices"
+	"strings"
 	"testing"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -8,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
 )
 
 func TestRouterMetricsHandler(t *testing.T) {
@@ -21,11 +28,11 @@ func TestRouterMetricsHandler(t *testing.T) {
 		},
 		{
 			desc:     "TCP routers metrics disabled",
-			registry: &registryMock{gauge: &gaugeMock{}},
+			registry: newRegistryMock(false),
 		},
 		{
 			desc:     "TCP routers metrics enabled",
-			registry: &registryMock{routerEnabled: true, gauge: &gaugeMock{}},
+			registry: newRegistryMock(true),
 			wrapped:  true,
 		},
 	}
@@ -46,23 +53,77 @@ func TestRouterMetricsHandler(t *testing.T) {
 }
 
 func TestMetricsMiddleware_ServeTCP(t *testing.T) {
-	gauge := &gaugeMock{}
-	registry := &registryMock{routerEnabled: true, gauge: gauge}
+	registry := newRegistryMock(true)
 
-	var openConnections float64
+	var openConnections map[string]float64
 	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-		openConnections = gauge.value
+		openConnections = maps.Clone(registry.gauge.values)
 	})
 
 	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file")
 
-	assert.Equal(t, []string{"traefik.router.name", "router@file", "traefik.service.name", "service@file"}, gauge.labelValues)
+	handler.ServeTCP(connMock{localAddr: &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 8080}})
 
-	handler.ServeTCP(nil)
+	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=ipv4,server.port=8080"
 
 	// The connection is counted while it is served, and released afterwards.
-	assert.InDelta(t, 1, openConnections, 0)
-	assert.InDelta(t, 0, gauge.value, 0)
+	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
+	assert.Equal(t, map[string]float64{labels: 0}, registry.gauge.values)
+	assert.Empty(t, registry.tlsGauge.values)
+}
+
+func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
+	cert, err := generate.DefaultCertificate()
+	require.NoError(t, err)
+
+	serverConn, clientConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = serverConn.Close()
+		_ = clientConn.Close()
+	})
+
+	go func() {
+		client := tls.Client(clientConn, &tls.Config{InsecureSkipVerify: true})
+		_, _ = client.Write([]byte("ping"))
+	}()
+
+	registry := newRegistryMock(true)
+
+	var beforeHandshake, afterHandshake map[string]float64
+	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		beforeHandshake = maps.Clone(registry.tlsGauge.values)
+
+		_, err := io.ReadFull(conn, make([]byte, 4))
+		assert.NoError(t, err)
+
+		afterHandshake = maps.Clone(registry.tlsGauge.values)
+	})
+
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file")
+
+	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
+		Certificates: []tls.Certificate{*cert},
+		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+	}))
+
+	// The network labels are empty because the local address of a pipe is not a TCP one.
+	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=,server.port=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+
+	// The TLS connection is counted once the handshake is done, and released afterwards.
+	assert.Empty(t, beforeHandshake)
+	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)
+	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
+}
+
+type connMock struct {
+	tcp.WriteCloser
+
+	localAddr net.Addr
+}
+
+func (c connMock) LocalAddr() net.Addr {
+	return c.localAddr
 }
 
 type registryMock struct {
@@ -70,6 +131,15 @@ type registryMock struct {
 
 	routerEnabled bool
 	gauge         *gaugeMock
+	tlsGauge      *gaugeMock
+}
+
+func newRegistryMock(routerEnabled bool) *registryMock {
+	return &registryMock{
+		routerEnabled: routerEnabled,
+		gauge:         &gaugeMock{values: make(map[string]float64)},
+		tlsGauge:      &gaugeMock{values: make(map[string]float64)},
+	}
 }
 
 func (r *registryMock) IsTCPRouterEnabled() bool {
@@ -80,20 +150,29 @@ func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
 	return r.gauge
 }
 
+func (r *registryMock) RouterTCPOpenTLSConnectionsGauge() gokitmetrics.Gauge {
+	return r.tlsGauge
+}
+
+// gaugeMock holds the values of a gauge by labels.
 type gaugeMock struct {
-	value       float64
-	labelValues []string
+	values map[string]float64
+	labels []string
 }
 
 func (g *gaugeMock) With(labelValues ...string) gokitmetrics.Gauge {
-	g.labelValues = labelValues
-	return g
+	labels := slices.Clone(g.labels)
+	for i := 0; i < len(labelValues); i += 2 {
+		labels = append(labels, labelValues[i]+"="+labelValues[i+1])
+	}
+
+	return &gaugeMock{values: g.values, labels: labels}
 }
 
 func (g *gaugeMock) Set(value float64) {
-	g.value = value
+	g.values[strings.Join(g.labels, ",")] = value
 }
 
 func (g *gaugeMock) Add(delta float64) {
-	g.value += delta
+	g.values[strings.Join(g.labels, ",")] += delta
 }

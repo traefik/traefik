@@ -58,12 +58,17 @@ const (
 	serviceRespsBytesTotalName = metricServicePrefix + "responses_bytes_total"
 
 	// TCP router level.
-	routerTCPOpenConnectionsName = metricRouterPrefix + "tcp_open_connections"
+	routerTCPOpenConnectionsName    = metricRouterPrefix + "tcp_open_connections"
+	routerTCPOpenTLSConnectionsName = metricRouterPrefix + "tcp_open_tls_connections"
 
-	// The TCP metrics labels are named after the traefik.router.name and traefik.service.name attributes,
+	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes,
 	// with the dots replaced by underscores to comply with the Prometheus naming rules.
-	tcpRouterNameLabel  = "traefik_router_name"
-	tcpServiceNameLabel = "traefik_service_name"
+	tcpRouterNameLabel         = "traefik_router_name"
+	tcpServiceNameLabel        = "traefik_service_name"
+	tcpNetworkTypeLabel        = "network_type"
+	tcpServerPortLabel         = "server_port"
+	tcpTLSProtocolVersionLabel = "tls_protocol_version"
+	tcpTLSCipherLabel          = "tls_cipher"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -280,17 +285,23 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	if config.EnableTCPRouterMetrics {
 		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenConnectionsName,
-			Help: "How many open connections exist on a TCP router, partitioned by service.",
-		}, []string{tcpRouterNameLabel, tcpServiceNameLabel})
+			Help: "How many open connections exist on a TCP router, partitioned by service, network type, and server port.",
+		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpServerPortLabel})
+		routerTCPOpenTLSConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPOpenTLSConnectionsName,
+			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
+		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpServerPortLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 
 		// TCP metrics are tracked apart from the HTTP ones,
 		// because HTTP and TCP routers can share the same name.
 		promState.tcpVectors = append(promState.tcpVectors,
 			routerTCPOpenConns.gv,
+			routerTCPOpenTLSConns.gv,
 		)
 
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
 		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
+		reg.routerTCPOpenTLSConnectionsGauge = routerTCPOpenTLSConns
 	}
 
 	return reg
