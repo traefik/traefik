@@ -69,6 +69,10 @@ func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
 	return r.gauge
 }
 
+func (r *registryMock) RouterTCPOpenTLSConnectionsGauge() gokitmetrics.Gauge {
+	return &gaugeMock{}
+}
+
 type gaugeMock struct {
 	gokitmetrics.Gauge
 

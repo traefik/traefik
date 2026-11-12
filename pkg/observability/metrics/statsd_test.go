@@ -74,6 +74,7 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".service.responses.bytes.total:1.000000|c\n",
 
 		metricsPrefix + ".router.tcp.open.connections:1.000000|g\n",
+		metricsPrefix + ".router.tcp.open.tls.connections:1.000000|g\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -106,6 +107,7 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		registry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		registry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
-		registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test").Set(1)
+		registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "server.port", "443").Set(1)
+		registry.RouterTCPOpenTLSConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Set(1)
 	})
 }
