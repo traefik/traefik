@@ -361,7 +361,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.RequestURI = req.URL.RequestURI()
 
 	authCookies := forwardResponse.Cookies()
-	if len(authCookies) == 0 {
+	if len(authCookies) == 0 || len(fa.addAuthCookiesToResponse) == 0 {
 		fa.next.ServeHTTP(rw, req)
 		return
 	}
@@ -383,12 +383,16 @@ func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, er
 
 func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
 	return func(res *http.Response) error {
-		cookies := res.Cookies()
+		// Parsing and re-serializing backend cookies drops values the cookie
+		// parser rejects and attributes it does not model, so forward the raw
+		// header values and only remove the cookies an auth cookie replaces.
+		backendCookies := res.Header.Values("Set-Cookie")
 		res.Header.Del("Set-Cookie")
 
-		for _, cookie := range cookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
-				res.Header.Add("Set-Cookie", cookie.String())
+		for _, raw := range backendCookies {
+			name, _, _ := strings.Cut(raw, "=")
+			if _, found := fa.addAuthCookiesToResponse[strings.TrimSpace(name)]; !found {
+				res.Header.Add("Set-Cookie", raw)
 			}
 		}
 
