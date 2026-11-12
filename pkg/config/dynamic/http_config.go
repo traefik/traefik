@@ -70,6 +70,8 @@ type Service struct {
 	// in access logs and future metric labels. Mirrors the Router.Observability
 	// shape. Not user-configurable.
 	Observability *ServiceObservabilityConfig `json:"observability,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+
+	Metadata *ServiceMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // Merge merges another Service into this one.
@@ -101,6 +103,8 @@ type Router struct {
 	RespondingTimeouts          *RouterRespondingTimeouts          `json:"respondingTimeouts,omitempty" toml:"respondingTimeouts,omitempty" yaml:"respondingTimeouts,omitempty" export:"true"`
 	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+
+	Metadata *Metadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -601,6 +605,8 @@ type ServersTransport struct {
 	PeerCertURI  string           `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty"`
 	PeerCertSANs []traefiktls.SAN `description:"Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification." json:"peerCertSANs,omitempty" toml:"peerCertSANs,omitempty" yaml:"peerCertSANs,omitempty"`
 	Spiffe       *Spiffe          `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	Metadata *Metadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
