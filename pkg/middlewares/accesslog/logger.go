@@ -112,7 +112,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog, hooks ...logrus.H
 	}
 
 	if config.OTLP != nil {
-		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
+		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx, config.SampleRate)
 		if err != nil {
 			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 		}
