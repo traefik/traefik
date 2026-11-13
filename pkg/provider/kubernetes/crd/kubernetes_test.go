@@ -3754,6 +3754,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
+								HealthCheck: &dynamic.HealthCheck{},
 							},
 						},
 						"default-external-svc-443": {
@@ -3804,6 +3805,116 @@ func TestLoadIngressRoutes(t *testing.T) {
 									Interval:          20000000000,
 									UnhealthyInterval: new(ptypes.Duration(20000000000)),
 									FollowRedirects:   new(true),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external-svc-with-https",
+										Port:      "443",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "with two external services, only one with health check",
+			paths: []string{"services.yml", "with_two_external_services_one_without_health_check.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "IngressRoute",
+										Namespace: "default",
+										Name:      "test.route",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-77c62dfe9517144aeeaa": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-external-svc-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-external-svc-with-https-443",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+								// HealthCheck must stay disabled here: enabling it would require
+								// every child to be able to register as a status updater, but
+								// default-external-svc-with-https-443 has no HealthCheck of its own.
+							},
+						},
+						"default-external-svc-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								HealthCheck: &dynamic.ServerHealthCheck{
+									Path:              "/health1",
+									Timeout:           5000000000,
+									Interval:          15000000000,
+									UnhealthyInterval: new(ptypes.Duration(15000000000)),
+									FollowRedirects:   new(true),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "external-svc",
+										Port:      "443",
+									},
+								},
+							},
+						},
+						"default-external-svc-with-https-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://external.domain:443",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 							Observability: &dynamic.ServiceObservabilityConfig{
