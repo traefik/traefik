@@ -2,7 +2,9 @@ package aggregator
 
 import (
 	"bytes"
+	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -72,6 +74,22 @@ func TestLaunchNamespacedProvider(t *testing.T) {
 	assert.Contains(t, output, "Starting provider *aggregator.mockNamespacedProvider (namespace: test-namespace)")
 }
 
+func TestMaybeThrottledProvide_StopsWithPool(t *testing.T) {
+	// The bubble fails the test if a goroutine started by the throttling outlives the pool.
+	synctest.Test(t, func(t *testing.T) {
+		cfgCh := make(chan dynamic.Message)
+		pool := safe.NewPool(t.Context())
+
+		provide := maybeThrottledProvide(&shutdownSenderProviderMock{}, time.Second)
+		require.NoError(t, provide(cfgCh, pool))
+
+		msg := <-cfgCh
+		assert.Equal(t, "shutdown-sender", msg.ProviderName)
+
+		pool.Stop()
+	})
+}
+
 // requireReceivedMessageFromProviders makes sure the given providers have emitted a message on the given message channel.
 // Providers order is not enforced.
 func requireReceivedMessageFromProviders(t *testing.T, cfgCh <-chan dynamic.Message, names []string) {
@@ -123,5 +141,24 @@ func (m *mockNamespacedProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool)
 }
 
 func (m *mockNamespacedProvider) Init() error {
+	return nil
+}
+
+// shutdownSenderProviderMock sends a configuration on start, and another one once the pool is stopping,
+// as a provider does when an event races with the cancellation.
+type shutdownSenderProviderMock struct{}
+
+func (m *shutdownSenderProviderMock) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	configurationChan <- dynamic.Message{ProviderName: "shutdown-sender", Configuration: &dynamic.Configuration{}}
+
+	pool.GoCtx(func(ctx context.Context) {
+		<-ctx.Done()
+		configurationChan <- dynamic.Message{ProviderName: "shutdown-sender", Configuration: &dynamic.Configuration{}}
+	})
+
+	return nil
+}
+
+func (m *shutdownSenderProviderMock) Init() error {
 	return nil
 }
