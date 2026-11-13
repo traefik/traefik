@@ -2,6 +2,8 @@ import { Flex, Button, CSS, AccessibleIcon } from '@traefik-labs/faency'
 import React, { useState } from 'react'
 import { FiCheck, FiCopy } from 'react-icons/fi'
 
+import useCopyToClipboard from 'hooks/use-copy-to-clipboard'
+
 type CopyButtonProps = {
   text: string
   disabled?: boolean
@@ -22,6 +24,7 @@ const CopyButton = ({
   color = 'var(--colors-textSubtle)',
 }: CopyButtonProps) => {
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const copyToClipboard = useCopyToClipboard()
 
   return (
     <Button
@@ -33,10 +36,11 @@ const CopyButton = ({
         ...css,
       }}
       title={title}
-      onClick={async (e: React.MouseEvent): Promise<void> => {
+        onClick={async (e: React.MouseEvent): Promise<void> => {
         e.preventDefault()
         e.stopPropagation()
-        await navigator.clipboard.writeText(text)
+        const success = await copyToClipboard(text)
+        if (!success) return
         if (onClick) onClick()
         setShowConfirmation(true)
         setTimeout(() => setShowConfirmation(false), 1500)
