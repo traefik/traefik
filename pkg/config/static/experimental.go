@@ -4,13 +4,13 @@ import "github.com/traefik/traefik/v3/pkg/plugins"
 
 // Experimental experimental Traefik features.
 type Experimental struct {
-	Plugins              map[string]plugins.Descriptor      `description:"Plugins configuration." json:"plugins,omitempty" toml:"plugins,omitempty" yaml:"plugins,omitempty" export:"true"`
-	LocalPlugins         map[string]plugins.LocalDescriptor `description:"Local plugins configuration." json:"localPlugins,omitempty" toml:"localPlugins,omitempty" yaml:"localPlugins,omitempty" export:"true"`
-	AbortOnPluginFailure bool                               `description:"Defines whether all plugins must be loaded successfully for Traefik to start." json:"abortOnPluginFailure,omitempty" toml:"abortOnPluginFailure,omitempty" yaml:"abortOnPluginFailure,omitempty" export:"true"`
-	DefaultYaegiVersion  string                             `description:"Version of the Yaegi interpreter that runs the Yaegi plugins (v1 or v2), unless their manifest sets runtimeVersion." json:"defaultYaegiVersion,omitempty" toml:"defaultYaegiVersion,omitempty" yaml:"defaultYaegiVersion,omitempty" export:"true"`
-	FastProxy            *FastProxyConfig                   `description:"Enables the FastProxy implementation." json:"fastProxy,omitempty" toml:"fastProxy,omitempty" yaml:"fastProxy,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	OTLPLogs             bool                               `description:"Enables the OpenTelemetry logs integration." json:"otlplogs,omitempty" toml:"otlplogs,omitempty" yaml:"otlplogs,omitempty" export:"true"`
-	Knative              bool                               `description:"Allow the Knative provider usage." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" export:"true"`
+	Plugins               map[string]plugins.Descriptor      `description:"Plugins configuration." json:"plugins,omitempty" toml:"plugins,omitempty" yaml:"plugins,omitempty" export:"true"`
+	LocalPlugins          map[string]plugins.LocalDescriptor `description:"Local plugins configuration." json:"localPlugins,omitempty" toml:"localPlugins,omitempty" yaml:"localPlugins,omitempty" export:"true"`
+	AbortOnPluginFailure  bool                               `description:"Defines whether all plugins must be loaded successfully for Traefik to start." json:"abortOnPluginFailure,omitempty" toml:"abortOnPluginFailure,omitempty" yaml:"abortOnPluginFailure,omitempty" export:"true"`
+	DefaultRuntimeVersion string                             `description:"Version of the Yaegi interpreter (v1 or v2) that runs the Yaegi plugins whose manifest does not set runtimeVersion. It has no effect on Wasm plugins." json:"defaultRuntimeVersion,omitempty" toml:"defaultRuntimeVersion,omitempty" yaml:"defaultRuntimeVersion,omitempty" export:"true"`
+	FastProxy             *FastProxyConfig                   `description:"Enables the FastProxy implementation." json:"fastProxy,omitempty" toml:"fastProxy,omitempty" yaml:"fastProxy,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	OTLPLogs              bool                               `description:"Enables the OpenTelemetry logs integration." json:"otlplogs,omitempty" toml:"otlplogs,omitempty" yaml:"otlplogs,omitempty" export:"true"`
+	Knative               bool                               `description:"Allow the Knative provider usage." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" export:"true"`
 
 	// Deprecated: KubernetesIngressNGINX provider is not an experimental feature starting with v3.6.2. Please remove its usage from the static configuration.
 	KubernetesIngressNGINX bool `description:"Allow the Kubernetes Ingress NGINX provider usage." json:"kubernetesIngressNGINX,omitempty" toml:"kubernetesIngressNGINX,omitempty" yaml:"kubernetesIngressNGINX,omitempty" export:"true"`
@@ -20,7 +20,7 @@ type Experimental struct {
 
 // SetDefaults sets the default values.
 func (e *Experimental) SetDefaults() {
-	e.DefaultYaegiVersion = plugins.YaegiV1
+	e.DefaultRuntimeVersion = plugins.YaegiV1
 }
 
 // FastProxyConfig holds the FastProxy configuration.

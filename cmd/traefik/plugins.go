@@ -21,12 +21,12 @@ func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Bu
 		return nil, err
 	}
 
-	var defaultYaegiVersion string
+	var defaultRuntimeVersion string
 	if staticConfiguration.Experimental != nil {
-		defaultYaegiVersion = staticConfiguration.Experimental.DefaultYaegiVersion
+		defaultRuntimeVersion = staticConfiguration.Experimental.DefaultRuntimeVersion
 	}
 
-	return plugins.NewBuilder(manager, plgs, localPlgs, defaultYaegiVersion)
+	return plugins.NewBuilder(manager, plgs, localPlgs, defaultRuntimeVersion)
 }
 
 func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]plugins.Descriptor, map[string]plugins.LocalDescriptor, error) {

@@ -28,7 +28,7 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Builder.
-func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor, defaultYaegiVersion string) (*Builder, error) {
+func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor, defaultRuntimeVersion string) (*Builder, error) {
 	ctx := context.Background()
 
 	pb := &Builder{
@@ -52,7 +52,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 
 		switch manifest.Type {
 		case typeMiddleware:
-			middleware, err := newMiddlewareBuilder(logCtx, manager.GoPath(), manifest, desc.ModuleName, desc.Settings, defaultYaegiVersion, false)
+			middleware, err := newMiddlewareBuilder(logCtx, manager.GoPath(), manifest, desc.ModuleName, desc.Settings, defaultRuntimeVersion, false)
 			if err != nil {
 				return nil, err
 			}
@@ -60,7 +60,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			pBuilder, err := newProviderBuilder(logCtx, manifest, manager.GoPath(), desc.ModuleName, desc.Settings, defaultYaegiVersion, false)
+			pBuilder, err := newProviderBuilder(logCtx, manifest, manager.GoPath(), desc.ModuleName, desc.Settings, defaultRuntimeVersion, false)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -87,7 +87,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 
 		switch manifest.Type {
 		case typeMiddleware:
-			middleware, err := newMiddlewareBuilder(logCtx, localGoPath, manifest, desc.ModuleName, desc.Settings, defaultYaegiVersion, true)
+			middleware, err := newMiddlewareBuilder(logCtx, localGoPath, manifest, desc.ModuleName, desc.Settings, defaultRuntimeVersion, true)
 			if err != nil {
 				return nil, err
 			}
@@ -95,7 +95,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			builder, err := newProviderBuilder(logCtx, manifest, localGoPath, desc.ModuleName, desc.Settings, defaultYaegiVersion, true)
+			builder, err := newProviderBuilder(logCtx, manifest, localGoPath, desc.ModuleName, desc.Settings, defaultRuntimeVersion, true)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -129,7 +129,7 @@ func (b Builder) Build(pName string, config map[string]any, middlewareName strin
 }
 
 // resolveYaegiVersion returns the version of the Yaegi interpreter that runs a plugin.
-// defaultVersion is the experimental defaultYaegiVersion option.
+// defaultVersion is the experimental defaultRuntimeVersion option.
 func resolveYaegiVersion(defaultVersion string, manifest *Manifest) (string, error) {
 	switch manifest.RuntimeVersion {
 	case "":
@@ -147,7 +147,7 @@ func resolveYaegiVersion(defaultVersion string, manifest *Manifest) (string, err
 	}
 }
 
-func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest, moduleName string, settings Settings, defaultYaegiVersion string, local bool) (middlewareBuilder, error) {
+func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest, moduleName string, settings Settings, defaultRuntimeVersion string, local bool) (middlewareBuilder, error) {
 	switch manifest.Runtime {
 	case runtimeWasm:
 		wasmPath, err := getWasmPath(manifest)
@@ -158,7 +158,7 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 		return newWasmMiddlewareBuilder(goPath, moduleName, wasmPath, settings)
 
 	case runtimeYaegi, "":
-		version, err := resolveYaegiVersion(defaultYaegiVersion, manifest)
+		version, err := resolveYaegiVersion(defaultRuntimeVersion, manifest)
 		if err != nil {
 			return nil, fmt.Errorf("resolving Yaegi version: %w", err)
 		}
@@ -184,10 +184,10 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 	}
 }
 
-func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath, moduleName string, settings Settings, defaultYaegiVersion string, local bool) (providerBuilder, error) {
+func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath, moduleName string, settings Settings, defaultRuntimeVersion string, local bool) (providerBuilder, error) {
 	switch manifest.Runtime {
 	case runtimeYaegi, "":
-		version, err := resolveYaegiVersion(defaultYaegiVersion, manifest)
+		version, err := resolveYaegiVersion(defaultRuntimeVersion, manifest)
 		if err != nil {
 			return providerBuilder{}, fmt.Errorf("resolving Yaegi version: %w", err)
 		}
