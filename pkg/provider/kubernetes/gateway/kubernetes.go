@@ -111,6 +111,7 @@ func (p *Provider) SetDefaults() {
 // Entrypoint defines the available entry points.
 type Entrypoint struct {
 	Address        string
+	Protocol       string
 	HasHTTPTLSConf bool
 }
 
@@ -921,6 +922,11 @@ func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.Protoc
 
 	for name, entryPoint := range p.EntryPoints {
 		if strings.HasSuffix(entryPoint.Address, ":"+portStr) {
+			// A UDP entryPoint can share the port of a TCP one, but cannot serve any of the supported listener protocols.
+			if entryPoint.Protocol == "udp" {
+				continue
+			}
+
 			// If the protocol is HTTP the entryPoint must have no TLS conf
 			// Not relevant for gatev1.TLSProtocolType && gatev1.TCPProtocolType
 			if protocol == gatev1.HTTPProtocolType && entryPoint.HasHTTPTLSConf {
