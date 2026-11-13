@@ -11,7 +11,7 @@ import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
-import { computeDaysLeft } from 'hooks/use-certificates'
+import { computeDaysLeft, computeDaysLifetime } from 'hooks/use-certificates'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 import PageTitle from 'layout/PageTitle'
@@ -19,6 +19,7 @@ import PageTitle from 'layout/PageTitle'
 export const CertificateRenderRow: RenderRowType = (row: unknown) => {
   const cert = row as Certificate.Raw
   const daysLeft = computeDaysLeft(cert.notAfter)
+  const daysLifetime = computeDaysLifetime(cert.notAfter, cert.notBefore)
   const validUntil = new Date(cert.notAfter).toLocaleDateString()
 
   return (
@@ -41,7 +42,7 @@ export const CertificateRenderRow: RenderRowType = (row: unknown) => {
         <Text>{validUntil}</Text>
       </AriaTd>
       <AriaTd>
-        <CertExpiryBadge daysLeft={daysLeft} size="small" />
+        <CertExpiryBadge daysLeft={daysLeft} daysLifetime={daysLifetime} size="small" />
       </AriaTd>
     </ClickableRow>
   )
