@@ -214,6 +214,7 @@
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         addAuthCookiesToResponse = ["foobar", "foobar"]
+        addAuthCookiesToResponseRegex = "foobar"
         headerField = "foobar"
         forwardBody = true
         maxBodySize = 42
