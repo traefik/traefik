@@ -504,7 +504,7 @@ func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggre
 			continue
 		}
 
-		tsProvider := &tailscale.Provider{ResolverName: name}
+		tsProvider := &tailscale.Provider{ResolverName: name, Socket: resolver.Tailscale.Socket}
 
 		if err := providerAggregator.AddProvider(tsProvider); err != nil {
 			log.Error().Err(err).Str(logs.ProviderName, name).Msg("Unable to create Tailscale provider")
