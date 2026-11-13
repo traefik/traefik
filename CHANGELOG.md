@@ -1,3 +1,37 @@
+## [v3.8.0-rc.3](https://github.com/traefik/traefik/tree/v3.8.0-rc.3) (2026-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v3.8.0-rc.2...v3.8.0-rc.3)
+
+**Enhancement:**
+- **[plugins]** Add Yaegi v2 as an experimental runtime for plugins ([#14276](https://github.com/traefik/traefik/pull/14276) @juliens)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.65.0 ([#14258](https://github.com/traefik/traefik/pull/14258) @amazon7737)
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+**Documentation:**
+- **[accesslogs]** Remove nonexistent access log fields ([#14255](https://github.com/traefik/traefik/pull/14255) @kunalvirwal)
+- **[metrics]** Fix TOML examples and StatsD defaults in metrics reference ([#13991](https://github.com/traefik/traefik/pull/13991) @ZainnQureshii)
+
+## [v3.7.19](https://github.com/traefik/traefik/tree/v3.7.19) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.18...v3.7.19)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.65.0 ([#14258](https://github.com/traefik/traefik/pull/14258) @amazon7737)
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+**Documentation:**
+- **[accesslogs]** Remove nonexistent access log fields ([#14255](https://github.com/traefik/traefik/pull/14255) @kunalvirwal)
+- **[metrics]** Fix TOML examples and StatsD defaults in metrics reference ([#13991](https://github.com/traefik/traefik/pull/13991) @ZainnQureshii)
+
+## [v2.11.63](https://github.com/traefik/traefik/tree/v2.11.63) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.62...v2.11.63)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
 ## [v3.8.0-rc.2](https://github.com/traefik/traefik/tree/v3.8.0-rc.2) (2026-11-10)
 [All Commits](https://github.com/traefik/traefik/compare/v3.8.0-rc.1...v3.8.0-rc.2)
 

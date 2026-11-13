@@ -39,8 +39,7 @@ require (
 	github.com/huandu/xstrings v1.5.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
-	// TODO: pin a released version once https://github.com/klauspost/compress/pull/1272 is part of a release.
-	github.com/klauspost/compress v1.20.4-0.20261021124103-35c6f98a5cb9
+	github.com/klauspost/compress v1.20.4
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.3
 	github.com/kvtools/redis v1.2.1
@@ -58,7 +57,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/client_model v0.6.3
-	github.com/quic-go/quic-go v0.64.1
+	github.com/quic-go/quic-go v0.65.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/slog-zerolog/v2 v2.9.2
@@ -77,6 +76,7 @@ require (
 	github.com/traefik/paerser v0.2.2
 	github.com/traefik/traefik/dynamic/ext v0.0.0-00010101000000-000000000000
 	github.com/traefik/yaegi v0.16.3
+	github.com/traefik/yaegi/v2 v2.0.0-20261112132425-b76896158fba // Not released yet: v2 branch of traefik/yaegi.
 	github.com/tufanbarisyildirim/gonginx v0.0.0-20250620092546-c3e307e36701 // latest tag is too old.
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
@@ -101,12 +101,12 @@ require (
 	go.opentelemetry.io/otel/sdk/log v0.22.0
 	go.opentelemetry.io/otel/sdk/metric v1.47.0
 	go.opentelemetry.io/otel/trace v1.47.0
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/mod v0.42.0
 	golang.org/x/net v0.62.0
-	golang.org/x/sync v0.24.0
-	golang.org/x/sys v0.49.0
-	golang.org/x/text v0.43.0
+	golang.org/x/sync v0.25.0
+	golang.org/x/sys v0.50.0
+	golang.org/x/text v0.44.0
 	golang.org/x/time v0.16.0
 	golang.org/x/tools v0.52.0
 	google.golang.org/grpc v1.84.0
@@ -391,7 +391,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
-	golang.org/x/term v0.47.0 // indirect
+	golang.org/x/term v0.48.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/api v0.309.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260928230214-8a89bd6388cc // indirect
