@@ -16,19 +16,19 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@v6.0.1
         with:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: '.go-version'
           check-latest: true
           cache: false
 
       - name: Restore go modules cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
@@ -36,7 +36,7 @@ jobs:
             ${{ runner.os }}-go-mod-
 
       - name: Restore go build cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
@@ -44,7 +44,7 @@ jobs:
             ${{ runner.os }}-go-build-
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        uses: golangci/golangci-lint-action@v9.2.0
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
 
@@ -53,19 +53,19 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@v6.0.1
         with:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: '.go-version'
           check-latest: true
           cache: false
 
       - name: Restore go modules cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
@@ -73,7 +73,7 @@ jobs:
             ${{ runner.os }}-go-mod-
 
       - name: Restore go build cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
@@ -94,19 +94,19 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@v6.0.1
         with:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: '.go-version'
           check-latest: true
           cache: false
 
       - name: Restore go modules cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
@@ -114,7 +114,7 @@ jobs:
             ${{ runner.os }}-go-mod-
 
       - name: Restore go build cache
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@v5.0.2
         with:
           path: ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.mod', '**/go.sum') }}
