@@ -249,6 +249,11 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
 		logger.Debug().Err(err).Msg("Final retry attempt failed")
+
+		// The back-off stops before the last attempt when the request context is done,
+		// so the last attempt is run here to make sure a response is written.
+		attempts = r.attempts
+		_ = operation()
 	}
 
 	if currentSpan != nil {
