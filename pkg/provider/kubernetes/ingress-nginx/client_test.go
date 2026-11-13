@@ -112,7 +112,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 		GitVersion: "v1.19",
 	}
 
-	client := newClient(kubeClient)
+	client := NewClient(kubeClient)
 
 	eventCh, err := client.WatchAll(t.Context(), "", "")
 	require.NoError(t, err)
@@ -179,7 +179,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 		GitVersion: "v1.19",
 	}
 
-	client := newClient(kubeClient)
+	client := NewClient(kubeClient)
 
 	eventCh, err := client.WatchAll(t.Context(), "", "")
 	require.NoError(t, err)

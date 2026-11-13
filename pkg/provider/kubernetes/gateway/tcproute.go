@@ -19,7 +19,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *StatusReport) {
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListTCPRoutes()
 	if err != nil {

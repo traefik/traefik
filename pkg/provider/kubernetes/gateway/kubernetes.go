@@ -32,8 +32,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
+	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 )
 
 const (
@@ -111,7 +113,7 @@ type Provider struct {
 	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
 
 	routerTransform k8s.RouterTransform
-	client          *clientWrapper
+	client          *Client
 }
 
 func (p *Provider) SetDefaults() {
@@ -221,6 +223,10 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
+func (p *Provider) SetClient(client *Client) {
+	p.client = client
+}
+
 // Init the provider.
 func (p *Provider) Init() error {
 	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
@@ -271,7 +277,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf, statusReport, err := p.loadConfigurationFromGateways(ctxLog)
+					conf, statusReport, err := p.BuildConfiguration(ctxLog)
 					if err != nil {
 						logger.Error().Err(err).Msg("Unable to load configuration from Gateways")
 					} else {
@@ -307,78 +313,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1.HTTPRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-// managesGateway reports whether the provider should reconcile the given Gateways.
-// When the Gateways scoping option is set, only the referenced namespace/name entries are managed.
-func (p *Provider) managesGateway(gateway *gatev1.Gateway) bool {
-	if len(p.Gateways) == 0 {
-		return true
-	}
-
-	for _, g := range p.Gateways {
-		if gateway.Namespace == g.Namespace && gateway.Name == g.Name {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	if p.GatewayClass != "" && p.LabelSelector != "" {
-		return nil, errors.New("gatewayClass and labelSelector options are mutually exclusive")
-	}
-
-	logger := log.Ctx(ctx)
-
-	if p.LabelSelector != "" {
-		// Label selector validation
-		_, err := labels.Parse(p.LabelSelector)
-		if err != nil {
-			return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-		}
-
-		logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
-		logger.Warn().Msg("LabelSelector option is deprecated, please use the GatewayClass option instead.")
-	}
-
-	var (
-		err    error
-		client *clientWrapper
-	)
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
-		client, err = newInClusterClient(p.Endpoint, p.QPS, p.Burst)
-	case os.Getenv("KUBECONFIG") != "":
-		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"), p.QPS, p.Burst)
-	default:
-		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token, p.QPS, p.Burst)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.gatewayClass = p.GatewayClass
-	client.labelSelector = p.LabelSelector
-
-	return client, nil
-}
-
+// BuildConfiguration builds the dynamic configuration from the resources that the client gives.
 // TODO Handle errors and update resources statuses (gatewayClass, gateway).
-func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.Configuration, *statusReport, error) {
+func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configuration, *StatusReport, error) {
 	statusReport := newStatusReport()
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
@@ -566,11 +503,79 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) (*dynamic.
 	return conf, statusReport, nil
 }
 
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1.HTTPRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+// managesGateway reports whether the provider should reconcile the given Gateways.
+// When the Gateways scoping option is set, only the referenced namespace/name entries are managed.
+func (p *Provider) managesGateway(gateway *gatev1.Gateway) bool {
+	if len(p.Gateways) == 0 {
+		return true
+	}
+
+	for _, g := range p.Gateways {
+		if gateway.Namespace == g.Namespace && gateway.Name == g.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*Client, error) {
+	if p.GatewayClass != "" && p.LabelSelector != "" {
+		return nil, errors.New("gatewayClass and labelSelector options are mutually exclusive")
+	}
+
+	logger := log.Ctx(ctx)
+
+	if p.LabelSelector != "" {
+		// Label selector validation
+		_, err := labels.Parse(p.LabelSelector)
+		if err != nil {
+			return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+		}
+
+		logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
+		logger.Warn().Msg("LabelSelector option is deprecated, please use the GatewayClass option instead.")
+	}
+
+	var (
+		err       error
+		csKube    kclientset.Interface
+		csGateway gateclientset.Interface
+	)
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
+		csKube, csGateway, err = newInClusterClientsets(p.Endpoint, p.QPS, p.Burst)
+	case os.Getenv("KUBECONFIG") != "":
+		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		csKube, csGateway, err = newExternalClusterClientsetsFromFile(os.Getenv("KUBECONFIG"), p.QPS, p.Burst)
+	default:
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
+		csKube, csGateway, err = newExternalClusterClientsets(p.Endpoint, p.CertAuthFilePath, p.Token, p.QPS, p.Burst)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(p, csKube, csGateway), nil
+}
+
 // loadHTTPAndGRPCRoutes loads the HTTPRoutes and the GRPCRoutes together, ordered by
 // creation timestamp then by "{namespace}/{name}".
 // As stated in the specification, when an HTTPRoute and a GRPCRoute attached to the same
 // listener have intersecting hostnames, only the first one in that order is accepted.
-func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *StatusReport) {
 	routes := make([]metav1.Object, 0)
 
 	httpRoutes, err := p.client.ListHTTPRoutes()
@@ -1069,7 +1074,7 @@ func hostnameMatcherValue(hostname string) string {
 
 // loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
 // and reports the status of the ones its AllowedListeners policy refuses.
-func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration, statusReport *statusReport) []gatewayListener {
+func (p *Provider) loadListenerSetListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSets []*gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration, statusReport *StatusReport) []gatewayListener {
 	var listeners []gatewayListener
 	for _, listenerSet := range listenerSets {
 		if !listenerSetRefsGateway(listenerSet, gateway) {

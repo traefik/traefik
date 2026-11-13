@@ -58,9 +58,9 @@ type clientWrapper struct {
 	watchedNamespaces           []string
 }
 
-// newInClusterClient returns a new Provider client that is expected to run
+// newInClusterClientset returns the clientset of a Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
+func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
@@ -70,21 +70,21 @@ func newInClusterClient(endpoint string) (*clientWrapper, error) {
 		config.Host = endpoint
 	}
 
-	return createClientFromConfig(config)
+	return createClientsetFromConfig(config)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
+func newExternalClusterClientsetFromFile(file string) (kclientset.Interface, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
 		return nil, err
 	}
-	return createClientFromConfig(configFromFlags)
+	return createClientsetFromConfig(configFromFlags)
 }
 
-// newExternalClusterClient returns a new Provider client that may run outside
+// newExternalClusterClientset returns the clientset of a Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
+func newExternalClusterClientset(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -107,10 +107,10 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
-	return createClientFromConfig(config)
+	return createClientsetFromConfig(config)
 }
 
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
+func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
 	c.UserAgent = fmt.Sprintf(
 		"%s/%s (%s/%s) kubernetes/ingress",
 		filepath.Base(os.Args[0]),
@@ -124,15 +124,19 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 		return nil, err
 	}
 
-	return newClientImpl(clientset), nil
+	return clientset, nil
 }
 
-func newClientImpl(clientset kclientset.Interface) *clientWrapper {
+// NewClient creates a client that reads the resources from the given clientset, with the options of the provider.
+func NewClient(provider *Provider, clientset kclientset.Interface) Client {
 	return &clientWrapper{
-		clientset:        clientset,
-		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
-		factoriesIngress: make(map[string]kinformers.SharedInformerFactory),
-		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
+		clientset:                   clientset,
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		factoriesIngress:            make(map[string]kinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		ingressLabelSelector:        provider.LabelSelector,
+		disableIngressClassInformer: provider.DisableIngressClassLookup || provider.DisableClusterScopeResources,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
 	}
 }
 

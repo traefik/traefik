@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	traefikclientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
@@ -35,6 +36,7 @@ import (
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	kclientset "k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -151,7 +153,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
+					conf := p.BuildConfiguration(ctxLog, k8sClient)
 
 					configurationChan <- dynamic.Message{
 						ProviderName:  ProviderName,
@@ -200,52 +202,8 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 	})
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, ingress)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
-
-	var client *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		client, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.labelSelector = p.LabelSelector
-	client.disableClusterScopeInformer = p.DisableClusterScopeResources
-	return client, nil
-}
-
-func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
+// BuildConfiguration builds the dynamic configuration from the resources that the client gives.
+func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynamic.Configuration {
 	stores, tlsConfigs := p.buildTLSStores(ctx, client)
 	if tlsConfigs == nil {
 		tlsConfigs = make(map[string]*tls.CertAndStores)
@@ -698,6 +656,52 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	return conf
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (Client, error) {
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+	}
+	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
+
+	withEndpoint := ""
+	if p.Endpoint != "" {
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
+	}
+
+	var (
+		csKube kclientset.Interface
+		csCrd  traefikclientset.Interface
+	)
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
+		csKube, csCrd, err = newInClusterClientsets(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		csKube, csCrd, err = newExternalClusterClientsetsFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
+		csKube, csCrd, err = newExternalClusterClientsets(p.Endpoint, p.CertAuthFilePath, p.Token)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(p, csKube, csCrd), nil
 }
 
 func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

@@ -43,7 +43,8 @@ const (
 	minGatewayAPIVersion = "v1.7.0"
 )
 
-type clientWrapper struct {
+// Client reads the Kubernetes resources that the provider builds the configuration from.
+type Client struct {
 	csGateway gateclientset.Interface
 	csKube    kclientset.Interface
 
@@ -65,66 +66,69 @@ type clientWrapper struct {
 	clusterTrustBundleAllowed   bool
 }
 
-func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
+func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	c.QPS = float32(qps)
 	c.Burst = burst
 
 	csGateway, err := gateclientset.NewForConfig(c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	csKube, err := kclientset.NewForConfig(c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return newClientImpl(csKube, csGateway), nil
+	return csKube, csGateway, nil
 }
 
-func newClientImpl(csKube kclientset.Interface, csGateway gateclientset.Interface) *clientWrapper {
-	return &clientWrapper{
+// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
+func NewClient(provider *Provider, csKube kclientset.Interface, csGateway gateclientset.Interface) *Client {
+	return &Client{
 		csGateway:        csGateway,
 		csKube:           csKube,
 		factoriesGateway: make(map[string]gateinformers.SharedInformerFactory),
 		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
 		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
+		gatewayClass:     provider.GatewayClass,
+		labelSelector:    provider.LabelSelector,
 	}
 }
 
-// newInClusterClient returns a new Provider client that is expected to run
+// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string, qps, burst int) (*clientWrapper, error) {
+func newInClusterClientsets(endpoint string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
 	}
 
 	if endpoint != "" {
 		config.Host = endpoint
 	}
 
-	return createClientFromConfig(config, qps, burst)
+	return createClientsetsFromConfig(config, qps, burst)
 }
 
-func newExternalClusterClientFromFile(file string, qps, burst int) (*clientWrapper, error) {
+func newExternalClusterClientsetsFromFile(file string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return createClientFromConfig(configFromFlags, qps, burst)
+	return createClientsetsFromConfig(configFromFlags, qps, burst)
 }
 
-// newExternalClusterClient returns a new Provider client that may run outside of the cluster.
+// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (*clientWrapper, error) {
+func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	if endpoint == "" {
-		return nil, errors.New("endpoint missing for external cluster client")
+		return nil, nil, errors.New("endpoint missing for external cluster client")
 	}
 
 	tokenData, err := token.Read()
 	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
+		return nil, nil, fmt.Errorf("read token: %w", err)
 	}
 
 	config := &rest.Config{
@@ -135,17 +139,17 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 	if caFilePath != "" {
 		caData, err := os.ReadFile(caFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
 		}
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
 
-	return createClientFromConfig(config, qps, burst)
+	return createClientsetsFromConfig(config, qps, burst)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(ctx context.Context, namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+func (c *Client) WatchAll(ctx context.Context, namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
 	logger := log.Ctx(ctx)
 
 	eventCh := make(chan any, 1)
@@ -350,7 +354,7 @@ func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandler {
 	}
 }
 
-func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, error) {
+func (c *Client) ListNamespaces(selector labels.Selector) ([]string, error) {
 	ns, err := c.factoryNamespace.Core().V1().Namespaces().Lister().List(selector)
 	if err != nil {
 		return nil, err
@@ -367,7 +371,7 @@ func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, erro
 	return namespaces, nil
 }
 
-func (c *clientWrapper) ListHTTPRoutes() ([]*gatev1.HTTPRoute, error) {
+func (c *Client) ListHTTPRoutes() ([]*gatev1.HTTPRoute, error) {
 	var httpRoutes []*gatev1.HTTPRoute
 	for _, namespace := range c.watchedNamespaces {
 		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().HTTPRoutes().Lister().HTTPRoutes(namespace).List(labels.Everything())
@@ -381,7 +385,7 @@ func (c *clientWrapper) ListHTTPRoutes() ([]*gatev1.HTTPRoute, error) {
 	return httpRoutes, nil
 }
 
-func (c *clientWrapper) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
+func (c *Client) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
 	var grpcRoutes []*gatev1.GRPCRoute
 	for _, namespace := range c.watchedNamespaces {
 		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().GRPCRoutes().Lister().GRPCRoutes(namespace).List(labels.Everything())
@@ -395,7 +399,7 @@ func (c *clientWrapper) ListGRPCRoutes() ([]*gatev1.GRPCRoute, error) {
 	return grpcRoutes, nil
 }
 
-func (c *clientWrapper) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
+func (c *Client) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
 	var tcpRoutes []*gatev1.TCPRoute
 	for _, namespace := range c.watchedNamespaces {
 		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
@@ -409,7 +413,7 @@ func (c *clientWrapper) ListTCPRoutes() ([]*gatev1.TCPRoute, error) {
 	return tcpRoutes, nil
 }
 
-func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
+func (c *Client) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
 	var tlsRoutes []*gatev1.TLSRoute
 	for _, namespace := range c.watchedNamespaces {
 		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().TLSRoutes().Lister().TLSRoutes(namespace).List(labels.Everything())
@@ -423,7 +427,7 @@ func (c *clientWrapper) ListTLSRoutes() ([]*gatev1.TLSRoute, error) {
 	return tlsRoutes, nil
 }
 
-func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1.ReferenceGrant, error) {
+func (c *Client) ListReferenceGrants(namespace string) ([]*gatev1.ReferenceGrant, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get ReferenceGrants: namespace %s is not within watched namespaces", namespace)
 	}
@@ -436,7 +440,7 @@ func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1.Referen
 	return referenceGrants, nil
 }
 
-func (c *clientWrapper) ListGateways() []*gatev1.Gateway {
+func (c *Client) ListGateways() []*gatev1.Gateway {
 	var result []*gatev1.Gateway
 
 	for ns, factory := range c.factoriesGateway {
@@ -451,7 +455,7 @@ func (c *clientWrapper) ListGateways() []*gatev1.Gateway {
 	return result
 }
 
-func (c *clientWrapper) ListListenerSets() []*gatev1.ListenerSet {
+func (c *Client) ListListenerSets() []*gatev1.ListenerSet {
 	var result []*gatev1.ListenerSet
 
 	for ns, factory := range c.factoriesGateway {
@@ -466,12 +470,12 @@ func (c *clientWrapper) ListListenerSets() []*gatev1.ListenerSet {
 	return result
 }
 
-func (c *clientWrapper) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
+func (c *Client) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().List(labels.Everything())
 }
 
 // ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
-func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
+func (c *Client) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
@@ -484,7 +488,7 @@ func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName stri
 }
 
 // ListBackendTLSPoliciesForService returns the BackendTLSPolicy for the given service name in the given namespace.
-func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName string) ([]*gatev1.BackendTLSPolicy, error) {
+func (c *Client) ListBackendTLSPoliciesForService(namespace, serviceName string) ([]*gatev1.BackendTLSPolicy, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get BackendTLSPolicies for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
@@ -510,12 +514,12 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 }
 
 // GetClusterTrustBundle returns the named ClusterTrustBundle.
-func (c *clientWrapper) GetClusterTrustBundle(name string) (*certificatesv1.ClusterTrustBundle, error) {
+func (c *Client) GetClusterTrustBundle(name string) (*certificatesv1.ClusterTrustBundle, error) {
 	return c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Lister().Get(name)
 }
 
 // GetService returns the named service from the given namespace.
-func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
+func (c *Client) GetService(namespace, name string) (*corev1.Service, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -523,7 +527,7 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, err
 }
 
 // GetSecret returns the named secret from the given namespace.
-func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error) {
+func (c *Client) GetSecret(namespace, name string) (*corev1.Secret, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -531,14 +535,14 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error
 }
 
 // GetConfigMap returns the named configMap from the given namespace.
-func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, error) {
+func (c *Client) GetConfigMap(namespace, name string) (*corev1.ConfigMap, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get configMap %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
 }
 
-func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error {
+func (c *Client) UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error {
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		currentGatewayClass, err := c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().Get(name)
 		if err != nil {
@@ -569,7 +573,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name strin
 	return nil
 }
 
-func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error {
+func (c *Client) UpdateGatewayStatus(ctx context.Context, gateway ktypes.NamespacedName, status gatev1.GatewayStatus) error {
 	if !c.isWatchedNamespace(gateway.Namespace) {
 		return fmt.Errorf("cannot update Gateway status %s/%s: namespace is not within watched namespaces", gateway.Namespace, gateway.Name)
 	}
@@ -604,7 +608,7 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.HTTPRouteStatus) error {
+func (c *Client) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.HTTPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating HTTPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -644,7 +648,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.GRPCRouteStatus) error {
+func (c *Client) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.GRPCRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating GRPCRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -684,7 +688,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 	return nil
 }
 
-func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TCPRouteStatus) error {
+func (c *Client) UpdateTCPRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TCPRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TCPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -724,7 +728,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TLSRouteStatus) error {
+func (c *Client) UpdateTLSRouteStatus(ctx context.Context, route ktypes.NamespacedName, gateways []gatewayWithListeners, status gatev1.TLSRouteStatus) error {
 	if !c.isWatchedNamespace(route.Namespace) {
 		return fmt.Errorf("updating TLSRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
 	}
@@ -764,7 +768,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy ktypes.NamespacedName, status gatev1.PolicyStatus) error {
+func (c *Client) UpdateBackendTLSPolicyStatus(ctx context.Context, policy ktypes.NamespacedName, status gatev1.PolicyStatus) error {
 	if !c.isWatchedNamespace(policy.Namespace) {
 		return fmt.Errorf("updating BackendTLSPolicy status %s/%s: namespace is not within watched namespaces", policy.Namespace, policy.Name)
 	}
@@ -817,7 +821,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 	return nil
 }
 
-func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) error {
+func (c *Client) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) error {
 	if !c.isWatchedNamespace(listenerSet.Namespace) {
 		return fmt.Errorf("cannot update ListenerSet status %s/%s: namespace is not within watched namespaces", listenerSet.Namespace, listenerSet.Name)
 	}
@@ -856,7 +860,7 @@ func (c *clientWrapper) UpdateListenerSetStatus(ctx context.Context, listenerSet
 // The distinction is necessary because we index all informers on the special
 // identifier iff all-namespaces are requested but receive specific namespace
 // identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *clientWrapper) lookupNamespace(namespace string) string {
+func (c *Client) lookupNamespace(namespace string) string {
 	if c.isNamespaceAll {
 		return metav1.NamespaceAll
 	}
@@ -865,7 +869,7 @@ func (c *clientWrapper) lookupNamespace(namespace string) string {
 
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
 // it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
+func (c *Client) isWatchedNamespace(namespace string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
@@ -1065,7 +1069,7 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
 // When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
 // and the informer logs the error if it is not.
-func (c *clientWrapper) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
+func (c *Client) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
 		switch {
@@ -1085,7 +1089,7 @@ func (c *clientWrapper) isClusterTrustBundleAPIServed(ctx context.Context) (bool
 // isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
 // When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
 // and the informer logs the error if it is not.
-func (c *clientWrapper) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
+func (c *Client) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
 	for _, verb := range []string{"list", "watch"} {
 		review := &authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{

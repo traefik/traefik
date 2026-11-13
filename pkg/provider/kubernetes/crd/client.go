@@ -70,7 +70,7 @@ type clientWrapper struct {
 	watchedNamespaces []string
 }
 
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
+func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikclientset.Interface, error) {
 	c.UserAgent = fmt.Sprintf(
 		"%s/%s (%s/%s) kubernetes/crd",
 		filepath.Base(os.Args[0]),
@@ -81,61 +81,64 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 
 	csCrd, err := traefikclientset.NewForConfig(c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	csKube, err := kclientset.NewForConfig(c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return newClientImpl(csKube, csCrd), nil
+	return csKube, csCrd, nil
 }
 
-func newClientImpl(csKube kclientset.Interface, csCrd traefikclientset.Interface) *clientWrapper {
+// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
+func NewClient(provider *Provider, csKube kclientset.Interface, csCrd traefikclientset.Interface) Client {
 	return &clientWrapper{
-		csCrd:           csCrd,
-		csKube:          csKube,
-		factoriesCrd:    make(map[string]traefikinformers.SharedInformerFactory),
-		factoriesKube:   make(map[string]kinformers.SharedInformerFactory),
-		factoriesSecret: make(map[string]kinformers.SharedInformerFactory),
+		csCrd:                       csCrd,
+		csKube:                      csKube,
+		factoriesCrd:                make(map[string]traefikinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		labelSelector:               provider.LabelSelector,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
 	}
 }
 
-// newInClusterClient returns a new Provider client that is expected to run
+// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
+func newInClusterClientsets(endpoint string) (kclientset.Interface, traefikclientset.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
 	}
 
 	if endpoint != "" {
 		config.Host = endpoint
 	}
 
-	return createClientFromConfig(config)
+	return createClientsetsFromConfig(config)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
+func newExternalClusterClientsetsFromFile(file string) (kclientset.Interface, traefikclientset.Interface, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return createClientFromConfig(configFromFlags)
+	return createClientsetsFromConfig(configFromFlags)
 }
 
-// newExternalClusterClient returns a new Provider client that may run outside
+// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
+func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, traefikclientset.Interface, error) {
 	if endpoint == "" {
-		return nil, errors.New("endpoint missing for external cluster client")
+		return nil, nil, errors.New("endpoint missing for external cluster client")
 	}
 
 	tokenData, err := token.Read()
 	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
+		return nil, nil, fmt.Errorf("read token: %w", err)
 	}
 
 	config := &rest.Config{
@@ -146,13 +149,13 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 	if caFilePath != "" {
 		caData, err := os.ReadFile(caFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
 		}
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
 	}
 
-	return createClientFromConfig(config)
+	return createClientsetsFromConfig(config)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.

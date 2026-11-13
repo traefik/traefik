@@ -26,7 +26,7 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, statusReport *statusReport) {
+func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithListeners, route *gatev1.HTTPRoute, conf *dynamic.Configuration, attachedRoutes attachedRoutes, servedRules servedRules, statusReport *StatusReport) {
 	logger := log.Ctx(ctx).With().
 		Str("http_route", route.Name).
 		Str("namespace", route.Namespace).
@@ -128,7 +128,7 @@ type httpRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]httpRouteRouter, metav1.Condition) {
+func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, statusReport *StatusReport) ([]httpRouteRouter, metav1.Condition) {
 	var routers []httpRouteRouter
 
 	condition := metav1.Condition{
@@ -251,7 +251,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 	return routers, condition
 }
 
-func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *StatusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -320,7 +320,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *StatusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -450,7 +450,7 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) ([]string, error) {
+func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *StatusReport) ([]string, error) {
 	type namedMiddleware struct {
 		Name   string
 		Config *dynamic.Middleware
@@ -558,7 +558,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -1248,7 +1248,7 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 }
 
 // loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
-func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
+func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *StatusReport) (*dynamic.Middleware, error) {
 	if filter == nil {
 		return nil, errors.New("missing configuration")
 	}

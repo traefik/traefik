@@ -2168,7 +2168,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -2189,7 +2189,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -10547,7 +10547,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -10570,7 +10570,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 
 			for name, middleware := range conf.HTTP.Middlewares {
@@ -10656,7 +10656,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-	client := newClientImpl(kubeClient, crdClient)
+	client := NewClient(&Provider{}, kubeClient, crdClient)
 
 	stopCh := make(chan struct{})
 
@@ -10669,7 +10669,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	}
 
 	p := Provider{}
-	conf := p.loadConfigurationFromCRD(t.Context(), client)
+	conf := p.BuildConfiguration(t.Context(), client)
 
 	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
 	require.True(t, ok)
@@ -11468,7 +11468,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -11489,7 +11489,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -13653,7 +13653,7 @@ func TestCrossNamespace(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -13671,7 +13671,7 @@ func TestCrossNamespace(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -13747,7 +13747,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 				kubeClient := kubefake.NewClientset(k8sObjects...)
 				crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-				client := newClientImpl(kubeClient, crdClient)
+				client := NewClient(&Provider{}, kubeClient, crdClient)
 
 				stopCh := make(chan struct{})
 
@@ -13766,7 +13766,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 				}
 				require.NoError(t, p.Init())
 
-				conf := p.loadConfigurationFromCRD(t.Context(), client)
+				conf := p.BuildConfiguration(t.Context(), client)
 
 				routerKey := "default-test2-route-23c7f4c450289ee29016"
 				wantMiddlewares := test.wantMiddlewares
@@ -13852,7 +13852,7 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 				kubeClient := kubefake.NewClientset(k8sObjects...)
 				crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-				client := newClientImpl(kubeClient, crdClient)
+				client := NewClient(&Provider{}, kubeClient, crdClient)
 
 				stopCh := make(chan struct{})
 
@@ -13871,7 +13871,7 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 				}
 				require.NoError(t, p.Init())
 
-				conf := p.loadConfigurationFromCRD(t.Context(), client)
+				conf := p.BuildConfiguration(t.Context(), client)
 
 				mirrorKey, weightedKey := "foo-mirror-cp", "bar-weighted-cp"
 				if safeNaming {
@@ -13925,7 +13925,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -13943,7 +13943,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 
 			router, ok := conf.HTTP.Routers["default-test-route-6b204d94623b3df4370c"]
 			if test.wantRouterDropped {
@@ -13995,7 +13995,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14013,7 +14013,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 
 			router, ok := conf.TCP.Routers["default-test.route-fdd3e9338e47a45efefc"]
 			if test.wantRouterDropped {
@@ -14065,7 +14065,7 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14083,7 +14083,7 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 
 			service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
 			if test.wantServiceDropped {
@@ -14135,7 +14135,7 @@ func TestCrossProviderNamespaces_TCPServersTransport(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14153,7 +14153,7 @@ func TestCrossProviderNamespaces_TCPServersTransport(t *testing.T) {
 			}
 			require.NoError(t, p.Init())
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 
 			service, ok := conf.TCP.Services["default-test.route-fdd3e9338e47a45efefc"]
 			if test.wantServiceDropped {
@@ -14436,7 +14436,7 @@ func TestExternalNameService(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14450,7 +14450,7 @@ func TestExternalNameService(t *testing.T) {
 
 			p := Provider{AllowExternalNameServices: test.allowExternalNameService}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -14636,7 +14636,7 @@ func TestNativeLB(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14650,7 +14650,7 @@ func TestNativeLB(t *testing.T) {
 
 			p := Provider{}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -14920,7 +14920,7 @@ func TestNodePortLB(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -14936,7 +14936,7 @@ func TestNodePortLB(t *testing.T) {
 				DisableClusterScopeResources: test.disableClusterScope,
 			}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -14961,7 +14961,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	crdClient := traefikcrdfake.NewClientset()
 
-	client := newClientImpl(kubeClient, crdClient)
+	client := NewClient(&Provider{}, kubeClient, crdClient)
 
 	stopCh := make(chan struct{})
 
@@ -15624,7 +15624,7 @@ func TestGlobalNativeLB(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
-			client := newClientImpl(kubeClient, crdClient)
+			client := NewClient(&Provider{}, kubeClient, crdClient)
 
 			stopCh := make(chan struct{})
 
@@ -15638,7 +15638,7 @@ func TestGlobalNativeLB(t *testing.T) {
 
 			p := Provider{NativeLBByDefault: test.NativeLBByDefault}
 
-			conf := p.loadConfigurationFromCRD(t.Context(), client)
+			conf := p.BuildConfiguration(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
