@@ -128,19 +128,19 @@ func (b Builder) Build(pName string, config map[string]any, middlewareName strin
 	return nil, fmt.Errorf("unknown plugin type: %s", pName)
 }
 
-// resolveYaegiVersion returns the version of the Yaegi interpreter that runs a plugin.
+// resolveYaegiVersion returns the interpreter that runs a Yaegi plugin: a version of Yaegi, or wy.
 // defaultVersion is the experimental defaultRuntimeVersion option.
 func resolveYaegiVersion(defaultVersion string, manifest *Manifest) (string, error) {
 	switch manifest.RuntimeVersion {
 	case "":
-	case YaegiV2:
-		return YaegiV2, nil
+	case YaegiV2, Wy:
+		return manifest.RuntimeVersion, nil
 	default:
-		return "", fmt.Errorf("invalid runtimeVersion in the plugin manifest: %s (only %s is allowed)", manifest.RuntimeVersion, YaegiV2)
+		return "", fmt.Errorf("invalid runtimeVersion in the plugin manifest: %s (only %s or %s is allowed)", manifest.RuntimeVersion, YaegiV2, Wy)
 	}
 
 	switch defaultVersion {
-	case YaegiV1, YaegiV2:
+	case YaegiV1, YaegiV2, Wy:
 		return defaultVersion, nil
 	default:
 		return "", fmt.Errorf("unknown Yaegi version: %q", defaultVersion)
@@ -172,6 +172,15 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 			return yaegiV2MiddlewareBuilder{plugin: plugin}, nil
 		}
 
+		if version == Wy {
+			i, err := newWyInterpreter(ctx, goPath, manifest, settings)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create wy interpreter: %w", err)
+			}
+
+			return newWyMiddlewareBuilder(ctx, i, manifest.BasePkg, manifest.Import)
+		}
+
 		i, err := newInterpreter(ctx, goPath, manifest, settings)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Yaegi interpreter: %w", err)
@@ -199,6 +208,19 @@ func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath, moduleN
 			}
 
 			return providerBuilder{plugin: plugin}, nil
+		}
+
+		if version == Wy {
+			i, err := newWyInterpreter(ctx, goPath, manifest, settings)
+			if err != nil {
+				return providerBuilder{}, err
+			}
+
+			return providerBuilder{
+				Import:        manifest.Import,
+				BasePkg:       manifest.BasePkg,
+				wyInterpreter: i,
+			}, nil
 		}
 
 		i, err := newInterpreter(ctx, goPath, manifest, settings)

@@ -94,7 +94,7 @@ experimental:
     They have no effect on Wasm plugins.
 
 Yaegi plugins run with Yaegi v1 by default.
-The `defaultRuntimeVersion` option selects the version of the Yaegi interpreter, `v1` (default) or `v2`, for all the Yaegi plugins.
+The `defaultRuntimeVersion` option selects the interpreter for all the Yaegi plugins: Yaegi `v1` (default), Yaegi `v2`, or [`wy`](#wy).
 
 ```yaml tab="File (YAML)"
 experimental:
@@ -110,9 +110,27 @@ experimental:
 --experimental.defaultruntimeversion=v2
 ```
 
-A Yaegi plugin can also ask for Yaegi v2 in its manifest (`.traefik.yml`), with `runtimeVersion: v2`.
-Such a plugin always runs with Yaegi v2, whatever the value of the `defaultRuntimeVersion` option.
+A Yaegi plugin can also ask for Yaegi v2 or wy in its manifest (`.traefik.yml`), with `runtimeVersion: v2` or `runtimeVersion: wy`.
+Such a plugin always runs with that interpreter, whatever the value of the `defaultRuntimeVersion` option.
 A manifest cannot ask for Yaegi v1.
 
 Yaegi v2 only loads plugins that the Go compiler accepts, and limits the CPU time, the memory and the number of goroutines of a plugin.
 A plugin that Yaegi v2 cannot load is reported as a plugin load failure.
+
+### wy
+
+[wy](https://github.com/darkweak/wy) is an alternative Go interpreter, built on `go/types`.
+It runs the plugins from their sources, as Yaegi does, and supports what plugins with large dependency trees need,
+such as generics, `reflect`, and the `encoding/json` methods of interpreted types.
+
+```yaml tab="Plugin manifest (.traefik.yml)"
+runtimeVersion: wy
+```
+
+```yaml tab="File (YAML)"
+experimental:
+  defaultRuntimeVersion: wy
+```
+
+The `useUnsafe` manifest field and setting apply to wy as they do to Yaegi:
+without both, a plugin cannot import the `unsafe` and `syscall` packages, including from its dependencies.

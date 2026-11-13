@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/darkweak/wy/tree"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -78,6 +79,9 @@ type providerBuilder struct {
 
 	// plugin is set when Yaegi v2 runs the plugin, interpreter otherwise.
 	plugin *vm.Plugin
+
+	// wyInterpreter is set when wy runs the plugin.
+	wyInterpreter *tree.Interp
 }
 
 // Provider is a plugin's provider wrapper.
@@ -89,6 +93,10 @@ type Provider struct {
 func newProvider(builder providerBuilder, config map[string]any, providerName string) (*Provider, error) {
 	if builder.plugin != nil {
 		return newYaegiV2Provider(builder.plugin, config, providerName)
+	}
+
+	if builder.wyInterpreter != nil {
+		return newWyProvider(builder, config, providerName)
 	}
 
 	basePkg := builder.BasePkg
