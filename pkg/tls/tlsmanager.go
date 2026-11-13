@@ -144,13 +144,10 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		if m.ocspStapler != nil && len(cert.Leaf.OCSPServer) > 0 {
 			certHash = hashRawCert(cert.Leaf.Raw)
 
-			issuer := cert.Leaf
-			if len(cert.Certificate) > 1 {
-				issuer, err = x509.ParseCertificate(cert.Certificate[1])
-				if err != nil {
-					log.Ctx(ctx).Error().Err(err).Msgf("Unable to parse issuer certificate %s", conf.Certificate.GetTruncatedCertificateName())
-					continue
-				}
+			issuer, err := findIssuer(cert.Leaf, cert.Certificate)
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msgf("Unable to find issuer certificate for %s", conf.Certificate.GetTruncatedCertificateName())
+				continue
 			}
 
 			if err := m.ocspStapler.Upsert(certHash, cert.Leaf, issuer); err != nil {
@@ -419,12 +416,9 @@ func (m *Manager) buildDefaultCertificate(defaultCertificate *Certificate) (*Cer
 	if m.ocspStapler != nil && len(cert.Leaf.OCSPServer) > 0 {
 		certHash = hashRawCert(cert.Leaf.Raw)
 
-		issuer := cert.Leaf
-		if len(cert.Certificate) > 1 {
-			issuer, err = x509.ParseCertificate(cert.Certificate[1])
-			if err != nil {
-				return nil, fmt.Errorf("parsing issuer certificate %s: %w", defaultCertificate.GetTruncatedCertificateName(), err)
-			}
+		issuer, err := findIssuer(cert.Leaf, cert.Certificate)
+		if err != nil {
+			return nil, fmt.Errorf("finding issuer certificate %s: %w", defaultCertificate.GetTruncatedCertificateName(), err)
 		}
 
 		if err := m.ocspStapler.Upsert(certHash, cert.Leaf, issuer); err != nil {

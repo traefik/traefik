@@ -2,8 +2,14 @@ package tls
 
 import (
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"io"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -482,4 +488,229 @@ func TestOCSPStapler_updateStaples(t *testing.T) {
 
 	assert.Equal(t, []byte("foo"), noUpdate.(*ocspEntry).staple)
 	assert.Equal(t, inOneHour, noUpdate.(*ocspEntry).nextUpdate)
+}
+
+type testChain struct {
+	rootCert         *x509.Certificate
+	rootKey          *ecdsa.PrivateKey
+	intermediateCert *x509.Certificate
+	intermediateKey  *ecdsa.PrivateKey
+	responderCert    *x509.Certificate
+	responderKey     *ecdsa.PrivateKey
+	leafCert         *x509.Certificate
+	leafKey          *ecdsa.PrivateKey
+}
+
+func generateTestChain(t *testing.T, ocspServerURL string) testChain {
+	t.Helper()
+
+	rootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	rootTmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "Root CA"},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+	}
+	rootDER, err := x509.CreateCertificate(rand.Reader, rootTmpl, rootTmpl, &rootKey.PublicKey, rootKey)
+	require.NoError(t, err)
+	rootCert, err := x509.ParseCertificate(rootDER)
+	require.NoError(t, err)
+
+	interKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	interTmpl := &x509.Certificate{
+		SerialNumber:          big.NewInt(2),
+		Subject:               pkix.Name{CommonName: "Intermediate CA"},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+	}
+	interDER, err := x509.CreateCertificate(rand.Reader, interTmpl, rootCert, &interKey.PublicKey, rootKey)
+	require.NoError(t, err)
+	interCert, err := x509.ParseCertificate(interDER)
+	require.NoError(t, err)
+
+	responderKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	responderTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(3),
+		Subject:      pkix.Name{CommonName: "Delegated OCSP Responder"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(24 * time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageOCSPSigning},
+	}
+	responderDER, err := x509.CreateCertificate(rand.Reader, responderTmpl, interCert, &responderKey.PublicKey, interKey)
+	require.NoError(t, err)
+	responderCert, err := x509.ParseCertificate(responderDER)
+	require.NoError(t, err)
+
+	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	leafTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(4),
+		Subject:      pkix.Name{CommonName: "Leaf Certificate"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(24 * time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		OCSPServer:   []string{ocspServerURL},
+	}
+	leafDER, err := x509.CreateCertificate(rand.Reader, leafTmpl, interCert, &leafKey.PublicKey, interKey)
+	require.NoError(t, err)
+	leafCert, err := x509.ParseCertificate(leafDER)
+	require.NoError(t, err)
+
+	return testChain{
+		rootCert:         rootCert,
+		rootKey:          rootKey,
+		intermediateCert: interCert,
+		intermediateKey:  interKey,
+		responderCert:    responderCert,
+		responderKey:     responderKey,
+		leafCert:         leafCert,
+		leafKey:          leafKey,
+	}
+}
+
+func TestFindIssuer(t *testing.T) {
+	chain := generateTestChain(t, "http://ocsp.example.com")
+
+	testCases := []struct {
+		desc       string
+		leaf       *x509.Certificate
+		chain      [][]byte
+		wantIssuer *x509.Certificate
+	}{
+		{
+			desc:       "leaf with intermediate and root (intermediate first)",
+			leaf:       chain.leafCert,
+			chain:      [][]byte{chain.leafCert.Raw, chain.intermediateCert.Raw, chain.rootCert.Raw},
+			wantIssuer: chain.intermediateCert,
+		},
+		{
+			desc:       "leaf with intermediate and root (root first)",
+			leaf:       chain.leafCert,
+			chain:      [][]byte{chain.leafCert.Raw, chain.rootCert.Raw, chain.intermediateCert.Raw},
+			wantIssuer: chain.intermediateCert,
+		},
+		{
+			desc:       "leaf with only intermediate",
+			leaf:       chain.leafCert,
+			chain:      [][]byte{chain.leafCert.Raw, chain.intermediateCert.Raw},
+			wantIssuer: chain.intermediateCert,
+		},
+		{
+			desc:       "intermediate with root",
+			leaf:       chain.intermediateCert,
+			chain:      [][]byte{chain.intermediateCert.Raw, chain.rootCert.Raw},
+			wantIssuer: chain.rootCert,
+		},
+		{
+			desc:       "leaf alone falls back to leaf",
+			leaf:       chain.leafCert,
+			chain:      [][]byte{chain.leafCert.Raw},
+			wantIssuer: chain.leafCert,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			issuer, err := findIssuer(tc.leaf, tc.chain)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantIssuer.SerialNumber, issuer.SerialNumber)
+			assert.Equal(t, tc.wantIssuer.Subject.CommonName, issuer.Subject.CommonName)
+		})
+	}
+}
+
+func TestOCSPStapler_DelegatedResponderMultiCertChain(t *testing.T) {
+	var responderURL string
+	var chain testChain
+
+	handler := func(rw http.ResponseWriter, req *http.Request) {
+		ct := req.Header.Get("Content-Type")
+		assert.Equal(t, "application/ocsp-request", ct)
+
+		reqBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		_, err = ocsp.ParseRequest(reqBytes)
+		require.NoError(t, err)
+
+		thisUpdate := time.Now().Truncate(time.Minute)
+		nextUpdate := thisUpdate.Add(time.Hour)
+
+		ocspResponseTmpl := ocsp.Response{
+			Status:       ocsp.Good,
+			SerialNumber: chain.leafCert.SerialNumber,
+			ThisUpdate:   thisUpdate,
+			NextUpdate:   nextUpdate,
+			Certificate:  chain.responderCert,
+		}
+
+		ocspResponse, err := ocsp.CreateResponse(chain.intermediateCert, chain.responderCert, ocspResponseTmpl, chain.responderKey)
+		require.NoError(t, err)
+
+		rw.Header().Set("Content-Type", "application/ocsp-response")
+		_, err = rw.Write(ocspResponse)
+		require.NoError(t, err)
+	}
+
+	responder := httptest.NewServer(http.HandlerFunc(handler))
+	t.Cleanup(responder.Close)
+	responderURL = responder.URL
+
+	chain = generateTestChain(t, responderURL)
+
+	// Simulate multi-certificate chain where root appears before intermediate.
+	rawChain := [][]byte{chain.leafCert.Raw, chain.rootCert.Raw, chain.intermediateCert.Raw}
+
+	// findIssuer must identify intermediateCert as issuer, not leafCert or rootCert.
+	resolvedIssuer, err := findIssuer(chain.leafCert, rawChain)
+	require.NoError(t, err)
+	assert.Equal(t, chain.intermediateCert.Subject.CommonName, resolvedIssuer.Subject.CommonName)
+
+	ocspStapler := newOCSPStapler(nil)
+	ocspStapler.client = &http.Client{Timeout: time.Second}
+
+	// 1. With properly resolved intermediate issuer, updateStaple must succeed for delegated responder.
+	entry := &ocspEntry{
+		leaf:       chain.leafCert,
+		issuer:     resolvedIssuer,
+		responders: []string{responderURL},
+	}
+
+	err = ocspStapler.updateStaple(t.Context(), entry)
+	require.NoError(t, err)
+	assert.NotEmpty(t, entry.staple)
+
+	// 2. Reproduce failure if entry.issuer is incorrectly set to rootCert.
+	badRootEntry := &ocspEntry{
+		leaf:       chain.leafCert,
+		issuer:     chain.rootCert,
+		responders: []string{responderURL},
+	}
+	err = ocspStapler.updateStaple(t.Context(), badRootEntry)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no OCSP staple obtained from any responders")
+
+	// 3. Reproduce failure if entry.issuer is incorrectly set to leafCert itself.
+	badLeafEntry := &ocspEntry{
+		leaf:       chain.leafCert,
+		issuer:     chain.leafCert,
+		responders: []string{responderURL},
+	}
+	err = ocspStapler.updateStaple(t.Context(), badLeafEntry)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no OCSP staple obtained from any responders")
 }
