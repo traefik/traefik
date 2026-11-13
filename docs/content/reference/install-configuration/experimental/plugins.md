@@ -88,8 +88,10 @@ experimental:
 
 ## Runtime Version
 
-The runtime version only applies to Yaegi plugins.
-It has no effect on Wasm plugins.
+!!! info "Yaegi plugins only"
+
+    The `defaultRuntimeVersion` option and the `runtimeVersion` manifest field only apply to Yaegi plugins.
+    They have no effect on Wasm plugins.
 
 Yaegi plugins run with Yaegi v1 by default.
 The `defaultRuntimeVersion` option selects the version of the Yaegi interpreter, `v1` (default) or `v2`, for all the Yaegi plugins.
