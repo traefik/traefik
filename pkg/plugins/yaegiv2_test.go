@@ -26,7 +26,10 @@ func TestResolveYaegiVersion(t *testing.T) {
 	}{
 		{desc: "default v1", defaultVersion: "v1", expected: YaegiV1},
 		{desc: "default v2", defaultVersion: "v2", expected: YaegiV2},
+		{desc: "default wy", defaultVersion: "wy", expected: Wy},
 		{desc: "manifest v2 with default v1", defaultVersion: "v1", manifest: "v2", expected: YaegiV2},
+		{desc: "manifest wy with default v1", defaultVersion: "v1", manifest: "wy", expected: Wy},
+		{desc: "manifest v2 with default wy", defaultVersion: "wy", manifest: "v2", expected: YaegiV2},
 		{desc: "manifest v1 is refused", defaultVersion: "v2", manifest: "v1", wantErr: true},
 		{desc: "unknown default", defaultVersion: "v3", wantErr: true},
 		{desc: "empty default", wantErr: true},

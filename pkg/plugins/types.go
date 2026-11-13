@@ -5,10 +5,11 @@ const (
 	runtimeWasm  = "wasm"
 )
 
-// Versions of the Yaegi interpreter.
+// Versions of the Yaegi interpreter, and wy, an alternative Go interpreter.
 const (
 	YaegiV1 = "v1"
 	YaegiV2 = "v2"
+	Wy      = "wy"
 )
 
 const (
