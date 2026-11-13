@@ -304,8 +304,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
 github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
 github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c/go.mod h1:GyV+0YP4qX0UQ7r2MoYZ+AvYDp12OF5yg4q8rGnyNh4=
-github.com/darkweak/wy v0.0.0-20261113175324-22db81c094c9 h1:jh1s3K0wv+keFyv5FnCcEuV42aPj+FV2P9odlx+wcJ8=
-github.com/darkweak/wy v0.0.0-20261113175324-22db81c094c9/go.mod h1:Krb8YwOywSm+S7jGn2/lvNQkNTQ0WBkEMAoF6ZH8Wqg=
+github.com/darkweak/wy v0.0.0-20261113204620-b9eca3d6334f h1:YT2Q3LexuKdfEQIUT/VpOwZ5YlOnHwdYOQXr7lW9SMA=
+github.com/darkweak/wy v0.0.0-20261113204620-b9eca3d6334f/go.mod h1:Krb8YwOywSm+S7jGn2/lvNQkNTQ0WBkEMAoF6ZH8Wqg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

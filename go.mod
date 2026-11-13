@@ -19,7 +19,7 @@ require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.7.0
-	github.com/darkweak/wy v0.0.0-20261113175324-22db81c094c9
+	github.com/darkweak/wy v0.0.0-20261113204620-b9eca3d6334f
 	github.com/docker/cli v29.8.1+incompatible
 	github.com/docker/go-connections v0.8.1
 	github.com/fatih/structs v1.1.0
