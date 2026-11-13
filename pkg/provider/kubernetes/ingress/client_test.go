@@ -306,3 +306,38 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 }
+
+func TestClientSetsTypeMeta(t *testing.T) {
+	ingress := &netv1.Ingress{
+		Namespace: "default",
+		Name:      "ingress",
+	}
+	service := &corev1.Service{
+		Namespace: "default",
+		Name:      "service",
+	}
+
+	kubeClient := kubefake.NewClientset(ingress, service)
+
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{
+		GitVersion: "v1.19",
+	}
+
+	client := newClientImpl(kubeClient)
+
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	ingresses := client.GetIngresses()
+	require.Len(t, ingresses, 1)
+	assert.Equal(t, netv1.SchemeGroupVersion.WithKind("Ingress"), ingresses[0].GetObjectKind().GroupVersionKind())
+
+	svc, found, err := client.GetService("default", "service")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, corev1.SchemeGroupVersion.WithKind("Service"), svc.GetObjectKind().GroupVersionKind())
+}

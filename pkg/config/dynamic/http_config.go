@@ -66,10 +66,8 @@ type Service struct {
 	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Mirroring           *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
-	// Observability carries provider-populated metadata surfaced per request
-	// in access logs and future metric labels. Mirrors the Router.Observability
-	// shape. Not user-configurable.
-	Observability *ServiceObservabilityConfig `json:"observability,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+
+	Metadata *ServiceMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // Merge merges another Service into this one.
@@ -101,6 +99,8 @@ type Router struct {
 	RespondingTimeouts          *RouterRespondingTimeouts          `json:"respondingTimeouts,omitempty" toml:"respondingTimeouts,omitempty" yaml:"respondingTimeouts,omitempty" export:"true"`
 	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+
+	Metadata *Metadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -188,67 +188,11 @@ type RouterObservabilityConfig struct {
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
 	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
-
-	// Metadata holds the metadata for this router.
-	// Metadata cannot be user-defined for now.
-	Metadata *ObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
 	r.TraceVerbosity = otypes.MinimalVerbosity
-}
-
-// IsMetadataOnly returns whether the observability configuration only holds metadata,
-// without any access logs, metrics or tracing settings.
-func (r *RouterObservabilityConfig) IsMetadataOnly() bool {
-	return r.Metadata != nil &&
-		r.AccessLogs == nil &&
-		r.Metrics == nil &&
-		r.Tracing == nil &&
-		r.TraceVerbosity == ""
-}
-
-// +k8s:deepcopy-gen=true
-
-// ObservabilityMetadata holds the observability metadata configuration.
-type ObservabilityMetadata struct {
-	Ingress *KubernetesMetadata `json:"ingress,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// KubernetesMetadata holds the Kubernetes Ingress metadata.
-type KubernetesMetadata struct {
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Kind      string `json:"kind,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ServiceObservabilityConfig holds the observability configuration of a service.
-type ServiceObservabilityConfig struct {
-	// Metadata carries provider-populated identity for the leaf service.
-	Metadata *ServiceObservabilityMetadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// ServiceObservabilityMetadata carries provider-populated identity for a leaf service.
-type ServiceObservabilityMetadata struct {
-	Kubernetes *KubernetesServiceMetadata `json:"kubernetes,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// KubernetesServiceMetadata holds the Kubernetes Service identity backing a
-// leaf load balancer (name, namespace and port after cross-namespace resolution).
-// Populated by Kubernetes providers.
-type KubernetesServiceMetadata struct {
-	Namespace string `json:"namespace,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Port      string `json:"port,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -601,6 +545,8 @@ type ServersTransport struct {
 	PeerCertURI  string           `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty"`
 	PeerCertSANs []traefiktls.SAN `description:"Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification." json:"peerCertSANs,omitempty" toml:"peerCertSANs,omitempty" yaml:"peerCertSANs,omitempty"`
 	Spiffe       *Spiffe          `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	Metadata *Metadata `json:"metadata,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true

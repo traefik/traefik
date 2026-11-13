@@ -208,21 +208,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
-	if metadata := observability.GetObservabilityMetadata(req.Context()); metadata != nil {
-		// Dispatch on the source resource kind so each kind maps to its own
-		// stable access-log field names. A single generic struct backs every
-		// Kubernetes provider; only the kind differs.
-		if k := metadata.Ingress; k != nil {
-			switch k.Kind {
-			case "Ingress":
-				logDataTable.Core[KubernetesIngressNamespace] = k.Namespace
-				logDataTable.Core[KubernetesIngressName] = k.Name
-			case "IngressRoute":
-				logDataTable.Core[KubernetesIngressRouteNamespace] = k.Namespace
-				logDataTable.Core[KubernetesIngressRouteName] = k.Name
-			}
-		}
-	}
+	addRouterMetadataFields(logDataTable.Core, observability.GetObservabilityMetadata(req.Context()))
 
 	if span := trace.SpanFromContext(req.Context()); span != nil {
 		spanContext := span.SpanContext()
@@ -293,16 +279,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		logDataTable.DownstreamResponse.size = capt.ResponseSize()
 		logDataTable.Request.size = capt.RequestSize()
 
-		// Service-level observability metadata is written by the leaf service
-		// handler while the chain runs (the state container is shared by
-		// pointer via the request context). Read it once here so the fields
-		// reflect the backend the load balancer actually dispatched to.
-		if state := observability.GetServiceObservabilityState(reqWithDataTable.Context()); state != nil && state.Metadata != nil {
-			if k := state.Metadata.Kubernetes; k != nil {
-				core[KubernetesServiceName] = k.Name
-				core[KubernetesServiceNamespace] = k.Namespace
-				core[KubernetesServicePort] = k.Port
-			}
+		// Service-level metadata is written by the service handlers while the
+		// chain runs (the state container is shared by pointer via the request
+		// context). Read it once here so the fields reflect the backend the
+		// load balancer actually dispatched to.
+		if state := observability.GetServiceObservabilityState(reqWithDataTable.Context()); state != nil {
+			addServiceMetadataFields(core, state.Metadata)
 		}
 
 		if _, ok := core[ClientUsername]; !ok {

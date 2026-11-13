@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
@@ -85,9 +86,11 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, gateways []gatewayWithList
 				attachedRoutes.Record(ref, kindHTTPRoute, hostnames)
 			}
 
+			routeParentRef := dynamic.MakeKubernetesRef(route, fmt.Sprintf("/spec/parentRefs/%d", match.ParentRefIndex))
+
 			// The ResolvedRefs condition must be reported for every parentRef,
 			// even when the route does not attach to the listener.
-			routerConfs, condition := p.loadHTTPRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, hostnames, statusReport)
+			routerConfs, condition := p.loadHTTPRouteConfiguration(logger.WithContext(ctx), match.GatewayName, match.GatewayNamespace, listener, route, routeParentRef, hostnames, statusReport)
 			if resolvedRefCondition == nil || resolvedRefCondition.Status == metav1.ConditionTrue {
 				resolvedRefCondition = new(condition)
 			}
@@ -128,7 +131,7 @@ type httpRouteRouter struct {
 	Conf *dynamic.Configuration
 }
 
-func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, hostnames []gatev1.Hostname, statusReport *statusReport) ([]httpRouteRouter, metav1.Condition) {
+func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, route *gatev1.HTTPRoute, routeParentRef dynamic.KubernetesRef, hostnames []gatev1.Hostname, statusReport *statusReport) ([]httpRouteRouter, metav1.Condition) {
 	var routers []httpRouteRouter
 
 	condition := metav1.Condition{
@@ -140,6 +143,8 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 	}
 
 	for ri, routeRule := range route.Spec.Rules {
+		ruleSource := dynamic.MakeKubernetesRef(route, fmt.Sprintf("/spec/rules/%d", ri))
+
 		var respondingTimeouts *dynamic.RouterRespondingTimeouts
 		if routeRule.Timeouts != nil {
 			if routeRule.Timeouts.Request != nil {
@@ -161,6 +166,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 		var retry *dynamic.Middleware
 		if routeRule.Retry != nil {
 			retry = createRetry(ctx, routeRule.Retry, p.RetryMaxRequestBodyBytes)
+			retry.Metadata = k8s.NewMetadata(dynamic.MakeKubernetesRef(route, ruleSource.Path+"/retry"))
 		}
 
 		for _, match := range routeRule.Matches {
@@ -172,6 +178,12 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 				Priority:           priority + len(route.Spec.Rules) - ri,
 				ParentRefs:         listener.RouterNames,
 				RespondingTimeouts: respondingTimeouts,
+				Metadata: k8s.NewMetadata(
+					dynamic.MakeKubernetesRef(route, "/spec/hostnames"),
+					routeParentRef,
+					ruleSource,
+					listener.ListenerSource,
+				),
 			}
 
 			routerName := makeRouterName(strings.ToLower(kindHTTPRoute), rule, route.Namespace, route.Name, gatewayNamespace, gatewayName, listener.EPName, ri)
@@ -193,7 +205,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 			//  - an invalid RequestMirror backend reference only drops the mirror, as per the spec, but the route keeps
 			//    ResolvedRefs=True, whereas the spec requires ResolvedRefs=False, with the RefNotPermitted reason when
 			//    the reference is not allowed by a ReferenceGrant. This applies to backend-level filters too.
-			router.Middlewares, err = p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, route, routeRule.Filters, match.Path, statusReport)
+			router.Middlewares, err = p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, route, ruleSource, routeRule.Filters, match.Path, statusReport)
 			switch {
 			case err != nil:
 				log.Ctx(ctx).Debug().Err(err).Msg("Unable to load HTTPRoute filters")
@@ -209,6 +221,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 							},
 						},
 					},
+					Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(route, ruleSource.Path+"/filters")),
 				}
 				router.Service = errWrrName
 
@@ -228,7 +241,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 
 			default:
 				var serviceCondition *metav1.Condition
-				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, routeRule, route, match.Path, statusReport)
+				router.Service, serviceCondition = p.loadWRRService(ctx, gatewayName, gatewayNamespace, listener, routerConf, routerName, routeRule, route, ruleSource, match.Path, statusReport)
 				if serviceCondition != nil {
 					condition = *serviceCondition
 				}
@@ -251,7 +264,7 @@ func (p *Provider) loadHTTPRouteConfiguration(ctx context.Context, gatewayName, 
 	return routers, condition
 }
 
-func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, routeRule gatev1.HTTPRouteRule, route *gatev1.HTTPRoute, ruleSource dynamic.KubernetesRef, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (string, *metav1.Condition) {
 	name := routerName + "-wrr"
 	if _, ok := conf.HTTP.Services[name]; ok {
 		return name, nil
@@ -271,6 +284,7 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 					},
 				},
 			},
+			Metadata: k8s.NewServiceMetadata(ruleSource),
 		}
 
 		return name, nil
@@ -292,9 +306,11 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for bi, backendRef := range routeRule.BackendRefs {
+		backendSource := dynamic.MakeKubernetesRef(route, fmt.Sprintf("%s/backendRefs/%d", ruleSource.Path, bi))
+
 		// TODO in loadService we need to always return a non-nil serviceName even when there is an error which is not the
 		// usual defacto.
-		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, pathMatch, responseHeaderTimeout, statusReport)
+		svcName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, routerName, route, bi, backendRef, backendSource, ruleSource, pathMatch, responseHeaderTimeout, statusReport)
 		weight := new(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Debug().Msgf("Unable to load HTTPRoute backend: %s", errCondition.Message)
@@ -314,13 +330,16 @@ func (p *Provider) loadWRRService(ctx context.Context, gatewayName, gatewayNames
 		})
 	}
 
-	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
+	conf.HTTP.Services[name] = &dynamic.Service{
+		Weighted: &wrr,
+		Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(route, ruleSource.Path+"/backendRefs")),
+	}
 	return name, condition
 }
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, routerName string, route *gatev1.HTTPRoute, backendIndex int, backendRef gatev1.HTTPBackendRef, backendSource, ruleSource dynamic.KubernetesRef, pathMatch *gatev1.HTTPPathMatch, responseHeaderTimeout ptypes.Duration, statusReport *statusReport) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -357,7 +376,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespac
 		}
 	}
 
-	middlewares, err := p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, conf, serviceName, route, backendRef.Filters, pathMatch, statusReport)
+	middlewares, err := p.loadMiddlewares(ctx, gatewayName, gatewayNamespace, listener, conf, serviceName, route, backendSource, backendRef.Filters, pathMatch, statusReport)
 	if err != nil {
 		return serviceName, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -403,15 +422,16 @@ func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespac
 		}
 	}
 
-	lb, st, errCondition := p.loadHTTPServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
+	lb, st, serviceSource, errCondition := p.loadHTTPServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
 
 	if responseHeaderTimeout > 0 {
 		if st == nil {
-			st = &dynamic.ServersTransport{}
+			st = &dynamic.ServersTransport{Metadata: k8s.NewMetadata()}
 		}
+		st.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(route, ruleSource.Path+"/timeouts"))
 
 		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{}
 		st.ForwardingTimeouts.SetDefaults()
@@ -423,7 +443,10 @@ func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespac
 		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
-	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb, Middlewares: middlewares}
+	metadata := k8s.NewServiceMetadata(serviceSource, backendSource)
+	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
+
+	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb, Middlewares: middlewares, Metadata: metadata}
 
 	return serviceName, nil
 }
@@ -450,7 +473,7 @@ func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBa
 	return backendFunc(string(backendRef.Name), namespace)
 }
 
-func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) ([]string, error) {
+func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, parentName string, route *gatev1.HTTPRoute, ruleSource dynamic.KubernetesRef, filters []gatev1.HTTPRouteFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) ([]string, error) {
 	type namedMiddleware struct {
 		Name   string
 		Config *dynamic.Middleware
@@ -464,24 +487,25 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 	var middlewares []namedMiddleware
 	for i, filter := range filters {
 		name := fmt.Sprintf("%s-%s-%d", parentName, strings.ToLower(string(filter.Type)), i)
+		filterSource := dynamic.MakeKubernetesRef(route, fmt.Sprintf("%s/filters/%d", ruleSource.Path, i))
 
 		switch filter.Type {
 		case gatev1.HTTPRouteFilterRequestRedirect:
 			middlewares = append(middlewares, namedMiddleware{
 				name,
-				createRequestRedirect(filter.RequestRedirect, pm),
+				createRequestRedirect(filter.RequestRedirect, pm, filterSource),
 			})
 
 		case gatev1.HTTPRouteFilterRequestHeaderModifier:
 			middlewares = append(middlewares, namedMiddleware{
 				name,
-				createRequestHeaderModifier(filter.RequestHeaderModifier),
+				createRequestHeaderModifier(filter.RequestHeaderModifier, filterSource),
 			})
 
 		case gatev1.HTTPRouteFilterResponseHeaderModifier:
 			middlewares = append(middlewares, namedMiddleware{
 				name,
-				createResponseHeaderModifier(filter.ResponseHeaderModifier),
+				createResponseHeaderModifier(filter.ResponseHeaderModifier, filterSource),
 			})
 
 		case gatev1.HTTPRouteFilterExtensionRef:
@@ -495,7 +519,7 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 			})
 
 		case gatev1.HTTPRouteFilterURLRewrite:
-			middleware, err := createURLRewrite(filter.URLRewrite, pm)
+			middleware, err := createURLRewrite(filter.URLRewrite, pm, filterSource)
 			if err != nil {
 				return nil, fmt.Errorf("invalid filter %s: %w", filter.Type, err)
 			}
@@ -507,11 +531,11 @@ func (p *Provider) loadMiddlewares(ctx context.Context, gatewayName, gatewayName
 		case gatev1.HTTPRouteFilterCORS:
 			middlewares = append(middlewares, namedMiddleware{
 				name,
-				createCORS(filter.CORS),
+				createCORS(filter.CORS, filterSource),
 			})
 
 		case gatev1.HTTPRouteFilterRequestMirror:
-			middleware, err := p.loadRequestMirror(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, filter.RequestMirror, pathMatch, statusReport)
+			middleware, err := p.loadRequestMirror(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, filterSource, filter.RequestMirror, pathMatch, statusReport)
 			if err != nil {
 				// As per the spec, an invalid mirror is dropped without failing the request.
 				log.Ctx(ctx).Debug().Err(err).Msg("Dropping RequestMirror filter")
@@ -558,10 +582,10 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
-	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
+func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *statusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, dynamic.KubernetesRef, *metav1.Condition) {
+	backendAddresses, svcPort, serviceSource, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, nil, &metav1.Condition{
+		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -573,7 +597,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 
 	backendTLSPolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
 	if err != nil {
-		return nil, nil, &metav1.Condition{
+		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -668,7 +692,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			// When something wen wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
-				return nil, nil, &metav1.Condition{
+				return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
 					Type:               string(gatev1.RouteConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: route.Generation,
@@ -676,6 +700,10 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 					Reason:             string(gatev1.RouteReasonRefNotPermitted),
 					Message:            fmt.Sprintf("Cannot apply BackendTLSPolicy for Service %s/%s: %s", namespace, string(backendRef.Name), resolvedRefCondition.Message),
 				}
+			}
+
+			if len(listener.BackendClientCertificates) > 0 {
+				serversTransport.Metadata.Kubernetes.Sources.Add(listener.BackendTLSSource)
 			}
 		}
 	}
@@ -689,7 +717,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 	if serversTransport == nil {
 		protocol, err = getHTTPServiceProtocol(svcPort)
 		if err != nil {
-			return nil, nil, &metav1.Condition{
+			return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -705,13 +733,14 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
-	return lb, serversTransport, nil
+	return lb, serversTransport, serviceSource, nil
 }
 
 func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.ServersTransport, metav1.Condition) {
 	st := &dynamic.ServersTransport{
 		ServerName:   string(policy.Spec.Validation.Hostname),
 		Certificates: clientCertificates,
+		Metadata:     k8s.NewMetadata(dynamic.MakeKubernetesRef(policy, "/spec")),
 	}
 
 	if len(policy.Spec.Validation.SubjectAltNames) > 0 {
@@ -1012,7 +1041,7 @@ func buildQueryParamRules(queryParams []gatev1.HTTPQueryParamMatch) ([]string, i
 
 // createRequestHeaderModifier does not enforce/check the configuration,
 // as the spec indicates that either the webhook or CEL (since v1.0 GA Release) should enforce that.
-func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middleware {
+func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter, filterSource dynamic.KubernetesRef) *dynamic.Middleware {
 	sets := map[string]string{}
 	for _, header := range filter.Set {
 		sets[string(header.Name)] = header.Value
@@ -1029,12 +1058,13 @@ func createRequestHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middl
 			Add:    adds,
 			Remove: filter.Remove,
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}
 }
 
 // createResponseHeaderModifier does not enforce/check the configuration,
 // as the spec indicates that either the webhook or CEL (since v1.0 GA Release) should enforce that.
-func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Middleware {
+func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter, filterSource dynamic.KubernetesRef) *dynamic.Middleware {
 	sets := map[string]string{}
 	for _, header := range filter.Set {
 		sets[string(header.Name)] = header.Value
@@ -1051,10 +1081,11 @@ func createResponseHeaderModifier(filter *gatev1.HTTPHeaderFilter) *dynamic.Midd
 			Add:    adds,
 			Remove: filter.Remove,
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}
 }
 
-func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch) *dynamic.Middleware {
+func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch gatev1.HTTPPathMatch, filterSource dynamic.KubernetesRef) *dynamic.Middleware {
 	var hostname *string
 	if filter.Hostname != nil {
 		hostname = new(string(*filter.Hostname))
@@ -1090,10 +1121,11 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch g
 			PathPrefix: pathPrefix,
 			StatusCode: ptr.Deref(filter.StatusCode, http.StatusFound),
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}
 }
 
-func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTPPathMatch) (*dynamic.Middleware, error) {
+func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTPPathMatch, filterSource dynamic.KubernetesRef) (*dynamic.Middleware, error) {
 	if filter.Path == nil && filter.Hostname == nil {
 		return nil, errors.New("empty configuration")
 	}
@@ -1121,10 +1153,11 @@ func createURLRewrite(filter *gatev1.HTTPURLRewriteFilter, pathMatch gatev1.HTTP
 			Path:       path,
 			PathPrefix: pathPrefix,
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}, nil
 }
 
-func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
+func createCORS(filter *gatev1.HTTPCORSFilter, filterSource dynamic.KubernetesRef) *dynamic.Middleware {
 	var allowOrigins, allowOriginsRegex []string
 	for _, origin := range filter.AllowOrigins {
 		if prefix, suffix, found := strings.Cut(string(origin), "*"); found {
@@ -1167,6 +1200,7 @@ func createCORS(filter *gatev1.HTTPCORSFilter) *dynamic.Middleware {
 			AccessControlExposeHeaders:        exposeHeaders,
 			AccessControlMaxAge:               new(int64(filter.MaxAge)),
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}
 }
 
@@ -1248,13 +1282,14 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 }
 
 // loadRequestMirror returns the middleware mirroring the requests to the backend of the given filter.
-func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
+func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNamespace string, listener gatewayListener, conf *dynamic.Configuration, name string, route *gatev1.HTTPRoute, filterSource dynamic.KubernetesRef, filter *gatev1.HTTPRequestMirrorFilter, pathMatch *gatev1.HTTPPathMatch, statusReport *statusReport) (*dynamic.Middleware, error) {
 	if filter == nil {
 		return nil, errors.New("missing configuration")
 	}
 
 	mirrorBackendRef := gatev1.HTTPBackendRef{BackendObjectReference: filter.BackendRef}
-	serviceName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, pathMatch, 0, statusReport)
+	backendSource := dynamic.MakeKubernetesRef(route, filterSource.Path+"/requestMirror/backendRef")
+	serviceName, errCondition := p.loadService(ctx, gatewayName, gatewayNamespace, listener, conf, name, route, 0, mirrorBackendRef, backendSource, dynamic.KubernetesRef{}, pathMatch, 0, statusReport)
 	if errCondition != nil {
 		return nil, errors.New(errCondition.Message)
 	}
@@ -1280,5 +1315,6 @@ func (p *Provider) loadRequestMirror(ctx context.Context, gatewayName, gatewayNa
 			Numerator:   numerator,
 			Denominator: denominator,
 		},
+		Metadata: k8s.NewMetadata(filterSource),
 	}, nil
 }

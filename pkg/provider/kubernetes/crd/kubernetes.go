@@ -296,6 +296,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 		if errorPageService != nil {
+			errorPageService.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(middleware, "/spec/errors/service"))
 			addToConfig(log.Ctx(ctxMid), "service", errorPage.Service, conf.HTTP.Services, errorPageService)
 		}
 
@@ -329,7 +330,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		tap, tapServices, err := p.createTapMiddleware(ctxMid, client, middleware.Namespace, id, middleware.Spec.Tap)
+		tap, tapServices, err := p.createTapMiddleware(ctxMid, client, middleware, id)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading tap middleware")
 			continue
@@ -367,6 +368,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Tap:               tap,
 			Plugin:            plugin,
 			URNRefs:           refs.OrNil(),
+			Metadata:          k8s.NewMetadata(dynamic.MakeKubernetesRef(middleware, "/spec")),
 		})
 	}
 
@@ -377,6 +379,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
 			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
 			IPAllowList:  middlewareTCP.Spec.IPAllowList,
+			Metadata:     k8s.NewMetadata(dynamic.MakeKubernetesRef(middlewareTCP, "/spec")),
 		})
 	}
 
@@ -580,6 +583,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			PeerCertURI:         serversTransport.Spec.PeerCertURI,
 			PeerCertSANs:        serversTransport.Spec.PeerCertSANs,
 			Spiffe:              serversTransport.Spec.Spiffe,
+			Metadata:            k8s.NewMetadata(dynamic.MakeKubernetesRef(serversTransport, "/spec")),
 		})
 	}
 
@@ -588,6 +592,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		var tcpServerTransport dynamic.TCPServersTransport
 		tcpServerTransport.SetDefaults()
+		tcpServerTransport.Metadata = k8s.NewMetadata(dynamic.MakeKubernetesRef(serversTransportTCP, "/spec"))
 
 		if serversTransportTCP.Spec.DialTimeout != nil {
 			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
@@ -733,12 +738,15 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 	return errp, service, nil
 }
 
-// createTapMiddleware returns the tap middleware configuration,
+// createTapMiddleware returns the tap middleware configuration of middleware,
 // along with the services to register for the destinations referencing a Kubernetes Service.
-func (p *Provider) createTapMiddleware(ctx context.Context, client Client, namespace, id string, tap *traefikv1alpha1.Tap) (*dynamic.Tap, map[string]*dynamic.Service, error) {
+func (p *Provider) createTapMiddleware(ctx context.Context, client Client, middleware *traefikv1alpha1.Middleware, id string) (*dynamic.Tap, map[string]*dynamic.Service, error) {
+	tap := middleware.Spec.Tap
 	if tap == nil {
 		return nil, nil, nil
 	}
+
+	namespace := middleware.Namespace
 
 	var conf dynamic.Tap
 
@@ -753,17 +761,32 @@ func (p *Provider) createTapMiddleware(ctx context.Context, client Client, names
 	}
 
 	if tap.Request != nil {
-		var err error
-		conf.Request, err = createTapRecord(ctx, cb, namespace, id+"-tap-request-service", *tap.Request, services)
+		serviceKey := id + "-tap-request-service"
+
+		record, service, err := createTapRecord(ctx, cb, namespace, serviceKey, *tap.Request)
 		if err != nil {
 			return nil, nil, fmt.Errorf("creating tap request record: %w", err)
+		}
+
+		conf.Request = record
+
+		if service != nil {
+			service.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(middleware, "/spec/tap/request/service"))
+			services[serviceKey] = service
 		}
 	}
 
 	if tap.Response != nil {
-		record, err := createTapRecord(ctx, cb, namespace, id+"-tap-response-service", tap.Response.TapRequest, services)
+		serviceKey := id + "-tap-response-service"
+
+		record, service, err := createTapRecord(ctx, cb, namespace, serviceKey, tap.Response.TapRequest)
 		if err != nil {
 			return nil, nil, fmt.Errorf("creating tap response record: %w", err)
+		}
+
+		if service != nil {
+			service.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(middleware, "/spec/tap/response/service"))
+			services[serviceKey] = service
 		}
 
 		conf.Response = &dynamic.TapResponse{
@@ -795,10 +818,12 @@ func (p *Provider) createChainMiddleware(ctx context.Context, parentNamespace st
 	return &dynamic.Chain{Middlewares: mds}, nil
 }
 
-func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKey string, record traefikv1alpha1.TapRequest, services map[string]*dynamic.Service) (*dynamic.TapRequest, error) {
+// createTapRecord returns the tap record configuration,
+// along with the service to register under serviceKey when the destination references a Kubernetes Service.
+func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKey string, record traefikv1alpha1.TapRequest) (*dynamic.TapRequest, *dynamic.Service, error) {
 	serviceName, service, err := cb.nameAndService(ctx, namespace, record.Service.LoadBalancerSpec, serviceKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	conf := &dynamic.TapRequest{}
@@ -810,7 +835,6 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 	conf.Service = serviceName
 	if service != nil {
 		conf.Service = serviceKey
-		services[serviceKey] = service
 	}
 
 	if record.Path != "" {
@@ -823,11 +847,11 @@ func createTapRecord(ctx context.Context, cb configBuilder, namespace, serviceKe
 
 	if record.Timeout != nil {
 		if err := conf.Timeout.Set(record.Timeout.String()); err != nil {
-			return nil, fmt.Errorf("setting timeout value: %w", err)
+			return nil, nil, fmt.Errorf("setting timeout value: %w", err)
 		}
 	}
 
-	return conf, nil
+	return conf, service, nil
 }
 
 // getServicePort always returns a valid port, an error otherwise.
@@ -1702,11 +1726,52 @@ func buildCertificates(ctx context.Context, client Client, tlsStore, namespace s
 // replaced by obj. This is most likely to happen when SafeNaming is disabled, as the legacy naming scheme
 // does not guarantee that generated names are unique.
 func addToConfig[T any](logger *zerolog.Logger, kind, name string, objects map[string]T, obj T) {
-	if existing, ok := objects[name]; ok && !reflect.DeepEqual(existing, obj) {
-		logger.Warn().Msgf("Name collision: %s %q is defined more than once, the previous definition will be overridden", kind, name)
+	if existing, ok := objects[name]; ok {
+		// We want to record all different sources that contribute to the creation of a resource.
+		mergeMetadata(obj, existing)
+
+		if !equalWithoutMetadata(existing, obj) {
+			logger.Warn().Msgf("Name collision: %s %q is defined more than once, the previous definition will be overridden", kind, name)
+		}
 	}
 
 	objects[name] = obj
+}
+
+// mergeMetadata tries to call the Merge method on src to merge the Metadata of src into the one of dst.
+func mergeMetadata[T any](dst, src T) {
+	vDst, vSrc := reflect.Indirect(reflect.ValueOf(dst)), reflect.Indirect(reflect.ValueOf(src))
+	if vDst.Kind() != reflect.Struct || vSrc.Kind() != reflect.Struct {
+		return
+	}
+
+	mDst, mSrc := vDst.FieldByName("Metadata"), vSrc.FieldByName("Metadata")
+	if !mDst.IsValid() || mDst.IsZero() || mSrc.IsZero() {
+		return
+	}
+
+	merge := mDst.MethodByName("Merge")
+	if !merge.IsValid() || merge.Type().NumIn() != 1 || !mSrc.Type().AssignableTo(merge.Type().In(0)) {
+		return
+	}
+
+	merge.Call([]reflect.Value{mSrc})
+}
+
+// equalWithoutMetadata reports whether a and b are equal, ignoring their Metadata field.
+func equalWithoutMetadata[T any](a, b T) bool {
+	va, vb := reflect.Indirect(reflect.ValueOf(a)), reflect.Indirect(reflect.ValueOf(b))
+	if va.Kind() != reflect.Struct || vb.Kind() != reflect.Struct || !va.FieldByName("Metadata").IsValid() {
+		return reflect.DeepEqual(a, b)
+	}
+
+	ca, cb := reflect.New(va.Type()).Elem(), reflect.New(vb.Type()).Elem()
+	ca.Set(va)
+	cb.Set(vb)
+	ca.FieldByName("Metadata").SetZero()
+	cb.FieldByName("Metadata").SetZero()
+
+	return reflect.DeepEqual(ca.Interface(), cb.Interface())
 }
 
 func shouldProcessIngress(ingressClass, ingressClassName string) bool {

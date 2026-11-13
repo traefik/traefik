@@ -1381,11 +1381,11 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing,
 		}
 
 		if metadata {
-			obs.Metadata = &dynamic.ObservabilityMetadata{
-				Ingress: &dynamic.KubernetesMetadata{
-					Kind:      "Ingress",
-					Namespace: "test-namespace",
-					Name:      "test-ingress",
+			obs.Metadata = &dynamic.Metadata{
+				Kubernetes: &dynamic.KubernetesMetadata{
+					Sources: dynamic.KubernetesSources{
+						{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "test-namespace", Name: "test-ingress", Path: "/spec/rules/0/http/paths/0"},
+					},
 				},
 			}
 		}
@@ -1401,11 +1401,13 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing,
 			return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 				ctx := observability.WithServiceObservabilityState(r.Context())
 				state := observability.GetServiceObservabilityState(ctx)
-				state.Metadata = &dynamic.ServiceObservabilityMetadata{
+				state.Metadata = &dynamic.ServiceMetadata{
 					Kubernetes: &dynamic.KubernetesServiceMetadata{
-						Namespace: "test-namespace",
-						Name:      "test-service",
-						Port:      "test-port",
+						Sources: dynamic.KubernetesSources{
+							{Version: "v1", Kind: "Service", Namespace: "test-namespace", Name: "test-service", Path: "/spec/ports/0"},
+							{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "test-namespace", Name: "test-ingress", Path: "/spec/rules/0/http/paths/0/backend"},
+						},
+						ServicePort: "test-port",
 					},
 				}
 				next.ServeHTTP(rw, r.WithContext(ctx))

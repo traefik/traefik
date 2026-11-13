@@ -11,13 +11,48 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "api.route",
-						"kind": "IngressRoute"
-					}
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "444",
+							"namespace": "default",
+							"name": "api.route",
+							"path": "/spec/entryPoints"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "444",
+							"namespace": "default",
+							"name": "api.route",
+							"path": "/spec/parentRefs"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "444",
+							"namespace": "default",
+							"name": "api.route",
+							"path": "/spec/routes/0"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "444",
+							"namespace": "default",
+							"name": "api.route",
+							"path": "/spec/tls"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -39,13 +74,48 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
-						"namespace": "default",
-						"name": "test.route",
-						"kind": "IngressRoute"
-					}
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "342",
+							"namespace": "default",
+							"name": "test.route",
+							"path": "/spec/entryPoints"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "342",
+							"namespace": "default",
+							"name": "test.route",
+							"path": "/spec/parentRefs"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "342",
+							"namespace": "default",
+							"name": "test.route",
+							"path": "/spec/routes/0"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "342",
+							"namespace": "default",
+							"name": "test.route",
+							"path": "/spec/tls"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -68,10 +138,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.9:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.3:80"
 					}
 				],
 				"strategy": "wrr",
@@ -80,13 +150,28 @@
 					"flushInterval": "100ms"
 				}
 			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
-						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "316",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "traefik.io",
+							"version": "v1alpha1",
+							"kind": "IngressRoute",
+							"resourceVersion": "342",
+							"namespace": "default",
+							"name": "test.route",
+							"path": "/spec/routes/0/services/0"
+						}
+					],
+					"servicePort": "80"
 				}
 			},
 			"status": "enabled",
@@ -94,8 +179,8 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.8:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.9:80": "UP"
 			}
 		},
 		"noop@internal": {

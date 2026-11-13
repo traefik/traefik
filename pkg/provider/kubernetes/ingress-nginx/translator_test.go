@@ -31,7 +31,7 @@ func TestApplyFromToWwwRedirect(t *testing.T) {
 		Middlewares: []string{"router-basic-auth"},
 	}
 
-	applyFromToWwwRedirect(loc, "router", rt, nil, conf)
+	applyFromToWwwRedirect(loc, "router", rt, conf)
 
 	router := conf.HTTP.Routers["router-from-to-www-redirect"]
 	require.NotNil(t, router)
