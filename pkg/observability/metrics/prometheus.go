@@ -289,7 +289,9 @@ func registerPromState(ctx context.Context) bool {
 
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
-// and sets it to the promState.
+// and sets it to the promState, as well as to the OpenTelemetry gauge
+// collector so that both registries can prune metric values that no longer
+// belong to the current configuration.
 func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 	dynCfg := newDynamicConfig()
 
@@ -297,25 +299,26 @@ func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 		dynCfg.entryPoints[value] = true
 	}
 
-	if conf.HTTP == nil {
-		promState.SetDynamicConfig(dynCfg)
-		return
-	}
+	if conf.HTTP != nil {
+		for name := range conf.HTTP.Routers {
+			dynCfg.routers[name] = true
+		}
 
-	for name := range conf.HTTP.Routers {
-		dynCfg.routers[name] = true
-	}
-
-	for serviceName, service := range conf.HTTP.Services {
-		dynCfg.services[serviceName] = make(map[string]bool)
-		if service.LoadBalancer != nil {
-			for _, server := range service.LoadBalancer.Servers {
-				dynCfg.services[serviceName][server.URL] = true
+		for serviceName, service := range conf.HTTP.Services {
+			dynCfg.services[serviceName] = make(map[string]bool)
+			if service.LoadBalancer != nil {
+				for _, server := range service.LoadBalancer.Servers {
+					dynCfg.services[serviceName][server.URL] = true
+				}
 			}
 		}
 	}
 
 	promState.SetDynamicConfig(dynCfg)
+
+	if openTelemetryGaugeCollector != nil {
+		openTelemetryGaugeCollector.setDynamicConfig(dynCfg)
+	}
 }
 
 func newPrometheusState() *prometheusState {
