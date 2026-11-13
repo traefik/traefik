@@ -23,11 +23,13 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatev1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
@@ -10521,4 +10523,39 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 	}
 
 	return k8sObjects, gwObjects
+}
+
+func TestEndpointSliceReadyCondition(t *testing.T) {
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "backend", Namespace: "default"},
+		Spec:       corev1.ServiceSpec{Ports: []corev1.ServicePort{{Name: "app", Port: 8000}}},
+	}
+	endpointSlice := &discoveryv1.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "backend-abc",
+			Namespace: "default",
+			Labels:    map[string]string{discoveryv1.LabelServiceName: "backend"},
+		},
+		AddressType: discoveryv1.AddressTypeIPv4,
+		Ports:       []discoveryv1.EndpointPort{{Name: ptr.To("app"), Port: ptr.To(int32(8000))}},
+		Endpoints: []discoveryv1.Endpoint{
+			{Addresses: []string{"10.10.0.1"}},
+			{Addresses: []string{"10.10.0.2"}, Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(true)}},
+			{Addresses: []string{"10.10.0.3"}, Conditions: discoveryv1.EndpointConditions{Ready: ptr.To(false)}},
+		},
+	}
+	kubeClient := kubefake.NewClientset(service, endpointSlice)
+	client := newClientImpl(kubeClient, newGatewaySimpleClientSet(t))
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+	_, err := client.WatchAll(nil, stopCh)
+	require.NoError(t, err)
+
+	p := Provider{client: client}
+	addresses, port, err := p.getBackendAddresses("default", gatev1.BackendRef{
+		BackendObjectReference: gatev1.BackendObjectReference{Name: "backend", Port: ptr.To(gatev1.PortNumber(8000))},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, service.Spec.Ports[0], port)
+	assert.Equal(t, []backendAddress{{IP: "10.10.0.1", Port: 8000}, {IP: "10.10.0.2", Port: 8000}}, addresses)
 }
