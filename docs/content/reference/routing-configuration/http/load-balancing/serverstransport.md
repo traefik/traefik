@@ -134,3 +134,12 @@ labels:
 | <a id="opt-spiffe" href="#opt-spiffe" title="#opt-spiffe">`spiffe`</a> | Defines the SPIFFE configuration. An empty `spiffe` section enables SPIFFE (that allows any SPIFFE ID).                                  |         | No       |
 | <a id="opt-spiffe-ids" href="#opt-spiffe-ids" title="#opt-spiffe-ids">`spiffe.ids`</a> | Defines the allowed SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain.                                                  | []      | No       |
 | <a id="opt-spiffe-trustDomain" href="#opt-spiffe-trustDomain" title="#opt-spiffe-trustDomain">`spiffe.trustDomain`</a> | Defines the SPIFFE trust domain.                                                                                                         | ""      | No       |
+
+!!! warning "readTimeout & writeTimeout"
+    These timeouts are enforced per network connection, not per request.
+
+    On an HTTP/2 (including gRPC and h2c) connection, an expired `readTimeout` closes the whole connection and every request it carries.
+    When using `readTimeout` with HTTP/2 backends, consider also setting `readIdleTimeout` (e.g. to half the `readTimeout`) so that the HTTP/2 ping health check keeps healthy idle connections alive.
+
+    With the standard proxy, the read deadline also applies while the connection is idle in the connection pool or upgraded (e.g. WebSocket): an idle or upgraded connection with no traffic for `readTimeout` is closed.
+    With [FastProxy](../../../install-configuration/experimental/fastproxy.md), the timeouts only apply while a request is being written or a response is being read, and do not apply to upgraded connections.
