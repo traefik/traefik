@@ -620,10 +620,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -878,10 +876,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -950,16 +946,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -1458,10 +1450,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -1569,10 +1559,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -5611,10 +5599,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -5915,10 +5901,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7252,10 +7236,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7462,10 +7444,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7644,10 +7624,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7826,10 +7804,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -7966,10 +7942,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -8392,10 +8366,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent(listenerCert),
-								KeyFile:  types.FileOrContent(listenerKey),
-							},
+							CertFile: types.FileOrContent(listenerCert),
+							KeyFile:  types.FileOrContent(listenerKey),
 						},
 					},
 				},
@@ -9236,10 +9208,8 @@ func Test_managesGateway(t *testing.T) {
 		{
 			desc: "no scoping manages everything",
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -9247,10 +9217,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "matching ref",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -9258,10 +9226,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "different name",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "bar",
-				},
+				Namespace: "default",
+				Name:      "bar",
 			},
 			want: false,
 		},
@@ -9269,10 +9235,8 @@ func Test_managesGateway(t *testing.T) {
 			desc:     "different namespace",
 			gateways: []NamespacedName{{Namespace: "default", Name: "foo"}},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "other",
-					Name:      "foo",
-				},
+				Namespace: "other",
+				Name:      "foo",
 			},
 			want: false,
 		},
@@ -9283,10 +9247,8 @@ func Test_managesGateway(t *testing.T) {
 				{Namespace: "other", Name: "bar"},
 			},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "foo",
-				},
+				Namespace: "default",
+				Name:      "foo",
 			},
 			want: true,
 		},
@@ -9297,10 +9259,8 @@ func Test_managesGateway(t *testing.T) {
 				{Namespace: "other", Name: "bar"},
 			},
 			gw: &gatev1.Gateway{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "baz",
-				},
+				Namespace: "default",
+				Name:      "baz",
 			},
 			want: false,
 		},

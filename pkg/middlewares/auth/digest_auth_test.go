@@ -20,10 +20,10 @@ func TestDigestAuthError(t *testing.T) {
 	})
 
 	auth := dynamic.DigestAuth{
-		Users: []string{"test"},
+		Users: []string{"test:traefik:a2688e031edb4be6a3797f3882655c05", "test"},
 	}
 	_, err := NewDigest(t.Context(), next, auth, "authName")
-	assert.Error(t, err)
+	assert.EqualError(t, err, "parsing user at index 1: expected user:realm:hash format")
 }
 
 func TestDigestAuthFail(t *testing.T) {

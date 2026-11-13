@@ -1,3 +1,149 @@
+## [v3.7.19](https://github.com/traefik/traefik/tree/v3.7.19) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.18...v3.7.19)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.65.0 ([#14258](https://github.com/traefik/traefik/pull/14258) @amazon7737)
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+**Documentation:**
+- **[accesslogs]** Remove nonexistent access log fields ([#14255](https://github.com/traefik/traefik/pull/14255) @kunalvirwal)
+- **[metrics]** Fix TOML examples and StatsD defaults in metrics reference ([#13991](https://github.com/traefik/traefik/pull/13991) @ZainnQureshii)
+
+## [v2.11.63](https://github.com/traefik/traefik/tree/v2.11.63) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.62...v2.11.63)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+## [v3.7.18](https://github.com/traefik/traefik/tree/v3.7.18) (2026-11-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.17...v3.7.18)
+
+**Bug fixes:**
+- **[authentication]** Limit BasicAuth password length ([#14168](https://github.com/traefik/traefik/pull/14168) @Neffi42)
+- **[authentication]** Support connection-bound authentication schemes in Proxy-Authorization ([#14203](https://github.com/traefik/traefik/pull/14203) @Neffi42)
+- **[k8s/ingress-nginx]** Apply host-less auth-tls annotations to the default TLS option ([#14224](https://github.com/traefik/traefik/pull/14224) @rtribotte)
+- **[k8s/ingress-nginx]** Apply Ingress NGINX CORS before the redirect annotations ([#14093](https://github.com/traefik/traefik/pull/14093) @lazerg)
+- **[k8s/ingress-nginx]** Fix Ssl-Client-* headers when Ingresses share a host ([#14160](https://github.com/traefik/traefik/pull/14160) @Neffi42)
+- **[k8s/knative]** Bump knative.dev/pkg to v0.0.0-20261102011501-7b6dcbbe4ea4 ([#14220](https://github.com/traefik/traefik/pull/14220) @kevinpollet)
+- **[middleware]** Accept uppercase Q weight in compress Accept-Encoding parsing ([#14153](https://github.com/traefik/traefik/pull/14153) @locker95)
+- **[middleware]** Bump github.com/vulcand/oxy to v2.3.2 ([#14241](https://github.com/traefik/traefik/pull/14241) @ldez)
+- **[middleware, performance]** Limit zstd encoder memory in the Compress middleware ([#14167](https://github.com/traefik/traefik/pull/14167) @juliens)
+- **[plugins]** Fix deterministic randomness in WASM plugins ([#14107](https://github.com/traefik/traefik/pull/14107) @yugfletcher)
+- **[plugins]** Bump github.com/traefik/yaegi to v0.16.3 ([#14231](https://github.com/traefik/traefik/pull/14231) @juliens)
+- **[server]** Validate HTTP Host matcher values ([#13571](https://github.com/traefik/traefik/pull/13571) @Milad93R)
+- **[server]** Resolve dot-segments and empty segments with path parameters ([#14188](https://github.com/traefik/traefik/pull/14188) @Neffi42)
+- **[server, grpc]** Add regression test for gRPC bidirectional streams ([#14037](https://github.com/traefik/traefik/pull/14037) @ozenyunus35)
+- **[service]** Fix SPIFFE configuration for the TCP servers transport ([#14200](https://github.com/traefik/traefik/pull/14200) @simpleqt)
+- **[tcp]** Detect TCP connection reset on read when the error is wrapped ([#14046](https://github.com/traefik/traefik/pull/14046) @noakky)
+
+**Documentation:**
+- **[k8s/ingress-nginx]** List missing ingress-nginx annotations as unsupported ([#14163](https://github.com/traefik/traefik/pull/14163) @lazerg)
+- **[middleware]** Use a Secret for basicAuth in the Chain middleware Kubernetes example ([#14143](https://github.com/traefik/traefik/pull/14143) @lazerg)
+- **[middleware]** Fix grammar in observability and InFlightReq pages ([#14209](https://github.com/traefik/traefik/pull/14209) @m-shahi)
+- **[plugins]** Fix typos in plugin type error and documentation ([#14186](https://github.com/traefik/traefik/pull/14186) @sarankumar1325)
+- Add version to the dot-segments migration note ([#14248](https://github.com/traefik/traefik/pull/14248) @kevinpollet)
+- Fix Docker Hub link in README ([#14198](https://github.com/traefik/traefik/pull/14198) @GUOZIJAN)
+- Fix broken anchors in providers overview, SPIFFE and v3 migration docs ([#14027](https://github.com/traefik/traefik/pull/14027) @SatvikMishra08)
+- Fix dead and redirecting external links ([#14139](https://github.com/traefik/traefik/pull/14139) @rachana5)
+- Move AI assistance disclosure to the pull request description ([#14194](https://github.com/traefik/traefik/pull/14194) @Neffi42)
+- Update download and GitHub star counts ([#14193](https://github.com/traefik/traefik/pull/14193) @tomatokoolaid)
+
+## [v2.11.62](https://github.com/traefik/traefik/tree/v2.11.62) (2026-11-09)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.61...v2.11.62)
+
+**Bug fixes:**
+- **[authentication]** Limit BasicAuth password length ([#14168](https://github.com/traefik/traefik/pull/14168) @Neffi42)
+- **[authentication]** Support connection-bound authentication schemes in Proxy-Authorization ([#14203](https://github.com/traefik/traefik/pull/14203) @Neffi42)
+- **[plugins]** Bump github.com/traefik/yaegi to v0.16.3 ([#14231](https://github.com/traefik/traefik/pull/14231) @juliens)
+- **[server]** Resolve dot-segments and empty segments with path parameters ([#14188](https://github.com/traefik/traefik/pull/14188) @Neffi42)
+
+**Documentation:**
+- Add version to the dot-segments migration note ([#14248](https://github.com/traefik/traefik/pull/14248) @kevinpollet)
+- Fix Docker Hub link in README ([#14198](https://github.com/traefik/traefik/pull/14198) @GUOZIJAN)
+
+## [v3.7.17](https://github.com/traefik/traefik/tree/v3.7.17) (2026-10-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.16...v3.7.17)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.6.0 ([#14166](https://github.com/traefik/traefik/pull/14166) @ldez)
+- **[acme]** Bump github.com/go-jose/go-jose/v4 to v4.1.6 ([#14165](https://github.com/traefik/traefik/pull/14165) @Mheaus)
+- **[http3]** Bump github.com/quic-go/quic-go to v0.64.1 ([#14132](https://github.com/traefik/traefik/pull/14132) @janpachol)
+- **[k8s/gatewayapi]** Preserve Gateway status conditions owned by other controllers ([#14128](https://github.com/traefik/traefik/pull/14128) @Neffi42)
+- **[k8s/ingress-nginx]** Avoid generated name collisions across namespaces in the ingress-nginx provider ([#14140](https://github.com/traefik/traefik/pull/14140) @Neffi42)
+- **[logs, k8s/gatewayapi]** Lower user configuration error logs to debug ([#14159](https://github.com/traefik/traefik/pull/14159) @rtribotte)
+- **[middleware]** Bump github.com/andybalholm/brotli to v1.2.7 ([#14137](https://github.com/traefik/traefik/pull/14137) @albe2669)
+- **[middleware]** Fix broken flush, hijack, and deadlines in wrapped ResponseWriters ([#14082](https://github.com/traefik/traefik/pull/14082) @Neffi42)
+- **[middleware, authentication, k8s/crd, k8s, k8s/ingress-nginx]** Resolve secret references when building middlewares ([#14083](https://github.com/traefik/traefik/pull/14083) @sdelicata)
+- **[server]** Add an entry point option to limit the number of request header values ([#14111](https://github.com/traefik/traefik/pull/14111) @juliens)
+- **[server]** Add global default for aliasHeadersStrategy ([#13919](https://github.com/traefik/traefik/pull/13919) @nikolas-sapa)
+- **[server]** Bump golang.org/x/net to v0.62.0 ([#14176](https://github.com/traefik/traefik/pull/14176) @kevinpollet)
+- **[server]** Fix backend connection leak for NTLM and Kerberos authentication ([#14144](https://github.com/traefik/traefik/pull/14144) @juliens)
+- **[server, fastproxy]** Fix FastProxy backend connection leak for NTLM and Kerberos ([#14158](https://github.com/traefik/traefik/pull/14158) @juliens)
+
+**Documentation:**
+- **[docker]** Update Docker Basic guide to use Traefik v3.7 ([#14141](https://github.com/traefik/traefik/pull/14141) @Saku0512)
+- **[security]** Point security announcements to GitHub advisories ([#14099](https://github.com/traefik/traefik/pull/14099) @nmengin)
+
+## [v2.11.61](https://github.com/traefik/traefik/tree/v2.11.61) (2026-10-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.60...v2.11.61)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-jose/go-jose/v4 to v4.1.6 ([#14165](https://github.com/traefik/traefik/pull/14165) @Mheaus)
+- **[server]** Add an entry point option to limit the number of request header values ([#14111](https://github.com/traefik/traefik/pull/14111) @juliens)
+- **[server]** Bump golang.org/x/net to v0.62.0 ([#14176](https://github.com/traefik/traefik/pull/14176) @kevinpollet)
+- **[server]** Fix backend connection leak for NTLM and Kerberos authentication ([#14144](https://github.com/traefik/traefik/pull/14144) @juliens)
+
+## [v3.7.16](https://github.com/traefik/traefik/tree/v3.7.16) (2026-10-20)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.15...v3.7.16)
+
+**Bug fixes:**
+- **[authentication, service, k8s/ingress-nginx]** Support NTLM and Kerberos in ForwardAuth and ingress-nginx auth-url ([#14091](https://github.com/traefik/traefik/pull/14091) @juliens)
+- **[authentication, service]** Support NTLM and Kerberos authentication in ForwardAuth ([#14084](https://github.com/traefik/traefik/pull/14084) @juliens)
+- **[k8s/gatewayapi]** Fix Gateway API conformance suite setup with the containerd image store ([#14089](https://github.com/traefik/traefik/pull/14089) @Neffi42)
+
+**Documentation:**
+- **[k8s/ingress-nginx]** Document that rewrite is supported in configuration-snippet ([#14070](https://github.com/traefik/traefik/pull/14070) @bingtang9)
+
+## [v2.11.60](https://github.com/traefik/traefik/tree/v2.11.60) (2026-10-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.59...v2.11.60)
+
+**Bug fixes:**
+- **[authentication, service]** Support NTLM and Kerberos authentication in ForwardAuth ([#14084](https://github.com/traefik/traefik/pull/14084) @juliens)
+
+## [v3.7.15](https://github.com/traefik/traefik/tree/v3.7.15) (2026-10-15)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.14...v3.7.15)
+
+**Bug fixes:**
+- **[server]** Reject CONNECT requests regardless of HTTP version ([#14031](https://github.com/traefik/traefik/pull/14031) @juliens)
+- **[server]** Reject CONNECT method before reaching the muxer ([#14050](https://github.com/traefik/traefik/pull/14050) @juliens)
+- **[k8s/crd]** Allow observability metadata on child routers ([#14018](https://github.com/traefik/traefik/pull/14018) @bunnysayzz)
+- **[k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.6.3 ([#14017](https://github.com/traefik/traefik/pull/14017) @rtribotte)
+- **[k8s/gatewayapi]** Default HTTPRoute backend scheme to HTTP when no appProtocol ([#13935](https://github.com/traefik/traefik/pull/13935) @Tyagiquamar)
+- **[k8s/ingress-nginx]** Apply auth-tls client authentication to the whole host ([#14057](https://github.com/traefik/traefik/pull/14057) @juliens)
+- **[k8s/ingress-nginx]** Fix cross-namespace check on shared auth-tls-secret TLS options ([#14066](https://github.com/traefik/traefik/pull/14066) @juliens)
+- **[fastproxy]** Add a non-regression test for CR/LF in FastProxy request headers ([#13642](https://github.com/traefik/traefik/pull/13642) @mturac)
+- **[fastproxy]** Fix concurrent buffer reads on upgraded connections ([#14023](https://github.com/traefik/traefik/pull/14023) @juliens)
+- Bump golang.org/x/net to v0.60.0 ([#14048](https://github.com/traefik/traefik/pull/14048) @kevinpollet)
+
+**Documentation:**
+- **[security]** Fix typo in the Request Path page ([#14036](https://github.com/traefik/traefik/pull/14036) @SethFalco)
+- **[k8s/crd]** Fix broken Kubernetes CRD definitions links in CRD reference pages ([#14047](https://github.com/traefik/traefik/pull/14047) @SatvikMishra08)
+- **[k8s]** Document the safeNaming impact on cross-provider references ([#13768](https://github.com/traefik/traefik/pull/13768) @lazerg)
+- **[k8s/gatewayapi]** Fix broken links in the Gateway API routing page ([#14072](https://github.com/traefik/traefik/pull/14072) @Neffi42)
+- Fix broken anchor links to Restrict the Scope of Service Discovery ([#14056](https://github.com/traefik/traefik/pull/14056) @SatvikMishra08)
+- Add the documentation style guide to the Contributing section ([#14061](https://github.com/traefik/traefik/pull/14061) @rachana5)
+- Remove redundant period in README ([#14068](https://github.com/traefik/traefik/pull/14068) @mxmrnn)
+
+## [v2.11.59](https://github.com/traefik/traefik/tree/v2.11.59) (2026-10-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.58...v2.11.59)
+
+**Bug fixes:**
+- **[server]** Reject CONNECT requests regardless of HTTP version ([#14031](https://github.com/traefik/traefik/pull/14031) @juliens)
+- **[server]** Reject CONNECT method before reaching the muxer ([#14050](https://github.com/traefik/traefik/pull/14050) @juliens)
+- Bump golang.org/x/net to v0.60.0 ([#14048](https://github.com/traefik/traefik/pull/14048) @kevinpollet)
+
 ## [v3.7.14](https://github.com/traefik/traefik/tree/v3.7.14) (2026-10-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.13...v3.7.14)
 

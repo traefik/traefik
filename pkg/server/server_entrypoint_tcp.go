@@ -33,7 +33,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -730,12 +730,17 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = populateRequestTLS(handler)
 
+	// The round trippers and connection pools dedicated to a connection (Kerberos or NTLM) are only reachable from its
+	// context, which is kept until the ConnState hook reports the connection closed to release them.
+	var transportConnContexts connContexts
+
 	var connContext multipleConnContext
 	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
+		ctx = kerberos.AddTransportOnContext(ctx)
 		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
 		ctx = fast.AddConnPoolsOnContext(ctx)
+		transportConnContexts.add(ctx, c)
 
 		if tlsConn, ok := c.(*tls.Conn); ok {
 			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
@@ -761,9 +766,16 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		})
 	}
 
-	var connState func(c net.Conn, state http.ConnState)
-	if debugConnection {
-		connState = func(c net.Conn, state http.ConnState) {
+	connState := func(c net.Conn, state http.ConnState) {
+		// A hijacked connection never reports the closed state, and serves no further request.
+		if state == http.StateClosed || state == http.StateHijacked {
+			if ctx, ok := transportConnContexts.remove(c); ok {
+				kerberos.ReleaseTransportOnContext(ctx)
+				fast.ReleaseConnPoolsOnContext(ctx)
+			}
+		}
+
+		if debugConnection {
 			clientConnectionStatesMu.Lock()
 			if clientConnectionStates[getConnKey(c)] != nil {
 				clientConnectionStates[getConnKey(c)].State = state.String()
@@ -773,13 +785,14 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	}
 
 	serverHTTP := &http.Server{
-		Protocols:      &protocols,
-		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		Protocols:           &protocols,
+		Handler:             handler,
+		ErrorLog:            stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:        time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
+		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
 		HTTP2: &http.HTTP2Config{
 			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
 			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
@@ -988,11 +1001,32 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 }
 
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
+// The path parameters of the "..;", ".;" and ";" segments are removed first, as backends stripping path parameters (Servlet containers, Spring, ...) resolve them as dot-segments or duplicate slashes.
 // It cleans the request URL Path and RawPath, and updates the request URI.
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
+
+		// Removes the path parameters of the dot-segments and empty segments, so that JoinPath collapses them.
+		if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, ";") {
+			segments := strings.Split(escapedPath, "/")
+			for i, segment := range segments {
+				switch {
+				case strings.HasPrefix(segment, "..;"):
+					segments[i] = ".."
+				case strings.HasPrefix(segment, ".;"):
+					segments[i] = "."
+				case strings.HasPrefix(segment, ";"):
+					segments[i] = ""
+				}
+			}
+
+			r2.URL = new(url.URL)
+			*r2.URL = *req.URL
+			r2.URL.RawPath = strings.Join(segments, "/")
+			r2.URL.Path, _ = url.PathUnescape(r2.URL.RawPath)
+		}
 
 		// Cleans the URL raw path and path.
 		r2.URL = r2.URL.JoinPath()

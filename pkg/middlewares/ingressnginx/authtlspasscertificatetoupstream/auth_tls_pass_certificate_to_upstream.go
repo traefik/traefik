@@ -76,10 +76,11 @@ func normalizeHeaderName(name string) string {
 }
 
 type authTLSPassCertificateToUpstream struct {
-	next           http.Handler
-	name           string
-	clientAuthType string
-	caCertPool     *x509.CertPool
+	next            http.Handler
+	name            string
+	clientAuthType  string
+	caCertPool      *x509.CertPool
+	passCertificate bool
 }
 
 func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler, config dynamic.AuthTLSPassCertificateToUpstream, name string) (http.Handler, error) {
@@ -97,10 +98,11 @@ func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler,
 	}
 
 	return &authTLSPassCertificateToUpstream{
-		next:           next,
-		name:           name,
-		clientAuthType: config.ClientAuthType,
-		caCertPool:     caCertPool,
+		next:            next,
+		name:            name,
+		clientAuthType:  config.ClientAuthType,
+		caCertPool:      caCertPool,
+		passCertificate: config.PassCertificate,
 	}, nil
 }
 
@@ -140,18 +142,41 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	// Go's RequestClientCert doesn't verify at TLS level, so we have to verify in the middleware to return the correct Ssl-Client-Verify header.
 	// For other cases, validation happens during the handshake, so if it reaches this middleware, it means that the certificate is valid.
 	if p.clientAuthType == tls.RequestClientCert {
-		_, err := cert.Verify(x509.VerifyOptions{Roots: p.caCertPool})
-		if err != nil {
-			clientVerify = "FAILED:" + err.Error()
-		}
+		clientVerify = p.verify(req.TLS.PeerCertificates)
 	}
 
 	req.Header.Set(sslClientVerify, clientVerify)
 	req.Header.Set(sslClientSubjectDN, cert.Subject.String())
 	req.Header.Set(sslClientIssuerDN, cert.Issuer.String())
-	req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	if p.passCertificate {
+		req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))
+	}
 
 	p.next.ServeHTTP(rw, req)
+}
+
+// verify returns the Ssl-Client-Verify value for the certificates the client presented.
+func (p *authTLSPassCertificateToUpstream) verify(certs []*x509.Certificate) string {
+	// A nil Roots would verify against the system certificate pool.
+	if p.caCertPool == nil {
+		return "FAILED:no CA certificate"
+	}
+
+	// The options are the ones crypto/tls uses to verify a client certificate during the handshake.
+	opts := x509.VerifyOptions{
+		Roots:         p.caCertPool,
+		Intermediates: x509.NewCertPool(),
+		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	for _, cert := range certs[1:] {
+		opts.Intermediates.AddCert(cert)
+	}
+
+	if _, err := certs[0].Verify(opts); err != nil {
+		return "FAILED:" + err.Error()
+	}
+
+	return "SUCCESS"
 }
 
 func extractCertificatePEM(ctx context.Context, cert *x509.Certificate) string {

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_detectChanges(t *testing.T) {
@@ -38,141 +37,105 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With same version",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 		},
 		{
 			name: "With different version",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 			},
 		},
 		{
 			name: "Ingress With same version",
 			oldObj: &netv1.Ingress{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 			newObj: &netv1.Ingress{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 		},
 		{
 			name: "Ingress With different version",
 			oldObj: &netv1.Ingress{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			},
 			newObj: &netv1.Ingress{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 			},
 			want: true,
 		},
 		{
 			name: "With same annotations",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-					Annotations: map[string]string{
-						"test-annotation": "_",
-					},
+				ResourceVersion: "1",
+				Annotations: map[string]string{
+					"test-annotation": "_",
 				},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-					Annotations: map[string]string{
-						"test-annotation": "_",
-					},
+				ResourceVersion: "2",
+				Annotations: map[string]string{
+					"test-annotation": "_",
 				},
 			},
 		},
 		{
 			name: "With different annotations",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-					Annotations: map[string]string{
-						"test-annotation": "V",
-					},
+				ResourceVersion: "1",
+				Annotations: map[string]string{
+					"test-annotation": "V",
 				},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-					Annotations: map[string]string{
-						"test-annotation": "X",
-					},
+				ResourceVersion: "2",
+				Annotations: map[string]string{
+					"test-annotation": "X",
 				},
 			},
 		},
 		{
 			name: "With same endpoints and ports",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
-				Endpoints: []discoveryv1.Endpoint{},
-				Ports:     []discoveryv1.EndpointPort{},
+				ResourceVersion: "1",
+				Endpoints:       []discoveryv1.Endpoint{},
+				Ports:           []discoveryv1.EndpointPort{},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
-				Endpoints: []discoveryv1.Endpoint{},
-				Ports:     []discoveryv1.EndpointPort{},
+				ResourceVersion: "1",
+				Endpoints:       []discoveryv1.Endpoint{},
+				Ports:           []discoveryv1.EndpointPort{},
 			},
 		},
 		{
 			name: "With different len of endpoints",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
-				Endpoints: []discoveryv1.Endpoint{},
+				ResourceVersion: "1",
+				Endpoints:       []discoveryv1.Endpoint{},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
-				Endpoints: []discoveryv1.Endpoint{{}},
+				ResourceVersion: "2",
+				Endpoints:       []discoveryv1.Endpoint{{}},
 			},
 			want: true,
 		},
 		{
 			name: "With different endpoints",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.10"},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.11"},
 				}},
@@ -182,18 +145,14 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With different endpoint ready condition",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Ready: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Ready: new(false)},
@@ -204,18 +163,14 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With different endpoint serving condition",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
@@ -226,18 +181,14 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With different endpoint terminating condition",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
@@ -248,17 +199,13 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With endpoint serving condition nil then explicitly true",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.10"},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Serving: new(true)},
@@ -268,17 +215,13 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With endpoint serving condition nil then explicitly false",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.10"},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Serving: new(false)},
@@ -289,17 +232,13 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With endpoint terminating condition nil then explicitly false",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.10"},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Terminating: new(false)},
@@ -309,17 +248,13 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With endpoint terminating condition nil then explicitly true",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses: []string{"10.10.10.10"},
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Endpoints: []discoveryv1.Endpoint{{
 					Addresses:  []string{"10.10.10.10"},
 					Conditions: discoveryv1.EndpointConditions{Terminating: new(true)},
@@ -330,33 +265,25 @@ func Test_detectChanges(t *testing.T) {
 		{
 			name: "With different len of ports",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
-				Ports: []discoveryv1.EndpointPort{},
+				ResourceVersion: "1",
+				Ports:           []discoveryv1.EndpointPort{},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
-				Ports: []discoveryv1.EndpointPort{{}},
+				ResourceVersion: "2",
+				Ports:           []discoveryv1.EndpointPort{{}},
 			},
 			want: true,
 		},
 		{
 			name: "With different ports",
 			oldObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 				Ports: []discoveryv1.EndpointPort{{
 					Port: new(int32(80)),
 				}},
 			},
 			newObj: &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "2",
-				},
+				ResourceVersion: "2",
 				Ports: []discoveryv1.EndpointPort{{
 					Port: new(int32(8080)),
 				}},

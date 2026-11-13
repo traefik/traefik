@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -70,16 +70,21 @@ func (w *writeDetector) Write(p []byte) (int, error) {
 }
 
 type writeFlusher struct {
-	io.Writer
+	rw http.ResponseWriter
 }
 
 func (w *writeFlusher) Write(b []byte) (int, error) {
-	n, err := w.Writer.Write(b)
-	if f, ok := w.Writer.(http.Flusher); ok {
-		f.Flush()
+	n, err := w.rw.Write(b)
+	if err != nil {
+		return n, err
 	}
 
-	return n, err
+	// ErrNotSupported is ignored to keep flushing a no-op on writers that cannot flush.
+	if err := http.NewResponseController(w.rw).Flush(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+		return n, err
+	}
+
+	return n, nil
 }
 
 type timeoutError struct {
@@ -265,11 +270,13 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	// shared pool, otherwise an unrelated frontend connection could later be handed the same socket and inherit the
 	// identity. It is dispatched through a pool dedicated to its frontend connection instead, and every subsequent
 	// request on that connection to the same backend reuses that pool to keep relying on the authenticated connection.
+	// Proxy-Authorization is checked as well, as ForwardAuth forwards it to the auth server.
 	connPool := p.connPool
 	if stickyPools, ok := ctx.Value(connPoolsKey).(*stickyConnPools); ok {
 		if dedicated := stickyPools.get(p.connPool); dedicated != nil {
 			connPool = dedicated
-		} else if containsNTLMorNegotiate(req.Header.Values("Authorization")) {
+		} else if containsNTLMorNegotiate(req.Header.Values("Authorization")) ||
+			containsNTLMorNegotiate(req.Header.Values("Proxy-Authorization")) {
 			connPool = stickyPools.stick(p.connPool)
 		}
 	}

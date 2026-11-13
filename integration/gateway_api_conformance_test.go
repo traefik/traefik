@@ -12,12 +12,14 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -121,7 +123,13 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	)
 	require.NoError(s.T(), err)
 
-	require.NoError(s.T(), s.k3sContainer.LoadImages(ctx, traefikConformanceImage, operatorImage))
+	// With the containerd image store, a pulled multi-platform image only holds
+	// the host platform content: saving all of its platforms makes the import
+	// into the node fail, and LoadImages does not report it.
+	require.NoError(s.T(), s.k3sContainer.LoadImagesWithOpts(ctx,
+		[]string{traefikConformanceImage, operatorImage},
+		testcontainers.SaveDockerImageWithPlatforms(specs.Platform{OS: "linux", Architecture: runtime.GOARCH}),
+	))
 
 	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", operatorNamespace, operatorDeployment, "--for=condition=Available", "--timeout=120s"})
 	if err != nil || exitCode > 0 {

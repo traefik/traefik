@@ -108,9 +108,7 @@ func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithList
 		}
 
 		routeStatus := gatev1alpha2.TCPRouteStatus{
-			RouteStatus: gatev1alpha2.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 		if err := p.client.UpdateTCPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, gateways, routeStatus); err != nil {
 			logger.Warn().

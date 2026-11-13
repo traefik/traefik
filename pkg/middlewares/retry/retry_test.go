@@ -481,6 +481,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		requestBody         string
 		responseDelay       time.Duration
 		amountOfTCPFailures int
+		flush               bool
 		wantRetryAttempts   int
 		wantResponseStatus  int
 	}{
@@ -507,6 +508,17 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			requestBody:         "test request body",
 			wantRetryAttempts:   3,
 			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry on 503 status code with flush",
+			config: dynamic.Retry{
+				Attempts: 3,
+				Status:   []string{"503"},
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusNotFound},
+			flush:               true,
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusNotFound,
 		},
 		{
 			desc: "retry on multiple specific status codes",
@@ -690,6 +702,10 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 
 				callCount++
 				rw.WriteHeader(statusCode)
+
+				if test.flush {
+					require.NoError(t, http.NewResponseController(rw).Flush())
+				}
 			})
 
 			retryListener := &countingRetryListener{}
