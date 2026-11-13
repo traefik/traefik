@@ -102,7 +102,9 @@ test-integration:
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
-	docker pull traefik/gateway-operator:latest
+	# pull all platforms to ensure k3s container correctly loads image.....
+	docker pull --platform linux/amd64 traefik/gateway-operator:latest
+	docker pull --platform linux/arm64 traefik/gateway-operator:latest
 	# The data plane image carries a fixed tag, and not latest, so that the pods
 	# the operator provisions keep the side loaded image instead of pulling the
 	# released Traefik over it.
