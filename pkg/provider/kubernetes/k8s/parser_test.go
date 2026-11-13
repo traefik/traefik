@@ -10,7 +10,8 @@ import (
 )
 
 func TestMustParseYaml(t *testing.T) {
-	content := `apiVersion: v1
+	content := `---
+apiVersion: v1
 kind: Service
 metadata:
   name: first
