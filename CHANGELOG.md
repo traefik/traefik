@@ -1,3 +1,68 @@
+## [v3.7.19](https://github.com/traefik/traefik/tree/v3.7.19) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.18...v3.7.19)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.65.0 ([#14258](https://github.com/traefik/traefik/pull/14258) @amazon7737)
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+**Documentation:**
+- **[accesslogs]** Remove nonexistent access log fields ([#14255](https://github.com/traefik/traefik/pull/14255) @kunalvirwal)
+- **[metrics]** Fix TOML examples and StatsD defaults in metrics reference ([#13991](https://github.com/traefik/traefik/pull/13991) @ZainnQureshii)
+
+## [v2.11.63](https://github.com/traefik/traefik/tree/v2.11.63) (2026-11-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.62...v2.11.63)
+
+**Bug fixes:**
+- **[middleware]** Bump github.com/klauspost/compress to v1.20.4 ([#14254](https://github.com/traefik/traefik/pull/14254) @Neffi42)
+- **[server]** Bump golang.org/x/crypto to v0.59.0 ([#14271](https://github.com/traefik/traefik/pull/14271) @kevinpollet)
+
+## [v3.7.18](https://github.com/traefik/traefik/tree/v3.7.18) (2026-11-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.17...v3.7.18)
+
+**Bug fixes:**
+- **[authentication]** Limit BasicAuth password length ([#14168](https://github.com/traefik/traefik/pull/14168) @Neffi42)
+- **[authentication]** Support connection-bound authentication schemes in Proxy-Authorization ([#14203](https://github.com/traefik/traefik/pull/14203) @Neffi42)
+- **[k8s/ingress-nginx]** Apply host-less auth-tls annotations to the default TLS option ([#14224](https://github.com/traefik/traefik/pull/14224) @rtribotte)
+- **[k8s/ingress-nginx]** Apply Ingress NGINX CORS before the redirect annotations ([#14093](https://github.com/traefik/traefik/pull/14093) @lazerg)
+- **[k8s/ingress-nginx]** Fix Ssl-Client-* headers when Ingresses share a host ([#14160](https://github.com/traefik/traefik/pull/14160) @Neffi42)
+- **[k8s/knative]** Bump knative.dev/pkg to v0.0.0-20261102011501-7b6dcbbe4ea4 ([#14220](https://github.com/traefik/traefik/pull/14220) @kevinpollet)
+- **[middleware]** Accept uppercase Q weight in compress Accept-Encoding parsing ([#14153](https://github.com/traefik/traefik/pull/14153) @locker95)
+- **[middleware]** Bump github.com/vulcand/oxy to v2.3.2 ([#14241](https://github.com/traefik/traefik/pull/14241) @ldez)
+- **[middleware, performance]** Limit zstd encoder memory in the Compress middleware ([#14167](https://github.com/traefik/traefik/pull/14167) @juliens)
+- **[plugins]** Fix deterministic randomness in WASM plugins ([#14107](https://github.com/traefik/traefik/pull/14107) @yugfletcher)
+- **[plugins]** Bump github.com/traefik/yaegi to v0.16.3 ([#14231](https://github.com/traefik/traefik/pull/14231) @juliens)
+- **[server]** Validate HTTP Host matcher values ([#13571](https://github.com/traefik/traefik/pull/13571) @Milad93R)
+- **[server]** Resolve dot-segments and empty segments with path parameters ([#14188](https://github.com/traefik/traefik/pull/14188) @Neffi42)
+- **[server, grpc]** Add regression test for gRPC bidirectional streams ([#14037](https://github.com/traefik/traefik/pull/14037) @ozenyunus35)
+- **[service]** Fix SPIFFE configuration for the TCP servers transport ([#14200](https://github.com/traefik/traefik/pull/14200) @simpleqt)
+- **[tcp]** Detect TCP connection reset on read when the error is wrapped ([#14046](https://github.com/traefik/traefik/pull/14046) @noakky)
+
+**Documentation:**
+- **[k8s/ingress-nginx]** List missing ingress-nginx annotations as unsupported ([#14163](https://github.com/traefik/traefik/pull/14163) @lazerg)
+- **[middleware]** Use a Secret for basicAuth in the Chain middleware Kubernetes example ([#14143](https://github.com/traefik/traefik/pull/14143) @lazerg)
+- **[middleware]** Fix grammar in observability and InFlightReq pages ([#14209](https://github.com/traefik/traefik/pull/14209) @m-shahi)
+- **[plugins]** Fix typos in plugin type error and documentation ([#14186](https://github.com/traefik/traefik/pull/14186) @sarankumar1325)
+- Add version to the dot-segments migration note ([#14248](https://github.com/traefik/traefik/pull/14248) @kevinpollet)
+- Fix Docker Hub link in README ([#14198](https://github.com/traefik/traefik/pull/14198) @GUOZIJAN)
+- Fix broken anchors in providers overview, SPIFFE and v3 migration docs ([#14027](https://github.com/traefik/traefik/pull/14027) @SatvikMishra08)
+- Fix dead and redirecting external links ([#14139](https://github.com/traefik/traefik/pull/14139) @rachana5)
+- Move AI assistance disclosure to the pull request description ([#14194](https://github.com/traefik/traefik/pull/14194) @Neffi42)
+- Update download and GitHub star counts ([#14193](https://github.com/traefik/traefik/pull/14193) @tomatokoolaid)
+
+## [v2.11.62](https://github.com/traefik/traefik/tree/v2.11.62) (2026-11-09)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.61...v2.11.62)
+
+**Bug fixes:**
+- **[authentication]** Limit BasicAuth password length ([#14168](https://github.com/traefik/traefik/pull/14168) @Neffi42)
+- **[authentication]** Support connection-bound authentication schemes in Proxy-Authorization ([#14203](https://github.com/traefik/traefik/pull/14203) @Neffi42)
+- **[plugins]** Bump github.com/traefik/yaegi to v0.16.3 ([#14231](https://github.com/traefik/traefik/pull/14231) @juliens)
+- **[server]** Resolve dot-segments and empty segments with path parameters ([#14188](https://github.com/traefik/traefik/pull/14188) @Neffi42)
+
+**Documentation:**
+- Add version to the dot-segments migration note ([#14248](https://github.com/traefik/traefik/pull/14248) @kevinpollet)
+- Fix Docker Hub link in README ([#14198](https://github.com/traefik/traefik/pull/14198) @GUOZIJAN)
+
 ## [v3.7.17](https://github.com/traefik/traefik/tree/v3.7.17) (2026-10-29)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.16...v3.7.17)
 

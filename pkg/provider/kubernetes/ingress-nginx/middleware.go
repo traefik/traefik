@@ -39,7 +39,6 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildUpstreamVhost(loc)
 	p.buildRateLimit(loc)
 	p.buildLimitConnections(loc)
-	p.buildAuthTLSPassCert(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
 	p.buildRetry(ctx, loc, endpointCount)
@@ -382,32 +381,24 @@ func (p *Provider) buildLimitConnections(loc *location) {
 	}
 }
 
-func (p *Provider) buildAuthTLSPassCert(loc *location) {
-	if !ptr.Deref(loc.Config.AuthTLSPassCertificateToUpstream, false) || loc.Config.AuthTLSSecret == nil {
+// buildAuthTLSPassCert builds the middleware setting the Ssl-Client-* headers from the client-auth TLS option of the server,
+// which ingress-nginx sets on every location of a server block configured for client certificate authentication.
+// Like the TLS option, Ssl-Client-Cert follows the auth-tls-pass-certificate-to-upstream annotation of the Ingress configuring it for the host.
+func buildAuthTLSPassCert(srv *server, loc *location) {
+	if srv.clientAuthIngress == "" {
 		return
 	}
 
-	verifyClient := clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient)
-
 	var caFiles []types.FileOrContent
-	// When auth-tls-verify-client is "optional_no_ca" (RequestClientCert), the CA
-	// certificate from the auth-tls-secret is forwarded to the upstream so the
-	// upstream can verify the client certificate it receives.
-	if verifyClient == tls.RequestClientCert {
-		parts := strings.SplitN(ptr.Deref(loc.Config.AuthTLSSecret, ""), "/", 2)
-		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
-			secretNamespace, secretName := parts[0], parts[1]
-			if p.AllowCrossNamespaceResources || secretNamespace == loc.Namespace {
-				if blocks, err := p.certificateBlocks(secretNamespace, secretName); err == nil && blocks.ca != nil {
-					caFiles = []types.FileOrContent{types.FileOrContent(blocks.ca)}
-				}
-			}
-		}
+	// RequestClientCert does not verify the client certificate during the handshake, so the middleware verifies it against the CA.
+	if srv.TLSOption.ClientAuth.ClientAuthType == tls.RequestClientCert {
+		caFiles = srv.TLSOption.ClientAuth.CAFiles
 	}
 
 	loc.AuthTLSPassCert = &dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType: verifyClient,
-		CAFiles:        caFiles,
+		ClientAuthType:  srv.TLSOption.ClientAuth.ClientAuthType,
+		CAFiles:         caFiles,
+		PassCertificate: srv.clientAuthPassCertificate,
 	}
 }
 
