@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
 
@@ -423,6 +424,32 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc: "Gateway API provider, entrypoints protocol",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{},
+				},
+				EntryPoints: EntryPoints{
+					"tcp": {Address: ":9000"},
+					"udp": {Address: ":9000/udp"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{
+						EntryPoints: map[string]gateway.Entrypoint{
+							"tcp": {Address: ":9000", Protocol: "tcp"},
+							"udp": {Address: ":9000", Protocol: "udp"},
+						},
+					},
+				},
+				EntryPoints: EntryPoints{
+					"tcp": {Address: ":9000"},
+					"udp": {Address: ":9000/udp"},
 				},
 			},
 		},
