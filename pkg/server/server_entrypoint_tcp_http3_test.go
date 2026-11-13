@@ -450,6 +450,81 @@ func TestHTTP3StickyBackendTransport(t *testing.T) {
 	assert.NotEqual(t, secondStickyConn, thirdStickyConn)
 }
 
+func TestHTTP3ClientClosedConnection(t *testing.T) {
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	received := make(chan struct{})
+	causes := make(chan error, 1)
+	router.AddHTTPTLSConfig("example.com", &tls.Config{Certificates: []tls.Certificate{tlsCert}}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		close(received)
+		<-req.Context().Done()
+		causes <- context.Cause(req.Context())
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	t.Cleanup(func() { entryPoint.Shutdown(ctx) })
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint.
+	time.Sleep(time.Second)
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+
+	http3Addr := entryPoint.http3Server.http3conn.LocalAddr().String()
+
+	transport := &http3.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:    certPool,
+			ServerName: "example.com",
+		},
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return quic.DialAddr(ctx, http3Addr, tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = transport.Close() })
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
+	require.NoError(t, err)
+
+	go func() { _, _ = transport.RoundTrip(req) }()
+
+	<-received
+	require.NoError(t, transport.Close())
+
+	select {
+	case cause := <-causes:
+		assert.ErrorIs(t, cause, context.Canceled)
+	case <-time.After(5 * time.Second):
+		t.Fatal("request context was never canceled")
+	}
+}
+
 func TestNewHTTP3ServerTimeouts(t *testing.T) {
 	certContent, err := localhostCert.Read()
 	require.NoError(t, err)
