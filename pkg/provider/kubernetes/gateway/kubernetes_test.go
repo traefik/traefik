@@ -5427,6 +5427,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -7083,6 +7084,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -10521,6 +10523,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 				},
@@ -10703,6 +10706,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 				},
@@ -10787,6 +10791,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.com",
 						},
 					},
 				},
@@ -12471,10 +12476,12 @@ func TestLoadMixedRoutes(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.example.com",
 						},
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "baz.example.com",
 						},
 					},
 					Options: map[string]tls.Options{
@@ -12933,6 +12940,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 						{
 							CertFile: types.FileOrContent(listenerCert),
 							KeyFile:  types.FileOrContent(listenerKey),
+							Hostname: "foo.example.com",
 						},
 					},
 					Options: map[string]tls.Options{},
@@ -15933,6 +15941,47 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"bar.example.com", "foo.example.com", "default-b.example.com", "default-a.example.com"}, commonNames)
+}
+
+func Test_loadConfigurationFromGateways_TLSCertificatesHostname(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"tls_certificates_hostnames.yml"})
+
+	client := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+
+	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	require.NoError(t, err)
+
+	// just wait for the first event
+	<-eventCh
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
+		client:      client,
+	}
+
+	conf, _, err := p.loadConfigurationFromGateways(t.Context())
+	require.NoError(t, err)
+
+	type certHostname struct {
+		commonName string
+		hostname   string
+	}
+
+	var actual []certHostname
+	for _, cert := range conf.TLS.Certificates {
+		actual = append(actual, certHostname{
+			commonName: certificateCommonName(t, cert.Certificate.CertFile),
+			hostname:   cert.Hostname,
+		})
+	}
+
+	// Each certificate is bound to the hostname of the listener referencing it,
+	// and a Secret referenced by several listeners is expected once per hostname.
+	assert.Equal(t, []certHostname{
+		{commonName: "default-a.example.com", hostname: "a.example.com"},
+		{commonName: "default-b.example.com", hostname: "*.example.com"},
+		{commonName: "default-b.example.com", hostname: "b.example.com"},
+	}, actual)
 }
 
 func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *testing.T) {
