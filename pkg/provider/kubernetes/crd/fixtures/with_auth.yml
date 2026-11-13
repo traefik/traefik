@@ -62,6 +62,7 @@ spec:
   forwardAuth:
     address: test.com
     headerField: X-Header-Field
+    timeout: 10s
     tls:
       certSecret: tlssecret
       caSecret: casecret
