@@ -10,7 +10,7 @@ Before creating `IngressRouteTCP` objects, you need to apply the [Traefik Kubern
 This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 
 !!! note "General"
-    If both HTTP routers and TCP routers are connected to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
+    If HTTP routers and TCP routers are connected to the same entry point, the TCP routers without TLS apply first to non-TLS connections. For TLS connections, an HTTPS router (an HTTP router with TLS) whose `Host` matches the SNI applies first, then a TCP router with TLS whose rule is not exactly ``HostSNI(`*`)``. For the complete order and its exceptions, see [TCP and HTTP Routers on the Same Entry Point](../../../tcp/routing/rules-and-priority.md#tcp-and-http-routers-on-the-same-entry-point).
 
 ## Configuration Example
 
