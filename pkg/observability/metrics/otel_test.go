@@ -2,13 +2,16 @@ package metrics
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -20,7 +23,21 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+	"google.golang.org/grpc"
 )
+
+type metricCollector struct {
+	pmetricotlp.UnimplementedGRPCServer
+
+	called atomic.Bool
+}
+
+func (c *metricCollector) Export(context.Context, pmetricotlp.ExportRequest) (pmetricotlp.ExportResponse, error) {
+	c.called.Store(true)
+
+	return pmetricotlp.NewExportResponse(), nil
+}
 
 func TestOpenTelemetry_labels(t *testing.T) {
 	tests := []struct {
@@ -450,6 +467,30 @@ func TestOpenTelemetry(t *testing.T) {
 			tryAssertMessage(t, c, expectedEntryPointReqDuration)
 		})
 	}
+}
+
+func TestNewGRPCExporter_IPv6Endpoint(t *testing.T) {
+	listener, err := net.Listen("tcp", "[::1]:0")
+	if err != nil {
+		t.Skipf("IPv6 loopback is not available: %v", err)
+	}
+
+	collector := &metricCollector{}
+	server := grpc.NewServer()
+	pmetricotlp.RegisterGRPCServer(server, collector)
+
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+
+	config := &otypes.OTelGRPC{Endpoint: listener.Addr().String(), Insecure: true}
+	exporter, err := newGRPCExporter(t.Context(), config)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	require.NoError(t, exporter.Export(ctx, &metricdata.ResourceMetrics{}))
+	assert.True(t, collector.called.Load())
 }
 
 func TestOpenTelemetry_histogramAggregation(t *testing.T) {
