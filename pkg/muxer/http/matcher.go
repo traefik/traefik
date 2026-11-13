@@ -84,7 +84,12 @@ func host(tree *matchersTree, hosts ...string) error {
 	}
 
 	if !hostOrIP.MatchString(hostExpr) {
-		return fmt.Errorf("invalid value for Host matcher, %q is not a valid hostname", hostExpr)
+		// Try converting an internationalized domain name to punycode before rejecting.
+		ascii, err := muxer.ToASCIIHostExpression(hostExpr)
+		if err != nil || !hostOrIP.MatchString(ascii) {
+			return fmt.Errorf("invalid value for Host matcher, %q is not a valid hostname", hostExpr)
+		}
+		hostExpr = ascii
 	}
 
 	if strings.Contains(hostExpr, "*") && !wildcardHost.MatchString(hostExpr) {

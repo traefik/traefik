@@ -83,7 +83,12 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 func hostV2(tree *matchersTree, hosts ...string) error {
 	for i, host := range hosts {
 		if !hostOrIPv2.MatchString(host) {
-			return fmt.Errorf("invalid value for \"Host\" matcher, %q is not a valid hostname", host)
+			// Try converting an internationalized domain name to punycode before rejecting.
+			ascii, err := muxer.ToASCIIHostExpression(host)
+			if err != nil || !hostOrIPv2.MatchString(ascii) {
+				return fmt.Errorf("invalid value for \"Host\" matcher, %q is not a valid hostname", host)
+			}
+			host = ascii
 		}
 
 		hosts[i] = strings.ToLower(host)
