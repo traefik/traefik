@@ -28,8 +28,12 @@ type ocspEntry struct {
 // ocspStapler retrieves staples from OCSP responders and store them in an in-memory cache.
 // It also updates the staples on a regular basis and before they expire.
 type ocspStapler struct {
-	client             *http.Client
-	cache              cache.Cache
+	client *http.Client
+	// cache must hold the pointer returned by cache.New:
+	// go-cache stops its janitor goroutine with a finalizer set on that pointer,
+	// so a copy of the value lets the janitor be stopped while the cache is still in use,
+	// and expired staples are then never removed from memory.
+	cache              *cache.Cache
 	forceStapleUpdates chan struct{}
 	responderOverrides map[string]string
 }
@@ -38,7 +42,7 @@ type ocspStapler struct {
 func newOCSPStapler(responderOverrides map[string]string) *ocspStapler {
 	return &ocspStapler{
 		client:             &http.Client{Timeout: 10 * time.Second},
-		cache:              *cache.New(defaultCacheDuration, 5*time.Minute),
+		cache:              cache.New(defaultCacheDuration, 5*time.Minute),
 		forceStapleUpdates: make(chan struct{}, 1),
 		responderOverrides: responderOverrides,
 	}
