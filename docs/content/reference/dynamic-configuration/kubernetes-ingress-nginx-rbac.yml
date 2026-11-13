@@ -21,14 +21,26 @@ rules:
     verbs:
       - list
       - watch
-  # The pods right is needed to inject k8s.pod.uid and k8s.pod.name OTel attributes.
-  # When OTel tracing/logs/metrics are not enabled, this rule is not needed.
+  # The pods right is needed to inject k8s.pod.uid and k8s.pod.name OTel attributes,
+  # and, together with the nodes right, to set the Ingress status to the addresses
+  # of the nodes running the controller pods.
+  # When OTel is not enabled and either publishService or publishStatusAddress is
+  # set, these two rules are not needed.
   - apiGroups:
       - ""
     resources:
       - pods
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - list
+      - watch
   - apiGroups:
       - discovery.k8s.io
     resources:
