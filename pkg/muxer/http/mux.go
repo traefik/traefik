@@ -95,14 +95,19 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName 
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
-	m.routes = append(m.routes, &route{
+	newRoute := &route{
 		handler:          handler,
 		matchers:         matchers,
 		priority:         priority,
 		providerPriority: slices.Index(m.providersPrecedence, providerName),
-	})
+	}
 
-	sort.Sort(m.routes)
+	// Inserting at the sorted position, instead of sorting all routes after each append, keeps building a muxer
+	// with thousands of routes from being quadratic.
+	idx := sort.Search(len(m.routes), func(i int) bool {
+		return newRoute.precedes(m.routes[i])
+	})
+	m.routes = slices.Insert(m.routes, idx, newRoute)
 
 	return nil
 }
@@ -215,20 +220,8 @@ func ParseDomains(rule string) ([]string, error) {
 	return buildTree().ParsePositiveMatchers([]string{"Host"}), nil
 }
 
-// routes implements sort.Interface.
+// routes are sorted by descending precedence.
 type routes []*route
-
-// Len implements sort.Interface.
-func (r routes) Len() int { return len(r) }
-
-// Swap implements sort.Interface.
-func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
-
-// Less implements sort.Interface.
-func (r routes) Less(i, j int) bool {
-	return r[i].priority > r[j].priority ||
-		(r[i].priority == r[j].priority && r[i].providerPriority > r[j].providerPriority)
-}
 
 // route holds the matchers to match HTTP route,
 // and the handler that will serve the request.
@@ -242,6 +235,12 @@ type route struct {
 	priority int
 	// providerPriority is used to disambiguate between two (or more) rules that would all match for a given request and have the same priority.
 	providerPriority int
+}
+
+// precedes reports whether r must be tried before o.
+func (r *route) precedes(o *route) bool {
+	return r.priority > o.priority ||
+		(r.priority == o.priority && r.providerPriority > o.providerPriority)
 }
 
 // matchersTree represents the matchers tree structure.
