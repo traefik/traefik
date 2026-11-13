@@ -139,8 +139,10 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
 
-	svr.Start(ctx)
 	defer svr.Close()
+	if err := svr.Start(ctx); err != nil {
+		return fmt.Errorf("starting server: %w", err)
+	}
 
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
@@ -203,7 +205,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	acmeProviders := initACMEProvider(staticConfiguration, providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider, routinesPool)
+	acmeProviders, err := initACMEProvider(staticConfiguration, providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider, routinesPool)
+	if err != nil {
+		routinesPool.Stop()
+		return nil, err
+	}
 
 	// Tailscale
 
@@ -329,15 +335,20 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		staticConfiguration.Core != nil && staticConfiguration.Core.StrictTLSOptions,
 	)
 
+	watcher.SetRequiredProviders(initialRequiredProviders(staticConfiguration, acmeProviders)...)
+
 	// TLS
-	watcher.AddListener(func(conf dynamic.Configuration) {
+	watcher.AddCriticalListener(func(conf dynamic.Configuration) error {
 		ctx := context.Background()
-		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+		if err := tlsManager.UpdateConfigsWithError(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates); err != nil {
+			return err
+		}
 
 		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
 		for _, certificate := range tlsManager.GetServerCertificates() {
 			appendCertMetric(gauge, certificate)
 		}
+		return nil
 	})
 
 	// Metrics
@@ -459,8 +470,30 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 	}
 }
 
+// Only providers with independent initial snapshots belong here: feedback-only
+// providers must receive partial configurations before they can publish certificates.
+func initialRequiredProviders(c *static.Configuration, resolvers []*acme.Provider) []string {
+	names := []string{"internal"}
+	if c.Providers.File != nil {
+		names = append(names, "file")
+	}
+	if c.Providers.HTTP != nil {
+		names = append(names, "http")
+	}
+	if c.Providers.Docker != nil {
+		names = append(names, "docker")
+	}
+	if c.Providers.Swarm != nil {
+		names = append(names, "swarm")
+	}
+	for _, resolver := range resolvers {
+		names = append(names, resolver.ResolverName+".acme")
+	}
+	return names
+}
+
 // initACMEProvider creates and registers acme.Provider instances corresponding to the configured ACME certificate resolvers.
-func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider, routinesPool *safe.Pool) []*acme.Provider {
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider, routinesPool *safe.Pool) ([]*acme.Provider, error) {
 	localStores := map[string]*acme.LocalStore{}
 
 	var resolvers []*acme.Provider
@@ -482,8 +515,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 
 		if err := providerAggregator.AddProvider(p); err != nil {
-			log.Error().Err(err).Str("resolver", name).Msg("The ACME resolve is skipped from the resolvers list")
-			continue
+			return nil, fmt.Errorf("initializing ACME resolver %s: %w", name, err)
 		}
 
 		p.SetTLSManager(tlsManager)
@@ -493,7 +525,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		resolvers = append(resolvers, p)
 	}
 
-	return resolvers
+	return resolvers, nil
 }
 
 // initTailscaleProviders creates and registers tailscale.Provider instances corresponding to the configured Tailscale certificate resolvers.
