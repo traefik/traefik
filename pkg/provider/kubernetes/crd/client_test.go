@@ -27,7 +27,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	kubeClient := kubefake.NewClientset(helmSecret, secret)
 	crdClient := traefikcrdfake.NewClientset()
 
-	client := newClientImpl(kubeClient, crdClient)
+	client := NewClient(&Provider{}, kubeClient, crdClient)
 
 	stopCh := make(chan struct{})
 

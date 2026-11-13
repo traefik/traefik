@@ -152,7 +152,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 		GitVersion: "v1.19",
 	}
 
-	client := newClientImpl(kubeClient)
+	client := NewClient(&Provider{}, kubeClient)
 
 	stopCh := make(chan struct{})
 
@@ -223,7 +223,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 		GitVersion: "v1.19",
 	}
 
-	client := newClientImpl(kubeClient)
+	client := NewClient(&Provider{}, kubeClient)
 
 	stopCh := make(chan struct{})
 

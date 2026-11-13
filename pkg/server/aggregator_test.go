@@ -12,6 +12,43 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
+func TestAggregate(t *testing.T) {
+	newConfigurations := func() dynamic.Configurations {
+		return dynamic.Configurations{
+			"provider": &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"router": {
+							Rule: "Host(`example.com`)",
+							TLS:  &dynamic.RouterTLSConfig{Options: "options"},
+						},
+					},
+				},
+			},
+			"internal": &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Models: map[string]*dynamic.Model{
+						"websecure": {Middlewares: []string{"middleware@provider"}},
+					},
+				},
+			},
+		}
+	}
+
+	configurations := newConfigurations()
+
+	conf := Aggregate(configurations, []string{"websecure"}, false)
+
+	router := conf.HTTP.Routers["router@provider"]
+	require.NotNil(t, router)
+
+	assert.Equal(t, []string{"websecure"}, router.EntryPoints)
+	assert.Equal(t, []string{"middleware@provider"}, router.Middlewares)
+	assert.Equal(t, "options@provider", router.TLS.ResolvedOptions)
+
+	assert.Equal(t, newConfigurations(), configurations)
+}
+
 func Test_mergeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string

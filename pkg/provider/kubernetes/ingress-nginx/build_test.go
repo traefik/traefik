@@ -59,7 +59,7 @@ func TestProvider_resolveBasicAuth_authMap(t *testing.T) {
 		Name: "basic-auth", Namespace: "default",
 		Data: map[string][]byte{"user2": []byte("hash2"), "user1": []byte("hash1")},
 	})
-	client := newClient(kubeClient)
+	client := NewClient(kubeClient)
 
 	_, err := client.WatchAll(t.Context(), "", "")
 	require.NoError(t, err)
