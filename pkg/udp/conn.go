@@ -275,13 +275,12 @@ func (c *Conn) readLoop() {
 	for {
 		if len(c.msgs) == 0 {
 			select {
+			case <-c.doneCh:
+				return
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
 			case <-ticker.C:
-				c.muActivity.RLock()
-				deadline := c.lastActivity.Add(c.timeout)
-				c.muActivity.RUnlock()
-				if time.Now().After(deadline) {
+				if c.hasTimedOut() {
 					c.Close()
 					return
 				}
@@ -290,6 +289,8 @@ func (c *Conn) readLoop() {
 		}
 
 		select {
+		case <-c.doneCh:
+			return
 		case cBuf := <-c.readCh:
 			msg := c.msgs[0]
 			c.msgs = c.msgs[1:]
@@ -298,15 +299,24 @@ func (c *Conn) readLoop() {
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
 		case <-ticker.C:
-			c.muActivity.RLock()
-			deadline := c.lastActivity.Add(c.timeout)
-			c.muActivity.RUnlock()
-			if time.Now().After(deadline) {
+			if c.hasTimedOut() {
 				c.Close()
 				return
 			}
 		}
 	}
+}
+
+func (c *Conn) hasTimedOut() bool {
+	c.muActivity.RLock()
+	lastActivity := c.lastActivity
+	c.muActivity.RUnlock()
+
+	if lastActivity.IsZero() {
+		return false
+	}
+
+	return time.Now().After(lastActivity.Add(c.timeout))
 }
 
 func (c *Conn) close() {
