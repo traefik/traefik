@@ -153,7 +153,8 @@ same namespace as the IngressRoute)
     The field `kind` allows the following values:
 
     - `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
-    - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md)
+    - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md),
+      or the built-in [`noop@internal`](../../../http/load-balancing/service.md#noop-service) service
 
 
 ### TLS Options
