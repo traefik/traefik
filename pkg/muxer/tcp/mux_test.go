@@ -396,6 +396,36 @@ func TestParseHostSNI(t *testing.T) {
 	}
 }
 
+func TestParseBoundedHostSNI(t *testing.T) {
+	testCases := []struct {
+		expression string
+		domains    []string
+		bounded    bool
+	}{
+		{expression: "HostSNI(`foo.bar`)", domains: []string{"foo.bar"}, bounded: true},
+		{expression: "HostSNI(`foo.bar`) && ClientIP(`10.0.0.1`)", domains: []string{"foo.bar"}, bounded: true},
+		{expression: "HostSNI(`foo.bar`) || ClientIP(`10.0.0.1`)", domains: []string{"foo.bar"}},
+		{expression: "HostSNI(`*`)", domains: []string{"*"}},
+		{expression: "!HostSNI(`foo.bar`)"},
+		{expression: "HostSNIRegexp(`^foo\\.bar$`)"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.expression, func(t *testing.T) {
+			t.Parallel()
+
+			domains, bounded, err := ParseBoundedHostSNI(test.expression)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.domains, domains)
+			assert.Equal(t, test.bounded, bounded)
+		})
+	}
+
+	_, _, err := ParseBoundedHostSNI("Foobar(`foo.bar`)")
+	require.Error(t, err)
+}
+
 func Test_Priority(t *testing.T) {
 	type rule struct {
 		rule     string

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,6 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // FooCert is a PEM-encoded TLS cert.
@@ -112,6 +118,27 @@ func TestAppendCertMetric(t *testing.T) {
 
 			assert.Equal(t, test.expected, gauge.metrics)
 		})
+	}
+}
+
+func TestInitACMEProvider_cnameFlattening(t *testing.T) {
+	for _, flattening := range []bool{false, true} {
+		acmeConfig := &acme.Configuration{}
+		acmeConfig.SetDefaults()
+		acmeConfig.Storage = filepath.Join(t.TempDir(), "acme.json")
+
+		staticConfig := &static.Configuration{
+			HostResolver:          &types.HostResolverConfig{CnameFlattening: flattening},
+			CertificatesResolvers: map[string]static.CertificateResolver{"le": {ACME: acmeConfig}},
+		}
+
+		pool := safe.NewPool(t.Context())
+		providers := initACMEProvider(staticConfig, aggregator.NewProviderAggregator(static.Providers{}),
+			traefiktls.NewManager(nil), nil, nil, pool)
+		pool.Stop()
+
+		require.Len(t, providers, 1)
+		assert.Equal(t, flattening, providers[0].CNAMEFlattening)
 	}
 }
 

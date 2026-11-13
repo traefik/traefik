@@ -108,13 +108,20 @@ ACME certificate resolvers have the following configuration options:
 
 ## Automatic Certificate Renewal
 
-Traefik automatically tracks the expiry date of certificates it generates. Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+Traefik automatically tracks the expiry date of certificates it generates.
 
 By default, Traefik manages 90-day certificates and starts renewing them 30 days before their expiry.
 When using a certificate resolver that issues certificates with custom durations, the `certificatesDuration` option can be used to configure the certificates' duration.
 
-!!! note
-    Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+!!! note "Certificates no longer used"
+    Traefik only renews a certificate if one of its domains is used by a TLS router (through its rule or `tls.domains`) or by a default generated certificate, whichever resolver they name.
+    While a TLS router can match domains its rule does not list (for example `HostRegexp`, `HostSNIRegexp`, ``Host(`*`)``, ``HostSNI(`*`)``, or a rule without `Host` or `HostSNI`), every certificate counts as used.
+    The same holds for every HTTP TLS router while `hostResolver.cnameFlattening` is enabled, since `Host` then also matches CNAME aliases.
+    A certificate is considered unused once no domain it covers has been used for a full renew interval (one day for 90-day certificates),
+    so a configuration that is briefly incomplete, at startup for example, does not stop its renewal.
+    This interval starts again when Traefik restarts, as usage is not stored.
+    An unused certificate stays in the storage until it expires, and is removed from it afterwards.
+    A certificate Traefik cannot parse is never removed.
 
 ## The Different ACME Challenges
 

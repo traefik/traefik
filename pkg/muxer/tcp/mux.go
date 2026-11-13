@@ -189,6 +189,21 @@ func ParseHostSNI(rule string) ([]string, error) {
 	return ruleTree.ParsePositiveMatchers([]string{"HostSNI"}), nil
 }
 
+// ParseBoundedHostSNI returns the positive HostSNI values of a rule, and
+// whether every connection the rule matches must match one of them, not "*".
+func ParseBoundedHostSNI(rule string) ([]string, bool, error) {
+	ruleTree, err := parseRuleTree(rule)
+	if err != nil {
+		return nil, false, err
+	}
+
+	sniMatchers := []string{"HostSNI"}
+	names := ruleTree.ParsePositiveMatchers(sniMatchers)
+	bounded := ruleTree.RequiresPositiveMatchers(sniMatchers) && !slices.Contains(names, "*")
+
+	return names, bounded, nil
+}
+
 // parseRuleTree parses the rule with every TCP matcher known, whatever the syntax.
 func parseRuleTree(rule string) (*rules.Tree, error) {
 	var matchers []string

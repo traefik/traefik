@@ -120,6 +120,20 @@ func (tree *Tree) ParsePositiveMatchers(matchers []string) []string {
 	}
 }
 
+// RequiresPositiveMatchers reports whether every request the Tree matches must
+// also match one of the given matchers, not negated.
+func (tree *Tree) RequiresPositiveMatchers(matchers []string) bool {
+	switch tree.Matcher {
+	case and:
+		return tree.RuleLeft.RequiresPositiveMatchers(matchers) || tree.RuleRight.RequiresPositiveMatchers(matchers)
+	case or:
+		return tree.RuleLeft.RequiresPositiveMatchers(matchers) && tree.RuleRight.RequiresPositiveMatchers(matchers)
+	default:
+		// Negation is pushed down to the leaves by invert.
+		return !tree.Not && slices.Contains(matchers, tree.Matcher)
+	}
+}
+
 // CheckRule validates the given rule.
 func CheckRule(rule *Tree) error {
 	if len(rule.Value) == 0 {
