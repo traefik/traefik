@@ -76,6 +76,7 @@ require (
 	github.com/traefik/paerser v0.2.2
 	github.com/traefik/traefik/dynamic/ext v0.0.0-00010101000000-000000000000
 	github.com/traefik/yaegi v0.16.3
+	github.com/traefik/yaegi/v2 v2.0.0-20261112132425-b76896158fba // Not released yet: v2 branch of traefik/yaegi.
 	github.com/tufanbarisyildirim/gonginx v0.0.0-20250620092546-c3e307e36701 // latest tag is too old.
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
