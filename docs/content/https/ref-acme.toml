@@ -3,7 +3,8 @@
 
   # Email address used for registration.
   #
-  # Required
+  # Optional
+  # Default: ""
   #
   email = "test@example.com"
 
