@@ -43,6 +43,7 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 
 	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 		rc := newRingChannel()
+		pool.GoCtx(rc.ringBuffer)
 		pool.GoCtx(func(ctx context.Context) {
 			for {
 				select {

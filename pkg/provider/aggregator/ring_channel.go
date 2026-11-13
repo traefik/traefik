@@ -1,6 +1,8 @@
 package aggregator
 
 import (
+	"context"
+
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -14,13 +16,16 @@ type RingChannel struct {
 	buffer        *dynamic.Message
 }
 
+// inputBufferSize matches the configuration watcher channel buffer:
+// providers send without watching for cancellation, so once ringBuffer has returned,
+// a send in flight during shutdown must not block the pool from stopping.
+const inputBufferSize = 100
+
 func newRingChannel() *RingChannel {
-	ch := &RingChannel{
-		input:  make(chan dynamic.Message),
+	return &RingChannel{
+		input:  make(chan dynamic.Message, inputBufferSize),
 		output: make(chan dynamic.Message),
 	}
-	go ch.ringBuffer()
-	return ch
 }
 
 func (ch *RingChannel) in() chan<- dynamic.Message {
@@ -32,7 +37,7 @@ func (ch *RingChannel) out() <-chan dynamic.Message {
 }
 
 // for all buffered cases.
-func (ch *RingChannel) ringBuffer() {
+func (ch *RingChannel) ringBuffer(ctx context.Context) {
 	var input, output chan dynamic.Message
 	var next dynamic.Message
 	input = ch.input
@@ -55,6 +60,8 @@ func (ch *RingChannel) ringBuffer() {
 				ch.buffer = &elem
 			case output <- next:
 				ch.buffer = nil
+			case <-ctx.Done():
+				return
 			}
 		}
 
