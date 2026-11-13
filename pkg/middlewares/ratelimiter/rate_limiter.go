@@ -3,6 +3,7 @@ package ratelimiter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/vulcand/oxy/v2/utils"
 	"golang.org/x/time/rate"
 )
@@ -149,6 +151,13 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rlSource := fmt.Sprintf("%s:%s", rl.name, source)
 	delay, err := rl.limiter.Allow(ctx, rlSource)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			rl.logger.Debug().Err(err).Msg("Client closed request")
+			observability.SetStatusErrorf(ctx, "Context canceled")
+			rw.WriteHeader(httputil.StatusClientClosedRequest)
+			return
+		}
+
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
 		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
 		http.Error(rw, "Could not insert/update bucket", http.StatusInternalServerError)
