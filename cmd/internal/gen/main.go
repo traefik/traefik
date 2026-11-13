@@ -63,7 +63,7 @@ func run(dest string) error {
 
 	centrifuge.ExcludedTypes = []string{
 		// tls
-		"CertificateStore", "Manager",
+		"CertificateStore", "CertificateData", "Manager",
 		// dynamic
 		"Message", "Configurations",
 		// types
@@ -99,6 +99,27 @@ func cleanType(typ types.Type, base string) string {
 		return "string"
 	}
 
+	if typ.String() == "*github.com/traefik/paerser/types.Duration" {
+		return "*string"
+	}
+
+	if typ.String() == "*net/http.Header" {
+		return "*http.Header"
+	}
+
+	if typ.String() == "github.com/traefik/traefik/v3/pkg/observability/types.TracingVerbosity" {
+		return "string"
+	}
+
+	if typ.String() == "google.golang.org/grpc/codes.Code" {
+		return "uint32"
+	}
+
+	// The ext extension points are empty structs, skip them.
+	if strings.HasPrefix(typ.String(), "github.com/traefik/traefik/dynamic/ext.") {
+		return ""
+	}
+
 	if strings.Contains(typ.String(), base) {
 		return strings.ReplaceAll(typ.String(), base+".", "")
 	}
@@ -112,7 +133,10 @@ func cleanType(typ types.Type, base string) string {
 
 func cleanPackage(src string) string {
 	switch src {
-	case "github.com/traefik/paerser/types":
+	case "github.com/traefik/paerser/types",
+		"github.com/traefik/traefik/v3/pkg/observability/types",
+		"github.com/traefik/traefik/dynamic/ext",
+		"google.golang.org/grpc/codes":
 		return ""
 	case "github.com/traefik/traefik/v3/pkg/tls":
 		return path.Join(destModuleName, destPkg, "tls")
