@@ -32,7 +32,7 @@ package v1alpha1
 // ClientTLSWithCAOptional holds the client TLS configuration.
 // TODO: This has to be removed once the CAOptional option is removed.
 type ClientTLSWithCAOptionalApplyConfiguration struct {
-	ClientTLSApplyConfiguration `json:",inline"`
+	ClientTLSApplyConfiguration `json:""`
 	// CAConfigMap is the name of a ConfigMap in the Middleware namespace containing the CA to validate the server certificate.
 	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
 	// CAConfigMap and CASecret are mutually exclusive.

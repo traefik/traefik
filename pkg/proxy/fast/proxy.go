@@ -270,11 +270,13 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	// shared pool, otherwise an unrelated frontend connection could later be handed the same socket and inherit the
 	// identity. It is dispatched through a pool dedicated to its frontend connection instead, and every subsequent
 	// request on that connection to the same backend reuses that pool to keep relying on the authenticated connection.
+	// Proxy-Authorization is checked as well, as ForwardAuth forwards it to the auth server.
 	connPool := p.connPool
 	if stickyPools, ok := ctx.Value(connPoolsKey).(*stickyConnPools); ok {
 		if dedicated := stickyPools.get(p.connPool); dedicated != nil {
 			connPool = dedicated
-		} else if containsNTLMorNegotiate(req.Header.Values("Authorization")) {
+		} else if containsNTLMorNegotiate(req.Header.Values("Authorization")) ||
+			containsNTLMorNegotiate(req.Header.Values("Proxy-Authorization")) {
 			connPool = stickyPools.stick(p.connPool)
 		}
 	}

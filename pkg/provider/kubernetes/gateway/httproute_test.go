@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -320,6 +321,88 @@ func Test_createCORS(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, test.expected, createCORS(test.filter))
+		})
+	}
+}
+
+func Test_loadRequestMirror(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		filter              gatev1.HTTPRequestMirrorFilter
+		expectedNumerator   int64
+		expectedDenominator int64
+	}{
+		{
+			desc:                "no percent nor fraction",
+			expectedNumerator:   1,
+			expectedDenominator: 1,
+		},
+		{
+			desc:                "percent",
+			filter:              gatev1.HTTPRequestMirrorFilter{Percent: new(int32(20))},
+			expectedNumerator:   20,
+			expectedDenominator: 100,
+		},
+		{
+			desc:                "fraction",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 25, Denominator: new(int32(50))}},
+			expectedNumerator:   25,
+			expectedDenominator: 50,
+		},
+		{
+			desc:                "fraction with default denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 42}},
+			expectedNumerator:   42,
+			expectedDenominator: 100,
+		},
+		{
+			desc:                "fraction below one percent",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 5, Denominator: new(int32(1000))}},
+			expectedNumerator:   5,
+			expectedDenominator: 1000,
+		},
+		{
+			desc:                "numerator greater than denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 3, Denominator: new(int32(2))}},
+			expectedNumerator:   2,
+			expectedDenominator: 2,
+		},
+		{
+			desc:                "invalid denominator",
+			filter:              gatev1.HTTPRequestMirrorFilter{Fraction: &gatev1.Fraction{Numerator: 1, Denominator: new(int32(0))}},
+			expectedNumerator:   0,
+			expectedDenominator: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// A cross-provider backend reference is loaded without any Kubernetes resource.
+			test.filter.BackendRef = gatev1.BackendObjectReference{
+				Group: new(gatev1.Group("traefik.io")),
+				Kind:  new(gatev1.Kind("TraefikService")),
+				Name:  "mirror@file",
+			}
+			route := &gatev1.HTTPRoute{Namespace: "default"}
+			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{
+				Middlewares: map[string]*dynamic.Middleware{},
+				Services:    map[string]*dynamic.Service{},
+			}}
+
+			var p Provider
+			middleware, err := p.loadRequestMirror(t.Context(), "gateway", "default", gatewayListener{}, conf, "mirror", route, &test.filter, nil, nil)
+			require.NoError(t, err)
+
+			expected := &dynamic.Middleware{
+				RequestMirror: &dynamic.RequestMirror{
+					Service:     "mirror@file",
+					Numerator:   test.expectedNumerator,
+					Denominator: test.expectedDenominator,
+				},
+			}
+			assert.Equal(t, expected, middleware)
 		})
 	}
 }

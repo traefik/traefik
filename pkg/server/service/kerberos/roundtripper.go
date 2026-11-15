@@ -46,6 +46,22 @@ func (s *stickyRoundTrippers) stick(owner *roundTripper) http.RoundTripper {
 	return rt
 }
 
+// release closes the idle backend connections of the dedicated round trippers, as nothing else does once their
+// client connection is closed: they would stay open until their idle timeout, and as each client connection has its
+// own pool, maxIdleConnsPerHost does not bound them.
+func (s *stickyRoundTrippers) release() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, rt := range s.roundTrippers {
+		if closer, ok := rt.(interface{ CloseIdleConnections() }); ok {
+			closer.CloseIdleConnections()
+		}
+	}
+
+	s.roundTrippers = nil
+}
+
 type transportKeyType string
 
 var transportKey transportKeyType = "transport"
@@ -53,6 +69,14 @@ var transportKey transportKeyType = "transport"
 // AddTransportOnContext returns a context holding the round trippers dedicated to a client connection.
 func AddTransportOnContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, transportKey, &stickyRoundTrippers{})
+}
+
+// ReleaseTransportOnContext releases the round trippers dedicated to the client connection of the given context.
+// It must be called once that connection is closed.
+func ReleaseTransportOnContext(ctx context.Context) {
+	if connRoundTrippers, ok := ctx.Value(transportKey).(*stickyRoundTrippers); ok {
+		connRoundTrippers.release()
+	}
 }
 
 type roundTripper struct {
@@ -90,7 +114,9 @@ func (k *roundTripper) RoundTrip(request *http.Request) (*http.Response, error) 
 	// Such a request must never be dispatched through the shared original round tripper, otherwise the
 	// now authenticated connection would stay in the globally shared pool where an unrelated frontend
 	// connection could later be handed the same socket and inherit the identity.
-	if containsNTLMorNegotiate(request.Header.Values("Authorization")) {
+	// Proxy-Authorization is checked as well, as ForwardAuth forwards it to the auth server.
+	if containsNTLMorNegotiate(request.Header.Values("Authorization")) ||
+		containsNTLMorNegotiate(request.Header.Values("Proxy-Authorization")) {
 		return connRoundTrippers.stick(k).RoundTrip(request)
 	}
 
