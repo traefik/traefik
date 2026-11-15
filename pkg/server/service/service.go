@@ -189,6 +189,15 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 
 	// We keep the originalLB and if it is StatusUpdater to allow wrapping to keep the state.
 	originalLB, isStatusUpdater := lb.(healthcheck.StatusUpdater)
+	if conf.LoadBalancer != nil {
+		// The balancer can generate a response before selecting a server.
+		metricsHandler := metricsMiddle.ServiceMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
+		var err error
+		lb, err = alice.New().Append(observability.WrapMiddleware(ctx, metricsHandler)).Then(lb)
+		if err != nil {
+			return nil, fmt.Errorf("error wrapping service metrics handler: %w", err)
+		}
+	}
 
 	if len(conf.Middlewares) > 0 {
 		if m.middlewareChainBuilder == nil {
@@ -501,20 +510,10 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		// middlewares in the chain.
 		proxy = retry.WrapHandler(proxy)
 
-		// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+		// Access log and tracing middlewares are idempotent if the associated signal is disabled.
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
-
-		metricsHandler := metricsMiddle.ServiceMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
-		metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
-
-		proxy, err = alice.New().
-			Append(metricsHandler).
-			Then(proxy)
-		if err != nil {
-			return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
-		}
 
 		proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
 
