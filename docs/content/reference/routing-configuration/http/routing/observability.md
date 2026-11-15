@@ -1,6 +1,6 @@
 ---
 title: "Per-Router Observability"
-description: "You can disable access logs, metrics, and tracing for a specific entrypoint attached to a HTTP Router. Read the technical documentation."
+description: "You can disable access logs, metrics, and tracing for a specific entrypoint attached to an HTTP router. Read the technical documentation."
 ---
 
 Traefik's observability features include logs, access logs, metrics, and tracing. You can configure these options globally or at more specific levels, such as per router or per entry point.
@@ -25,7 +25,7 @@ However, a router defining its own observability configuration will opt-out from
     and will be ignored.
 
     For instance, if a router exposes the `api@internal` service and `metrics.AddInternals` is false,
-    it will never produces metrics, even if the router observability configuration enables metrics.
+    it will never produce metrics, even if the router observability configuration enables metrics.
 
 ## Configuration Example
 

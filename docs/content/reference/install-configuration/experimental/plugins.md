@@ -112,3 +112,34 @@ Wasm plugins use the HTTP-Wasm host `log` function to select a log level and sen
 Traefik sends those messages through the middleware logger with the configured log output and format.
 The HTTP-Wasm log function accepts a message string; it does not provide separate structured fields.
 Wasm plugins cannot import the Yaegi middleware logger bridge.
+
+## Runtime Version
+
+!!! info "Yaegi plugins only"
+
+    The `defaultRuntimeVersion` option and the `runtimeVersion` manifest field only apply to Yaegi plugins.
+    They have no effect on Wasm plugins.
+
+Yaegi plugins run with Yaegi v1 by default.
+The `defaultRuntimeVersion` option selects the version of the Yaegi interpreter, `v1` (default) or `v2`, for all the Yaegi plugins.
+
+```yaml tab="File (YAML)"
+experimental:
+  defaultRuntimeVersion: v2
+```
+
+```toml tab="File (TOML)"
+[experimental]
+  defaultRuntimeVersion = "v2"
+```
+
+```bash tab="CLI"
+--experimental.defaultruntimeversion=v2
+```
+
+A Yaegi plugin can also ask for Yaegi v2 in its manifest (`.traefik.yml`), with `runtimeVersion: v2`.
+Such a plugin always runs with Yaegi v2, whatever the value of the `defaultRuntimeVersion` option.
+A manifest cannot ask for Yaegi v1.
+
+Yaegi v2 only loads plugins that the Go compiler accepts, and limits the CPU time, the memory and the number of goroutines of a plugin.
+A plugin that Yaegi v2 cannot load is reported as a plugin load failure.

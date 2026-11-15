@@ -54,7 +54,7 @@ type ServiceTCPApplyConfiguration struct {
 	// Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
 	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/tcp/service/#proxy-protocol
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/tcp/service/#proxy-protocol
 	//
 	// Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`

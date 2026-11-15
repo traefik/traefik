@@ -42,11 +42,39 @@ import (
 )
 
 // IngressRouteInformer provides access to a shared informer and lister for
-// IngressRoutes.
+// IngressRoutes. Prefer using the type-safe variant (see [TypedIngressRouteInformer]).
 type IngressRouteInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() traefikiov1alpha1.IngressRouteLister
 }
+
+// TypedIngressRouteInformer provides access to a shared informer and lister for
+// IngressRoutes, including the type-safe TypedInformer variant.
+// It is a superset of IngressRouteInformer.
+type TypedIngressRouteInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() IngressRouteIndexInformer
+	Lister() traefikiov1alpha1.IngressRouteLister
+}
+
+// IngressRouteIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type IngressRouteIndexInformer cache.TypedSharedIndexInformer[*crdtraefikiov1alpha1.IngressRoute]
+
+// IngressRouteHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for IngressRoute.
+type IngressRouteHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*crdtraefikiov1alpha1.IngressRoute]
+
+// IngressRouteDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for IngressRoute.
+type IngressRouteDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*crdtraefikiov1alpha1.IngressRoute]
+
+// IngressRouteFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for IngressRoute.
+type IngressRouteFilteringHandler = cache.TypedFilteringResourceEventHandler[*crdtraefikiov1alpha1.IngressRoute]
+
+// IngressRouteIndexers is a specialization of [cache.TypedIndexers] for IngressRoute.
+type IngressRouteIndexers = cache.TypedIndexers[*crdtraefikiov1alpha1.IngressRoute]
+
+// DeletedIngressRoute is a specialization of [cache.DeletedObject] for IngressRoute.
+type DeletedIngressRoute = cache.DeletedObject[*crdtraefikiov1alpha1.IngressRoute]
 
 type ingressRouteInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -57,25 +85,49 @@ type ingressRouteInformer struct {
 // NewIngressRouteInformer constructs a new informer for IngressRoute type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedIngressRouteInformer]).
 func NewIngressRouteInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewIngressRouteInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedIngressRouteInformer constructs a new informer for IngressRoute type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedIngressRouteInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers IngressRouteIndexers) IngressRouteIndexInformer {
+	return NewTypedIngressRouteInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredIngressRouteInformer constructs a new informer for IngressRoute type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredIngressRouteInformer]).
 func NewFilteredIngressRouteInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewIngressRouteInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedIngressRouteInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredIngressRouteInformer constructs a new informer for IngressRoute type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredIngressRouteInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers IngressRouteIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) IngressRouteIndexInformer {
+	return NewTypedIngressRouteInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewIngressRouteInformerWithOptions constructs a new informer for IngressRoute type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedIngressRouteInformerWithOptions]).
 func NewIngressRouteInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedIngressRouteInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedIngressRouteInformerWithOptions constructs a new informer for IngressRoute type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedIngressRouteInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) IngressRouteIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "ingressroutes"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.IngressRoute](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -108,17 +160,57 @@ func NewIngressRouteInformerWithOptions(client versioned.Interface, namespace st
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *ingressRouteInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewIngressRouteInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedIngressRouteInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *ingressRouteInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&crdtraefikiov1alpha1.IngressRoute{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *ingressRouteInformer) TypedInformer() IngressRouteIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.IngressRoute](f.factory.InformerFor(&crdtraefikiov1alpha1.IngressRoute{}, f.defaultInformer))
 }
 
 func (f *ingressRouteInformer) Lister() traefikiov1alpha1.IngressRouteLister {
 	return traefikiov1alpha1.NewIngressRouteLister(f.Informer().GetIndexer())
+}
+
+// ToTypedIngressRouteInformer converts an untyped informer into a TypedIngressRouteInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *IngressRoute. If that is not the case, calling type-safe methods of the returned
+// TypedIngressRouteInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedIngressRouteInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedIngressRouteInformer(informer IngressRouteInformer) TypedIngressRouteInformer {
+	if informer, ok := informer.(TypedIngressRouteInformer); ok {
+		return informer
+	}
+	return &ingressRouteTypedInformerAdapter{informer}
+}
+
+type ingressRouteTypedInformerAdapter struct {
+	IngressRouteInformer
+}
+
+func (a *ingressRouteTypedInformerAdapter) TypedInformer() IngressRouteIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.IngressRoute](a.Informer())
+}
+
+// ToIngressRouteIndexInformer converts an untyped informer into a IngressRouteIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *IngressRoute. If that is not the case, calling type-safe methods of the returned
+// IngressRouteIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a IngressRouteIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToIngressRouteIndexInformer(informer cache.SharedIndexInformer) IngressRouteIndexInformer {
+	if informer, ok := informer.(IngressRouteIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*crdtraefikiov1alpha1.IngressRoute](informer)
 }

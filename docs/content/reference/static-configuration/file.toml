@@ -200,6 +200,7 @@
     throttleDuration = "42s"
     experimentalChannel = true
     nativeLBByDefault = true
+    retryMaxRequestBodyBytes = 42
     [providers.kubernetesGateway.statusAddress]
       ip = "foobar"
       hostname = "foobar"

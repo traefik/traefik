@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/klauspost/compress/gzhttp"
+	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -634,6 +635,35 @@ func TestMinResponseBodyBytes(t *testing.T) {
 			assert.Equal(t, rw.Body.Bytes(), fakeBody)
 		})
 	}
+}
+
+func TestZstdWindowSize(t *testing.T) {
+	fakeBody := generateBytes(1 << 20)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if _, err := rw.Write(fakeBody); err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, zstdName)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, zstdName, rw.Header().Get(contentEncodingHeader))
+
+	// Each in-flight response holds one encoder, and the encoder memory grows with the window size.
+	reader, err := zstd.NewReader(rw.Body, zstd.WithDecoderMaxWindow(128<<10))
+	require.NoError(t, err)
+	t.Cleanup(reader.Close)
+
+	body, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	assert.Equal(t, fakeBody, body)
 }
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
