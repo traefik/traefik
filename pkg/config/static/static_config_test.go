@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
@@ -221,8 +222,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -269,8 +271,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -328,8 +331,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -391,8 +395,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					ProxyProtocol:    nil,
 					ForwardedHeaders: &ForwardedHeaders{},
 					HTTP: HTTPConfig{
-						SanitizePath:   new(true),
-						MaxHeaderBytes: 1048576,
+						SanitizePath:        new(true),
+						MaxHeaderBytes:      1048576,
+						MaxHeaderValueCount: 500,
 					},
 					HTTP2: &HTTP2Config{
 						MaxConcurrentStreams:      250,
@@ -472,6 +477,103 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					"admin":     {Address: ":8081"},
 					"traefik":   {Address: ":8080"},
 					"websecure": {Address: ":443", HTTP: HTTPConfig{TLS: &TLSConfig{}}},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, missing, created with defaults",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					"web": {Address: ":80"},
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						Transport: &EntryPointsTransport{
+							LifeCycle: &LifeCycle{
+								GraceTimeOut: 10000000000,
+							},
+							RespondingTimeouts: &RespondingTimeouts{
+								ReadTimeout: 60000000000,
+								IdleTimeout: 180000000000,
+							},
+						},
+						ForwardedHeaders: &ForwardedHeaders{},
+						HTTP: HTTPConfig{
+							SanitizePath:        new(true),
+							MaxHeaderBytes:      1048576,
+							MaxHeaderValueCount: 500,
+						},
+						HTTP2: &HTTP2Config{
+							MaxConcurrentStreams:      250,
+							MaxDecoderHeaderTableSize: 4096,
+							MaxEncoderHeaderTableSize: 4096,
+						},
+						UDP: &UDPConfig{
+							Timeout: 3000000000,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no address, default address set and options kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						HTTP: HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {
+						Address: ":8080",
+						HTTP:    HTTPConfig{AliasHeadersStrategy: AliasHeadersStrategyReject},
+					},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, address set, address kept",
+			conf: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				Ping:      &ping.Handler{EntryPoint: DefaultInternalEntryPointName},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8082"},
+				},
+			},
+		},
+		{
+			desc: "Internal entrypoint, no internal service enabled, default address set",
+			conf: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {},
+				},
+			},
+			expected: &Configuration{
+				Providers: &Providers{},
+				EntryPoints: EntryPoints{
+					DefaultInternalEntryPointName: {Address: ":8080"},
 				},
 			},
 		},
@@ -648,6 +750,7 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 		desc        string
 		underscore  string
 		alias       string
+		global      string
 		expectError bool
 	}{
 		{
@@ -676,6 +779,25 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			alias:       AliasHeadersStrategyReject,
 			expectError: true,
 		},
+		{
+			desc:   "only the global default configured",
+			global: AliasHeadersStrategyDelete,
+		},
+		{
+			desc:   "global default with an explicit per-entry-point override",
+			global: AliasHeadersStrategyDelete,
+			alias:  AliasHeadersStrategyKeep,
+		},
+		{
+			desc:        "invalid global default",
+			global:      "foobar",
+			expectError: true,
+		},
+		{
+			desc:        "invalid per-entry-point value",
+			alias:       "foobar",
+			expectError: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -695,6 +817,10 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 				},
 			}
 
+			if test.global != "" {
+				cfg.Global = &Global{AliasHeadersStrategy: test.global}
+			}
+
 			err := cfg.ValidateConfiguration()
 			if test.expectError {
 				assert.Error(t, err)
@@ -702,6 +828,90 @@ func TestValidateConfiguration_aliasHeadersStrategy(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestValidateConfiguration_aliasHeadersStrategyInvalidGlobalAfterPropagation(t *testing.T) {
+	cfg := &Configuration{
+		Providers: &Providers{},
+		Global:    &Global{AliasHeadersStrategy: "foobar"},
+		EntryPoints: EntryPoints{
+			"web": {Address: ":80"},
+		},
+	}
+
+	cfg.SetEffectiveConfiguration()
+
+	require.EqualError(t, cfg.ValidateConfiguration(), `invalid global aliasHeadersStrategy value "foobar"`)
+}
+
+func TestSetEffectiveConfiguration_aliasHeadersStrategyDefault(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		global     string
+		entry      map[string]string
+		underscore map[string]string
+		expected   map[string]string
+	}{
+		{
+			desc:     "no global default leaves entry points untouched",
+			entry:    map[string]string{"web": "", "websecure": ""},
+			expected: map[string]string{"web": "", "websecure": ""},
+		},
+		{
+			desc:     "global default fills entry points without an explicit value",
+			global:   AliasHeadersStrategyDelete,
+			entry:    map[string]string{"web": "", "websecure": ""},
+			expected: map[string]string{"web": AliasHeadersStrategyDelete, "websecure": AliasHeadersStrategyDelete},
+		},
+		{
+			desc:     "explicit per-entry-point value wins over the global default",
+			global:   AliasHeadersStrategyDelete,
+			entry:    map[string]string{"web": AliasHeadersStrategyKeep, "websecure": ""},
+			expected: map[string]string{"web": AliasHeadersStrategyKeep, "websecure": AliasHeadersStrategyDelete},
+		},
+		{
+			desc:       "global default skips entry points using the deprecated option",
+			global:     AliasHeadersStrategyKeep,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
+		{
+			desc:       "global default skips entry points using the deprecated option, even with a matching value",
+			global:     AliasHeadersStrategyDelete,
+			entry:      map[string]string{"web": ""},
+			underscore: map[string]string{"web": UnderscoreHeadersStrategyDelete},
+			expected:   map[string]string{"web": ""},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{Providers: &Providers{}, EntryPoints: EntryPoints{}}
+			for epName, strategy := range test.entry {
+				cfg.EntryPoints[epName] = &EntryPoint{
+					Address: ":80",
+					HTTP: HTTPConfig{
+						AliasHeadersStrategy:      strategy,
+						UnderscoreHeadersStrategy: test.underscore[epName],
+					},
+				}
+			}
+
+			if test.global != "" {
+				cfg.Global = &Global{AliasHeadersStrategy: test.global}
+			}
+
+			cfg.SetEffectiveConfiguration()
+			require.NoError(t, cfg.ValidateConfiguration())
+
+			for epName, want := range test.expected {
+				assert.Equal(t, want, cfg.EntryPoints[epName].HTTP.AliasHeadersStrategy)
+			}
 		})
 	}
 }

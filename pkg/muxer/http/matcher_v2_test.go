@@ -201,6 +201,11 @@ func TestHostV2Matcher(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			desc:          "invalid Host matcher (not a hostname)",
+			rule:          "Host(`/`)",
+			expectedError: true,
+		},
+		{
 			desc: "valid Host matcher (many parameters)",
 			rule: "Host(`example.com`, `example.org`)",
 			expected: map[string]int{
@@ -1031,7 +1036,7 @@ func Test_addRoute(t *testing.T) {
 		},
 		{
 			desc: "Host and PathPrefix Host OR, first host and wrong PathPrefix",
-			rule: "Host(`nope,localhost`) && PathPrefix(`/bar`)",
+			rule: "Host(`nope`,`localhost`) && PathPrefix(`/bar`)",
 			expected: map[string]int{
 				"http://localhost/foo": http.StatusNotFound,
 			},

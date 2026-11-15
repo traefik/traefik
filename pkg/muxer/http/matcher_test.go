@@ -194,6 +194,11 @@ func TestHostMatcher(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			desc:          "invalid Host matcher (not a hostname)",
+			rule:          "Host(`/`)",
+			expectedError: true,
+		},
+		{
 			desc:          "invalid Host matcher (too many parameters)",
 			rule:          "Host(`example.com`, `example.org`)",
 			expectedError: true,

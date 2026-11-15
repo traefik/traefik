@@ -62,6 +62,11 @@ type Middleware struct {
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
+	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
+	// Only providers set it, and it must stay part of the configuration hash, so that a change of a referenced value reloads the middleware.
+	URNRefs map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false" loggable:"false"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -589,6 +594,8 @@ type PassTLSClientCert struct {
 type AuthTLSPassCertificateToUpstream struct {
 	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
 	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
+	// PassCertificate sets the Ssl-Client-Cert header with the client certificate.
+	PassCertificate bool `json:"passCertificate,omitempty" toml:"passCertificate,omitempty" yaml:"passCertificate,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

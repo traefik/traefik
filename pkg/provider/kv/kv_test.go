@@ -864,20 +864,16 @@ func Test_buildConfiguration(t *testing.T) {
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: []*tls.CertAndStores{
 				{
-					Certificate: tls.Certificate{
-						CertFile: types.FileOrContent("foobar"),
-						KeyFile:  types.FileOrContent("foobar"),
-					},
+					CertFile: types.FileOrContent("foobar"),
+					KeyFile:  types.FileOrContent("foobar"),
 					Stores: []string{
 						"foobar",
 						"foobar",
 					},
 				},
 				{
-					Certificate: tls.Certificate{
-						CertFile: types.FileOrContent("foobar"),
-						KeyFile:  types.FileOrContent("foobar"),
-					},
+					CertFile: types.FileOrContent("foobar"),
+					KeyFile:  types.FileOrContent("foobar"),
 					Stores: []string{
 						"foobar",
 						"foobar",

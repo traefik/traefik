@@ -99,9 +99,14 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
-	config := b.configs[middlewareName]
-	if config == nil || config.Middleware == nil {
+	info := b.configs[middlewareName]
+	if info == nil || info.Middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
+	config, err := info.Middleware.ResolveURNRefs()
+	if err != nil {
+		return nil, fmt.Errorf("resolving middleware %q configuration: %w", middlewareName, err)
 	}
 
 	var middleware alice.Constructor
@@ -415,13 +420,19 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, fmt.Errorf("plugin: %w", err)
 		}
 
+		// Unlike the other middlewares, the decoding of a plugin configuration puts the invalid values in its errors.
 		plug, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
 		if err != nil {
-			return nil, fmt.Errorf("plugin: %w", err)
+			return nil, info.RedactURNRefs(fmt.Errorf("plugin: %w", err))
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return newTraceablePlugin(ctx, middlewareName, plug, next)
+			handler, err := newTraceablePlugin(ctx, middlewareName, plug, next)
+			if err != nil {
+				return nil, info.RedactURNRefs(err)
+			}
+
+			return handler, nil
 		}
 	}
 

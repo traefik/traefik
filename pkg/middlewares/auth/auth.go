@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -19,11 +20,17 @@ func getUsers(fileName string, appendUsers []string, parser UserParser) (map[str
 		return nil, err
 	}
 
+	// loadUsers puts the users of the file before the users of the list.
+	fileUsers := len(users) - len(appendUsers)
+
 	userMap := make(map[string]string)
-	for _, user := range users {
+	for i, user := range users {
 		userName, userHash, err := parser(user)
 		if err != nil {
-			return nil, err
+			if i < fileUsers {
+				return nil, fmt.Errorf("parsing user %d of %s: %w", i+1, fileName, err)
+			}
+			return nil, fmt.Errorf("parsing user at index %d: %w", i-fileUsers, err)
 		}
 		userMap[userName] = userHash
 	}

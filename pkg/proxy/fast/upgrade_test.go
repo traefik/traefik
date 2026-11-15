@@ -1,12 +1,16 @@
 package fast
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -140,4 +144,70 @@ func TestH2CUpgradeNotForwarded(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
+}
+
+// After a 101, the connection is handed over to the tunnel copiers, which read it through the same
+// bufio.Reader: the pool readLoop must not read from it anymore.
+func TestUpgradedConnNotReadByReadLoop(t *testing.T) {
+	// After the handler returns, net/http keeps the connection open and waits for the next request.
+	// The proxy never sends one, so the backend stays silent and copyFromBackend parks inside the shared reader.
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.Header().Set("Connection", "Upgrade")
+		rw.Header().Set("Upgrade", "test")
+		rw.WriteHeader(http.StatusSwitchingProtocols)
+	}))
+	t.Cleanup(backend.Close)
+
+	var detector atomic.Pointer[concurrentReadDetector]
+
+	u := testhelpers.MustParseURL(backend.URL)
+	pool := newConnPool(200, 0, 0, func() (net.Conn, error) {
+		c, err := net.Dial("tcp", u.Host)
+		require.NoError(t, err)
+
+		d := &concurrentReadDetector{Conn: c}
+		detector.Store(d)
+
+		return d, nil
+	})
+	t.Cleanup(pool.Close)
+
+	proxy := createProxyWithForwarder(t, backend.URL, pool)
+
+	req, err := http.NewRequest(http.MethodGet, proxy.URL+"/ws", http.NoBody)
+	require.NoError(t, err)
+
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Upgrade", "test")
+
+	resp, err := proxy.Client().Do(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+
+	// Close the switched connection so copyToBackend returns first and the upgrade handler returns while
+	// copyFromBackend is still parked in the shared reader.
+	require.NoError(t, resp.Body.Close())
+
+	// Let the readLoop come back around to Peek on the upgraded connection.
+	time.Sleep(500 * time.Millisecond)
+
+	d := detector.Load()
+	require.NotNil(t, d)
+	assert.False(t, d.overlapped.Load())
+}
+
+type concurrentReadDetector struct {
+	net.Conn
+
+	inRead     atomic.Int32
+	overlapped atomic.Bool
+}
+
+func (c *concurrentReadDetector) Read(b []byte) (int, error) {
+	if c.inRead.Add(1) > 1 {
+		c.overlapped.Store(true)
+	}
+	defer c.inRead.Add(-1)
+
+	return c.Conn.Read(b)
 }

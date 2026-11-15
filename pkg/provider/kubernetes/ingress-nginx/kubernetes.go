@@ -29,6 +29,9 @@ const (
 	// unavailableServiceName is the name of a Traefik service returning a 503 Service Unavailable.
 	unavailableServiceName = "unavailable-service"
 
+	// forbiddenServiceName is the name of a Traefik service returning a 403 Forbidden.
+	forbiddenServiceName = "forbidden-service"
+
 	// NGINX default values.
 	annotationIngressClass = "kubernetes.io/ingress.class"
 

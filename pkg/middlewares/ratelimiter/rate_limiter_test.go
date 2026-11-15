@@ -568,6 +568,9 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 	state := lua.NewState()
 	defer state.Close()
 
+	// gopher-lua provides table.maxn, unlike the Lua 5.4 that Dragonfly and similar servers embed.
+	state.SetField(state.GetGlobal("table"), "maxn", lua.LNil)
+
 	tableKeys := state.NewTable()
 	for _, key := range keys {
 		tableKeys.Append(lua.LString(key))

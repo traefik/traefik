@@ -11,7 +11,7 @@ Rules are a set of matchers configured with values, that determine if a particul
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
 - To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes ``\"``.
-    - Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
+    - Single quotes `'` are not accepted since the values are [Go's String Literals](https://go.dev/ref/spec#String_literals).
 - Matchers that accept a regular expression (`regexp`) use the [Go flavored syntax](https://golang.org/pkg/regexp/).
 - The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules, as well as parentheses to express complex rules.
 - The NOT (`!`) operator allows you to invert the matcher.

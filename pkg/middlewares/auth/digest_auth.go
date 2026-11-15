@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -122,7 +122,8 @@ func (d *digestAuth) secretDigest(user, realm string) string {
 func digestUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 3 {
-		return "", "", fmt.Errorf("error parsing DigestUser: %v", user)
+		// The user is not part of the error, as it may come from a secret.
+		return "", "", errors.New("expected user:realm:hash format")
 	}
 	return split[0] + ":" + split[1], split[2], nil
 }

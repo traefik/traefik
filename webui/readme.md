@@ -20,13 +20,13 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 22](https://nodejs.org) [Yarn](https://yarnpkg.com/)
+- prerequisite: [Node 26](https://nodejs.org) [Yarn](https://yarnpkg.com/)
 
 - Go to the `webui/` directory
 
 - As we use Yarn v4, you will need to install corepack before installing dependencies:
 
-  - `npm i -g corepack`
+  - `npm i -g corepack@0.36.0 --ignore-scripts`
 
 - To install dependencies, execute the following commands:
 

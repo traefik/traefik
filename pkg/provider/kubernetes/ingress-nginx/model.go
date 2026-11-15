@@ -82,6 +82,26 @@ type server struct {
 
 	// Locations holds the per-path routing units for this hostname.
 	Locations []*location
+
+	// TLSOptionName is the name of the TLS option of the server.
+	// Every host gets its own TLS option, as ingress-nginx configures TLS per server block.
+	// Host-less rules belong to the ingress-nginx default server, which answers unknown server names:
+	// in Traefik, only the default TLS option applies to them.
+	TLSOptionName string
+
+	// TLSOption is the TLS option of the server, nil when the server has none to define.
+	TLSOption *tls.Options
+
+	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
+	clientAuthIngress string
+
+	// clientAuthPassCertificate is the auth-tls-pass-certificate-to-upstream annotation of that Ingress,
+	// as ingress-nginx reads it from the server block and not from the location.
+	clientAuthPassCertificate bool
+
+	// AuthTLSError tells why the first unusable auth-tls-secret declared for the server cannot be used.
+	// ingress-nginx answers 403 to every request of such a server.
+	AuthTLSError string
 }
 
 // location is the per-path routing unit. It is the central type of the metamodel:
@@ -130,6 +150,9 @@ type location struct {
 	// DigestAuth holds the resolved digest-auth middleware (nil unless auth-type=digest).
 	DigestAuth *dynamic.DigestAuth
 
+	// AuthURNRefs holds the values of the users of BasicAuth or DigestAuth, which only hold their URNs.
+	AuthURNRefs map[string]string
+
 	// ResolvedCustomHeaders holds the pre-fetched custom response headers.
 	// Populated in Phase 1 from the custom-headers ConfigMap.
 	ResolvedCustomHeaders map[string]string
@@ -137,14 +160,6 @@ type location struct {
 	// ResolvedHTTPErrorBackendName is the key into Configuration.Backends for the
 	// custom-http-errors default backend service. Empty if no custom errors configured.
 	ResolvedHTTPErrorBackendName string
-
-	// TLSOptionName is set to the TLS option name when auth-tls-secret is configured.
-	TLSOptionName string
-
-	// TLSOption holds the resolved client-auth TLS option for this Location
-	// (nil when auth-tls-secret is not configured). The translator registers it
-	// once per unique TLSOptionName in conf.TLS.Options.
-	TLSOption *tls.Options
 
 	// HasTLS is true when the parent ingress has a TLS section covering this
 	// location's host. The certs themselves live on the parent Server.
@@ -182,6 +197,9 @@ type location struct {
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
 
+	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
+	AppRootExtraRouterRule string
+
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
 
@@ -215,7 +233,7 @@ type location struct {
 	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
 	LimitConnections *dynamic.InFlightReq
 
-	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
+	// AuthTLSPassCert, if non-nil, sets the Ssl-Client-* headers from the client TLS certificate, removing the values the client sent for them.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
 	// SnippetAuth, if non-nil, configures server/configuration snippets and forward auth.

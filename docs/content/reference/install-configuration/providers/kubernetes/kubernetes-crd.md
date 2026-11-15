@@ -145,7 +145,7 @@ objects, one silently replacing the other.
 
 `safeNaming` enables collision-safe naming instead: generated names are derived from the identity of the object
 they come from, and Kubernetes Services referenced from several parents (a route with several services, or a
-Weighted/Mirroring/HighestRandomWeight TraefikService) are scoped to their parent instead of being shared by identity.
+Weighted/Mirroring/HighestRandomWeight/Failover TraefikService) are scoped to their parent instead of being shared by identity.
 
 | Value    | Behavior                                                                                     |
 |----------|-----------------------------------------------------------------------------------------------|
@@ -189,6 +189,14 @@ parents are health checked once per reference, instead of once for all of them.
     and in the `router` and `service` labels of the metrics.
     Dashboards, alerting rules, and log queries that match on Kubernetes CRD router, middleware or service names must be updated accordingly
     when `safeNaming` is enabled.
+
+!!! warning "Cross-provider references"
+
+    The generated names are also the ones the other providers reference. When `safeNaming` is enabled, a namespaced
+    `@kubernetescrd` reference, such as the `traefik.ingress.kubernetes.io/router.middlewares` annotation on an Ingress,
+    must be of form `namespace_name@kubernetescrd` instead of `namespace-name@kubernetescrd`.
+    A reference left in the legacy form is not resolved, and the routers using it are not created.
+    For a TLS options reference, the TLS handshake is refused on the host names served by those routers.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -68,7 +68,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 			pb.providerBuilders[pName] = pBuilder
 
 		default:
-			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
+			return nil, fmt.Errorf("unknown plugin type: %s", manifest.Type)
 		}
 	}
 
@@ -103,7 +103,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 			pb.providerBuilders[pName] = builder
 
 		default:
-			return nil, fmt.Errorf("unknow plugin type: %s", manifest.Type)
+			return nil, fmt.Errorf("unknown plugin type: %s", manifest.Type)
 		}
 	}
 	return pb, nil

@@ -274,3 +274,150 @@ func Test_gatewayStatusEquals(t *testing.T) {
 		})
 	}
 }
+
+func Test_mergeGatewayStatus(t *testing.T) {
+	accepted := metav1.Condition{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue}
+	staleAccepted := metav1.Condition{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionFalse}
+	listenerAccepted := metav1.Condition{Type: string(gatev1.ListenerConditionAccepted), Status: metav1.ConditionTrue}
+	staleConflicted := metav1.Condition{Type: string(gatev1.ListenerConditionConflicted), Status: metav1.ConditionTrue}
+	foreign := metav1.Condition{Type: "example.com/Foreign", Status: metav1.ConditionTrue}
+
+	desired := gatev1.GatewayStatus{
+		Conditions: []metav1.Condition{accepted},
+		Listeners: []gatev1.ListenerStatus{{
+			Name:       "http",
+			Conditions: []metav1.Condition{listenerAccepted},
+		}},
+	}
+
+	testCases := []struct {
+		desc     string
+		current  gatev1.GatewayStatus
+		expected gatev1.GatewayStatus
+	}{
+		{
+			desc:     "no current status",
+			expected: desired,
+		},
+		{
+			desc: "keeps foreign Gateway condition",
+			current: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{staleAccepted, foreign},
+			},
+			expected: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{accepted, foreign},
+				Listeners:  desired.Listeners,
+			},
+		},
+		{
+			desc: "keeps foreign listener condition",
+			current: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{foreign},
+				}},
+			},
+			expected: gatev1.GatewayStatus{
+				Conditions: desired.Conditions,
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{listenerAccepted, foreign},
+				}},
+			},
+		},
+		{
+			desc: "drops owned listener condition no longer desired",
+			current: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{listenerAccepted, staleConflicted},
+				}},
+			},
+			expected: desired,
+		},
+		{
+			desc: "drops status of listener no longer desired",
+			current: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "removed",
+					Conditions: []metav1.Condition{foreign},
+				}},
+			},
+			expected: desired,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := mergeGatewayStatus(test.current, desired)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func Test_withoutForeignConditions(t *testing.T) {
+	accepted := metav1.Condition{Type: string(gatev1.GatewayConditionAccepted), Status: metav1.ConditionTrue}
+	listenerAccepted := metav1.Condition{Type: string(gatev1.ListenerConditionAccepted), Status: metav1.ConditionTrue}
+	foreign := metav1.Condition{Type: "example.com/Foreign", Status: metav1.ConditionTrue}
+
+	testCases := []struct {
+		desc     string
+		status   gatev1.GatewayStatus
+		expected gatev1.GatewayStatus
+	}{
+		{
+			desc: "keeps owned conditions",
+			status: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{accepted},
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{listenerAccepted},
+				}},
+			},
+			expected: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{accepted},
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{listenerAccepted},
+				}},
+			},
+		},
+		{
+			desc: "drops foreign Gateway condition",
+			status: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{foreign, accepted},
+			},
+			expected: gatev1.GatewayStatus{
+				Conditions: []metav1.Condition{accepted},
+			},
+		},
+		{
+			desc: "drops foreign listener condition",
+			status: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{foreign, listenerAccepted},
+				}},
+			},
+			expected: gatev1.GatewayStatus{
+				Listeners: []gatev1.ListenerStatus{{
+					Name:       "http",
+					Conditions: []metav1.Condition{listenerAccepted},
+				}},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := withoutForeignConditions(test.status)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}

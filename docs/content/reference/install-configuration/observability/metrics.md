@@ -12,8 +12,8 @@ Traefik provides metrics in the [OpenTelemetry](#open-telemetry) format as well 
 - [Prometheus](#prometheus)
 - [StatsD](#statsd)
 
-Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
-and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
+Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346-traefik-official-standalone-dashboard/)
+and [Kubernetes](https://grafana.com/grafana/dashboards/17347-traefik-official-kubernetes-dashboard/) deployments.
 
 ---
 
@@ -68,7 +68,7 @@ metrics:
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
 | <a id="opt-metrics-otlp-addServicesLabels" href="#opt-metrics-otlp-addServicesLabels" title="#opt-metrics-otlp-addServicesLabels">`metrics.otlp.addServicesLabels`</a> | Enable metrics on services.                                                                                                                                      | true                                               | No       |
-| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.                                                                                                                   | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
+| <a id="opt-metrics-otlp-explicitBoundaries" href="#opt-metrics-otlp-explicitBoundaries" title="#opt-metrics-otlp-explicitBoundaries">`metrics.otlp.explicitBoundaries`</a> | Explicit boundaries for Histogram data points.<br /> Only applies to explicit bucket histogram exports.                                                          | ".005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10" | No       |
 | <a id="opt-metrics-otlp-pushInterval" href="#opt-metrics-otlp-pushInterval" title="#opt-metrics-otlp-pushInterval">`metrics.otlp.pushInterval`</a> | Interval at which metrics are sent to the OpenTelemetry Collector.                                                                                               | 10s                                                | No       |
 | <a id="opt-metrics-otlp-http" href="#opt-metrics-otlp-http" title="#opt-metrics-otlp-http">`metrics.otlp.http`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
 | <a id="opt-metrics-otlp-http-endpoint" href="#opt-metrics-otlp-http-endpoint" title="#opt-metrics-otlp-http-endpoint">`metrics.otlp.http.endpoint`</a> | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`"                                                           | "https://localhost:4318"                 | Yes      |
@@ -175,7 +175,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB2]
-    address: http://localhost:8086
+    address = "http://localhost:8086"
 ```
 
 ```bash tab="CLI"
@@ -216,11 +216,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    [metrics.prometheus.buckets]
-      - 0.1
-      - 0.3
-      - 1.2
-      - 5.0
+    buckets = [0.1, 0.3, 1.2, 5.0]
 ```
 
 ```bash tab="CLI"
@@ -293,7 +289,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsD]
-    address: localhost:8125
+    address = "localhost:8125"
 ```
 
 ```bash tab="CLI"
@@ -308,8 +304,8 @@ metrics:
 | <a id="opt-metrics-statsD-addEntryPointsLabels" href="#opt-metrics-statsD-addEntryPointsLabels" title="#opt-metrics-statsD-addEntryPointsLabels">`metrics.statsD.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="opt-metrics-statsD-addRoutersLabels" href="#opt-metrics-statsD-addRoutersLabels" title="#opt-metrics-statsD-addRoutersLabels">`metrics.statsD.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="opt-metrics-statsD-addServicesLabels" href="#opt-metrics-statsD-addServicesLabels" title="#opt-metrics-statsD-addServicesLabels">`metrics.statsD.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
-| <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to DataDog server. | 10s      | No      |
-| <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "127.0.0.1:8125"     | Yes      |
+| <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to StatsD server. | 10s      | No      |
+| <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "localhost:8125"     | Yes      |
 | <a id="opt-metrics-statsD-prefix" href="#opt-metrics-statsD-prefix" title="#opt-metrics-statsD-prefix">`metrics.statsD.prefix`</a> | The prefix to use for metrics collection. | "traefik"      | No      |
 
 ## Metrics Provided
@@ -614,6 +610,6 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 !!! info "`method` label value"
 
-    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
     then the value for the method label becomes `EXTENSION_METHOD`.

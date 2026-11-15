@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -51,7 +52,9 @@ func (b wasmMiddlewareBuilder) newMiddleware(config map[string]any, middlewareNa
 }
 
 func (b wasmMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	h, applyCtx, err := b.buildMiddleware(ctx, next, cfg, middlewareName)
+	h, applyCtx, err := wrapExternalWith(next, func(next http.Handler) (http.Handler, func(ctx context.Context) context.Context, error) {
+		return b.buildMiddleware(ctx, next, cfg, middlewareName)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("building Wasm middleware: %w", err)
 	}
@@ -81,7 +84,10 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	logger := middlewares.GetLogger(ctx, middlewareName, "wasm")
 
-	config := wazero.NewModuleConfig().WithSysWalltime().WithStartFunctions("_start", "_initialize")
+	config := wazero.NewModuleConfig().
+		WithSysWalltime().
+		WithRandSource(rand.Reader).
+		WithStartFunctions("_start", "_initialize")
 	for _, env := range b.settings.Envs {
 		config = config.WithEnv(env, os.Getenv(env))
 	}
