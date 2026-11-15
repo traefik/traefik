@@ -34,6 +34,7 @@ func (c *recordingServiceCounter) With(_ http.Header, labels ...string) metrics.
 
 type recordingServiceRegistry struct {
 	metrics.Registry
+
 	counter *recordingServiceCounter
 }
 
@@ -86,7 +87,7 @@ func TestLoadBalancerServiceMetrics(t *testing.T) {
 			assert.Equal(t, test.code, rw.Code)
 
 			labels := []string{"service", test.name, "method", http.MethodGet, "protocol", "http", "code", strconv.Itoa(test.code)}
-			assert.Equal(t, float64(1), registry.counter.counts[strings.Join(labels, "\x00")])
+			assert.InDelta(t, 1, registry.counter.counts[strings.Join(labels, "\x00")], 0)
 		})
 	}
 }
