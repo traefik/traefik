@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/http/httptrace"
 	"net/textproto"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -18,9 +19,17 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
 func TestGetLoadBalancer(t *testing.T) {
@@ -788,6 +797,230 @@ func TestGetServiceHandler_HealthCheck(t *testing.T) {
 	}
 }
 
+func TestBuildHTTP_serviceMetricsCountLoadBalancerErrors(t *testing.T) {
+	backend503 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(backend503.Close)
+
+	testCases := []struct {
+		desc    string
+		servers []dynamic.Server
+	}{
+		{
+			desc:    "503 returned by the backend",
+			servers: []dynamic.Server{{URL: backend503.URL}},
+		},
+		{
+			desc:    "503 returned by the load-balancer when there is no available server",
+			servers: []dynamic.Server{},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			registry := &svcMetricsRegistry{
+				Registry: metrics.NewVoidRegistry(),
+				reqs:     &collectingCounterWithHeaders{counts: map[string]float64{}},
+			}
+			obsMgr := middleware.NewObservabilityMgr(static.Configuration{}, registry, nil, nil, nil, nil)
+			pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+			sm := NewManager(map[string]*runtime.ServiceInfo{
+				"test@file": {
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{
+							Strategy: dynamic.BalancerStrategyWRR,
+							Servers:  test.servers,
+						},
+					},
+				},
+			}, obsMgr, nil, &transportManagerMock{}, pb)
+
+			handler, err := sm.BuildHTTP(t.Context(), "test@file")
+			require.NoError(t, err)
+
+			handler, err = capture.Wrap(handler)
+			require.NoError(t, err)
+			handler = observability.WithObservabilityHandler(handler, observability.Observability{MetricsEnabled: true})
+
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://foo.bar/", nil))
+
+			assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
+			assert.InDelta(t, 1, registry.reqs.counts[strconv.Itoa(http.StatusServiceUnavailable)], 0)
+		})
+	}
+}
+
+func TestBuildHTTP_serviceMetricsHealthCheckDown(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/health" {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(backend.Close)
+
+	registry := &svcMetricsRegistry{
+		Registry: metrics.NewVoidRegistry(),
+		reqs:     &collectingCounterWithHeaders{counts: map[string]float64{}},
+	}
+	obsMgr := middleware.NewObservabilityMgr(static.Configuration{}, registry, nil, nil, nil, nil)
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	sm := NewManager(map[string]*runtime.ServiceInfo{
+		"test@file": {
+			Service: &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{
+					Strategy: dynamic.BalancerStrategyWRR,
+					Servers:  []dynamic.Server{{URL: backend.URL}},
+					HealthCheck: &dynamic.ServerHealthCheck{
+						Path:     "/health",
+						Interval: ptypes.Duration(50 * time.Millisecond),
+						Timeout:  ptypes.Duration(time.Second),
+					},
+				},
+			},
+		},
+	}, obsMgr, nil, &transportManagerMock{}, pb)
+
+	handler, err := sm.BuildHTTP(t.Context(), "test@file")
+	require.NoError(t, err)
+
+	handler, err = capture.Wrap(handler)
+	require.NoError(t, err)
+
+	sm.LaunchHealthCheck(t.Context())
+
+	// Keep polling requests out of the metrics assertions.
+	require.Eventually(t, func() bool {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://foo.bar/", nil))
+		return rec.Code == http.StatusServiceUnavailable
+	}, 5*time.Second, 20*time.Millisecond)
+
+	handler = observability.WithObservabilityHandler(handler, observability.Observability{MetricsEnabled: true})
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://foo.bar/", nil))
+
+	assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
+	assert.Equal(t, map[string]float64{"503": 1}, registry.reqs.counts)
+}
+
+func TestBuildHTTP_serviceMetricsCountedOncePerRequest(t *testing.T) {
+	var servers []dynamic.Server
+	for range 2 {
+		backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(backend.Close)
+		servers = append(servers, dynamic.Server{URL: backend.URL})
+	}
+
+	registry := &svcMetricsRegistry{
+		Registry: metrics.NewVoidRegistry(),
+		reqs:     &collectingCounterWithHeaders{counts: map[string]float64{}},
+	}
+	obsMgr := middleware.NewObservabilityMgr(static.Configuration{}, registry, nil, nil, nil, nil)
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	sm := NewManager(map[string]*runtime.ServiceInfo{
+		"test@file": {
+			Service: &dynamic.Service{
+				LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR, Servers: servers},
+			},
+		},
+	}, obsMgr, nil, &transportManagerMock{}, pb)
+
+	handler, err := sm.BuildHTTP(t.Context(), "test@file")
+	require.NoError(t, err)
+
+	handler, err = capture.Wrap(handler)
+	require.NoError(t, err)
+	handler = observability.WithObservabilityHandler(handler, observability.Observability{MetricsEnabled: true})
+
+	for range 4 {
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://foo.bar/", nil))
+	}
+
+	assert.Equal(t, map[string]float64{"200": 4}, registry.reqs.counts)
+}
+
+func TestBuildHTTP_serviceTracingSpans(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(backend.Close)
+
+	testCases := []struct {
+		desc     string
+		servers  []dynamic.Server
+		expected []string
+	}{
+		{
+			desc:     "available server",
+			servers:  []dynamic.Server{{URL: backend.URL}},
+			expected: []string{"ReverseProxy", "Metrics", "Service", "Root"},
+		},
+		{
+			desc:     "no available server",
+			servers:  []dynamic.Server{},
+			expected: []string{"Metrics", "Service", "Root"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			registry := &svcMetricsRegistry{
+				Registry: metrics.NewVoidRegistry(),
+				reqs:     &collectingCounterWithHeaders{counts: map[string]float64{}},
+			}
+			obsMgr := middleware.NewObservabilityMgr(static.Configuration{}, registry, nil, nil, nil, nil)
+			pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+			sm := NewManager(map[string]*runtime.ServiceInfo{
+				"test@file": {
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR, Servers: test.servers},
+					},
+				},
+			}, obsMgr, nil, &transportManagerMock{}, pb)
+
+			handler, err := sm.BuildHTTP(t.Context(), "test@file")
+			require.NoError(t, err)
+
+			handler, err = capture.Wrap(handler)
+			require.NoError(t, err)
+			handler = observability.WithObservabilityHandler(handler, observability.Observability{
+				MetricsEnabled:         true,
+				TracingEnabled:         true,
+				DetailedTracingEnabled: true,
+			})
+
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(spanRecorder))
+			tracer := tracing.NewTracer(tracerProvider.Tracer("github.com/traefik/traefik"), nil, nil, nil)
+
+			ctx, rootSpan := tracer.Start(t.Context(), "Root")
+			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://foo.bar/", nil).WithContext(ctx))
+			rootSpan.End()
+
+			var names []string
+			for _, span := range spanRecorder.Ended() {
+				names = append(names, span.Name())
+			}
+			assert.Equal(t, test.expected, names)
+		})
+	}
+}
+
 // noopMiddlewareChainBuilder wraps a handler in a plain http.HandlerFunc,
 // simulating the effect of service-level middlewares without needing real middleware config.
 type noopMiddlewareChainBuilder struct{}
@@ -822,3 +1055,31 @@ func (t transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
 func (t transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
 	return &dynamic.ServersTransport{}, nil
 }
+
+type collectingCounterWithHeaders struct {
+	counts map[string]float64
+	last   string
+}
+
+func (c *collectingCounterWithHeaders) With(_ http.Header, labelValues ...string) metrics.CounterWithHeaders {
+	for i := 0; i+1 < len(labelValues); i += 2 {
+		if labelValues[i] == "code" {
+			c.last = labelValues[i+1]
+		}
+	}
+	return c
+}
+
+func (c *collectingCounterWithHeaders) Add(delta float64) {
+	c.counts[c.last] += delta
+}
+
+type svcMetricsRegistry struct {
+	metrics.Registry
+
+	reqs *collectingCounterWithHeaders
+}
+
+func (r *svcMetricsRegistry) IsSvcEnabled() bool { return true }
+
+func (r *svcMetricsRegistry) ServiceReqsCounter() metrics.CounterWithHeaders { return r.reqs }
