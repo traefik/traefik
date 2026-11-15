@@ -31,12 +31,12 @@ local bucket = {
     last = 0
 }
 
-local rl_source = redis.call('hgetall', key)
+-- Fields are read by name because Redis does not guarantee the field order of a hash.
+local rl_source = redis.call('hmget', key, 'last', 'tokens')
 
-if #rl_source == 4 then
-    -- Get bucket state from redis
-    bucket.last = tonumber(rl_source[2])
-    bucket.tokens = tonumber(rl_source[4])
+if rl_source[1] and rl_source[2] then
+    bucket.last = tonumber(rl_source[1])
+    bucket.tokens = tonumber(rl_source[2])
 end
 
 local last = bucket.last
