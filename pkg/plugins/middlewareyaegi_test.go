@@ -1,9 +1,14 @@
 package plugins
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/yaegi/interp"
@@ -145,4 +150,65 @@ func verifyMiddlewareWorks(t *testing.T, builder *yaegiMiddlewareBuilder) {
 	require.NotNil(t, middleware, "Middleware should not be nil")
 
 	// The fact that we got here without crashing proves unsafe/syscall work!
+}
+
+func TestYaegiMiddleware_Logger(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		level zerolog.Level
+		count int
+	}{
+		{name: "debug", level: zerolog.DebugLevel, count: 6},
+		{name: "info", level: zerolog.InfoLevel, count: 4},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var output bytes.Buffer
+			logger := zerolog.New(&output).Level(test.level).With().Str("plugin", "logging").Logger()
+			ctx := logger.WithContext(t.Context())
+
+			interpreter, err := newInterpreter(ctx, "fixtures", &Manifest{Import: "testpluginlogging"}, Settings{})
+			require.NoError(t, err)
+			builder, err := newYaegiMiddlewareBuilder(interpreter, "testpluginlogging", "testpluginlogging")
+			require.NoError(t, err)
+			middleware, err := builder.newMiddleware(nil, "logging@file")
+			require.NoError(t, err)
+			handler, err := middleware.NewHandler(ctx, http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				rw.WriteHeader(http.StatusNoContent)
+			}))
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, httptest.NewRequestWithContext(ctx, http.MethodGet, "/hello", http.NoBody))
+			assert.Equal(t, http.StatusNoContent, recorder.Code)
+
+			var entries []map[string]any
+			decoder := json.NewDecoder(&output)
+			decoder.UseNumber()
+			for decoder.More() {
+				var entry map[string]any
+				require.NoError(t, decoder.Decode(&entry))
+				entries = append(entries, entry)
+			}
+			require.Len(t, entries, test.count)
+			for _, entry := range entries {
+				assert.Equal(t, "logging", entry["plugin"])
+				expectedLevels := map[string]string{
+					"plugin ready": "info", "plugin debug": "debug", "plugin request": "info",
+					"plugin warning": "warn", "plugin error": "error", "legacy output": "debug",
+				}
+				assert.Equal(t, expectedLevels[entry["message"].(string)], entry["level"])
+				if entry["message"] == "legacy output" {
+					assert.Equal(t, "debug", entry["level"])
+					continue
+				}
+				assert.Equal(t, "logging@file", entry["middlewareName"])
+				assert.Equal(t, "testpluginlogging", entry["middlewareType"])
+				if entry["message"] == "plugin request" {
+					assert.Equal(t, "info", entry["level"])
+					assert.Equal(t, "/hello", entry["path"])
+					assert.Equal(t, json.Number("1"), entry["count"])
+				}
+			}
+		})
+	}
 }
