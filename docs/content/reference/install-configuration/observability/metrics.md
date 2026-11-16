@@ -625,8 +625,8 @@ Traefik also provides metrics to monitor the TCP traffic.
 
 #### TCP Router Metrics
 
-The TCP router metrics are not enabled by default,
-they have to be enabled with the `enableTCPRouterMetrics` option of the metrics exporter.
+The TCP router metrics are disabled by default.
+Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
 === "OpenTelemetry"
 
