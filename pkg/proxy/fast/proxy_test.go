@@ -10,8 +10,10 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -460,6 +462,88 @@ func TestInvalidStatusCode(t *testing.T) {
 			proxyHandler.ServeHTTP(res, req)
 
 			assert.Equal(t, http.StatusInternalServerError, res.Code)
+		})
+	}
+}
+
+// TestReadLoopExitBeforeHandoff checks that a request does not block forever when the backend closes the connection
+// after the request is written, but before the response writer is passed to the connection readLoop (handoff).
+func TestReadLoopExitBeforeHandoff(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		method           string
+		body             io.Reader
+		expectedStatus   int
+		expectedRequests int32
+	}{
+		{
+			desc:             "replayable request is retried on a new connection",
+			method:           http.MethodGet,
+			body:             http.NoBody,
+			expectedStatus:   http.StatusOK,
+			expectedRequests: 2,
+		},
+		{
+			desc:             "non-replayable request fails",
+			method:           http.MethodPost,
+			body:             strings.NewReader("data"),
+			expectedStatus:   http.StatusInternalServerError,
+			expectedRequests: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// The backend drops the first request by closing its connection without an answer, and answers the following ones.
+			var requests atomic.Int32
+			backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if requests.Add(1) > 1 {
+					return
+				}
+
+				if conn, _, err := rw.(http.Hijacker).Hijack(); err == nil {
+					_ = conn.Close()
+				}
+			}))
+			t.Cleanup(backend.Close)
+
+			pool := newConnPool(1, 0, 0, func() (net.Conn, error) {
+				return net.Dial("tcp", backend.Listener.Addr().String())
+			})
+			t.Cleanup(pool.Close)
+
+			// The first connection is dialed ahead, so the test can wait for its readLoop to exit.
+			co, err := pool.AcquireConn()
+			require.NoError(t, err)
+			pool.ReleaseConn(co)
+
+			proxy, err := NewReverseProxy(testhelpers.MustParseURL(backend.URL), nil, false, true, false, pool)
+			require.NoError(t, err)
+
+			// The request goroutine is held after writing the request until the readLoop has exited,
+			// so the response writer is always passed to a connection whose readLoop is gone.
+			trace := &httptrace.ClientTrace{
+				WroteRequest: func(httptrace.WroteRequestInfo) { <-co.DoneCh },
+			}
+			req := httptest.NewRequest(test.method, "/", test.body).WithContext(httptrace.WithClientTrace(t.Context(), trace))
+			res := httptest.NewRecorder()
+
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				proxy.ServeHTTP(res, req)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(10 * time.Second):
+				t.Fatal("request blocked waiting for the readLoop")
+			}
+
+			assert.Equal(t, test.expectedStatus, res.Code)
+			assert.Equal(t, test.expectedRequests, requests.Load())
 		})
 	}
 }
