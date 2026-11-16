@@ -52,10 +52,19 @@ type metricsMiddleware struct {
 func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics.Registry, routerName string, serviceName string, tlsConfig *dynamic.RouterTCPTLSConfig) tcp.Handler {
 	middlewares.GetLogger(ctx, nameRouter, typeName).Debug().Msg("Creating middleware")
 
+	tlsMode := tlsModeNone
+	if tlsConfig != nil {
+		if tlsConfig.Passthrough {
+			tlsMode = tlsModePassthrough
+		} else {
+			tlsMode = tlsModeTerminated
+		}
+	}
+
 	return &metricsMiddleware{
 		next:                     next,
 		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
-		openConnectionsLabels:    []string{routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, getTLSMode(tlsConfig)},
+		openConnectionsLabels:    []string{routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
 		openTLSConnectionsGauge:  registry.RouterTCPOpenTLSConnectionsGauge(),
 		openTLSConnectionsLabels: []string{routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
@@ -69,17 +78,6 @@ func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, router
 		}
 
 		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName, tlsConfig), nil
-	}
-}
-
-func getTLSMode(tlsConfig *dynamic.RouterTCPTLSConfig) string {
-	switch {
-	case tlsConfig == nil:
-		return tlsModeNone
-	case tlsConfig.Passthrough:
-		return tlsModePassthrough
-	default:
-		return tlsModeTerminated
 	}
 }
 
