@@ -281,7 +281,6 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 	}
 
-	var co *conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -290,8 +289,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		default:
 		}
 
-		var err error
-		co, err = connPool.AcquireConn()
+		co, err := connPool.AcquireConn()
 		if err != nil {
 			return fmt.Errorf("acquire connection: %w", err)
 		}
@@ -310,32 +308,47 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			// WroteRequest hook is used by the tracing middleware to detect if the request has been written.
 			trace.WroteRequest(httptrace.WroteRequestInfo{})
 		}
-		if err == nil {
-			break
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
+
+			co.Close()
+
+			if wd.written && !isReplayable(req) {
+				return err
+			}
+
+			continue
 		}
 
-		log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
+		// Sending the responseWriter unlocks the connection readLoop, to handle the response.
+		// The readLoop can have returned while the request was written, for example when the backend closed the
+		// connection. Nothing receives on RWCh anymore, and the send would block forever.
+		select {
+		case co.RWCh <- rwWithUpgrade{
+			ReqMethod: req.Method,
+			RW:        rw,
+			Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
+		}:
 
-		co.Close()
+		case <-co.DoneCh:
+			log.Ctx(ctx).Debug().Msg("Connection closed before handling the response")
 
-		if wd.written && !isReplayable(req) {
+			co.Close()
+
+			if !isReplayable(req) {
+				return errors.New("connection closed before handling the response")
+			}
+
+			continue
+		}
+
+		if err := <-co.ErrCh; err != nil {
 			return err
 		}
-	}
 
-	// Sending the responseWriter unlocks the connection readLoop, to handle the response.
-	co.RWCh <- rwWithUpgrade{
-		ReqMethod: req.Method,
-		RW:        rw,
-		Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
+		connPool.ReleaseConn(co)
+		return nil
 	}
-
-	if err := <-co.ErrCh; err != nil {
-		return err
-	}
-
-	connPool.ReleaseConn(co)
-	return nil
 }
 
 func (p *ReverseProxy) writeRequest(co net.Conn, outReq *fasthttp.Request) error {

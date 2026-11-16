@@ -34,6 +34,10 @@ type conn struct {
 	RWCh  chan rwWithUpgrade
 	ErrCh chan error
 
+	// DoneCh is closed when the readLoop returns.
+	// Nothing receives on RWCh anymore, so a roundTrip waiting to send on it must give up.
+	DoneCh chan struct{}
+
 	br *bufio.Reader
 
 	idleAt      time.Time // the last time it was marked as idle.
@@ -91,6 +95,7 @@ func (c *conn) isUpgraded() bool {
 // readLoop handles the successive HTTP response read operations on the connection,
 // and watches for unsolicited bytes or connection errors when idle.
 func (c *conn) readLoop() {
+	defer close(c.DoneCh)
 	defer c.Close()
 
 	for {
@@ -530,6 +535,7 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 		responseHeaderTimeout: c.responseHeaderTimeout,
 		RWCh:                  make(chan rwWithUpgrade),
 		ErrCh:                 make(chan error),
+		DoneCh:                make(chan struct{}),
 		bufferPool:            &c.bufferPool,
 		limitedReaderPool:     &c.limitedReaderPool,
 	}
