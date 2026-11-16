@@ -15,8 +15,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
 type recordingServiceCounter struct {
@@ -44,6 +47,71 @@ func (r *recordingServiceRegistry) IsSvcEnabled() bool {
 
 func (r *recordingServiceRegistry) ServiceReqsCounter() metrics.CounterWithHeaders {
 	return r.counter
+}
+
+func TestBuildHTTPServiceTracingSpans(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(backend.Close)
+
+	testCases := []struct {
+		desc     string
+		servers  []dynamic.Server
+		expected []string
+	}{
+		{
+			desc:     "available server",
+			servers:  []dynamic.Server{{URL: backend.URL}},
+			expected: []string{"ReverseProxy", "Metrics", "Service", "Root"},
+		},
+		{
+			desc:     "no available server",
+			servers:  []dynamic.Server{},
+			expected: []string{"Metrics", "Service", "Root"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			registry := &recordingServiceRegistry{
+				Registry: metrics.NewVoidRegistry(),
+				counter:  &recordingServiceCounter{counts: make(map[string]float64)},
+			}
+			manager := NewManager(map[string]*runtime.ServiceInfo{
+				"test@file": {
+					Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Servers: test.servers}},
+				},
+			}, middleware.NewObservabilityMgr(static.Configuration{}, registry, nil, nil, nil, nil), nil, &transportManagerMock{}, httputil.NewProxyBuilder(&transportManagerMock{}, nil))
+
+			handler, err := manager.BuildHTTP(t.Context(), "test@file")
+			require.NoError(t, err)
+
+			handler, err = capture.Wrap(handler)
+			require.NoError(t, err)
+			handler = observability.WithObservabilityHandler(handler, observability.Observability{
+				MetricsEnabled:         true,
+				TracingEnabled:         true,
+				DetailedTracingEnabled: true,
+			})
+
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(spanRecorder))
+			tracer := tracing.NewTracer(tracerProvider.Tracer("github.com/traefik/traefik"), nil, nil, nil)
+
+			ctx, rootSpan := tracer.Start(t.Context(), "Root")
+			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://example.com/", nil).WithContext(ctx))
+			rootSpan.End()
+
+			var names []string
+			for _, span := range spanRecorder.Ended() {
+				names = append(names, span.Name())
+			}
+			assert.Equal(t, test.expected, names)
+		})
+	}
 }
 
 func TestLoadBalancerServiceMetrics(t *testing.T) {
