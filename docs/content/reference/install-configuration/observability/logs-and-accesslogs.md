@@ -349,6 +349,11 @@ Below the fields displayed with the Traefik CLF format:
     In both CLF formats, `<HTTP_status>` is the `DownstreamStatus`, the status sent to the client.
     The backend status (`OriginStatus`) is only available with the `json` format.
 
+!!! info "`<remote_IP_address>` is the `ClientHost` field"
+
+    In both CLF formats, `<remote_IP_address>` is the [`ClientHost`](#opt-ClientHost) field.
+    When the entry point keeps an incoming `X-Forwarded-For` header, `<remote_IP_address>` is the value of that header and can be a comma-separated list of addresses.
+
 ### Generic CLF format fields
 
 Below the fields displayed with the generic CLF format:
