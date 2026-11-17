@@ -245,6 +245,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
+			if err := p.client.checkGatewayAPIResources(ctxPool, p.Namespaces); err != nil {
+				// Retrying cannot help until the CRDs or the RBAC are updated, so the provider stops.
+				if errors.Is(err, errGatewayAPIResourceUnavailable) {
+					return backoff.Permanent(err)
+				}
+
+				return fmt.Errorf("checking Gateway API resources: %w", err)
+			}
+
 			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
@@ -300,7 +309,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
-			logger.Error().Err(err).Msg("Cannot retrieve data")
+			logger.Error().Err(err).Msg("Kubernetes Gateway API Provider stopped")
 		}
 	})
 

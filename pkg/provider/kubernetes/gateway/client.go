@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -30,9 +31,33 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
+	"sigs.k8s.io/gateway-api/pkg/consts"
 )
 
 const resyncPeriod = 10 * time.Minute
+
+var errGatewayAPIResourceUnavailable = errors.New("gateway API resource unavailable")
+
+// gatewayAPIResources lists the Gateway API resources watched by the provider, through their v1 version.
+// Their availability is checked before starting the informers, as an informer on a resource that is not served,
+// or that Traefik is not allowed to list and watch, never syncs and blocks the provider,
+// and without the status update permission, the provider cannot report the state of the resources.
+// WatchAll starts the informers of the namespaced resources from this list, while GatewayClasses have their own filtered informer.
+var gatewayAPIResources = []struct {
+	name          string
+	namespaced    bool
+	updatesStatus bool
+}{
+	{name: "gatewayclasses", updatesStatus: true},
+	{name: "gateways", namespaced: true, updatesStatus: true},
+	{name: "httproutes", namespaced: true, updatesStatus: true},
+	{name: "grpcroutes", namespaced: true, updatesStatus: true},
+	{name: "tcproutes", namespaced: true, updatesStatus: true},
+	{name: "tlsroutes", namespaced: true, updatesStatus: true},
+	{name: "referencegrants", namespaced: true},
+	{name: "backendtlspolicies", namespaced: true, updatesStatus: true},
+	{name: "listenersets", namespaced: true, updatesStatus: true},
+}
 
 type clientWrapper struct {
 	csGateway gateclientset.Interface
@@ -205,46 +230,25 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-
-		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryGateway.Gateway().V1().HTTPRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryGateway.Gateway().V1().GRPCRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryGateway.Gateway().V1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryGateway.Gateway().V1().BackendTLSPolicies().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
 		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = factoryGateway.Gateway().V1().TLSRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
+		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
+		for _, resource := range gatewayAPIResources {
+			if !resource.namespaced {
+				continue
+			}
 
-		_, err = factoryGateway.Gateway().V1().ListenerSets().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
+			informer, err := factoryGateway.ForResource(schema.GroupVersionResource{Group: gatev1.GroupName, Version: gatev1.GroupVersion.Version, Resource: resource.name})
+			if err != nil {
+				return nil, fmt.Errorf("creating %s informer: %w", resource.name, err)
+			}
 
-		_, err = factoryGateway.Gateway().V1().TCPRoutes().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
+			if _, err = informer.Informer().AddEventHandler(eventHandler); err != nil {
+				return nil, fmt.Errorf("adding %s event handler: %w", resource.name, err)
+			}
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
@@ -1012,6 +1016,84 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
+}
+
+// checkGatewayAPIResources ensures that the Gateway API resources watched by the provider are served as v1,
+// and that Traefik is allowed to list and watch them, and to update the status of those it reports on, in the given namespaces.
+func (c *clientWrapper) checkGatewayAPIResources(ctx context.Context, namespaces []string) error {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(gatev1.GroupVersion.String())
+	if err != nil && !kerror.IsNotFound(err) {
+		return fmt.Errorf("discovering %s resources: %w", gatev1.GroupVersion, err)
+	}
+
+	if len(namespaces) == 0 {
+		namespaces = []string{metav1.NamespaceAll}
+	}
+
+	if resourceList == nil || len(resourceList.APIResources) == 0 {
+		return fmt.Errorf("%w: %s is not served, install the Gateway API CRDs %s or later",
+			errGatewayAPIResourceUnavailable, gatev1.GroupVersion, consts.BundleVersion)
+	}
+
+	for _, resource := range gatewayAPIResources {
+		served := slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == resource.name })
+		if !served {
+			return fmt.Errorf("%w: %s.%s is not served as %s, update the Gateway API CRDs to %s or later",
+				errGatewayAPIResourceUnavailable, resource.name, gatev1.GroupName, gatev1.GroupVersion, consts.BundleVersion)
+		}
+
+		resourceNamespaces := []string{metav1.NamespaceAll}
+		if resource.namespaced {
+			resourceNamespaces = namespaces
+		}
+
+		accesses := []authorizationv1.ResourceAttributes{{Verb: "list"}, {Verb: "watch"}}
+		if resource.updatesStatus {
+			accesses = append(accesses, authorizationv1.ResourceAttributes{Verb: "update", Subresource: "status"})
+		}
+
+		for _, namespace := range resourceNamespaces {
+			for _, access := range accesses {
+				access.Namespace = namespace
+				access.Group = gatev1.GroupName
+				access.Version = gatev1.GroupVersion.Version
+				access.Resource = resource.name
+
+				target := resource.name + "." + gatev1.GroupName
+				if access.Subresource != "" {
+					target += "/" + access.Subresource
+				}
+
+				// The GatewayClass informer only selects the configured GatewayClass by name,
+				// so an RBAC restricted to this name, with resourceNames, is enough.
+				if resource.name == "gatewayclasses" && c.gatewayClass != "" {
+					access.Name = c.gatewayClass
+					target += fmt.Sprintf(" named %q", c.gatewayClass)
+				}
+
+				review := &authorizationv1.SelfSubjectAccessReview{
+					Spec: authorizationv1.SelfSubjectAccessReviewSpec{ResourceAttributes: &access},
+				}
+
+				review, err = c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
+				if err != nil {
+					return fmt.Errorf("checking %s permission on %s: %w", access.Verb, target, err)
+				}
+
+				if !review.Status.Allowed {
+					scope := "cluster-wide"
+					if namespace != metav1.NamespaceAll {
+						scope = fmt.Sprintf("in namespace %q", namespace)
+					}
+
+					return fmt.Errorf("%w: not allowed to %s %s %s, update the Traefik RBAC for the Kubernetes Gateway API provider",
+						errGatewayAPIResourceUnavailable, access.Verb, target, scope)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.

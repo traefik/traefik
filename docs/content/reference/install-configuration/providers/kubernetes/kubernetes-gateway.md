@@ -29,6 +29,9 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
     ```
 
+    At startup, the provider checks that all the `v1.7.0` Gateway API resources it watches are served, and that it is allowed to watch them, and update their statuses.
+    Otherwise, the provider stops and logs an error naming the missing resource or permission.
+
 2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
     ```bash
