@@ -49,10 +49,11 @@ To learn more about how to add a new plugin to a Traefik instance, please refer 
 | <a id="opt-moduleName" href="#opt-moduleName" title="#opt-moduleName">`moduleName`</a> | Plugin's module name. | string | Yes |
 | <a id="opt-version" href="#opt-version" title="#opt-version">`version`</a> | Plugin's version. | string | Yes |
 | <a id="opt-hash" href="#opt-hash" title="#opt-hash">`hash`</a> | Plugin's hash to validate. | string | No |
-| <a id="opt-settings" href="#opt-settings" title="#opt-settings">`settings`</a> | Plugin's settings (works only for wasm plugins). | object | No |
+| <a id="opt-settings" href="#opt-settings" title="#opt-settings">`settings`</a> | Plugin's settings (wasm plugins; `useUnsafe` also applies to Yaegi plugins, `mounts` and `fileMapping` to Yaegi v2 plugins). | object | No |
 | <a id="opt-settings-envs" href="#opt-settings-envs" title="#opt-settings-envs">`settings.envs`</a> | Environment variables to forward to the wasm guest. | []string | No |
-| <a id="opt-settings-mounts" href="#opt-settings-mounts" title="#opt-settings-mounts">`settings.mounts`</a> | Directory to mount to the wasm guest. | []string | No |
+| <a id="opt-settings-mounts" href="#opt-settings-mounts" title="#opt-settings-mounts">`settings.mounts`</a> | Directory to mount to the wasm guest. For Yaegi v2 plugins, the only directories the plugin can reach by path (`dir` or `dir:ro`). No mount gives the whole file system. | []string | No |
 | <a id="opt-settings-useUnsafe" href="#opt-settings-useUnsafe" title="#opt-settings-useUnsafe">`settings.useUnsafe`</a> | Allow the plugin to use unsafe and syscall packages. | bool | No |
+| <a id="opt-settings-fileMapping" href="#opt-settings-fileMapping" title="#opt-settings-fileMapping">`settings.fileMapping`</a> | Allow a Yaegi v2 plugin to lock and map its own files (flock, mmap). Requires `useUnsafe`. | bool | No |
 
 ## Local Plugins
 
@@ -81,10 +82,11 @@ experimental:
 | Field | Description | Type | Required |
 |-------|-------------|------|----------|
 | <a id="opt-moduleName-2" href="#opt-moduleName-2" title="#opt-moduleName-2">`moduleName`</a> | Plugin's module name. | string | Yes |
-| <a id="opt-settings-2" href="#opt-settings-2" title="#opt-settings-2">`settings`</a> | Plugin's settings (works only for wasm plugins). | object | No |
+| <a id="opt-settings-2" href="#opt-settings-2" title="#opt-settings-2">`settings`</a> | Plugin's settings (wasm plugins; `useUnsafe` also applies to Yaegi plugins, `mounts` and `fileMapping` to Yaegi v2 plugins). | object | No |
 | <a id="opt-settings-envs-2" href="#opt-settings-envs-2" title="#opt-settings-envs-2">`settings.envs`</a> | Environment variables to forward to the wasm guest. | []string | No |
-| <a id="opt-settings-mounts-2" href="#opt-settings-mounts-2" title="#opt-settings-mounts-2">`settings.mounts`</a> | Directory to mount to the wasm guest. | []string | No |
+| <a id="opt-settings-mounts-2" href="#opt-settings-mounts-2" title="#opt-settings-mounts-2">`settings.mounts`</a> | Directory to mount to the wasm guest. For Yaegi v2 plugins, the only directories the plugin can reach by path (`dir` or `dir:ro`). No mount gives the whole file system. | []string | No |
 | <a id="opt-settings-useUnsafe-2" href="#opt-settings-useUnsafe-2" title="#opt-settings-useUnsafe-2">`settings.useUnsafe`</a> | Allow the plugin to use unsafe and syscall packages. | bool | No |
+| <a id="opt-settings-fileMapping-2" href="#opt-settings-fileMapping-2" title="#opt-settings-fileMapping-2">`settings.fileMapping`</a> | Allow a Yaegi v2 plugin to lock and map its own files (flock, mmap). Requires `useUnsafe`. | bool | No |
 
 ## Runtime Version
 
