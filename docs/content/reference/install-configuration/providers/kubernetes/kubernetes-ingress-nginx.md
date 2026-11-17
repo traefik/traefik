@@ -186,6 +186,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-certAuthFilePath" href="#opt-providers-kubernetesIngressNGINX-certAuthFilePath" title="#opt-providers-kubernetesIngressNGINX-certAuthFilePath">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-throttleDuration" href="#opt-providers-kubernetesIngressNGINX-throttleDuration" title="#opt-providers-kubernetesIngressNGINX-throttleDuration">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.                                                                                                                                                                                                                                                                                      | 0s     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-globalAuthURL" href="#opt-providers-kubernetesIngressNGINX-globalAuthURL" title="#opt-providers-kubernetesIngressNGINX-globalAuthURL">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`globalAuthURL`</a> | URL to the service that provides authentication for all the locations. Per-ingress `auth-url` annotation has precedence over this option.                                                                                                                                                                                                                                                                                                                                                                                                                        | ""     | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-secrets" href="#opt-providers-kubernetesIngressNGINX-secrets" title="#opt-providers-kubernetesIngressNGINX-secrets">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`secrets`</a> | Limits watched Secrets to names grouped by namespace, for example `default: [cert1, cert2]`. An empty map watches all eligible Secrets in each watched namespace. See [secrets](#secrets). | `{}` | No |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespace" href="#opt-providers-kubernetesIngressNGINX-watchNamespace" title="#opt-providers-kubernetesIngressNGINX-watchNamespace">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespace`</a> | Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.                                                                                                                                                                                                                                                                                                                                                                                                                                 | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" href="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" title="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespaceSelector`</a> | Selector selects namespaces the controller watches for updates to Kubernetes objects.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ""     | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-ingressClass" href="#opt-providers-kubernetesIngressNGINX-ingressClass" title="#opt-providers-kubernetesIngressNGINX-ingressClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClass`</a> | Name of the IngressClass this controller handles. When `ingressClassByName` is `true`, IngressClasses with this name are included in discovery regardless of their `spec.controller` value.                                                                                                                                                                                          | "nginx"      | No       |
@@ -270,6 +271,50 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesingressnginx.endpoint=http://localhost:8080
 ```
+
+### `secrets`
+
+Set `secrets` to a map of namespace names to Secret names. Traefik applies the map within the scope of `watchNamespace` or `watchNamespaceSelector`. With neither namespace option set, Traefik considers every namespace in the map. A selector that matches zero namespaces starts zero Secret watchers.
+
+Use `"*"` to watch every eligible Secret in one namespace. A wildcard takes precedence over individual names in that namespace. When `secrets` is omitted or empty, Traefik watches every eligible Secret in every watched namespace. Traefik filters Secrets labeled `owner=helm` in every mode.
+
+For a cross-namespace Secret reference supported by an Ingress annotation, enable `allowCrossNamespaceResources` and include the target namespace in the watch scope. When `secrets` is set to a non-empty map, include the Secret in the target namespace's list or use `"*"` there. Ingress `spec.tls[].secretName` always resolves in the Ingress namespace. Include every Secret your Ingresses need for TLS certificates, client authentication, and upstream TLS. A missing Ingress TLS certificate can trigger fallback to the default certificate. Missing authentication Secrets can cause Traefik to skip affected routes.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngressNGINX:
+    secrets:
+      default: [cert1, cert2]
+      infra: ["*"]
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngressNGINX.secrets]
+  default = ["cert1", "cert2"]
+  infra = ["*"]
+```
+
+```bash tab="CLI"
+--providers.kubernetesingressnginx.secrets.default=cert1,cert2
+'--providers.kubernetesingressnginx.secrets.infra=*'
+```
+
+```yaml tab="Helm Chart Values"
+providers:
+  kubernetesIngressNginx:
+    enabled: true
+additionalArguments:
+  - "--providers.kubernetesingressnginx.secrets.default=cert1,cert2"
+  - "--providers.kubernetesingressnginx.secrets.infra=*"
+```
+
+#### RBAC
+
+For named Secrets, give the Traefik service account a `Role` and `RoleBinding` in each applicable namespace. Grant `list` and `watch` on `secrets` with `resourceNames` set to the allowed Secret names. Traefik includes a matching `metadata.name` field selector on each request. A wildcard requires `list` and `watch` permissions on all Secrets in that namespace. See [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
+
+The standard installation grants broad Secret access. To enforce the narrower permissions in Kubernetes, remove the broader Secret grants from the service account after checking the Secret requirements of any other providers that use it. Keep the permissions needed for other resource types, including ConfigMaps and namespace discovery.
+
+If Kubernetes denies the initial read for a configured Secret, the provider can wait for the Secret cache to sync before serving any Ingresses.
 
 ## Routing Configuration
 

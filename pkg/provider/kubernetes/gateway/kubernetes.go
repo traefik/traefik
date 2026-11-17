@@ -92,6 +92,7 @@ type Provider struct {
 	Burst            int                 `description:"Defines the maximum burst of requests to the Kubernetes API server." json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
 	CertAuthFilePath string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces       []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	Secrets          map[string][]string `description:"Restricts the watched Secrets to the given names, grouped by namespace. Use * as the name to watch all the Secrets of a namespace." json:"secrets,omitempty" toml:"secrets,omitempty" yaml:"secrets,omitempty" export:"true"`
 	GatewayClass     string              `description:"Name of the GatewayClass to watch for. If empty, all GatewayClasses are processed." json:"gatewayClass,omitempty" toml:"gatewayClass,omitempty" yaml:"gatewayClass,omitempty" export:"true"`
 	// Deprecated: please use the GatewayClass option instead.
 	LabelSelector            string           `description:"Kubernetes label selector to select specific GatewayClasses (Deprecated, please use the GatewayClass option instead)." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
@@ -373,6 +374,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 	client.gatewayClass = p.GatewayClass
 	client.labelSelector = p.LabelSelector
+	client.secrets = p.Secrets
 
 	return client, nil
 }

@@ -15,8 +15,10 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28612,7 +28614,7 @@ func TestLoadIngresses(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			client := newClient(kubeClient)
 
-			eventCh, err := client.WatchAll(t.Context(), "", "")
+			eventCh, err := client.WatchAll(t.Context(), "", "", nil)
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 {
@@ -28650,6 +28652,71 @@ func TestLoadIngresses(t *testing.T) {
 			for name, middleware := range conf.HTTP.Middlewares {
 				_, err := middleware.ResolveURNRefs()
 				assert.NoError(t, err, name)
+			}
+		})
+	}
+}
+
+func TestProvideCrossNamespaceAuthSecret(t *testing.T) {
+	testCases := []struct {
+		name           string
+		allowCross     bool
+		allowedSecret  string
+		watchNamespace string
+		wantRouter     bool
+	}{
+		{name: "allowed and watched", allowCross: true, allowedSecret: "basic-auth", wantRouter: true},
+		{name: "cross-namespace references disabled", allowedSecret: "basic-auth"},
+		{name: "Secret omitted from allowlist", allowCross: true, allowedSecret: "other"},
+		{name: "Secret namespace outside watch scope", allowCross: true, allowedSecret: "basic-auth", watchNamespace: "default"},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			objects := readResources(t, []string{"services.yml", "ingressclasses.yml", "ingresses/ingress-with-basicauth.yml"})
+			for _, object := range objects {
+				switch resource := object.(type) {
+				case *netv1.Ingress:
+					resource.Annotations["nginx.ingress.kubernetes.io/auth-secret"] = "infra/basic-auth"
+				case *corev1.Secret:
+					resource.Namespace = "infra"
+				}
+			}
+			p := &Provider{
+				WatchNamespace:               test.watchNamespace,
+				Secrets:                      map[string][]string{"infra": {test.allowedSecret}},
+				AllowCrossNamespaceResources: test.allowCross,
+				NonTLSEntryPoints:            []string{"http"},
+				TLSEntryPoints:               []string{"https"},
+				k8sClient:                    newClient(kubefake.NewClientset(objects...)),
+			}
+			p.SetDefaults()
+
+			pool := safe.NewPool(t.Context())
+			t.Cleanup(pool.Stop)
+			messages := make(chan dynamic.Message, len(objects)+1)
+			require.NoError(t, p.Provide(messages, pool))
+
+			select {
+			case message := <-messages:
+				routers := message.Configuration.HTTP.Routers
+				if !test.wantRouter {
+					assert.Empty(t, routers)
+					return
+				}
+
+				require.Len(t, routers, 2)
+				for routerName, router := range routers {
+					assert.Equal(t, `Host("whoami.localhost") && Path("/basicauth")`, router.Rule)
+					middlewareName := routerName + "-basic-auth"
+					assert.Contains(t, router.Middlewares, middlewareName)
+					middleware := message.Configuration.HTTP.Middlewares[middlewareName]
+					require.NotNil(t, middleware)
+					require.NotNil(t, middleware.BasicAuth)
+					assert.NotEmpty(t, middleware.BasicAuth.Users)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatal("timed out waiting for provider configuration")
 			}
 		})
 	}
@@ -28786,7 +28853,7 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			client := newClient(kubeClient)
 
-			eventCh, err := client.WatchAll(t.Context(), "", "")
+			eventCh, err := client.WatchAll(t.Context(), "", "", nil)
 			require.NoError(t, err)
 			<-eventCh
 

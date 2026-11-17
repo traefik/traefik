@@ -35,7 +35,7 @@ type clientWrapper struct {
 	clientset           kclientset.Interface
 	clusterScopeFactory kinformers.SharedInformerFactory
 	factoriesKube       map[string]kinformers.SharedInformerFactory
-	factoriesSecret     map[string]kinformers.SharedInformerFactory
+	secretInformers     *k8s.SecretInformers
 	factoriesConfigMap  map[string]kinformers.SharedInformerFactory
 	factoriesIngress    map[string]kinformers.SharedInformerFactory
 	isNamespaceAll      bool
@@ -116,7 +116,6 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 func newClient(clientSet kclientset.Interface) *clientWrapper {
 	return &clientWrapper{
 		clientset:          clientSet,
-		factoriesSecret:    make(map[string]kinformers.SharedInformerFactory),
 		factoriesConfigMap: make(map[string]kinformers.SharedInformerFactory),
 		factoriesIngress:   make(map[string]kinformers.SharedInformerFactory),
 		factoriesKube:      make(map[string]kinformers.SharedInformerFactory),
@@ -124,7 +123,7 @@ func newClient(clientSet kclientset.Interface) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelector string) (<-chan any, error) {
+func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelector string, secrets map[string][]string) (<-chan any, error) {
 	stopCh := ctx.Done()
 	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
@@ -139,17 +138,23 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		}
 	}
 
+	c.isNamespaceAll = namespaceSelector == "" && namespace == metav1.NamespaceAll
 	if namespaceSelector != "" {
 		ns, err := c.clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: namespaceSelector})
 		if err != nil {
 			return nil, fmt.Errorf("listing namespaces: %w", err)
 		}
+		c.watchedNamespaces = make([]string, 0, len(ns.Items))
 		for _, item := range ns.Items {
 			c.watchedNamespaces = append(c.watchedNamespaces, item.Name)
 		}
 	} else {
-		c.isNamespaceAll = namespace == metav1.NamespaceAll
 		c.watchedNamespaces = []string{namespace}
+	}
+
+	c.secretInformers, err = k8s.NewSecretInformers(c.clientset, resyncPeriod, c.watchedNamespaces, secrets, eventHandler)
+	if err != nil {
+		return nil, err
 	}
 
 	notOwnedByHelm := func(opts *metav1.ListOptions) {
@@ -181,13 +186,6 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 		}
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		c.factoriesSecret[ns] = factorySecret
-
 		factoryConfigMap := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryConfigMap.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
@@ -199,9 +197,9 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 	for _, ns := range c.watchedNamespaces {
 		c.factoriesIngress[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
-		c.factoriesSecret[ns].Start(stopCh)
 		c.factoriesConfigMap[ns].Start(stopCh)
 	}
+	c.secretInformers.Start(stopCh)
 
 	for _, ns := range c.watchedNamespaces {
 		for t, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
@@ -216,17 +214,15 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 			}
 		}
 
-		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
-			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
-			}
-		}
-
 		for t, ok := range c.factoriesConfigMap[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
+	}
+
+	if err := c.secretInformers.WaitForCacheSync(stopCh); err != nil {
+		return nil, err
 	}
 
 	c.clusterScopeFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
@@ -345,7 +341,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error
 		return nil, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	return c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	return c.secretInformers.Get(c.lookupNamespace(namespace), namespace, name)
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.

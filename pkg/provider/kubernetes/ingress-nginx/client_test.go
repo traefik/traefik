@@ -1,6 +1,8 @@
 package ingressnginx
 
 import (
+	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -11,9 +13,11 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	kversion "k8s.io/apimachinery/pkg/version"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	kubefake "k8s.io/client-go/kubernetes/fake"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func TestIsLoadBalancerIngressEquals(t *testing.T) {
@@ -114,7 +118,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 	client := newClient(kubeClient)
 
-	eventCh, err := client.WatchAll(t.Context(), "", "")
+	eventCh, err := client.WatchAll(t.Context(), "", "", nil)
 	require.NoError(t, err)
 
 	select {
@@ -138,6 +142,117 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 	_, err = client.GetSecret("default", "helm-secret")
 	assert.True(t, kerror.IsNotFound(err))
+}
+
+func TestClientWatchSecretScopes(t *testing.T) {
+	testCases := []struct {
+		name              string
+		namespace         string
+		namespaceSelector string
+		secrets           map[string][]string
+		wantLists         []string
+		wantSecrets       []string
+		wantConfigMap     bool
+	}{
+		{
+			name:          "empty map watches all namespaces",
+			secrets:       map[string][]string{},
+			wantLists:     []string{"/"},
+			wantSecrets:   []string{"apps/cert", "apps/extra", "infra/cert", "other/cert"},
+			wantConfigMap: true,
+		},
+		{
+			name:          "all namespaces with a Secret allowlist",
+			secrets:       map[string][]string{"apps": {"cert", "helm"}, "infra": {"*"}},
+			wantLists:     []string{"apps/metadata.name=cert", "apps/metadata.name=helm", "infra/"},
+			wantSecrets:   []string{"apps/cert", "infra/cert"},
+			wantConfigMap: true,
+		},
+		{
+			name:          "one watched namespace",
+			namespace:     "apps",
+			secrets:       map[string][]string{"apps": {"cert"}, "infra": {"*"}},
+			wantLists:     []string{"apps/metadata.name=cert"},
+			wantSecrets:   []string{"apps/cert"},
+			wantConfigMap: true,
+		},
+		{
+			name:              "namespace selector matches multiple namespaces",
+			namespaceSelector: "watched=true",
+			secrets:           map[string][]string{"apps": {"cert"}, "infra": {"*"}, "other": {"cert"}},
+			wantLists:         []string{"apps/metadata.name=cert", "infra/"},
+			wantSecrets:       []string{"apps/cert", "infra/cert"},
+			wantConfigMap:     true,
+		},
+		{
+			name:              "namespace selector matches nothing",
+			namespaceSelector: "watched=false",
+			secrets:           map[string][]string{"apps": {"*"}},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+
+			secrets := []*corev1.Secret{
+				{Namespace: "apps", Name: "cert"},
+				{Namespace: "apps", Name: "extra"},
+				{Namespace: "apps", Name: "helm", Labels: map[string]string{"owner": "helm"}},
+				{Namespace: "infra", Name: "cert"},
+				{Namespace: "other", Name: "cert"},
+			}
+			objects := []runtime.Object{
+				&corev1.Namespace{Name: "apps", Labels: map[string]string{"watched": "true"}},
+				&corev1.Namespace{Name: "infra", Labels: map[string]string{"watched": "true"}},
+				&corev1.Namespace{Name: "other"},
+				&corev1.ConfigMap{Namespace: "apps", Name: "headers"},
+				&corev1.ConfigMap{Namespace: "apps", Name: "helm", Labels: map[string]string{"owner": "helm"}},
+			}
+			for _, secret := range secrets {
+				objects = append(objects, secret)
+			}
+			kubeClient := kubefake.NewClientset(objects...)
+			client := newClient(kubeClient)
+			_, err := client.WatchAll(ctx, test.namespace, test.namespaceSelector, test.secrets)
+			require.NoError(t, err)
+
+			var secretLists []string
+			for _, action := range kubeClient.Actions() {
+				if !action.Matches("list", "secrets") {
+					continue
+				}
+				selectors := action.(ktesting.ListAction).GetListRestrictions()
+				assert.Equal(t, "owner!=helm", selectors.Labels.String())
+				secretLists = append(secretLists, action.GetNamespace()+"/"+selectors.Fields.String())
+			}
+			assert.ElementsMatch(t, test.wantLists, secretLists)
+
+			for _, secret := range secrets {
+				key := secret.Namespace + "/" + secret.Name
+				got, err := client.GetSecret(secret.Namespace, secret.Name)
+				switch {
+				case slices.Contains(test.wantSecrets, key):
+					assert.NoError(t, err, key)
+					assert.NotNil(t, got, key)
+				case client.isWatchedNamespace(secret.Namespace):
+					assert.True(t, kerror.IsNotFound(err), key)
+				default:
+					assert.ErrorContains(t, err, "namespace is not within watched namespaces", key)
+				}
+			}
+
+			_, err = client.GetConfigMap("apps", "headers")
+			if test.wantConfigMap {
+				assert.NoError(t, err)
+				_, err = client.GetConfigMap("apps", "helm")
+				assert.True(t, kerror.IsNotFound(err))
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
@@ -181,7 +296,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 
 	client := newClient(kubeClient)
 
-	eventCh, err := client.WatchAll(t.Context(), "", "")
+	eventCh, err := client.WatchAll(t.Context(), "", "", nil)
 	require.NoError(t, err)
 
 	select {

@@ -61,7 +61,7 @@ func TestProvider_resolveBasicAuth_authMap(t *testing.T) {
 	})
 	client := newClient(kubeClient)
 
-	_, err := client.WatchAll(t.Context(), "", "")
+	_, err := client.WatchAll(t.Context(), "", "", nil)
 	require.NoError(t, err)
 
 	p := Provider{k8sClient: client}
