@@ -231,7 +231,7 @@ func getIssuerDNInfo(ctx context.Context, options *IssuerDistinguishedNameOption
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
+			_, _ = fmt.Fprintf(content, "DC=%s%s", escapeDNValue(name.Value), subFieldSeparator)
 		}
 	}
 
@@ -273,7 +273,7 @@ func getSubjectDNInfo(ctx context.Context, options *SubjectDistinguishedNameOpti
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
+			_, _ = fmt.Fprintf(content, "DC=%s%s", escapeDNValue(name.Value), subFieldSeparator)
 		}
 	}
 
@@ -316,11 +316,18 @@ func writeParts(ctx context.Context, content io.StringWriter, entries []string, 
 
 func writePart(ctx context.Context, content io.StringWriter, entry, prefix string) {
 	if len(entry) > 0 {
-		_, err := content.WriteString(fmt.Sprintf("%s=%s%s", prefix, entry, subFieldSeparator))
+		_, err := content.WriteString(fmt.Sprintf("%s=%s%s", prefix, escapeDNValue(entry), subFieldSeparator))
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Send()
 		}
 	}
+}
+
+// escapeDNValue escapes characters that would break the quoted, delimiter-separated
+// certificate info header format, so values such as a common name containing a quote
+// remain unambiguous to consumers that parse the header.
+func escapeDNValue(value any) string {
+	return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(fmt.Sprint(value))
 }
 
 // sanitize As we pass the raw certificates, remove the useless data and make it http request compliant.

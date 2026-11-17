@@ -1,8 +1,10 @@
 package passtlsclientcert
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
 	"net"
 	"net/http"
@@ -560,6 +562,23 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			assert.Empty(t, res.Header().Get(xForwardedTLSClientCertInfo), "The response header should be always empty")
 		})
 	}
+}
+
+func TestPassTLSClientCert_certInfoEscapesDNValues(t *testing.T) {
+	p := &passTLSClientCert{info: &tlsClientCertificateInfo{
+		subject: &SubjectDistinguishedNameOptions{CommonName: true, OrganizationName: true},
+	}}
+
+	cert := &x509.Certificate{
+		Subject: pkix.Name{
+			CommonName:   `a"b\c`,
+			Organization: []string{`Org "Quoted"`},
+		},
+	}
+
+	expected := `Subject="O=Org \"Quoted\",CN=a\"b\\c"`
+
+	assert.Equal(t, expected, p.getCertInfo(context.Background(), []*x509.Certificate{cert}))
 }
 
 func Test_sanitize(t *testing.T) {
