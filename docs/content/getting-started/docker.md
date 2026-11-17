@@ -36,7 +36,7 @@ This configuration:
 # docker-compose.yml
 services:
   traefik:
-    image: traefik:v3.7
+    image: traefik:v3.8
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -84,7 +84,7 @@ docker run -d \
   -p 8080:8080 \
   -v $PWD/traefik.yml:/etc/traefik/traefik.yml \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  traefik:v3.7
+  traefik:v3.8
 ```
 
 ## Expose the Dashboard

@@ -30,7 +30,7 @@ func TestResponseCapturer_streamed(t *testing.T) {
 	assert.Equal(t, "yes", recorder.Header().Get("X-Backend"))
 	assert.False(t, capturer.buffering)
 
-	capturer.Flush()
+	require.NoError(t, capturer.FlushError())
 	assert.True(t, recorder.Flushed)
 
 	require.NoError(t, capturer.serve())
@@ -59,7 +59,7 @@ func TestResponseCapturer_withheld(t *testing.T) {
 	assert.True(t, capturer.buffering)
 
 	// A withheld response cannot be flushed.
-	capturer.Flush()
+	require.NoError(t, capturer.FlushError())
 	assert.False(t, recorder.Flushed)
 
 	rec := capturer.record(time.Second)
@@ -250,17 +250,7 @@ func TestResponseCapturer_hijackServesWithheldResponse(t *testing.T) {
 	_, err := capturer.Write([]byte("pong"))
 	require.NoError(t, err)
 
-	// httptest.ResponseRecorder is not a http.Hijacker, but the withheld response is served first.
-	_, _, err = capturer.Hijack()
-	require.Error(t, err)
-	assert.Empty(t, recorder.Body.String())
-
-	// The response is served as soon as the underlying writer can be hijacked.
-	capturer = newResponseCapturer(&hijackableRecorder{ResponseRecorder: recorder}, &destination{recordBody: true, maxRecordBodySize: -1}, true, nil)
-
-	_, err = capturer.Write([]byte("pong"))
-	require.NoError(t, err)
-
+	// The response is served before the hijack is attempted.
 	_, _, err = capturer.Hijack()
 	require.Error(t, err)
 

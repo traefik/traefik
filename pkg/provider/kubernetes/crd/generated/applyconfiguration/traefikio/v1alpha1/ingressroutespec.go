@@ -35,17 +35,17 @@ type IngressRouteSpecApplyConfiguration struct {
 	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/install-configuration/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/install-configuration/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// Routes defines the list of routes.
 	Routes []RouteApplyConfiguration `json:"routes,omitempty"`
 	// TLS defines the TLS configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/router/#tls
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/router/#tls
 	TLS *TLSApplyConfiguration `json:"tls,omitempty"`
 	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
 	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
-	// More info: https://doc.traefik.io/traefik/v3.7/routing/routers/#parentrefs
+	// More info: https://doc.traefik.io/traefik/v3.8/routing/routers/#parentrefs
 	ParentRefs []IngressRouteRefApplyConfiguration `json:"parentRefs,omitempty"`
 }
 

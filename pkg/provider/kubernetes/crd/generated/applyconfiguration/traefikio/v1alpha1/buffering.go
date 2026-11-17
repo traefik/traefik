@@ -31,7 +31,7 @@ package v1alpha1
 //
 // Buffering holds the buffering middleware configuration.
 // This middleware retries or limits the size of requests that can be forwarded to backends.
-// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#maxrequestbodybytes
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#maxrequestbodybytes
 type BufferingApplyConfiguration struct {
 	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
 	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
@@ -49,8 +49,17 @@ type BufferingApplyConfiguration struct {
 	MemResponseBodyBytes *int64 `json:"memResponseBodyBytes,omitempty"`
 	// RetryExpression defines the retry conditions.
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
-	// More info: https://doc.traefik.io/traefik/v3.7/middlewares/http/buffering/#retryexpression
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#retryexpression
 	RetryExpression *string `json:"retryExpression,omitempty"`
+	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+	// When true, MaxRequestBodyBytes is not enforced.
+	// Default: false.
+	DisableRequestBuffer *bool `json:"disableRequestBuffer,omitempty"`
+	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+	// This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+	// When true, MaxResponseBodyBytes is not enforced.
+	// Default: false.
+	DisableResponseBuffer *bool `json:"disableResponseBuffer,omitempty"`
 }
 
 // BufferingApplyConfiguration constructs a declarative configuration of the Buffering type for use with
@@ -96,5 +105,21 @@ func (b *BufferingApplyConfiguration) WithMemResponseBodyBytes(value int64) *Buf
 // If called multiple times, the RetryExpression field is set to the value of the last call.
 func (b *BufferingApplyConfiguration) WithRetryExpression(value string) *BufferingApplyConfiguration {
 	b.RetryExpression = &value
+	return b
+}
+
+// WithDisableRequestBuffer sets the DisableRequestBuffer field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DisableRequestBuffer field is set to the value of the last call.
+func (b *BufferingApplyConfiguration) WithDisableRequestBuffer(value bool) *BufferingApplyConfiguration {
+	b.DisableRequestBuffer = &value
+	return b
+}
+
+// WithDisableResponseBuffer sets the DisableResponseBuffer field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DisableResponseBuffer field is set to the value of the last call.
+func (b *BufferingApplyConfiguration) WithDisableResponseBuffer(value bool) *BufferingApplyConfiguration {
+	b.DisableResponseBuffer = &value
 	return b
 }

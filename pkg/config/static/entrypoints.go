@@ -102,6 +102,7 @@ type HTTPConfig struct {
 	EncodeQuerySemicolons bool               `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
 	SanitizePath          *bool              `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
 	MaxHeaderBytes        int                `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	MaxHeaderValueCount   int                `description:"Maximum number of request header values." json:"maxHeaderValueCount,omitempty" toml:"maxHeaderValueCount,omitempty" yaml:"maxHeaderValueCount,omitempty" export:"true"`
 	AliasHeadersStrategy  string             `description:"Defines the strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject)." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" export:"true"`
 
 	// UnderscoreHeadersStrategy is the strategy to handle request headers with underscores in their names.
@@ -114,6 +115,7 @@ type HTTPConfig struct {
 func (h *HTTPConfig) SetDefaults() {
 	h.SanitizePath = new(true)
 	h.MaxHeaderBytes = http.DefaultMaxHeaderBytes
+	h.MaxHeaderValueCount = http.DefaultMaxHeaderValueCount
 }
 
 // EncodedCharacters configures which encoded characters are allowed in the request path.

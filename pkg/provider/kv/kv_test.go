@@ -62,6 +62,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
 		"traefik/http/services/Service02/mirroring/mirrorBody":                                       "true",
 		"traefik/http/services/Service02/mirroring/maxBodySize":                                      "42",
+		"traefik/http/services/Service02/mirroring/streamBody":                                       "true",
 		"traefik/http/services/Service02/mirroring/mirrors/0/name":                                   "foobar",
 		"traefik/http/services/Service02/mirroring/mirrors/0/percent":                                "42",
 		"traefik/http/services/Service02/mirroring/mirrors/1/name":                                   "foobar",
@@ -213,6 +214,8 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware02/buffering/retryExpression":                            "foobar",
 		"traefik/http/middlewares/Middleware02/buffering/maxRequestBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware02/buffering/memRequestBodyBytes":                        "42",
+		"traefik/http/middlewares/Middleware02/buffering/disableRequestBuffer":                       "true",
+		"traefik/http/middlewares/Middleware02/buffering/disableResponseBuffer":                      "true",
 		"traefik/http/middlewares/Middleware05/compress/encodings":                                   "foobar, foobar",
 		"traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
@@ -406,11 +409,13 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware02": {
 					Buffering: &dynamic.Buffering{
-						MaxRequestBodyBytes:  42,
-						MemRequestBodyBytes:  42,
-						MaxResponseBodyBytes: 42,
-						MemResponseBodyBytes: 42,
-						RetryExpression:      "foobar",
+						MaxRequestBodyBytes:   42,
+						MemRequestBodyBytes:   42,
+						MaxResponseBodyBytes:  42,
+						MemResponseBodyBytes:  42,
+						RetryExpression:       "foobar",
+						DisableRequestBuffer:  true,
+						DisableResponseBuffer: true,
 					},
 				},
 				"Middleware04": {
@@ -702,6 +707,7 @@ func Test_buildConfiguration(t *testing.T) {
 						Service:     "foobar",
 						MirrorBody:  new(true),
 						MaxBodySize: new(int64(42)),
+						StreamBody:  true,
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
@@ -864,20 +870,16 @@ func Test_buildConfiguration(t *testing.T) {
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: []*tls.CertAndStores{
 				{
-					Certificate: tls.Certificate{
-						CertFile: types.FileOrContent("foobar"),
-						KeyFile:  types.FileOrContent("foobar"),
-					},
+					CertFile: types.FileOrContent("foobar"),
+					KeyFile:  types.FileOrContent("foobar"),
 					Stores: []string{
 						"foobar",
 						"foobar",
 					},
 				},
 				{
-					Certificate: tls.Certificate{
-						CertFile: types.FileOrContent("foobar"),
-						KeyFile:  types.FileOrContent("foobar"),
-					},
+					CertFile: types.FileOrContent("foobar"),
+					KeyFile:  types.FileOrContent("foobar"),
 					Stores: []string{
 						"foobar",
 						"foobar",

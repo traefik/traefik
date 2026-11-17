@@ -98,8 +98,22 @@ type Router struct {
 	Priority                    int                                `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
 	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Observability               *RouterObservabilityConfig         `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	RespondingTimeouts          *RouterRespondingTimeouts          `json:"respondingTimeouts,omitempty" toml:"respondingTimeouts,omitempty" yaml:"respondingTimeouts,omitempty" export:"true"`
 	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterRespondingTimeouts holds the timeouts for responding to client requests on a router.
+// They count from the router receiving the request, and replace the entrypoint ones when set.
+type RouterRespondingTimeouts struct {
+	// ReadTimeout is the maximum duration for reading the request body.
+	// If zero, no timeout applies, and the entrypoint read timeout is lifted for the router.
+	ReadTimeout *ptypes.Duration `json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	// WriteTimeout is the maximum duration before timing out writes of the response, including the wait for the backend.
+	// If zero, no timeout applies, and the entrypoint write timeout is lifted for the router.
+	WriteTimeout *ptypes.Duration `json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -244,6 +258,7 @@ type Mirroring struct {
 	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	MirrorBody  *bool           `json:"mirrorBody,omitempty" toml:"mirrorBody,omitempty" yaml:"mirrorBody,omitempty" export:"true"`
 	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	StreamBody  bool            `json:"streamBody,omitempty" toml:"streamBody,omitempty" yaml:"streamBody,omitempty" export:"true"`
 	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty" export:"true"`
 	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }

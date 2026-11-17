@@ -15,7 +15,7 @@ It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingres
 
     **→ See the [NGINX to Traefik Migration Guide](../../../../migrate/nginx-to-traefik.md) for step-by-step instructions.**
 
-    For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
+    For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
 
 ## Requirements
 
@@ -29,7 +29,7 @@ ensure that you add/update the [RBAC](https://kubernetes.io/docs/reference/acces
 
 ```bash
 # Install RBAC for Traefik Ingress NGINX provider:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-ingress-nginx-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.8/docs/content/reference/dynamic-configuration/kubernetes-ingress-nginx-rbac.yml
 ```
 
 ## Ingress Discovery

@@ -209,4 +209,4 @@ To change an option description in the generated reference, change the comment o
 2. Check that every link and anchor resolves.
 3. Run the docs build with `mkdocs build --strict` and the markdown lint, as described in the contributing guide.
 4. Target the right branch: `master` for new features, and the maintenance branch for the release for fixes. Don't backport your own change.
-5. Declare substantial AI assistance with an `Assisted-by:` trailer.
+5. Declare substantial AI assistance in the pull request description with `Assisted-by: <agent name>`, never in a commit trailer.

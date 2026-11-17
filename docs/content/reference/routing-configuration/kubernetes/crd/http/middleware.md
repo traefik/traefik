@@ -51,3 +51,65 @@ spec:
 ```
 
 For more information about the available middlewares, navigate to the dedicated [middlewares overview section](../../../http/middlewares/overview.md).
+
+## Referencing a Secret or a ConfigMap in a plugin configuration
+
+A value inside `spec.plugin` can be a reference to a Kubernetes object instead of a literal.
+Traefik resolves it while building the dynamic configuration, at any depth, in strings, lists and maps.
+
+| Reference | Reads |
+|---|---|
+| <a id="opt-urnk8ssecretnamekey" href="#opt-urnk8ssecretnamekey" title="#opt-urnk8ssecretnamekey">`urn:k8s:secret:[name]:[key]`</a> | the key of that `Secret` |
+| <a id="opt-urnk8sconfigmapnamekey" href="#opt-urnk8sconfigmapnamekey" title="#opt-urnk8sconfigmapnamekey">`urn:k8s:configmap:[name]:[key]`</a> | the key of that `ConfigMap`, from `data` or `binaryData` |
+
+Both are read from the namespace of the `Middleware` itself.
+A reference has no namespace, so a `Middleware` cannot read a `Secret` or a `ConfigMap` from another namespace.
+
+Use a `Secret` for a credential, and a `ConfigMap` for a value that is not one and is too long to
+sit in the manifest, such as a block of text the plugin hands to its clients.
+
+The two references are not shown the same way in the API, the dashboard and the support dump:
+
+- A `Secret` reference stays in the routing configuration, and Traefik reads its value only when it builds the middleware, so the value is never shown.
+- A `ConfigMap` reference is replaced with its value in the routing configuration, so the value is shown.
+
+!!! warning "Unresolved references"
+    If the referenced object does not exist, does not carry the key, or if the reference is malformed,
+    the whole `Middleware` is invalid and is left out of the routing configuration. Routers referencing it are not served.
+
+```yaml tab="Middleware"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: my-plugin
+  namespace: foo
+
+spec:
+  plugin:
+    myplugin:
+      token: urn:k8s:secret:my-plugin-credentials:token
+      instructions: urn:k8s:configmap:my-plugin-instructions:text
+```
+
+```yaml tab="Secret"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-plugin-credentials
+  namespace: foo
+
+data:
+  token: dG9rZW4=
+```
+
+```yaml tab="ConfigMap"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-plugin-instructions
+  namespace: foo
+
+data:
+  text: |-
+    Any text the plugin needs and a manifest should not carry.
+```

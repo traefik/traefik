@@ -48,7 +48,7 @@ type LoadBalancerSpecApplyConfiguration struct {
 	// Middlewares defines the list of references to Middleware resources to apply to the service.
 	Middlewares []MiddlewareRefApplyConfiguration `json:"middlewares,omitempty"`
 	// Sticky defines the sticky sessions configuration.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/load-balancing/service/#sticky-sessions
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/load-balancing/service/#sticky-sessions
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.

@@ -36,7 +36,7 @@ import (
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/retry/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/retry/
 type RetryApplyConfiguration struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts *int `json:"attempts,omitempty"`

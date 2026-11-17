@@ -345,15 +345,22 @@ func TestForwardAuthNotForwardBody(t *testing.T) {
 
 func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
 	testCases := []struct {
-		desc string
-		tls  bool
+		desc   string
+		tls    bool
+		header string
 	}{
 		{
-			desc: "HTTP auth server",
+			desc:   "HTTP auth server",
+			header: "Authorization",
 		},
 		{
-			desc: "HTTPS auth server",
-			tls:  true,
+			desc:   "HTTPS auth server",
+			tls:    true,
+			header: "Authorization",
+		},
+		{
+			desc:   "credential in Proxy-Authorization",
+			header: "Proxy-Authorization",
 		},
 	}
 
@@ -368,7 +375,7 @@ func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
 			// is sent on, and later requests without credential on that connection are authenticated as the same user.
 			authServer := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				conn := req.Context().Value(authConnKey{}).(*authConn)
-				if scheme, user, ok := strings.Cut(req.Header.Get("Authorization"), " "); ok && scheme == "NTLM" {
+				if scheme, user, ok := strings.Cut(req.Header.Get(test.header), " "); ok && scheme == "NTLM" {
 					conn.user = user
 				}
 
@@ -411,12 +418,12 @@ func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
 			t.Cleanup(ts.Close)
 
 			// Each client has its own transport, hence its own connection to Traefik.
-			send := func(client *http.Client, authorization string) (int, string) {
+			send := func(client *http.Client, credential string) (int, string) {
 				t.Helper()
 
 				req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-				if authorization != "" {
-					req.Header.Set("Authorization", authorization)
+				if credential != "" {
+					req.Header.Set(test.header, credential)
 				}
 
 				res, err := client.Do(req)
@@ -598,12 +605,12 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 
 func TestForwardAuthClientClosedRequest(t *testing.T) {
 	requestStarted := make(chan struct{})
-	requestCancelled := make(chan struct{})
 	responseComplete := make(chan struct{})
 
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		close(requestStarted)
-		<-requestCancelled
+		// Wait for the client to give up on the request, so the auth server never answers before the cancellation is observed.
+		<-r.Context().Done()
 	}))
 	t.Cleanup(authTs.Close)
 
@@ -629,11 +636,7 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 
 	<-requestStarted
 
-	// Cancel request and wait for cancellation to propagate
 	cancel()
-	<-ctx.Done()
-
-	close(requestCancelled)
 
 	<-responseComplete
 
