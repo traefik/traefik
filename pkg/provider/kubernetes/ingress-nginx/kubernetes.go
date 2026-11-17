@@ -102,6 +102,7 @@ type Provider struct {
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
 	IPAllowListStrategy *dynamic.IPStrategy `description:"Defines the IP strategy to determine the client IP for allowlist/whitelist source range annotations." json:"ipAllowListStrategy,omitempty" toml:"ipAllowListStrategy,omitempty" yaml:"ipAllowListStrategy,omitempty" export:"true"`
+	LimitIPStrategy     *dynamic.IPStrategy `description:"Defines the IP strategy to determine the client IP for limit-rps, limit-rpm and limit-connections annotations." json:"limitIPStrategy,omitempty" toml:"limitIPStrategy,omitempty" yaml:"limitIPStrategy,omitempty" export:"true"`
 
 	HTTPEntryPoint  string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
 	HTTPSEntryPoint string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`

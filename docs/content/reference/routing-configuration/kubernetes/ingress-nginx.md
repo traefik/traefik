@@ -378,6 +378,12 @@ The following annotations are organized by category for easier navigation.
 
 ### Rate Limiting
 
+!!! info "Client IP Strategy"
+
+    By default, requests and connections are counted per remote address of the incoming request.
+    When Traefik is behind a reverse proxy, all clients share the remote address of the proxy, and the actual client IP is often found in the `X-Forwarded-For` header instead.
+    This can be configured globally using the provider option [`limitIPStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-limitIPStrategy).
+
 | Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |-----------------------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
