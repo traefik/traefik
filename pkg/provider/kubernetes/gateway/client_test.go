@@ -11,7 +11,7 @@ import (
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	fakediscovery "k8s.io/client-go/discovery/fake"
+	discoveryfake "k8s.io/client-go/discovery/fake"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -143,7 +143,7 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 
 			kubeClient := kubefake.NewClientset()
 
-			fakeDiscovery, ok := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
+			fakeDiscovery, ok := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
 			require.True(t, ok)
 			if test.resources != nil {
 				fakeDiscovery.Resources = []*metav1.APIResourceList{{GroupVersion: gatev1.GroupVersion.String(), APIResources: test.resources}}

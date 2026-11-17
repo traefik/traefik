@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	kschema "k8s.io/apimachinery/pkg/runtime/schema"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -241,7 +241,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 				continue
 			}
 
-			informer, err := factoryGateway.ForResource(schema.GroupVersionResource{Group: gatev1.GroupName, Version: gatev1.GroupVersion.Version, Resource: resource.name})
+			informer, err := factoryGateway.ForResource(kschema.GroupVersionResource{Group: gatev1.GroupName, Version: gatev1.GroupVersion.Version, Resource: resource.name})
 			if err != nil {
 				return nil, fmt.Errorf("creating %s informer: %w", resource.name, err)
 			}
