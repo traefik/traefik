@@ -11,6 +11,7 @@ How well Traefik Proxy isolates tenants from each other depends on how you deplo
 | Deployment | Routing Configuration | Address | Multi-Tenancy |
 |---|---|---|---|
 | Traefik Operator with Kubernetes Gateway API | One per Gateway | One per Gateway | Recommended |
+| One Traefik instance per Gateway, scoped with `providers.kubernetesGateway.gateways` | One per Gateway | One per Gateway | Alternative to the Traefik Operator |
 | Single Traefik instance with Kubernetes Gateway API | Shared by all Gateways | Shared by all Gateways | Not recommended |
 | Single Traefik instance with Ingress or IngressRoute | Shared by all namespaces | Shared by all namespaces | Not recommended |
 
@@ -31,6 +32,7 @@ When you run one Traefik instance with the [Kubernetes Gateway API provider](../
 * **Gateways share one instance.** Heavy traffic or a misconfiguration on one Gateway affects every other Gateway served by that instance.
 
 Use a single Traefik instance only when every Gateway it serves belongs to the same tenant.
+To isolate Gateways without the Traefik Operator, see [One Traefik Instance per Gateway](#one-traefik-instance-per-gateway).
 
 ### Traefik Operator
 
@@ -52,6 +54,66 @@ Create one Gateway per tenant, in the tenant's namespace.
 Listeners add control inside each Gateway.
 A cluster operator can use the listener `hostname` to limit the domain names a Gateway serves, and `allowedRoutes` to limit which namespaces can attach routes to it.
 See [Gateway API routing configuration](../reference/routing-configuration/kubernetes/gateway-api.md) for the listener options Traefik supports.
+
+### One Traefik Instance per Gateway
+
+Without the Traefik Operator, you can get the same isolation by deploying one Traefik instance per Gateway yourself.
+Set [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways) on each instance to the Gateway it serves.
+An instance reconciles only the Gateways listed in `gateways`, and ignores every other Gateway and the routes attached to it.
+
+Give each instance its own `Service`, and set [`providers.kubernetesGateway.statusAddress.service`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-statusAddress-service-name) to that `Service`, so each Gateway reports the address of its own instance.
+List each Gateway in the `gateways` option of one instance only.
+
+Using the `tenant-a` Gateway in the `tenant-a` namespace as the example:
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    # Reconcile only the tenant-a Gateway.
+    gateways:
+      - name: tenant-a
+        namespace: tenant-a
+    # Report the address of this instance's Service in the Gateway status.
+    statusAddress:
+      service:
+        name: traefik-tenant-a
+        namespace: tenant-a
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  # Reconcile only the tenant-a Gateway.
+  [[providers.kubernetesGateway.gateways]]
+    name = "tenant-a"
+    namespace = "tenant-a"
+  # Report the address of this instance's Service in the Gateway status.
+  [providers.kubernetesGateway.statusAddress.service]
+    name = "traefik-tenant-a"
+    namespace = "tenant-a"
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.gateways[0].name=tenant-a
+--providers.kubernetesgateway.gateways[0].namespace=tenant-a
+--providers.kubernetesgateway.statusaddress.service.name=traefik-tenant-a
+--providers.kubernetesgateway.statusaddress.service.namespace=tenant-a
+```
+
+```yaml tab="Helm Chart Values"
+providers:
+  kubernetesGateway:
+    enabled: true
+    # Reconcile only the tenant-a Gateway.
+    gateways:
+      - name: tenant-a
+        namespace: tenant-a
+    # The chart reports the address of its own Service in the Gateway status by default.
+    statusAddress:
+      service:
+        enabled: true
+```
+
+Unlike the Traefik Operator, this setup leaves you to create, update, and delete each instance and its `Service` when tenants add or remove Gateways.
 
 ## Ingress and IngressRoute
 
