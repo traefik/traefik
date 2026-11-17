@@ -1,6 +1,6 @@
 ---
 title: "Multi-Tenancy in Kubernetes"
-description: "Isolate tenants in a shared Kubernetes cluster with the Traefik Operator, which provisions a dedicated Traefik data plane for each Gateway API Gateway, and learn the limits of a single shared Traefik instance."
+description: "Isolate tenants in a shared Kubernetes cluster with a dedicated Traefik data plane for each Gateway API Gateway, provisioned by the Traefik Operator or scoped with the gateways option, and learn the limits of a single shared Traefik instance."
 ---
 
 # Multi-Tenancy in Kubernetes
@@ -13,15 +13,16 @@ How well Traefik Proxy isolates tenants from each other depends on how you deplo
 | Traefik Operator with Kubernetes Gateway API | One per Gateway | One per Gateway | Recommended |
 | One Traefik instance per Gateway, scoped with `providers.kubernetesGateway.gateways` | One per Gateway | One per Gateway | Alternative to the Traefik Operator |
 | Single Traefik instance with Kubernetes Gateway API | Shared by all Gateways | Shared by all Gateways | Not recommended |
+| One Traefik instance per tenant with Ingress or IngressRoute, scoped with `namespaces` | One per tenant | One per tenant | Recommended for Ingress and IngressRoute |
 | Single Traefik instance with Ingress or IngressRoute | Shared by all namespaces | Shared by all namespaces | Not recommended |
 
-For multi-tenant clusters, use Kubernetes Gateway API with the [Traefik Operator](#traefik-operator), and create one Gateway per tenant.
+For multi-tenant clusters, use Kubernetes Gateway API with the [Traefik Operator](#traefik-operator), or with [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with `providers.kubernetesGateway.gateways`, and create one Gateway per tenant.
 
 ## Gateway API
 
 Kubernetes Gateway API treats each Gateway as an independent entry point to the cluster, with its own listeners, routes, and addresses.
 A single Traefik instance doesn't keep Gateways separate.
-To give each Gateway its own Traefik data plane, use the [Traefik Operator](#traefik-operator).
+To give each Gateway its own Traefik data plane, use the [Traefik Operator](#traefik-operator), or deploy [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with `providers.kubernetesGateway.gateways`.
 
 ### Single Traefik Instance
 
@@ -43,6 +44,8 @@ Each data plane is a separate Traefik instance, with its own `Deployment`, `Serv
 * **Each Gateway reports its own address.** The data plane reports the address of its own `Service` in the Gateway `status.addresses`, and honors the addresses requested in `spec.addresses`.
 * **Each Gateway carries its own infrastructure metadata.** The labels and annotations set in the Gateway `spec.infrastructure` are added to the resources generated for its data plane.
 * **Each data plane runs in the tenant's namespace.** Kubernetes deletes the data plane with its Gateway, and the data plane counts against the tenant's namespace quotas.
+
+To get the same isolation without the Traefik Operator, see [One Traefik Instance per Gateway](#one-traefik-instance-per-gateway).
 
 The Traefik Operator requires Traefik v3.8 or later as the data plane.
 To install it, follow the Traefik Operator [Getting Started guide](https://github.com/traefik/gateway-operator/blob/main/docs/getting-started.md).
@@ -119,8 +122,28 @@ Unlike the Traefik Operator, this setup leaves you to create, update, and delete
 
 The Kubernetes Ingress and IngressRoute providers build one routing configuration for every namespace a Traefik instance watches, so tenants share the limits described in [Limits of a Shared Traefik Instance](#limits-of-a-shared-traefik-instance).
 
-For multi-tenant clusters, migrate tenant routing to Kubernetes Gateway API and deploy it with the [Traefik Operator](#traefik-operator).
-See the [Kubernetes Gateway API provider](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md) to configure it.
+With Ingress or IngressRoute, the recommended approach for multi-tenant Kubernetes clusters is to **deploy one dedicated Traefik instance per tenant**, scoped to that tenant's namespace(s).
+This ensures strict boundaries between tenants and prevents cross-tenant configuration leakage.
+
+Each Traefik instance should be:
+
+* Deployed in the tenant's namespace with a dedicated `ServiceAccount`
+* Configured with `providers.kubernetesCRD.namespaces` and/or `providers.kubernetesIngress.namespaces` to restrict resource watch to that tenant's namespaces only
+* Subject to Kubernetes RBAC that limits its access to only the resources it needs
+
+This namespace-per-tenant topology, combined with Kubernetes `NetworkPolicy` resources, provides the strongest available isolation when using Ingress or IngressRoute on a shared cluster.
+
+!!! tip "Dedicate one Traefik instance per tenant using the Helm Chart"
+
+    ```yaml
+    providers:
+      kubernetesCRD:
+        namespaces:
+          - tenant
+      kubernetesIngress:
+        namespaces:
+          - tenant
+    ```
 
 ## Limits of a Shared Traefik Instance
 
