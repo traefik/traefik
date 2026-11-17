@@ -144,7 +144,13 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 			matches = []gatev1.GRPCRouteMatch{{}}
 		}
 
-		for _, match := range matches {
+		for mi, match := range matches {
+			matchSource := ruleSource
+			// The match substituted to empty matches is not in the resource.
+			if len(routeRule.Matches) > 0 {
+				matchSource = dynamic.MakeKubernetesRef(route, fmt.Sprintf("%s/matches/%d", ruleSource.Path, mi))
+			}
+
 			rule, priority := buildGRPCMatchRule(hostnames, match)
 			router := dynamic.Router{
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
@@ -153,9 +159,8 @@ func (p *Provider) loadGRPCRouteConfiguration(ctx context.Context, gatewayName, 
 				Priority:   priority,
 				ParentRefs: listener.RouterNames,
 				Metadata: k8s.NewMetadata(
-					dynamic.MakeKubernetesRef(route, "/spec/hostnames"),
 					routeParentRef,
-					ruleSource,
+					matchSource,
 					listener.ListenerSource,
 				),
 			}
@@ -303,7 +308,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName, gatewayNamespace string, list
 		}
 	}
 
-	lb, st, serviceSource, errCondition := p.loadGRPCServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
+	lb, st, serviceSources, errCondition := p.loadGRPCServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -313,7 +318,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName, gatewayNamespace string, list
 		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
-	metadata := k8s.NewServiceMetadata(serviceSource, backendSource)
+	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
 	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
 
 	return serviceName, &dynamic.Service{LoadBalancer: lb, Metadata: metadata}, nil
@@ -367,10 +372,10 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, route *gatev
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSource, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
+func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, []dynamic.KubernetesRef, *metav1.Condition) {
+	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
-		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -382,7 +387,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 
 	backendTLSPolicies, err := p.k8sClient.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
 	if err != nil {
-		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -476,7 +481,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 			// When something went wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
-				return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+				return nil, nil, nil, &metav1.Condition{
 					Type:               string(gatev1.RouteConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: route.Generation,
@@ -498,7 +503,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 	if serversTransport == nil {
 		protocol, err = getGRPCServiceProtocol(svcPort)
 		if err != nil {
-			return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+			return nil, nil, nil, &metav1.Condition{
 				Type:               string(gatev1.RouteConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: route.Generation,
@@ -518,7 +523,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 		})
 	}
 
-	return lb, serversTransport, serviceSource, nil
+	return lb, serversTransport, serviceSources, nil
 }
 
 func buildGRPCMatchRule(hostnames []gatev1.Hostname, match gatev1.GRPCRouteMatch) (string, int) {

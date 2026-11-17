@@ -326,11 +326,6 @@ func addTCPService(conf *dynamic.Configuration, name string, svc *dynamic.TCPSer
 
 // addServersTransport registers the serversTransport of the location, which the locations of an Ingress share.
 func addServersTransport(conf *dynamic.Configuration, loc *location) {
-	if loc.ServersTransport.Metadata == nil {
-		loc.ServersTransport.Metadata = k8s.NewMetadata()
-	}
-	loc.ServersTransport.Metadata.Kubernetes.Sources.Add(loc.BackendSources...)
-
 	conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 }
 

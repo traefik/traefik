@@ -382,7 +382,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		}
 
 		// Normal ingress: build serversTransport, TLS options, and Locations.
-		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+		nst, err := p.buildServersTransport(ctxIng, ing.Ingress, ing.config)
 		if err != nil {
 			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
 			continue
@@ -633,7 +633,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					RuleIndex:               ri,
 					IsIngressDefaultBackend: true,
 					SSLPassthrough:          sslPassthrough,
-					Sources:                 makeIngressSources(ing.Ingress, "/spec/defaultBackend", fmt.Sprintf("/spec/rules/%d/host", ri)),
+					Sources:                 makeIngressSources(ing.Ingress, fmt.Sprintf("/spec/rules/%d/host", ri)),
 					BackendSources:          makeIngressSources(ing.Ingress, "/spec/defaultBackend"),
 				}
 
@@ -683,10 +683,13 @@ func inheritServerAppRoot(loc *location, appRoot string) {
 	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
 }
 
-func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
+func (p *Provider) buildServersTransport(ctx context.Context, ing *netv1.Ingress, cfg IngressConfig) (namedServersTransport, error) {
+	namespace := ing.Namespace
+
 	nst := namedServersTransport{
-		name: makeKey(namespace, name),
+		name: makeKey(namespace, ing.Name),
 		ServersTransport: &dynamic.ServersTransport{
+			Metadata: k8s.NewMetadata(dynamic.MakeKubernetesRef(ing, "/metadata/annotations")),
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
 				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
@@ -807,13 +810,9 @@ func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBa
 // makeIngressSources returns the references to the parts of the Ingress at the given paths, and to its annotations.
 // The annotations are a single source: an object does not record which of them it reads.
 func makeIngressSources(ing *netv1.Ingress, paths ...string) []dynamic.KubernetesRef {
-	sources := make([]dynamic.KubernetesRef, 0, len(paths)+1)
+	sources := []dynamic.KubernetesRef{dynamic.MakeKubernetesRef(ing, "/metadata/annotations")}
 	for _, path := range paths {
 		sources = append(sources, dynamic.MakeKubernetesRef(ing, path))
-	}
-
-	if len(ing.Annotations) > 0 {
-		sources = append(sources, dynamic.MakeKubernetesRef(ing, "/metadata/annotations"))
 	}
 
 	return sources

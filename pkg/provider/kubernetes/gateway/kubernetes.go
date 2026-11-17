@@ -1774,35 +1774,38 @@ type backendAddress struct {
 	Port int32
 }
 
-func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, dynamic.KubernetesRef, error) {
+func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, []dynamic.KubernetesRef, error) {
 	if ref.Port == nil {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("port is required for Kubernetes Service reference")
+		return nil, corev1.ServicePort{}, nil, errors.New("port is required for Kubernetes Service reference")
 	}
 
 	service, err := p.k8sClient.GetService(namespace, string(ref.Name))
 	if err != nil {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("getting service: %w", err)
+		return nil, corev1.ServicePort{}, nil, fmt.Errorf("getting service: %w", err)
 	}
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+		return nil, corev1.ServicePort{}, nil, errors.New("type ExternalName is not supported for Kubernetes Service reference")
 	}
 
 	var svcPort *corev1.ServicePort
-	var serviceSource dynamic.KubernetesRef
+	var serviceSources []dynamic.KubernetesRef
 	for i, p := range service.Spec.Ports {
 		if p.Port == *ref.Port {
 			svcPort = &p
-			serviceSource = dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", i))
+			serviceSources = []dynamic.KubernetesRef{
+				dynamic.MakeKubernetesRef(service, "/metadata/annotations"),
+				dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", i)),
+			}
 			break
 		}
 	}
 	if svcPort == nil {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("service port %d not found", *ref.Port)
+		return nil, corev1.ServicePort{}, nil, fmt.Errorf("service port %d not found", *ref.Port)
 	}
 
 	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
 	if err != nil {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("parsing service annotations config: %w", err)
+		return nil, corev1.ServicePort{}, nil, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
 	nativeLB := p.NativeLBByDefault
@@ -1812,21 +1815,21 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 	if nativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
-			return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+			return nil, corev1.ServicePort{}, nil, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}
 
 		return []backendAddress{{
 			IP:   service.Spec.ClusterIP,
 			Port: svcPort.Port,
-		}}, *svcPort, serviceSource, nil
+		}}, *svcPort, serviceSources, nil
 	}
 
 	endpointSlices, err := p.k8sClient.ListEndpointSlicesForService(namespace, string(ref.Name))
 	if err != nil {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
+		return nil, corev1.ServicePort{}, nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 	if len(endpointSlices) == 0 {
-		return nil, corev1.ServicePort{}, dynamic.KubernetesRef{}, errors.New("endpointslices not found")
+		return nil, corev1.ServicePort{}, nil, errors.New("endpointslices not found")
 	}
 
 	uniqAddresses := map[string]struct{}{}
@@ -1862,7 +1865,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}
 	}
 
-	return backendServers, *svcPort, serviceSource, nil
+	return backendServers, *svcPort, serviceSources, nil
 }
 
 // hasInsecureFrontendValidationMode reports whether a validation of the Gateway allows an insecure fallback.

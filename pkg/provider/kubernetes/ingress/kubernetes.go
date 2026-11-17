@@ -296,7 +296,10 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
-				Metadata:   k8s.NewMetadata(dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend")),
+				Metadata: k8s.NewMetadata(
+					dynamic.MakeKubernetesRef(ingress, "/metadata/annotations"),
+					dynamic.MakeKubernetesRef(ingress, "/spec/defaultBackend"),
+				),
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
@@ -370,7 +373,10 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 					continue
 				}
 
-				rt.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingress, pathSource))
+				rt.Metadata.Kubernetes.Sources.Add(
+					dynamic.MakeKubernetesRef(ingress, "/metadata/annotations"),
+					dynamic.MakeKubernetesRef(ingress, pathSource),
+				)
 
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
@@ -609,7 +615,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", portIndex)))
+	metadata := k8s.NewServiceMetadata(
+		dynamic.MakeKubernetesRef(service, "/metadata/annotations"),
+		dynamic.MakeKubernetesRef(service, fmt.Sprintf("/spec/ports/%d", portIndex)),
+	)
 	metadata.Kubernetes.ServicePort = portString(backend.Service.Port)
 
 	svc := &dynamic.Service{

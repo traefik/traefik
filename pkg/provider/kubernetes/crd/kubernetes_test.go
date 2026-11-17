@@ -93,9 +93,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -156,9 +154,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -218,9 +214,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -283,9 +277,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -374,9 +366,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -464,9 +454,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -541,9 +529,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -624,9 +610,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -639,9 +623,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -723,10 +705,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -787,9 +767,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -894,9 +872,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1000,9 +976,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1188,9 +1162,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1252,9 +1224,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1342,9 +1312,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1432,9 +1400,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1520,9 +1486,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1607,9 +1571,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1698,9 +1660,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1789,9 +1749,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1851,9 +1809,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1914,9 +1870,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -1983,9 +1937,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2056,9 +2008,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2121,9 +2071,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2180,9 +2128,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2240,9 +2186,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2281,9 +2225,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2344,9 +2286,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2407,9 +2347,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2467,7 +2405,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -2506,9 +2443,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2591,10 +2526,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2694,9 +2626,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2806,9 +2736,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2913,9 +2841,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -2953,9 +2879,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3007,9 +2931,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3061,9 +2983,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3201,10 +3121,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3274,10 +3191,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3345,10 +3259,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3464,10 +3375,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3578,10 +3486,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3691,10 +3596,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3802,10 +3704,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3886,10 +3785,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3977,10 +3873,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -3993,10 +3886,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4087,10 +3977,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4201,10 +4088,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4286,10 +4170,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4437,10 +4318,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4645,10 +4523,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4751,10 +4626,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4902,10 +4774,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -4973,10 +4842,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5151,10 +5017,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5448,10 +5311,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5557,10 +5417,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5665,10 +5522,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5807,10 +5661,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -5905,10 +5756,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6013,10 +5861,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6120,10 +5965,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6261,10 +6103,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6371,10 +6210,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6486,10 +6322,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6599,10 +6432,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6614,10 +6444,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6629,10 +6456,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/2"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6644,10 +6468,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/3"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6853,10 +6674,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6868,10 +6686,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6883,10 +6698,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/2"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -6898,10 +6710,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/routes/3"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.shared", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7280,10 +7089,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7355,10 +7161,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7449,10 +7252,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7544,10 +7344,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7616,10 +7413,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7635,10 +7429,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7754,10 +7545,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7848,10 +7636,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -7921,10 +7706,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8015,10 +7797,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8034,10 +7813,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8154,10 +7930,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8246,10 +8019,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8342,10 +8112,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8439,10 +8206,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8507,10 +8271,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8574,10 +8335,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8641,10 +8399,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8709,10 +8464,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8777,10 +8529,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -8845,10 +8594,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9551,10 +9297,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9627,10 +9370,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9705,10 +9445,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9849,10 +9586,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9919,10 +9653,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -9936,10 +9667,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10040,10 +9768,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10111,10 +9836,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10189,10 +9911,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10206,10 +9925,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10300,10 +10016,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10363,10 +10076,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10426,10 +10136,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10578,10 +10285,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10756,10 +10460,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10892,10 +10593,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -10952,10 +10650,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11012,10 +10707,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11072,10 +10764,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11148,10 +10837,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11223,10 +10909,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11373,10 +11056,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11388,10 +11068,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test2.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11622,10 +11299,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-single", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-single", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-single", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-single", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11637,10 +11311,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-single", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-single", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-single", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-single", Path: "/spec/tls"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-single", Path: "/spec/routes"},
 									},
 								},
 							},
@@ -11702,10 +11374,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11716,10 +11385,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11731,10 +11397,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-routes", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-routes", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-routes", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-routes", Path: "/spec/tls"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-multi", Path: "/spec/routes"},
 									},
 								},
 							},
@@ -11796,10 +11460,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-a", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-a", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-a", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-a", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11810,10 +11471,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-b", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-b", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-b", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-b", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11825,10 +11483,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-parents", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-parents", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-parents", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-multi-parents", Path: "/spec/tls"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-a", Path: "/spec/routes"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-b", Path: "/spec/routes"},
 									},
 								},
 							},
@@ -11914,10 +11571,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11929,10 +11583,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-b", Name: "child-cross-allowed", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-b", Name: "child-cross-allowed", Path: "/spec/parentRefs"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/routes"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-b", Name: "child-cross-allowed", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-b", Name: "child-cross-allowed", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -11995,10 +11647,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "ns-a", Name: "parent-cross", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -12033,10 +11682,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-default", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-default", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-default", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-default", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -12048,10 +11694,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-same", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-same", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-same", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child-same", Path: "/spec/tls"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "parent-default", Path: "/spec/routes"},
 									},
 								},
 							},
@@ -12115,10 +11759,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -12229,10 +11870,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 					Metadata: &dynamic.Metadata{
 						Kubernetes: &dynamic.KubernetesMetadata{
 							Sources: dynamic.KubernetesSources{
-								{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-								{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 								{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-								{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 							},
 						},
 					},
@@ -12352,7 +11990,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12413,7 +12050,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12473,7 +12109,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12486,7 +12121,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/1"},
 									},
 								},
@@ -12569,7 +12203,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12630,7 +12263,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12691,7 +12323,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12751,7 +12382,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12856,7 +12486,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -12960,7 +12589,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13090,7 +12718,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13147,7 +12774,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13205,7 +12831,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13267,7 +12892,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13305,7 +12929,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13357,7 +12980,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13409,7 +13031,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -13842,10 +13463,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -13862,10 +13480,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/3"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -13972,10 +13587,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -13989,10 +13601,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14006,10 +13615,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/2"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14026,10 +13632,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/3"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14253,10 +13856,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14270,10 +13870,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14287,10 +13884,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/2"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14307,10 +13901,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/routes/3"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test-crossnamespace.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14530,10 +14121,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14545,10 +14133,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "cross-ns-route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -14887,10 +14472,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15019,10 +14601,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15174,10 +14753,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15331,9 +14907,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15422,9 +14996,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15438,9 +15010,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/1"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15556,9 +15126,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15613,9 +15181,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15654,9 +15220,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15733,9 +15297,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15796,9 +15358,7 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -15939,7 +15499,6 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -16000,7 +15559,6 @@ func TestCrossNamespace(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -16606,10 +16164,7 @@ func TestExternalNameService(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -16693,9 +16248,7 @@ func TestExternalNameService(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -16748,9 +16301,7 @@ func TestExternalNameService(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -16783,7 +16334,6 @@ func TestExternalNameService(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -16842,7 +16392,6 @@ func TestExternalNameService(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -16951,10 +16500,7 @@ func TestNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17013,9 +16559,7 @@ func TestNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17061,7 +16605,6 @@ func TestNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -17191,10 +16734,7 @@ func TestNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17253,9 +16793,7 @@ func TestNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17301,7 +16839,6 @@ func TestNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -17391,9 +16928,7 @@ func TestNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17425,7 +16960,6 @@ func TestNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -17716,10 +17250,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "global-native-lb", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "global-native-lb", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "global-native-lb", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "global-native-lb", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17778,10 +17309,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.native-disabled", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.native-disabled", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.native-disabled", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route.native-disabled", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17843,10 +17371,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/parentRefs"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17906,9 +17431,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "global-native-lb", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "global-native-lb", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "global-native-lb", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -17966,9 +17489,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "tcp.route.native-disabled", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "tcp.route.native-disabled", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "tcp.route.native-disabled", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -18030,9 +17551,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteTCP", Namespace: "default", Name: "test.route", Path: "/spec/tls"},
 									},
 								},
 							},
@@ -18078,7 +17597,6 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
@@ -18137,7 +17655,6 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "global-native-lb", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "global-native-lb", Path: "/spec/routes/0"},
 									},
 								},
@@ -18195,7 +17712,6 @@ func TestGlobalNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "udp.route.native-disabled", Path: "/spec/entryPoints"},
 										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRouteUDP", Namespace: "default", Name: "udp.route.native-disabled", Path: "/spec/routes/0"},
 									},
 								},

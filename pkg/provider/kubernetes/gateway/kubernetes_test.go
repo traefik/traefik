@@ -408,9 +408,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -827,9 +826,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -873,6 +871,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -958,9 +957,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -975,9 +973,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -995,9 +992,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-wildcard-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-wildcard", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-wildcard", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-wildcard", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-wildcard", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1016,9 +1012,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-other-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1058,6 +1053,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1097,6 +1093,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1136,6 +1133,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-wildcard", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1175,6 +1173,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1243,9 +1242,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1260,9 +1258,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1280,9 +1277,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-other-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1322,6 +1318,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1361,6 +1358,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-precise", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1400,6 +1398,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-other", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1455,9 +1454,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1501,6 +1499,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1556,9 +1555,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1573,9 +1571,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -1668,9 +1665,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1686,9 +1682,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -1703,9 +1698,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2/matches/0"},
 									},
 								},
 							},
@@ -1784,6 +1778,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -1810,6 +1805,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -1837,6 +1833,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2/backendRefs/0"},
 									},
@@ -1923,9 +1920,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -1983,9 +1979,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2029,6 +2024,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2095,9 +2091,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2141,6 +2136,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2236,9 +2232,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2282,6 +2277,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2337,9 +2333,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2383,6 +2378,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2438,9 +2434,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2484,6 +2479,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2539,9 +2535,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2556,9 +2551,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -2619,6 +2613,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2645,6 +2640,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -2700,9 +2696,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2750,6 +2745,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2776,6 +2772,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -2850,9 +2847,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway-http", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2867,9 +2863,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway-https", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -2930,6 +2925,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -2956,6 +2952,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3038,9 +3035,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3055,9 +3051,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3118,6 +3113,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3144,6 +3140,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3207,9 +3204,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3224,9 +3220,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2/matches/0"},
 									},
 								},
 							},
@@ -3241,9 +3236,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -3321,6 +3315,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3347,6 +3342,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/2/backendRefs/0"},
 									},
@@ -3373,6 +3369,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -3428,9 +3425,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3474,6 +3470,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3529,9 +3526,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3575,6 +3571,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3630,9 +3627,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3676,6 +3672,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3731,9 +3728,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3748,9 +3744,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3811,6 +3806,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3837,6 +3833,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3892,9 +3889,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -3938,6 +3934,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -3994,9 +3991,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4055,6 +4051,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4112,9 +4109,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4188,6 +4184,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4245,9 +4242,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4321,6 +4317,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4378,9 +4375,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4438,6 +4434,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4494,9 +4491,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4555,6 +4551,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4610,9 +4607,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4672,6 +4668,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -4728,9 +4725,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4813,9 +4809,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4897,9 +4892,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -4956,6 +4950,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5017,9 +5012,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5119,6 +5113,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5145,6 +5140,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/filters/0/requestMirror/backendRef"},
 									},
@@ -5171,6 +5167,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/filters/2/requestMirror/backendRef"},
 									},
@@ -5197,6 +5194,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/filters/3/requestMirror/backendRef"},
 									},
@@ -5252,9 +5250,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5298,6 +5295,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5354,9 +5352,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5413,6 +5410,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5469,9 +5467,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5530,6 +5527,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5585,9 +5583,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5632,6 +5629,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5693,9 +5691,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5710,9 +5707,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -5751,6 +5747,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -5794,6 +5791,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -5877,9 +5875,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5894,9 +5891,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -5911,9 +5907,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-other-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -5928,9 +5923,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-other-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 									},
 								},
 							},
@@ -5980,6 +5974,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6023,6 +6018,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -6067,6 +6063,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6110,6 +6107,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -6212,9 +6210,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
 									},
 								},
@@ -6229,9 +6226,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
 									},
 								},
@@ -6271,6 +6267,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6314,6 +6311,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami2", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/1/backendRefs/0"},
 									},
@@ -6407,9 +6405,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6454,6 +6451,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6525,9 +6523,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6572,6 +6569,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6640,9 +6638,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6687,6 +6684,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -6756,9 +6754,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6833,9 +6830,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6910,9 +6906,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -6953,6 +6948,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7008,9 +7004,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7051,6 +7046,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-native", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-native", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7107,9 +7103,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7153,6 +7148,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-native-disabled", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-native-disabled", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7208,9 +7204,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7246,6 +7241,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7301,9 +7297,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7339,6 +7334,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7394,9 +7390,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catch-all", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catch-all", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catch-all", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catch-all", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7440,6 +7435,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catch-all", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7476,9 +7472,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
 									},
 								},
@@ -7521,6 +7516,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7653,9 +7649,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7670,9 +7665,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7716,6 +7710,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7759,6 +7754,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7858,9 +7854,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7875,9 +7870,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-secure-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-secure", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-secure", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-secure", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-secure", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -7917,6 +7911,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -7956,6 +7951,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-secure", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -8041,9 +8037,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8083,6 +8078,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -8212,9 +8208,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8292,9 +8287,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8375,9 +8369,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8456,9 +8449,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8538,9 +8530,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8588,6 +8579,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -8649,9 +8641,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8708,6 +8699,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-h2c", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-h2c", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -8731,6 +8723,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-ws", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-ws", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -8754,6 +8747,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-wss", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-wss", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/backendRefs/2"},
 									},
@@ -8777,6 +8771,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-HTTPS", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-HTTPS", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/backendRefs/4"},
 									},
@@ -8800,6 +8795,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-HTTP", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-HTTP", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-multi-protocols", Path: "/spec/rules/0/backendRefs/3"},
 									},
@@ -8913,9 +8909,8 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -8963,6 +8958,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -8992,6 +8988,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -9055,9 +9052,8 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -9109,6 +9105,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -9138,6 +9135,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -9192,9 +9190,8 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -9272,9 +9269,8 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -9401,7 +9397,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -9449,6 +9444,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -9517,7 +9513,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -9565,6 +9560,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -9625,7 +9621,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -9667,6 +9662,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -9759,7 +9755,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -9807,6 +9802,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -9877,7 +9873,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -9925,6 +9920,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10010,7 +10006,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10027,7 +10022,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
@@ -10074,6 +10068,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10117,6 +10112,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10215,7 +10211,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10232,7 +10227,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-secure", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-secure", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-secure", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-secure-gateway", Path: "/spec/listeners/0"},
@@ -10275,6 +10269,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10314,6 +10309,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-secure", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10398,7 +10394,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10441,6 +10436,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catchall", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10503,7 +10499,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10542,6 +10537,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10596,7 +10592,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10635,6 +10630,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10689,7 +10685,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catch-all", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catch-all", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catch-all", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10736,8 +10731,170 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-catch-all", Path: "/spec/rules/0/backendRefs/0"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:  "GRPCRoute with matches",
+			paths: []string{"services.yml", "grpcroute/with_matches.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"listener-web-http-5b3226d4ebd42b7200f1": {
+							EntryPoints: []string{"web"},
+							Rule:        `Host("*")`,
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-dbc8859d1853bc00b3b1": {
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-dbc8859d1853bc00b3b1-wrr",
+							Rule:       `Host("foo.com") && PathRegexp("/foo/Bar")`,
+							Priority:   29,
+							RuleSyntax: "default",
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/matches/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-67b4ee610b0d01c1f1a3": {
+							Service:    "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-67b4ee610b0d01c1f1a3-wrr",
+							Rule:       `Host("foo.com") && PathRegexp("/foo/Baz")`,
+							Priority:   29,
+							RuleSyntax: "default",
+							ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/matches/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-dbc8859d1853bc00b3b1-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-dbc8859d1853bc00b3b1-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs"},
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-dbc8859d1853bc00b3b1-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-67b4ee610b0d01c1f1a3-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-67b4ee610b0d01c1f1a3-svc-default-whoami-0",
+										Weight: new(1),
+									},
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs"},
+									},
+								},
+							},
+						},
+						"grpcroute-default-grpc-app-1-gw-default-my-gateway-ep-web-0-67b4ee610b0d01c1f1a3-svc-default-whoami-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://10.10.0.1:80",
+									},
+									{
+										URL: "h2c://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
 									ServicePort: "80",
 								},
@@ -10791,7 +10948,6 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -10853,6 +11009,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -10972,7 +11129,6 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -11019,6 +11175,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11081,7 +11238,6 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -11131,6 +11287,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11184,7 +11341,6 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -11267,7 +11423,6 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-1", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -11657,6 +11812,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11774,6 +11930,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11795,6 +11952,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-2", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11880,6 +12038,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -11967,6 +12126,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -12078,6 +12238,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-older", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12161,6 +12322,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12244,6 +12406,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "bar", Name: "tcp-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12327,6 +12490,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "bar", Name: "tcp-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12408,6 +12572,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12488,6 +12653,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12572,6 +12738,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native-disabled", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native-disabled", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12646,6 +12813,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-name", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-name", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12720,6 +12888,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-value", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-value", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12803,6 +12972,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-first", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -12873,6 +13043,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13126,7 +13297,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13310,7 +13480,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13354,6 +13523,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13408,7 +13578,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13452,6 +13621,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13502,7 +13672,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13550,6 +13719,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/1"},
 									},
@@ -13609,7 +13779,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13653,6 +13822,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13706,7 +13876,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13750,6 +13919,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13803,7 +13973,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13847,6 +14016,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -13900,7 +14070,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13920,7 +14089,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -13964,6 +14132,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14002,6 +14171,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14055,7 +14225,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -14099,6 +14268,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14152,7 +14322,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0"},
 									},
@@ -14196,6 +14365,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14249,7 +14419,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0"},
 									},
@@ -14269,7 +14438,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0"},
 									},
@@ -14330,6 +14498,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14351,6 +14520,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14404,7 +14574,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0"},
 									},
@@ -14448,6 +14617,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14501,7 +14671,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/rules/0"},
 									},
@@ -14545,6 +14714,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14599,7 +14769,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -14640,6 +14809,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14693,7 +14863,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -14734,6 +14903,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-native", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14787,7 +14957,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -14834,6 +15003,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -14907,7 +15077,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -14999,7 +15168,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15046,6 +15214,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15122,7 +15291,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15152,6 +15320,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15249,7 +15418,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15296,6 +15464,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15371,7 +15540,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15418,6 +15586,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15490,7 +15659,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15525,6 +15693,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-name", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-name", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15578,7 +15747,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15613,6 +15781,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-value", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp-nil-port-value", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15660,7 +15829,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-catch-all", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-catch-all", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-catch-all", Path: "/spec/rules/0"},
 									},
@@ -15707,6 +15875,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-catch-all", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -15768,7 +15937,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -15794,6 +15962,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16050,7 +16219,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/4"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -16111,6 +16279,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16132,6 +16301,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16179,9 +16349,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16196,9 +16365,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16259,6 +16427,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16285,6 +16454,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16389,7 +16559,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/4"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0"},
 									},
@@ -16450,6 +16619,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16471,6 +16641,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16518,9 +16689,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16535,9 +16705,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16598,6 +16767,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16624,6 +16794,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16683,7 +16854,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/4"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0"},
 									},
@@ -16742,6 +16912,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16763,6 +16934,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "bar", Name: "tcp-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16827,9 +16999,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16844,9 +17015,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -16873,6 +17043,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -16899,6 +17070,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17007,7 +17179,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/4"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0"},
 									},
@@ -17034,6 +17205,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "bar", Name: "tcp-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17055,6 +17227,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoamitcp-bar", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "bar", Name: "tls-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17136,9 +17309,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -17153,9 +17325,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/parentRefs/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -17182,6 +17353,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17208,6 +17380,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "bar", Name: "whoami-bar", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "bar", Name: "http-app-bar", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17330,6 +17503,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17377,9 +17551,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -17394,9 +17567,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/1"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -17457,6 +17629,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17483,6 +17656,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-default", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17545,7 +17719,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-priority", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-priority", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-priority", Path: "/spec/rules/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
@@ -17588,6 +17761,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "GRPCRoute", Namespace: "default", Name: "grpc-app-priority", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17643,9 +17817,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-conflict", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-conflict", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-conflict", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-conflict", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -17685,6 +17858,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-conflict", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17731,7 +17905,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-tls-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/rules/0"},
 									},
@@ -17786,6 +17959,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17820,6 +17994,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute", Namespace: "default", Name: "tcp-app", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -17862,9 +18037,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/1"},
 									},
 								},
@@ -17907,6 +18081,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -18004,9 +18179,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-older", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-older", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-older", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-older", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "ls-z-older", Path: "/spec/listeners/0"},
 									},
 								},
@@ -18046,6 +18220,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-older", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -18140,9 +18315,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
 									},
 								},
@@ -18185,6 +18359,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -18441,7 +18616,6 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/parentRefs/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0"},
 									},
@@ -18483,6 +18657,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoamitcp", Path: "/spec/ports/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute", Namespace: "default", Name: "tls-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},
@@ -18634,9 +18809,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway", Namespace: "default", Name: "my-gateway", Path: "/spec/listeners/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 									},
 								},
 							},
@@ -18691,9 +18865,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/hostnames"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/parentRefs/0"},
-										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0"},
+										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/matches/0"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "ListenerSet", Namespace: "default", Name: "my-listenerset", Path: "/spec/listeners/0"},
 									},
 								},
@@ -18736,6 +18909,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
 										{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "http-app-1", Path: "/spec/rules/0/backendRefs/0"},
 									},

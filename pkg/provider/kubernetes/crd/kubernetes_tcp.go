@@ -131,10 +131,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				Priority:    route.Priority,
 				RuleSyntax:  route.Syntax,
 				Service:     serviceName,
-				Metadata: k8s.NewMetadata(
-					dynamic.MakeKubernetesRef(ingressRouteTCP, "/spec/entryPoints"),
-					dynamic.MakeKubernetesRef(ingressRouteTCP, "/spec/tls"),
-					dynamic.MakeKubernetesRef(ingressRouteTCP, fmt.Sprintf("/spec/routes/%d", ri))),
+				Metadata:    k8s.NewMetadata(dynamic.MakeKubernetesRef(ingressRouteTCP, fmt.Sprintf("/spec/routes/%d", ri))),
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {

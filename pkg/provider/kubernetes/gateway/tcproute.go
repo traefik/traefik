@@ -319,21 +319,21 @@ func (p *Provider) loadTCPService(routerName string, route *gatev1.TCPRoute, bac
 		}
 	}
 
-	lb, serviceSource, errCondition := p.loadTCPServers(namespace, route, backendRef)
+	lb, serviceSources, errCondition := p.loadTCPServers(namespace, route, backendRef)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
 
-	metadata := k8s.NewServiceMetadata(serviceSource, backendSource)
+	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
 	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
 
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb, Metadata: metadata}, nil
 }
 
-func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSource, err := p.getBackendAddresses(namespace, backendRef)
+func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, []dynamic.KubernetesRef, *metav1.Condition) {
+	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -344,7 +344,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, back
 	}
 
 	if svcPort.Protocol != corev1.ProtocolTCP {
-		return nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -361,7 +361,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, back
 			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
-	return lb, serviceSource, nil
+	return lb, serviceSources, nil
 }
 
 func (p *Provider) loadTCPBackendRef(routeNamespace string, backendRef gatev1.BackendRef) (string, error) {

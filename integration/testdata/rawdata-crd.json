@@ -23,34 +23,7 @@
 							"resourceVersion": "444",
 							"namespace": "default",
 							"name": "api.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "444",
-							"namespace": "default",
-							"name": "api.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "444",
-							"namespace": "default",
-							"name": "api.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "444",
-							"namespace": "default",
-							"name": "api.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -86,34 +59,7 @@
 							"resourceVersion": "342",
 							"namespace": "default",
 							"name": "test.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "342",
-							"namespace": "default",
-							"name": "test.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "342",
-							"namespace": "default",
-							"name": "test.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "342",
-							"namespace": "default",
-							"name": "test.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -149,34 +95,7 @@
 							"resourceVersion": "424",
 							"namespace": "default",
 							"name": "test2.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "424",
-							"namespace": "default",
-							"name": "test2.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "424",
-							"namespace": "default",
-							"name": "test2.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "424",
-							"namespace": "default",
-							"name": "test2.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -209,34 +128,7 @@
 							"resourceVersion": "445",
 							"namespace": "default",
 							"name": "test3.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "445",
-							"namespace": "default",
-							"name": "test3.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "445",
-							"namespace": "default",
-							"name": "test3.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "445",
-							"namespace": "default",
-							"name": "test3.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -269,34 +161,7 @@
 							"resourceVersion": "446",
 							"namespace": "default",
 							"name": "test4.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "446",
-							"namespace": "default",
-							"name": "test4.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "446",
-							"namespace": "default",
-							"name": "test4.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "446",
-							"namespace": "default",
-							"name": "test4.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -329,34 +194,7 @@
 							"resourceVersion": "467",
 							"namespace": "default",
 							"name": "testst.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "467",
-							"namespace": "default",
-							"name": "testst.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "467",
-							"namespace": "default",
-							"name": "testst.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "467",
-							"namespace": "default",
-							"name": "testst.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -389,34 +227,7 @@
 							"resourceVersion": "458",
 							"namespace": "other-ns",
 							"name": "test6.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "458",
-							"namespace": "other-ns",
-							"name": "test6.route",
-							"path": "/spec/parentRefs"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "458",
-							"namespace": "other-ns",
-							"name": "test6.route",
 							"path": "/spec/routes/2"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRoute",
-							"resourceVersion": "458",
-							"namespace": "other-ns",
-							"name": "test6.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -897,25 +708,7 @@
 							"resourceVersion": "430",
 							"namespace": "default",
 							"name": "test3.route",
-							"path": "/spec/entryPoints"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRouteTCP",
-							"resourceVersion": "430",
-							"namespace": "default",
-							"name": "test3.route",
 							"path": "/spec/routes/0"
-						},
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRouteTCP",
-							"resourceVersion": "430",
-							"namespace": "default",
-							"name": "test3.route",
-							"path": "/spec/tls"
 						}
 					]
 				}
@@ -1048,15 +841,6 @@
 			"metadata": {
 				"kubernetes": {
 					"sources": [
-						{
-							"group": "traefik.io",
-							"version": "v1alpha1",
-							"kind": "IngressRouteUDP",
-							"resourceVersion": "436",
-							"namespace": "default",
-							"name": "test3.route",
-							"path": "/spec/entryPoints"
-						},
 						{
 							"group": "traefik.io",
 							"version": "v1alpha1",

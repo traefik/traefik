@@ -74,6 +74,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -100,6 +101,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -147,6 +149,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -182,6 +185,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -205,6 +209,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -216,6 +221,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
@@ -242,6 +248,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
@@ -266,6 +273,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -277,6 +285,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
@@ -303,6 +312,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
@@ -327,6 +337,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -338,6 +349,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
@@ -364,6 +376,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
@@ -388,6 +401,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -399,6 +413,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
@@ -425,6 +440,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
@@ -449,6 +465,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -475,6 +492,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -498,6 +516,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -521,6 +540,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -544,6 +564,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -555,6 +576,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
@@ -581,6 +603,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
@@ -605,6 +628,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -616,6 +640,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
@@ -642,6 +667,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
@@ -666,6 +692,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -677,6 +704,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
@@ -703,6 +731,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -729,6 +758,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service2", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service2", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
 									},
@@ -753,6 +783,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -771,6 +802,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -848,6 +880,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
 								},
@@ -874,6 +907,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
@@ -897,6 +931,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -923,6 +958,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -946,6 +982,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -972,6 +1009,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -995,6 +1033,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1021,6 +1060,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1044,6 +1084,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1055,6 +1096,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
@@ -1081,6 +1123,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1107,6 +1150,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
 									},
@@ -1130,6 +1174,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1156,6 +1201,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1179,6 +1225,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1190,6 +1237,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1216,6 +1264,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1242,6 +1291,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "toto", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "toto", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1285,6 +1335,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1308,6 +1359,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1332,6 +1384,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1355,6 +1408,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1386,6 +1440,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1412,6 +1467,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1435,6 +1491,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1461,6 +1518,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1485,6 +1543,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1511,6 +1570,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1536,6 +1596,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
 								},
@@ -1562,6 +1623,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
@@ -1585,6 +1647,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1608,6 +1671,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1674,6 +1738,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1699,6 +1764,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1723,6 +1789,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1748,6 +1815,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1771,6 +1839,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1782,6 +1851,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1805,6 +1875,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1829,6 +1900,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1852,6 +1924,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1875,6 +1948,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1898,6 +1972,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1921,6 +1996,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1944,6 +2020,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -1967,6 +2044,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -1990,6 +2068,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2013,6 +2092,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2036,6 +2116,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2059,6 +2140,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2082,6 +2164,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2108,6 +2191,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2131,6 +2215,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2157,6 +2242,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2180,6 +2266,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2203,6 +2290,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2226,6 +2314,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2275,6 +2364,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2298,6 +2388,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2333,6 +2424,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/spec/defaultBackend"},
 									},
 								},
@@ -2356,6 +2448,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "defaultservice", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "defaultservice", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/spec/defaultBackend"},
 									},
@@ -2379,6 +2472,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2413,6 +2507,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2436,6 +2531,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2462,6 +2558,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2497,6 +2594,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2521,6 +2619,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2539,6 +2638,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2563,6 +2663,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2581,6 +2682,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2644,6 +2746,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2667,6 +2770,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2690,6 +2794,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2713,6 +2818,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-bar", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-bar", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2737,6 +2843,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2760,6 +2867,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-foo", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-foo", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2806,6 +2914,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2827,6 +2936,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -2872,6 +2982,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -2893,6 +3004,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -3295,6 +3407,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -3316,6 +3429,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -3339,6 +3453,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -3360,6 +3475,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "service1", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "service1", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
@@ -3383,6 +3499,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
@@ -3407,6 +3524,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Metadata: &dynamic.ServiceMetadata{
 								Kubernetes: &dynamic.KubernetesServiceMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "native-disabled-svc", Path: "/metadata/annotations"},
 										{Version: "v1", Kind: "Service", Namespace: "default", Name: "native-disabled-svc", Path: "/spec/ports/0"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0/backend"},
 									},

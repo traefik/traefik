@@ -97,15 +97,10 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			metadata := k8s.NewMetadata(
-				dynamic.MakeKubernetesRef(ingressRouteUDP, fmt.Sprintf("/spec/routes/%d", i)),
-				dynamic.MakeKubernetesRef(ingressRouteUDP, "/spec/entryPoints"),
-			)
-
 			addToConfig(&logger, "router", routerName, conf.Routers, &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
 				Service:     serviceName,
-				Metadata:    metadata,
+				Metadata:    k8s.NewMetadata(dynamic.MakeKubernetesRef(ingressRouteUDP, fmt.Sprintf("/spec/routes/%d", i))),
 			})
 		}
 	}

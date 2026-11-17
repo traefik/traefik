@@ -67,7 +67,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client *Cl
 			nameBuilder:                  p.nameBuilder,
 		}
 
-		parentRouterNames, err := p.resolveParentRouterNames(client, ingressRoute)
+		parentRouterNames, parentSources, err := p.resolveParentRouterNames(client, ingressRoute)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error resolving parent routers")
 			continue
@@ -159,13 +159,9 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client *Cl
 				Rule:        route.Match,
 				Service:     serviceName,
 				ParentRefs:  parentRouterNames,
-				Metadata: k8s.NewMetadata(
-					dynamic.MakeKubernetesRef(ingressRoute, "/spec/entryPoints"),
-					dynamic.MakeKubernetesRef(ingressRoute, "/spec/tls"),
-					dynamic.MakeKubernetesRef(ingressRoute, "/spec/parentRefs"),
-					dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d", ri)),
-				),
+				Metadata:    k8s.NewMetadata(dynamic.MakeKubernetesRef(ingressRoute, fmt.Sprintf("/spec/routes/%d", ri))),
 			}
+			r.Metadata.Kubernetes.Sources.Add(parentSources...)
 
 			if route.Observability != nil {
 				r.Observability = &dynamic.RouterObservabilityConfig{
@@ -258,14 +254,16 @@ func makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewar
 }
 
 // resolveParentRouterNames resolves parent IngressRoute references to router names.
-// It returns the list of parent router names and an error if one occurred during processing.
-func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefikv1alpha1.IngressRoute) ([]string, error) {
+// It returns the list of parent router names, the parts of the parent IngressRoutes they are built from,
+// and an error if one occurred during processing.
+func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefikv1alpha1.IngressRoute) ([]string, []dynamic.KubernetesRef, error) {
 	// If no parent refs, return empty list (not an error).
 	if len(ingressRoute.Spec.ParentRefs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var parentRouterNames []string
+	var parentSources []dynamic.KubernetesRef
 	for _, parentRef := range ingressRoute.Spec.ParentRefs {
 		// Determine parent namespace (default to child namespace if not specified).
 		parentNamespace := parentRef.Namespace
@@ -275,7 +273,7 @@ func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefi
 
 		// Validate cross-namespace access.
 		if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, parentNamespace) {
-			return nil, fmt.Errorf("cross-namespace reference to parent IngressRoute %s/%s not allowed", parentNamespace, parentRef.Name)
+			return nil, nil, fmt.Errorf("cross-namespace reference to parent IngressRoute %s/%s not allowed", parentNamespace, parentRef.Name)
 		}
 
 		var parentIngressRoute *traefikv1alpha1.IngressRoute
@@ -287,7 +285,7 @@ func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefi
 		}
 
 		if parentIngressRoute == nil {
-			return nil, fmt.Errorf("parent IngressRoute %s/%s does not exist", parentNamespace, parentRef.Name)
+			return nil, nil, fmt.Errorf("parent IngressRoute %s/%s does not exist", parentNamespace, parentRef.Name)
 		}
 
 		parentIngressName := parentIngressRoute.Name
@@ -299,14 +297,16 @@ func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefi
 		for ri, route := range parentIngressRoute.Spec.Routes {
 			routerName, err := p.nameBuilder.httpRouter(parentIngressRoute.Namespace, parentIngressName, ri, route.Match)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			parentRouterNames = append(parentRouterNames, routerName)
 		}
+
+		parentSources = append(parentSources, dynamic.MakeKubernetesRef(parentIngressRoute, "/spec/routes"))
 	}
 
-	return parentRouterNames, nil
+	return parentRouterNames, parentSources, nil
 }
 
 type configBuilder struct {

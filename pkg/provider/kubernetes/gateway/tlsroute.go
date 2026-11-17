@@ -169,7 +169,6 @@ func (p *Provider) loadTLSRoute(gatewayName, gatewayNamespace string, listener g
 				Passthrough: listener.TLS != nil && listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1.TLSModePassthrough,
 			},
 			Metadata: k8s.NewMetadata(
-				dynamic.MakeKubernetesRef(route, "/spec/hostnames"),
 				routeParentRef,
 				ruleSource,
 				listener.ListenerSource,
@@ -336,7 +335,7 @@ func (p *Provider) loadTLSService(gatewayName, gatewayNamespace string, listener
 		}
 	}
 
-	lb, st, serviceSource, errCondition := p.loadTLSServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
+	lb, st, serviceSources, errCondition := p.loadTLSServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -346,16 +345,16 @@ func (p *Provider) loadTLSService(gatewayName, gatewayNamespace string, listener
 		conf.TCP.ServersTransports[serviceName] = st
 	}
 
-	metadata := k8s.NewServiceMetadata(serviceSource, backendSource)
+	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
 	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
 
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb, Metadata: metadata}, nil
 }
 
-func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSource, err := p.getBackendAddresses(namespace, backendRef)
+func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.TLSRoute, backendRef gatev1.BackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.TCPServersLoadBalancer, *dynamic.TCPServersTransport, []dynamic.KubernetesRef, *metav1.Condition) {
+	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
-		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -367,7 +366,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 
 	backendTLSPolicies, err := p.k8sClient.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
 	if err != nil {
-		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.Generation,
@@ -461,7 +460,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 			// When something went wrong during the loading of a ServersTransport,
 			// we stop here and return a route condition error.
 			if resolvedRefCondition.Status == metav1.ConditionFalse {
-				return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+				return nil, nil, nil, &metav1.Condition{
 					Type:               string(gatev1.RouteConditionResolvedRefs),
 					Status:             metav1.ConditionFalse,
 					ObservedGeneration: route.Generation,
@@ -478,7 +477,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 	}
 
 	if svcPort.Protocol != corev1.ProtocolTCP {
-		return nil, nil, dynamic.KubernetesRef{}, &metav1.Condition{
+		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
 			ObservedGeneration: route.GetGeneration(),
@@ -498,7 +497,7 @@ func (p *Provider) loadTLSServers(gatewayName, gatewayNamespace, namespace strin
 			TLS: serversTransport != nil && serversTransport.TLS != nil && !passthrough,
 		})
 	}
-	return lb, serversTransport, serviceSource, nil
+	return lb, serversTransport, serviceSources, nil
 }
 
 func (p *Provider) loadTCPServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.TCPServersTransport, metav1.Condition) {

@@ -55,6 +55,24 @@ type KubernetesServiceMetadata struct {
 }
 
 // KubernetesSources are the parts of the Kubernetes resources that a provider reads to build an object.
+//
+// The sources of an object must select every field the provider reads to build it,
+// and as few other fields as possible.
+// A path such as /spec/rules/0/matches/0 selects all the fields of /spec, /spec/rules/0 and /spec/rules/0/matches/0,
+// except the other items of the arrays and maps along the way.
+// Use as few sources as possible.
+//
+// With several sources, an item is left out only if one source leaves it out and no source goes through it.
+// For example, on an HTTPRoute with the parentRefs 0 and 1, and the rules 0, 1 and 2:
+//
+//	Sources                              Selected fields of /spec
+//	/spec/rules/0                        hostnames, parentRefs 0 and 1, rule 0
+//	/spec/rules/0 + /spec/rules/1        hostnames, parentRefs 0 and 1, rules 0 and 1
+//	/spec/rules/0 + /spec/parentRefs/1   hostnames, parentRef 1, rule 0
+//
+// With /spec/rules/0 + /spec/rules/1, rule 1 is kept: /spec/rules/0 leaves it out, but /spec/rules/1 goes through it.
+// With /spec/rules/0 + /spec/parentRefs/1, parentRef 0 is left out: /spec/parentRefs/1 leaves it out,
+// and no source goes through it.
 type KubernetesSources []KubernetesRef
 
 // +k8s:deepcopy-gen=true
