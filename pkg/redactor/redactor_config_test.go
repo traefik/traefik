@@ -999,7 +999,7 @@ func fullStaticConfiguration() *static.Configuration {
 	return config
 }
 
-func TestDo_staticConfiguration(t *testing.T) {
+func TestAnonymize_staticConfiguration(t *testing.T) {
 	config := fullStaticConfiguration()
 
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-static-config.json")
