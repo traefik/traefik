@@ -9,11 +9,7 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
-
-var _ middlewares.Stateful = &responseCapturer{}
 
 // responseCapturer captures the response for the record.
 // While buffering, nothing reaches the client until serve, so that the record is sent first.
@@ -127,29 +123,22 @@ func (r *responseCapturer) Write(p []byte) (int, error) {
 	return r.rw.Write(p)
 }
 
-func (r *responseCapturer) Flush() {
+func (r *responseCapturer) FlushError() error {
 	if r.buffering {
-		return
+		return nil
 	}
 
-	if f, ok := r.rw.(http.Flusher); ok {
-		f.Flush()
-	}
+	return http.NewResponseController(r.rw).Flush()
 }
 
 func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := r.rw.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("not a hijacker: %T", r.rw)
-	}
-
 	// A hijacked connection is out of our control, so the response is served first,
 	// as it should not be buffered anymore.
 	if err := r.serve(); err != nil {
 		return nil, nil, err
 	}
 
-	conn, brw, err := h.Hijack()
+	conn, brw, err := http.NewResponseController(r.rw).Hijack()
 
 	// The status is then written on the hijacked connection, which the reverse proxy only does for a 101 Switching Protocols.
 	if err == nil && r.status == 0 {
@@ -157,6 +146,11 @@ func (r *responseCapturer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return conn, brw, err
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *responseCapturer) Unwrap() http.ResponseWriter {
+	return r.rw
 }
 
 // capture keeps at most dest.maxRecordBodySize bytes of the body for the record.

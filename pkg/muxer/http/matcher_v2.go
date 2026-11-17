@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/muxer"
 )
+
+var hostOrIPv2 = regexp.MustCompile(`^[[:word:]\.\-\:]+$`)
 
 var httpFuncsV2 = matcherBuilderFuncs{
 	"Host":          hostV2,
@@ -79,8 +82,8 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 
 func hostV2(tree *matchersTree, hosts ...string) error {
 	for i, host := range hosts {
-		if !muxer.IsASCII(host) {
-			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
+		if !hostOrIPv2.MatchString(host) {
+			return fmt.Errorf("invalid value for \"Host\" matcher, %q is not a valid hostname", host)
 		}
 
 		hosts[i] = strings.ToLower(host)

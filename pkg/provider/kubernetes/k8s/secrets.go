@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -34,6 +35,11 @@ type SecretInformers struct {
 // and a namespace allowing "*" has all its Secrets watched.
 // When allowed is empty, all the Secrets (not owned by Helm) of the given namespaces are watched.
 func NewSecretInformers(client kclientset.Interface, resync time.Duration, namespaces []string, allowed map[string][]string, handler cache.ResourceEventHandler) (*SecretInformers, error) {
+	// An empty allowed namespace would create a cluster-wide Secret informer.
+	if _, ok := allowed[metav1.NamespaceAll]; ok {
+		return nil, errors.New("secret restrictions require a non-empty namespace")
+	}
+
 	s := &SecretInformers{
 		factories:  make(map[string]kinformers.SharedInformerFactory),
 		restricted: len(allowed) > 0,

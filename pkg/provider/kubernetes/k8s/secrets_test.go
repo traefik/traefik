@@ -16,9 +16,16 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
+func TestNewSecretInformersRejectsEmptyAllowedNamespace(t *testing.T) {
+	client := kubefake.NewSimpleClientset()
+	allowed := map[string][]string{"": {"*"}}
+	_, err := NewSecretInformers(client, time.Minute, []string{metav1.NamespaceAll}, allowed, &ResourceEventHandler{Ev: make(chan any, 1)})
+	require.EqualError(t, err, "secret restrictions require a non-empty namespace")
+}
+
 func TestSecretInformers_Get(t *testing.T) {
 	newSecret := func(namespace, name string) *corev1.Secret {
-		return &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
+		return &corev1.Secret{Namespace: namespace, Name: name}
 	}
 
 	testCases := []struct {
@@ -150,7 +157,7 @@ func TestSecretInformers_Get(t *testing.T) {
 
 func TestNewSecretInformers_multipleNamespaces(t *testing.T) {
 	newSecret := func(namespace, name string) *corev1.Secret {
-		return &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
+		return &corev1.Secret{Namespace: namespace, Name: name}
 	}
 
 	testCases := []struct {

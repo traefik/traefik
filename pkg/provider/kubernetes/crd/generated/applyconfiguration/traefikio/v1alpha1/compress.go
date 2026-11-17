@@ -31,7 +31,7 @@ package v1alpha1
 //
 // Compress holds the compress middleware configuration.
 // This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/compress/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/compress/
 type CompressApplyConfiguration struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.

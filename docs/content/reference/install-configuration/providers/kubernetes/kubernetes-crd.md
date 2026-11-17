@@ -20,10 +20,10 @@ When you install Traefik without using the Helm Chart, or when you are upgrading
 
 ```bash
 # Install Traefik Resource Definitions:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.8/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
 # Install RBAC for Traefik:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.7/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.8/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
 ```
 
 ## Configuration Example
@@ -146,7 +146,7 @@ objects, one silently replacing the other.
 
 `safeNaming` enables collision-safe naming instead: generated names are derived from the identity of the object
 they come from, and Kubernetes Services referenced from several parents (a route with several services, or a
-Weighted/Mirroring/HighestRandomWeight TraefikService) are scoped to their parent instead of being shared by identity.
+Weighted/Mirroring/HighestRandomWeight/Failover TraefikService) are scoped to their parent instead of being shared by identity.
 
 | Value    | Behavior                                                                                     |
 |----------|-----------------------------------------------------------------------------------------------|

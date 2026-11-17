@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.6.3](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.3) of the specification.
+The Kubernetes Gateway API provider supports version [v1.7.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, `TCPRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.7/traefik-traefik).
 
 
 ## Deploying a Gateway
@@ -140,6 +140,42 @@ spec:
           from: Same
 ```
 
+### Backend Client Certificate
+
+The `tls.backend.clientCertificateRef` field on a `Gateway` (`spec.tls.backend`, a sibling of `spec.listeners`) sets the client certificate that Traefik presents to backends that require mutual TLS (mTLS), as defined by [GEP-3155](https://gateway-api.sigs.k8s.io/geps/gep-3155/).
+
+Traefik presents the certificate to the backends selected by a [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/), for `HTTPRoute` and `GRPCRoute` routes.
+Backends without a `BackendTLSPolicy` are not affected, because the field does not enable TLS by itself.
+The listeners of a `ListenerSet` use the certificate of their parent `Gateway`.
+
+The reference must point to a core `Secret` that contains the `tls.crt` and `tls.key` entries.
+A `Secret` in another namespace requires a [ReferenceGrant](https://gateway-api.sigs.k8s.io/reference/api-types/referencegrant/) in that namespace.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    backend:
+      # Presented to every backend selected by a BackendTLSPolicy.
+      clientCertificateRef:
+        name: backend-client-tls
+        # Set namespace only for a Secret in another namespace, which requires a ReferenceGrant.
+        # namespace: certs
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
 ### ListenerSets
 
 Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.
@@ -156,6 +192,76 @@ Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) r
 
     Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
     Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
+
+### Frontend Client Certificate Validation
+
+The `tls.frontend` field on a `Gateway` (`spec.tls.frontend`, a sibling of `spec.listeners`) allows requiring a client certificate (mTLS) for incoming connections, as defined by [GEP-91](https://gateway-api.sigs.k8s.io/geps/gep-91/).
+
+Validation can be set for all HTTPS listeners on the `Gateway` via `default`, and optionally overridden per port via `perPort`. The CA certificate used to validate client certificates is provided through `caCertificateRefs`, with a single reference to a `ConfigMap` containing a `ca.crt` key, as defined by the core support of the specification. Other kinds of resources and multiple references are not supported, and leave the listener not accepted.
+
+The `mode` field controls how a missing or invalid client certificate is handled:
+
+- `AllowValidOnly` (default): the connection is rejected unless the client presents a certificate signed by one of the referenced CAs.
+- `AllowInsecureFallback`: the client certificate is requested but connections without one, or with an invalid one, are still accepted.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    frontend:
+      # Applies to every HTTPS listener, unless overridden by a perPort entry below.
+      default:
+        validation:
+          caCertificateRefs:
+            - name: client-ca
+              kind: ConfigMap
+      # Overrides the default validation for listeners bound to port 8443.
+      perPort:
+        - port: 8443
+          tls:
+            validation:
+              mode: AllowInsecureFallback
+              caCertificateRefs:
+                - name: other-client-ca
+                  kind: ConfigMap
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+    - name: https-relaxed
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! info "Insecure fallback"
+
+    When any listener uses `AllowInsecureFallback`, Traefik sets the `InsecureFrontendValidationMode` condition to `True` on the `Gateway` status to make the reduced security guarantee visible.
+
+!!! warning "Gateways sharing an entry point"
+
+    `Gateway` resources with HTTPS listeners on the same port must declare the same validation, or none.
+    Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer ones on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason.
 
 ## Exposing a Route
 
@@ -346,6 +452,7 @@ There are three types of filters:
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "ExtensionRef Filters"
@@ -471,6 +578,7 @@ This allows request modifications to be applied to specific backends, enabling t
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"

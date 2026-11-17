@@ -36,7 +36,7 @@ import (
 // TapResponse holds the configuration of the response records sent by the tap middleware.
 // A response record is configured like a request record, with the request headers on top.
 type TapResponseApplyConfiguration struct {
-	TapRequestApplyConfiguration `json:",inline"`
+	TapRequestApplyConfiguration `json:""`
 	// RequestHeaders defines the request headers described in the records, along with the request line.
 	// It allows a response record to be understood, and correlated, without the matching request record.
 	RequestHeaders []string `json:"requestHeaders,omitempty"`

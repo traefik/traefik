@@ -12,9 +12,13 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
@@ -44,7 +48,13 @@ type clientWrapper struct {
 	isNamespaceAll    bool
 	watchedNamespaces []string
 
+	gatewayClass  string
 	labelSelector string
+
+	// The ClusterTrustBundle API is optional, and an informer that cannot list or watch
+	// the resource blocks the cache sync, so both are checked before watching it.
+	clusterTrustBundleAPIServed bool
+	clusterTrustBundleAllowed   bool
 }
 
 func createClientFromConfig(c *rest.Config, qps, burst int) (*clientWrapper, error) {
@@ -137,8 +147,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.watchedNamespaces = namespaces
 
-	labelSelectorOptions := func(options *metav1.ListOptions) {
-		options.LabelSelector = c.labelSelector
+	gatewayClassOptions := func(options *metav1.ListOptions) {
+		switch {
+		case c.labelSelector != "":
+			options.LabelSelector = c.labelSelector
+		case c.gatewayClass != "":
+			options.FieldSelector = fields.OneTermEqualSelector("metadata.name", c.gatewayClass).String()
+		}
 	}
 
 	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
@@ -147,7 +162,26 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
-	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(labelSelectorOptions), gateinformers.WithTransform(k8s.StripManagedFields))
+	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed()
+	if err != nil {
+		return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
+	}
+
+	if c.clusterTrustBundleAPIServed {
+		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed()
+		if err != nil {
+			return nil, fmt.Errorf("checking ClusterTrustBundle permissions: %w", err)
+		}
+	}
+
+	if c.clusterTrustBundleAPIServed && c.clusterTrustBundleAllowed {
+		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(gatewayClassOptions), gateinformers.WithTransform(k8s.StripManagedFields))
 	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return nil, err
@@ -422,6 +456,11 @@ func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName 
 	return servicePolicies, nil
 }
 
+// GetClusterTrustBundle returns the named ClusterTrustBundle.
+func (c *clientWrapper) GetClusterTrustBundle(name string) (*certificatesv1.ClusterTrustBundle, error) {
+	return c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Lister().Get(name)
+}
+
 // GetService returns the named service from the given namespace.
 func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
 	if !c.isWatchedNamespace(namespace) {
@@ -490,12 +529,12 @@ func (c *clientWrapper) UpdateGatewayStatus(ctx context.Context, gateway ktypes.
 			return err
 		}
 
-		if gatewayStatusEqual(currentGateway.Status, status) {
+		if gatewayStatusEqual(withoutForeignConditions(currentGateway.Status), status) {
 			return nil
 		}
 
 		currentGateway = currentGateway.DeepCopy()
-		currentGateway.Status = status
+		currentGateway.Status = mergeGatewayStatus(currentGateway.Status, status)
 
 		if _, err = c.csGateway.GatewayV1().Gateways(gateway.Namespace).UpdateStatus(ctx, currentGateway, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
@@ -534,9 +573,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.HTTPRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().HTTPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -576,9 +613,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.GRPCRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().GRPCRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -618,9 +653,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.TCPRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().TCPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -660,9 +693,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 
 		currentRoute = currentRoute.DeepCopy()
 		currentRoute.Status = gatev1.TLSRouteStatus{
-			RouteStatus: gatev1.RouteStatus{
-				Parents: parentStatuses,
-			},
+			Parents: parentStatuses,
 		}
 
 		if _, err = c.csGateway.GatewayV1().TLSRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
@@ -819,6 +850,67 @@ func mergeRouteParentStatuses(routeNamespace string, currentParents, desiredPare
 	return parentStatuses
 }
 
+// gatewayConditionTypes and listenerConditionTypes are the condition types Traefik writes,
+// conditions of any other type are owned by other controllers and must be preserved.
+var (
+	gatewayConditionTypes = []string{
+		string(gatev1.GatewayConditionAccepted),
+		string(gatev1.GatewayConditionProgrammed),
+		string(gatev1.GatewayConditionResolvedRefs),
+		string(gatev1.GatewayConditionInsecureFrontendValidationMode),
+	}
+	listenerConditionTypes = []string{
+		string(gatev1.ListenerConditionAccepted),
+		string(gatev1.ListenerConditionConflicted),
+		string(gatev1.ListenerConditionProgrammed),
+		string(gatev1.ListenerConditionResolvedRefs),
+	}
+)
+
+// withoutForeignConditions returns the status without the Gateway and listener conditions not owned by Traefik.
+func withoutForeignConditions(status gatev1.GatewayStatus) gatev1.GatewayStatus {
+	filtered := status.DeepCopy()
+	filtered.Conditions = slices.DeleteFunc(filtered.Conditions, func(condition metav1.Condition) bool {
+		return !slices.Contains(gatewayConditionTypes, condition.Type)
+	})
+
+	for i := range filtered.Listeners {
+		filtered.Listeners[i].Conditions = slices.DeleteFunc(filtered.Listeners[i].Conditions, func(condition metav1.Condition) bool {
+			return !slices.Contains(listenerConditionTypes, condition.Type)
+		})
+	}
+
+	return *filtered
+}
+
+// mergeGatewayStatus returns the desired status, with the Gateway and listener conditions
+// of the current status that are not owned by Traefik.
+func mergeGatewayStatus(current, desired gatev1.GatewayStatus) gatev1.GatewayStatus {
+	status := desired.DeepCopy()
+	for _, condition := range current.Conditions {
+		if !slices.Contains(gatewayConditionTypes, condition.Type) {
+			status.Conditions = append(status.Conditions, condition)
+		}
+	}
+
+	for i, listener := range status.Listeners {
+		idx := slices.IndexFunc(current.Listeners, func(l gatev1.ListenerStatus) bool {
+			return l.Name == listener.Name
+		})
+		if idx < 0 {
+			continue
+		}
+
+		for _, condition := range current.Listeners[idx].Conditions {
+			if !slices.Contains(listenerConditionTypes, condition.Type) {
+				status.Listeners[i].Conditions = append(status.Listeners[i].Conditions, condition)
+			}
+		}
+	}
+
+	return *status
+}
+
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
 	return reflect.DeepEqual(statusA.Addresses, statusB.Addresses) &&
 		reflect.DeepEqual(statusA.AttachedListenerSets, statusB.AttachedListenerSets) &&
@@ -915,4 +1007,44 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
+}
+
+// isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
+func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
+	if err != nil {
+		if kerror.IsNotFound(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
+}
+
+// isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
+func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
+	for _, verb := range []string{"list", "watch"} {
+		review := &authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{
+					Group:    certificatesv1.GroupName,
+					Resource: "clustertrustbundles",
+					Verb:     verb,
+				},
+			},
+		}
+
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		if err != nil {
+			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
+		}
+
+		if !review.Status.Allowed {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

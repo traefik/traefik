@@ -31,7 +31,7 @@ package v1alpha1
 //
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/errorpages/
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/errorpages/
 type ErrorPageApplyConfiguration struct {
 	// Status defines which status or range of statuses should result in an error page.
 	// It can be either a status code as a number (500),
@@ -43,7 +43,7 @@ type ErrorPageApplyConfiguration struct {
 	// For example: "418": 404 or "410-418": 404
 	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/middlewares/errorpages/#service
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/errorpages/#service
 	Service *ServiceApplyConfiguration `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.

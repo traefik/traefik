@@ -537,10 +537,8 @@ func TestHandler_Certificates(t *testing.T) {
 
 			if test.setup.loadCerts {
 				dynamicConfigs := []*tlspkg.CertAndStores{{
-					Certificate: tlspkg.Certificate{
-						CertFile: localhostCert,
-						KeyFile:  localhostKey,
-					},
+					CertFile: localhostCert,
+					KeyFile:  localhostKey,
 				}}
 
 				tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
@@ -549,28 +547,20 @@ func TestHandler_Certificates(t *testing.T) {
 			if test.setup.loadMultipleCerts {
 				dynamicConfigs := []*tlspkg.CertAndStores{
 					{
-						Certificate: tlspkg.Certificate{
-							CertFile: localhostCert,
-							KeyFile:  localhostKey,
-						},
+						CertFile: localhostCert,
+						KeyFile:  localhostKey,
 					},
 					{
-						Certificate: tlspkg.Certificate{
-							CertFile: warnCert,
-							KeyFile:  warnKey,
-						},
+						CertFile: warnCert,
+						KeyFile:  warnKey,
 					},
 					{
-						Certificate: tlspkg.Certificate{
-							CertFile: expiredCert,
-							KeyFile:  expiredKey,
-						},
+						CertFile: expiredCert,
+						KeyFile:  expiredKey,
 					},
 					{
-						Certificate: tlspkg.Certificate{
-							CertFile: acmeCert,
-							KeyFile:  acmeKey,
-						},
+						CertFile: acmeCert,
+						KeyFile:  acmeKey,
 					},
 				}
 

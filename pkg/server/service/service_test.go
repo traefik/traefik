@@ -608,6 +608,66 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 
+func TestGetMirrorServiceHandler_streamBody(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		mirrorBody  *bool
+		maxBodySize *int64
+		expectedErr bool
+	}{
+		{
+			desc:        "unlimited body size",
+			maxBodySize: new(int64(-1)),
+		},
+		{
+			desc: "default body size",
+		},
+		{
+			desc:        "limited body size",
+			maxBodySize: new(int64(1024)),
+			expectedErr: true,
+		},
+		{
+			desc:        "limited body size without mirroring the body",
+			mirrorBody:  new(false),
+			maxBodySize: new(int64(1024)),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			services := map[string]*runtime.ServiceInfo{
+				"main@file": {
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR},
+					},
+				},
+				"mirrored@file": {
+					Service: &dynamic.Service{
+						Mirroring: &dynamic.Mirroring{
+							Service:     "main@file",
+							MirrorBody:  test.mirrorBody,
+							MaxBodySize: test.maxBodySize,
+							StreamBody:  true,
+						},
+					},
+				},
+			}
+
+			manager := NewManager(services, nil, nil, &transportManagerMock{}, nil)
+
+			_, err := manager.BuildHTTP(t.Context(), "mirrored@file")
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestGetServiceHandler_Headers(t *testing.T) {
 	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
 

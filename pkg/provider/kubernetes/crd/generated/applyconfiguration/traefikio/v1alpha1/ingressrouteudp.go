@@ -37,7 +37,7 @@ import (
 //
 // IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDPApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:""`
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
