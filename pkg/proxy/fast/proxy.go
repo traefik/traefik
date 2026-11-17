@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -320,17 +322,38 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			continue
 		}
 
+		// The response header timeout starts once the request is written, before the readLoop is unlocked below,
+		// as the readLoop only receives the responseWriter when the first response byte arrives.
+		// Closing the connection interrupts the readLoop read, which then reports the error.
+		var (
+			responseHeaderTimer    *time.Timer
+			responseHeaderTimedOut atomic.Bool
+		)
+		if co.responseHeaderTimeout > 0 {
+			responseHeaderTimer = time.AfterFunc(co.responseHeaderTimeout, func() {
+				responseHeaderTimedOut.Store(true)
+				co.Close()
+			})
+		}
+
 		// Sending the responseWriter unlocks the connection readLoop, to handle the response.
 		// The readLoop can have returned while the request was written, for example when the backend closed the
 		// connection. Nothing receives on RWCh anymore, and the send would block forever.
 		select {
 		case co.RWCh <- rwWithUpgrade{
-			ReqMethod: req.Method,
-			RW:        rw,
-			Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
+			ReqMethod:           req.Method,
+			RW:                  rw,
+			Upgrade:             upgradeResponseHandler(req.Context(), reqUpType),
+			ResponseHeaderTimer: responseHeaderTimer,
 		}:
 
 		case <-co.DoneCh:
+			// The timer can have fired before the readLoop received the responseWriter, the readLoop then exits without
+			// reporting the error.
+			if responseHeaderTimer != nil && !responseHeaderTimer.Stop() {
+				return timeoutError{errors.New("timeout awaiting response headers")}
+			}
+
 			log.Ctx(ctx).Debug().Msg("Connection closed before handling the response")
 
 			co.Close()
@@ -342,7 +365,16 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			continue
 		}
 
-		if err := <-co.ErrCh; err != nil {
+		err = <-co.ErrCh
+
+		if responseHeaderTimer != nil {
+			responseHeaderTimer.Stop()
+		}
+
+		if err != nil && responseHeaderTimedOut.Load() {
+			return timeoutError{errors.New("timeout awaiting response headers")}
+		}
+		if err != nil {
 			return err
 		}
 
