@@ -1026,10 +1026,6 @@ func (c *clientWrapper) checkGatewayAPIResources(ctx context.Context, namespaces
 		return fmt.Errorf("discovering %s resources: %w", gatev1.GroupVersion, err)
 	}
 
-	if len(namespaces) == 0 {
-		namespaces = []string{metav1.NamespaceAll}
-	}
-
 	if resourceList == nil || len(resourceList.APIResources) == 0 {
 		return fmt.Errorf("%w: %s is not served, install the Gateway API CRDs %s or later",
 			errGatewayAPIResourceUnavailable, gatev1.GroupVersion, consts.BundleVersion)
@@ -1042,55 +1038,66 @@ func (c *clientWrapper) checkGatewayAPIResources(ctx context.Context, namespaces
 				errGatewayAPIResourceUnavailable, resource.name, gatev1.GroupName, gatev1.GroupVersion, consts.BundleVersion)
 		}
 
-		resourceNamespaces := []string{metav1.NamespaceAll}
-		if resource.namespaced {
-			resourceNamespaces = namespaces
-		}
-
 		accesses := []authorizationv1.ResourceAttributes{{Verb: "list"}, {Verb: "watch"}}
 		if resource.updatesStatus {
 			accesses = append(accesses, authorizationv1.ResourceAttributes{Verb: "update", Subresource: "status"})
 		}
 
-		for _, namespace := range resourceNamespaces {
-			for _, access := range accesses {
-				access.Namespace = namespace
-				access.Group = gatev1.GroupName
-				access.Version = gatev1.GroupVersion.Version
-				access.Resource = resource.name
+		for _, access := range accesses {
+			err = c.checkAccess(ctx, resource.name, access, metav1.NamespaceAll)
+			if err == nil {
+				continue // cluster-wide permission granted, no need to check per namespace
+			}
 
-				target := resource.name + "." + gatev1.GroupName
-				if access.Subresource != "" {
-					target += "/" + access.Subresource
-				}
+			// A cluster-wide permission covers every namespace,
+			// so the watched namespaces are only checked, for RBACs granted per namespace, when it is denied.
+			if !errors.Is(err, errGatewayAPIResourceUnavailable) || !resource.namespaced || len(namespaces) == 0 {
+				return err
+			}
 
-				// The GatewayClass informer only selects the configured GatewayClass by name,
-				// so an RBAC restricted to this name, with resourceNames, is enough.
-				if resource.name == "gatewayclasses" && c.gatewayClass != "" {
-					access.Name = c.gatewayClass
-					target += fmt.Sprintf(" named %q", c.gatewayClass)
-				}
-
-				review := &authorizationv1.SelfSubjectAccessReview{
-					Spec: authorizationv1.SelfSubjectAccessReviewSpec{ResourceAttributes: &access},
-				}
-
-				review, err = c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
-				if err != nil {
-					return fmt.Errorf("checking %s permission on %s: %w", access.Verb, target, err)
-				}
-
-				if !review.Status.Allowed {
-					scope := "cluster-wide"
-					if namespace != metav1.NamespaceAll {
-						scope = fmt.Sprintf("in namespace %q", namespace)
-					}
-
-					return fmt.Errorf("%w: not allowed to %s %s %s, update the Traefik RBAC for the Kubernetes Gateway API provider",
-						errGatewayAPIResourceUnavailable, access.Verb, target, scope)
+			for _, namespace := range namespaces {
+				if err = c.checkAccess(ctx, resource.name, access, namespace); err != nil {
+					return err
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+// checkAccess ensures that Traefik is granted the given access on the Gateway API resource in the namespace,
+// metav1.NamespaceAll standing for a cluster-wide access.
+func (c *clientWrapper) checkAccess(ctx context.Context, resource string, access authorizationv1.ResourceAttributes, namespace string) error {
+	access.Namespace = namespace
+	access.Group = gatev1.GroupName
+	access.Version = gatev1.GroupVersion.Version
+	access.Resource = resource
+
+	target := resource + "." + gatev1.GroupName
+	if access.Subresource != "" {
+		target += "/" + access.Subresource
+	}
+
+	// The GatewayClass informer only selects the configured GatewayClass by name,
+	// so an RBAC restricted to this name, with resourceNames, is enough.
+	if resource == "gatewayclasses" && c.gatewayClass != "" {
+		access.Name = c.gatewayClass
+		target += fmt.Sprintf(" named %q", c.gatewayClass)
+	}
+
+	review := &authorizationv1.SelfSubjectAccessReview{
+		Spec: authorizationv1.SelfSubjectAccessReviewSpec{ResourceAttributes: &access},
+	}
+
+	review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("checking %s permission on %s in the namespace %q: %w", access.Verb, target, namespace, err)
+	}
+
+	if !review.Status.Allowed {
+		return fmt.Errorf("%w: not allowed to %s %s in the namespace %q, update the Traefik RBAC for the Kubernetes Gateway API provider",
+			errGatewayAPIResourceUnavailable, access.Verb, target, namespace)
 	}
 
 	return nil

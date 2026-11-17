@@ -48,14 +48,16 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 		servedResources = append(servedResources, metav1.APIResource{Name: resource.name})
 	}
 
+	errAccessReview := errors.New("access review error")
+
 	testCases := []struct {
 		desc         string
 		resources    []metav1.APIResource
 		namespaces   []string
 		gatewayClass string
-		denied       string
+		denied       []string
 		apiError     error
-		expectedErr  string
+		expectedErr  error
 	}{
 		{
 			desc:      "Resources served and allowed",
@@ -63,63 +65,75 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 		},
 		{
 			desc:        "Gateway API v1 not served",
-			expectedErr: "gateway API resource unavailable: gateway.networking.k8s.io/v1 is not served, install the Gateway API CRDs v1.7.0 or later",
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:        "Gateway API v1 served without resources",
 			resources:   []metav1.APIResource{},
-			expectedErr: "gateway API resource unavailable: gateway.networking.k8s.io/v1 is not served, install the Gateway API CRDs v1.7.0 or later",
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc: "TCPRoute not served",
 			resources: slices.DeleteFunc(slices.Clone(servedResources), func(r metav1.APIResource) bool {
 				return r.Name == "tcproutes"
 			}),
-			expectedErr: "gateway API resource unavailable: tcproutes.gateway.networking.k8s.io is not served as gateway.networking.k8s.io/v1, update the Gateway API CRDs to v1.7.0 or later",
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:        "List not allowed cluster-wide",
 			resources:   servedResources,
-			denied:      "list/tcproutes/",
-			expectedErr: "gateway API resource unavailable: not allowed to list tcproutes.gateway.networking.k8s.io cluster-wide, update the Traefik RBAC for the Kubernetes Gateway API provider",
+			denied:      []string{"list/tcproutes/"},
+			expectedErr: errGatewayAPIResourceUnavailable,
+		},
+		{
+			desc:       "Cluster-wide permission covers watched namespaces",
+			resources:  servedResources,
+			namespaces: []string{"foo"},
+			denied:     []string{"watch/listenersets/foo"},
+		},
+		{
+			desc:       "Permission granted per watched namespace",
+			resources:  servedResources,
+			namespaces: []string{"foo", "bar"},
+			denied:     []string{"watch/listenersets/"},
 		},
 		{
 			desc:        "Watch not allowed in a watched namespace",
 			resources:   servedResources,
 			namespaces:  []string{"foo", "bar"},
-			denied:      "watch/listenersets/bar",
-			expectedErr: `gateway API resource unavailable: not allowed to watch listenersets.gateway.networking.k8s.io in namespace "bar", update the Traefik RBAC for the Kubernetes Gateway API provider`,
+			denied:      []string{"watch/listenersets/", "watch/listenersets/bar"},
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:        "GatewayClass permission checked cluster-wide with watched namespaces",
 			resources:   servedResources,
 			namespaces:  []string{"foo"},
-			denied:      "watch/gatewayclasses/",
-			expectedErr: "gateway API resource unavailable: not allowed to watch gatewayclasses.gateway.networking.k8s.io cluster-wide, update the Traefik RBAC for the Kubernetes Gateway API provider",
+			denied:      []string{"watch/gatewayclasses/"},
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:         "GatewayClass permission checked by name",
 			resources:    servedResources,
 			gatewayClass: "traefik",
-			denied:       "update/gatewayclasses/status:traefik/",
-			expectedErr:  `gateway API resource unavailable: not allowed to update gatewayclasses.gateway.networking.k8s.io/status named "traefik" cluster-wide, update the Traefik RBAC for the Kubernetes Gateway API provider`,
+			denied:       []string{"update/gatewayclasses/status:traefik/"},
+			expectedErr:  errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:        "Status update not allowed",
 			resources:   servedResources,
-			denied:      "update/httproutes/status/",
-			expectedErr: "gateway API resource unavailable: not allowed to update httproutes.gateway.networking.k8s.io/status cluster-wide, update the Traefik RBAC for the Kubernetes Gateway API provider",
+			denied:      []string{"update/httproutes/status/"},
+			expectedErr: errGatewayAPIResourceUnavailable,
 		},
 		{
 			desc:      "ReferenceGrant status update not required",
 			resources: servedResources,
-			denied:    "update/referencegrants/status/",
+			denied:    []string{"update/referencegrants/status/"},
 		},
 		{
 			desc:        "Access review error",
 			resources:   servedResources,
-			apiError:    errors.New("boom"),
-			expectedErr: "checking list permission on gatewayclasses.gateway.networking.k8s.io: boom",
+			apiError:    errAccessReview,
+			expectedErr: errAccessReview,
 		},
 	}
 
@@ -149,7 +163,7 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 				if attrs.Name != "" {
 					target += ":" + attrs.Name
 				}
-				review.Status.Allowed = attrs.Verb+"/"+target+"/"+attrs.Namespace != test.denied
+				review.Status.Allowed = !slices.Contains(test.denied, attrs.Verb+"/"+target+"/"+attrs.Namespace)
 
 				return true, review, nil
 			})
@@ -158,13 +172,7 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 			client.gatewayClass = test.gatewayClass
 
 			err := client.checkGatewayAPIResources(t.Context(), test.namespaces)
-			if test.expectedErr == "" {
-				require.NoError(t, err)
-				return
-			}
-
-			require.EqualError(t, err, test.expectedErr)
-			assert.Equal(t, test.apiError == nil, errors.Is(err, errGatewayAPIResourceUnavailable))
+			assert.ErrorIs(t, err, test.expectedErr)
 		})
 	}
 }
