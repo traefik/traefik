@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"io"
@@ -329,4 +330,54 @@ func TestBidirectionalStreamEndedByBackend(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("The end of the stream was not forwarded to the client")
 	}
+}
+
+func TestComputeStatusCodeWithContext(t *testing.T) {
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	testCases := []struct {
+		name     string
+		ctx      context.Context
+		err      error
+		expected int
+	}{
+		{
+			name:     "client canceled",
+			ctx:      canceledCtx,
+			err:      errors.New("quic: NO_ERROR (remote)"),
+			expected: StatusClientClosedRequest,
+		},
+		{
+			name:     "backend EOF",
+			ctx:      context.Background(),
+			err:      io.EOF,
+			expected: http.StatusBadGateway,
+		},
+		{
+			name:     "other error",
+			ctx:      context.Background(),
+			err:      errors.New("unexpected"),
+			expected: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, ComputeStatusCodeWithContext(test.ctx, test.err))
+		})
+	}
+
+	// The error alone is not enough to identify a client abort over HTTP/3.
+	assert.Equal(t, http.StatusInternalServerError, ComputeStatusCode(errors.New("quic: NO_ERROR (remote)")))
+}
+
+func TestErrorHandlerWithContextDoesNotOverwriteClientCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	recorder := httptest.NewRecorder()
+	ErrorHandlerWithContext(ctx, recorder, errors.New("quic: NO_ERROR (remote)"))
+
+	assert.Equal(t, StatusClientClosedRequest, recorder.Code)
 }
