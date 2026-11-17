@@ -188,7 +188,7 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 
 // ErrorHandlerWithContext is the http.Handler called when something goes wrong when forwarding the request.
 func ErrorHandlerWithContext(ctx context.Context, w http.ResponseWriter, err error) {
-	statusCode := ComputeStatusCode(err)
+	statusCode := ComputeStatusCodeWithContext(ctx, err)
 
 	logger := log.Ctx(ctx)
 
@@ -225,6 +225,16 @@ func isTLSConfigError(err error) bool {
 	// tls.CertificateVerificationError is returned when the server certificate cannot be verified.
 	_, ok := errors.AsType[*tls.CertificateVerificationError](err)
 	return ok
+}
+
+// ComputeStatusCodeWithContext computes the HTTP status code according to the
+// given error and request context. A canceled request context means the client
+// closed the request, even when the error carries a protocol-specific cause.
+func ComputeStatusCodeWithContext(ctx context.Context, err error) int {
+	if ctx.Err() == context.Canceled {
+		return StatusClientClosedRequest
+	}
+	return ComputeStatusCode(err)
 }
 
 // ComputeStatusCode computes the HTTP status code according to the given error.
