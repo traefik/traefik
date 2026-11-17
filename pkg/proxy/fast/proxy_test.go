@@ -548,6 +548,42 @@ func TestReadLoopExitBeforeHandoff(t *testing.T) {
 	}
 }
 
+// TestResponseHeaderTimeout checks that the response header timeout applies when the backend never answers,
+// not only once the first response byte has arrived.
+func TestResponseHeaderTimeout(t *testing.T) {
+	release := make(chan struct{})
+	backend := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		<-release
+	}))
+	t.Cleanup(backend.Close)
+	t.Cleanup(func() { close(release) })
+
+	pool := newConnPool(1, 0, 200*time.Millisecond, func() (net.Conn, error) {
+		return net.Dial("tcp", backend.Listener.Addr().String())
+	})
+	t.Cleanup(pool.Close)
+
+	proxy, err := NewReverseProxy(testhelpers.MustParseURL(backend.URL), nil, false, true, false, pool)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		proxy.ServeHTTP(res, req)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("request blocked waiting for the response headers")
+	}
+
+	assert.Equal(t, http.StatusGatewayTimeout, res.Code)
+}
+
 func TestNoContentLength(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
