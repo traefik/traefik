@@ -11,18 +11,18 @@ How well Traefik Proxy isolates tenants from each other depends on how you deplo
 | Deployment | Routing Configuration | Address | Multi-Tenancy |
 |---|---|---|---|
 | Traefik Operator with Kubernetes Gateway API | One per Gateway | One per Gateway | Recommended |
-| One Traefik instance per Gateway, scoped with `providers.kubernetesGateway.gateways` | One per Gateway | One per Gateway | Alternative to the Traefik Operator |
+| One Traefik instance per Gateway, scoped with [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways) | One per Gateway | One per Gateway | Alternative to the Traefik Operator |
 | Single Traefik instance with Kubernetes Gateway API | Shared by all Gateways | Shared by all Gateways | Not recommended |
 | One Traefik instance per tenant with Ingress or IngressRoute, scoped with `namespaces` | One per tenant | One per tenant | Recommended for Ingress and IngressRoute |
 | Single Traefik instance with Ingress or IngressRoute | Shared by all namespaces | Shared by all namespaces | Not recommended |
 
-For multi-tenant clusters, use Kubernetes Gateway API with the [Traefik Operator](#traefik-operator), or with [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with `providers.kubernetesGateway.gateways`, and create one Gateway per tenant.
+For multi-tenant clusters, use Kubernetes Gateway API with the [Traefik Operator](#traefik-operator), or with [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways), and create one Gateway per tenant.
 
 ## Gateway API
 
 Kubernetes Gateway API treats each Gateway as an independent entry point to the cluster, with its own listeners, routes, and addresses.
 A single Traefik instance doesn't keep Gateways separate.
-To give each Gateway its own Traefik data plane, use the [Traefik Operator](#traefik-operator), or deploy [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with `providers.kubernetesGateway.gateways`.
+To give each Gateway its own Traefik data plane, use the [Traefik Operator](#traefik-operator), or deploy [one Traefik instance per Gateway](#one-traefik-instance-per-gateway) scoped with [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways).
 
 ### Single Traefik Instance
 
@@ -62,10 +62,10 @@ See [Gateway API routing configuration](../reference/routing-configuration/kuber
 
 Without the Traefik Operator, you can get the same isolation by deploying one Traefik instance per Gateway yourself.
 Set [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways) on each instance to the Gateway it serves.
-An instance reconciles only the Gateways listed in `gateways`, and ignores every other Gateway and the routes attached to it.
+An instance reconciles only the Gateways listed in [`gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways), and ignores every other Gateway and the routes attached to it.
 
 Give each instance its own `Service`, and set [`providers.kubernetesGateway.statusAddress.service`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-statusAddress-service-name) to that `Service`, so each Gateway reports the address of its own instance.
-List each Gateway in the `gateways` option of one instance only.
+List each Gateway in the [`gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways) option of one instance only.
 
 Using the `tenant-a` Gateway in the `tenant-a` namespace as the example:
 

@@ -175,7 +175,7 @@ limit, not a vulnerability. For isolation between Gateways, the
 [Traefik Operator](../security/multi-tenant-kubernetes.md#traefik-operator) provisions a dedicated data
 plane for each Gateway, or you can deploy
 [one Traefik instance per Gateway](../security/multi-tenant-kubernetes.md#one-traefik-instance-per-gateway)
-scoped with `providers.kubernetesGateway.gateways`, as described in
+scoped with [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways), as described in
 [Multi-Tenancy in Kubernetes](../security/multi-tenant-kubernetes.md#gateway-api).
 
 **Decided in this class.**
