@@ -1958,7 +1958,7 @@ func Test_LocationPrefixModifier(t *testing.T) {
 			handler, err := New(t.Context(), next, &dynamic.Snippet{
 				ServerSnippet: `
 location ^~ /internal {
-	return 404;
+	return 418;
 }
 `,
 			}, "test-snippet")
