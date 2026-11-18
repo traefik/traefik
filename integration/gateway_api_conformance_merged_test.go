@@ -185,7 +185,8 @@ func (s *GatewayAPIConformanceMergedSuite) TestK8sGatewayAPIConformanceMerged() 
 				ksuite.GatewayTCPConformanceProfileName,
 			},
 			// GatewayInfrastructure gates GatewayInvalidParametersRef, which a single Traefik instance satisfies.
-			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
+			// The Traefik instance runs with the experimentalChannel option enabled.
+			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(true), []features.FeatureName{
 				features.SupportGatewayInfrastructure,
 			}),
 			// The following tests are skipped because they require features that a single Traefik instance

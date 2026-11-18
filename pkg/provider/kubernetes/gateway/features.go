@@ -1,13 +1,34 @@
 package gateway
 
 import (
+	"slices"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/gateway-api/pkg/features"
 )
 
-var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
+// SupportedFeatures returns the supported features,
+// including the ones requiring the experimentalChannel option when it is enabled.
+func SupportedFeatures(experimentalChannel bool) []features.FeatureName {
+	featureNames := slices.Clone(standardFeatures())
+	if experimentalChannel {
+		for f := range experimentalChannelFeatures() {
+			featureNames = append(featureNames, f.Name)
+		}
+	}
+
+	return featureNames
+}
+
+// experimentalChannelFeatures returns the supported features requiring the experimentalChannel option.
+func experimentalChannelFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GatewayListenerFiltersFeature,
+	)
+}
+
+var standardFeatures = sync.OnceValue(func() []features.FeatureName {
 	featureSet := sets.New[features.Feature]().
 		Insert(features.GatewayCoreFeatures.UnsortedList()...).
 		Insert(features.GatewayExtendedFeatures.Intersection(extendedGatewayFeatures()).UnsortedList()...).

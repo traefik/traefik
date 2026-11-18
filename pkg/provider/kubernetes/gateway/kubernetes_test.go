@@ -33,6 +33,7 @@ import (
 	ktesting "k8s.io/client-go/testing"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
+	"sigs.k8s.io/gateway-api/pkg/features"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -15460,7 +15461,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
-			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}), conf)
+			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{}), conf)
 
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
@@ -15603,15 +15604,16 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
+			listenerFilters := map[gatev1.PortNumber]listenerFiltersClaim{}
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
 
 			gateway := newGateway("my-gateway", nil, newValidation("ca-configmap", gatev1.AllowValidOnly))
-			listeners := p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			listeners := p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations, listenerFilters), conf)
 			require.Len(t, listeners, 1)
 			require.True(t, listeners[0].Attached)
 
 			gateway = newGateway("my-other-gateway", test.hostname, test.validation)
-			listeners = p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			listeners = p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations, listenerFilters), conf)
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
 
@@ -15627,6 +15629,335 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 				expectedCertificates = 2
 			}
 			assert.Len(t, conf.TLS.Certificates, expectedCertificates)
+		})
+	}
+}
+
+func TestLoadHTTPRoutes_listenerFilters(t *testing.T) {
+	k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/listener_filters.yml"})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+	client := NewClient(&Provider{}, kubeClient, gwClient)
+
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
+	require.NoError(t, err)
+	<-eventCh
+
+	newProvider := func(experimentalChannel bool) *Provider {
+		p := &Provider{
+			EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
+			ExperimentalChannel: experimentalChannel,
+			k8sClient:           client,
+		}
+		p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+			return namespace + "-" + name, nil, nil
+		})
+
+		return p
+	}
+
+	t.Run("experimental channel enabled", func(t *testing.T) {
+		conf, statusReport, err := newProvider(true).BuildConfiguration(t.Context())
+		require.NoError(t, err)
+
+		// The filters are set on the parent router, so that they run before the route matching.
+		require.Contains(t, conf.HTTP.Routers, "listener-web-http-5b3226d4ebd42b7200f1")
+		assert.Equal(t, []string{"default-my-first-middleware", "default-my-second-middleware"}, conf.HTTP.Routers["listener-web-http-5b3226d4ebd42b7200f1"].Middlewares)
+
+		routerName := "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93"
+		require.Contains(t, conf.HTTP.Routers, routerName)
+		assert.Equal(t, []string{"listener-web-http-5b3226d4ebd42b7200f1"}, conf.HTTP.Routers[routerName].ParentRefs)
+		assert.Empty(t, conf.HTTP.Routers[routerName].Middlewares)
+
+		require.Len(t, statusReport.gatewayListeners, 1)
+		require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
+		assert.True(t, statusReport.gatewayListeners[0].listeners[0].Attached)
+	})
+
+	t.Run("experimental channel disabled", func(t *testing.T) {
+		conf, statusReport, err := newProvider(false).BuildConfiguration(t.Context())
+		require.NoError(t, err)
+
+		// The listener is rejected, as the specification forbids skipping its filters.
+		assert.Empty(t, conf.HTTP.Routers)
+
+		require.Len(t, statusReport.gatewayListeners, 1)
+		require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
+		listener := statusReport.gatewayListeners[0].listeners[0]
+		assert.False(t, listener.Attached)
+
+		accepted := meta.FindStatusCondition(listener.Status.Conditions, string(gatev1.ListenerConditionAccepted))
+		require.NotNil(t, accepted)
+		assert.Equal(t, metav1.ConditionFalse, accepted.Status)
+		assert.Equal(t, string(gatev1.ListenerReasonUnsupportedValue), accepted.Reason)
+		assert.Equal(t, "listener filters require the experimentalChannel option", accepted.Message)
+	})
+}
+
+func TestSupportedFeatures_experimentalChannel(t *testing.T) {
+	assert.NotContains(t, SupportedFeatures(false), features.SupportGatewayListenerFilters)
+	assert.Contains(t, SupportedFeatures(true), features.SupportGatewayListenerFilters)
+	assert.Len(t, SupportedFeatures(true), len(SupportedFeatures(false))+1)
+}
+
+func Test_loadListenerFilters(t *testing.T) {
+	extensionRef := func(kind, name string) gatev1.ListenerFilter {
+		return gatev1.ListenerFilter{
+			Type: gatev1.ListenerFilterExtensionRef,
+			ExtensionRef: &gatev1.LocalObjectReference{
+				Group: traefikv1alpha1.GroupName,
+				Kind:  gatev1.Kind(kind),
+				Name:  gatev1.ObjectName(name),
+			},
+		}
+	}
+
+	testCases := []struct {
+		desc                string
+		filters             []gatev1.ListenerFilter
+		expectedNames       []string
+		expectedMiddlewares map[string]*dynamic.Middleware
+		expectedConditions  []metav1.Condition
+	}{
+		{
+			desc:                "no filter",
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+		},
+		{
+			desc: "ExtensionRef filters keep their order",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Middleware", "second"),
+				extensionRef("Middleware", "first"),
+			},
+			expectedNames:       []string{"ns-second", "ns-first"},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+		},
+		{
+			desc:          "ExtensionRef filter creating a middleware",
+			filters:       []gatev1.ListenerFilter{extensionRef("Created", "created")},
+			expectedNames: []string{"ns-created"},
+			expectedMiddlewares: map[string]*dynamic.Middleware{
+				"ns-created": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "test"}}},
+			},
+		},
+		{
+			desc: "unsupported ExtensionRef kind",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Created", "created"),
+				extensionRef("Unknown", "unknown"),
+			},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(listenerReasonInvalidListenerFilterRef),
+					Message:            "filters.requests[1]: unsupported filter extension ref traefik.io/Unknown/unknown",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalid),
+					Message:            "Invalid listener filters",
+				},
+			},
+		},
+		{
+			desc: "ExternalAuth filter is not supported",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Middleware", "first"),
+				{Type: gatev1.ListenerFilterExternalAuth, ExternalAuth: &gatev1.HTTPExternalAuthFilter{}},
+			},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonUnsupportedValue),
+					Message:            "filters.requests[1]: unsupported filter type ExternalAuth",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalid),
+					Message:            "Invalid listener filters",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{}
+			p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+				return namespace + "-" + name, nil, nil
+			})
+			p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Created", func(name, namespace string) (string, *dynamic.Middleware, error) {
+				return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "test"}}}, nil
+			})
+
+			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}}}
+
+			names, conditions := p.loadListenerFilters("ns", 1, test.filters, conf)
+
+			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
+			for i := range conditions {
+				conditions[i].LastTransitionTime = metav1.Time{}
+			}
+
+			assert.Equal(t, test.expectedNames, names)
+			assert.Equal(t, test.expectedConditions, conditions)
+			assert.Equal(t, test.expectedMiddlewares, conf.HTTP.Middlewares)
+		})
+	}
+}
+
+func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}, "web8080": {Address: ":8080"}},
+		ExperimentalChannel: true,
+	}
+	p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
+	})
+
+	type listener struct {
+		port     gatev1.PortNumber
+		hostname gatev1.Hostname
+		filter   string
+		// invalid makes an HTTPS listener without TLS configuration, rejected after the listener filters.
+		invalid bool
+	}
+
+	newGateway := func(name string, listeners []listener) *gatev1.Gateway {
+		gateway := &gatev1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default", Generation: 1},
+		}
+
+		for i, l := range listeners {
+			gl := gatev1.Listener{
+				Name:     gatev1.SectionName("http-" + string(rune('a'+i))),
+				Protocol: gatev1.HTTPProtocolType,
+				Port:     l.port,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+			}
+			if l.hostname != "" {
+				gl.Hostname = new(l.hostname)
+			}
+			if l.invalid {
+				gl.Protocol = gatev1.HTTPSProtocolType
+			}
+			if l.filter != "" {
+				gl.Filters = &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: gatev1.ObjectName(l.filter)},
+				}}}
+			}
+
+			gateway.Spec.Listeners = append(gateway.Spec.Listeners, gl)
+		}
+
+		return gateway
+	}
+
+	testCases := []struct {
+		desc     string
+		older    []listener
+		younger  []listener
+		expected []bool
+	}{
+		{
+			desc:     "Gateways without filters share a port",
+			older:    []listener{{port: 80}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a Gateway with filters owns its port",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "a Gateway cannot add filters on a shared port",
+			older:    []listener{{port: 80}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "the same filters on a shared port are conflicted",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "the listeners on another port are not conflicted",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80}, {port: 8080, filter: "b"}},
+			expected: []bool{false, true},
+		},
+		{
+			desc:     "a Gateway with filters owning its port can declare different filters per listener",
+			older:    []listener{{port: 8080}},
+			younger:  []listener{{port: 80, filter: "a"}, {port: 80, hostname: "foo.com", filter: "b"}, {port: 80, hostname: "bar.com"}},
+			expected: []bool{true, true, true},
+		},
+		{
+			desc:     "a rejected listener with filters does not own its port",
+			older:    []listener{{port: 80, filter: "a", invalid: true}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a rejected listener does not share its port",
+			older:    []listener{{port: 80, invalid: true}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{true},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
+			listenerFilters := map[gatev1.PortNumber]listenerFiltersClaim{}
+			conf := &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+				TLS:  &dynamic.TLSConfiguration{},
+			}
+
+			listeners := p.loadGatewayListeners(t.Context(), newGateway("older", test.older), nil, newListenerClaims(frontendValidations, listenerFilters), conf)
+			for i, l := range listeners {
+				require.Equal(t, !test.older[i].invalid, l.Attached)
+			}
+
+			listeners = p.loadGatewayListeners(t.Context(), newGateway("younger", test.younger), nil, newListenerClaims(frontendValidations, listenerFilters), conf)
+			require.Len(t, listeners, len(test.expected))
+
+			for i, l := range listeners {
+				assert.Equal(t, test.expected[i], l.Attached, "listener %s", l.SectionName)
+
+				if test.expected[i] {
+					assert.Empty(t, l.Status.Conditions)
+					continue
+				}
+
+				conflicted := meta.FindStatusCondition(l.Status.Conditions, string(gatev1.ListenerConditionConflicted))
+				require.NotNil(t, conflicted)
+				assert.Equal(t, metav1.ConditionTrue, conflicted.Status)
+				assert.Equal(t, string(listenerReasonListenerFiltersConflict), conflicted.Reason)
+			}
 		})
 	}
 }
@@ -16696,7 +17027,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				gateway.Spec.AllowedListeners = test.allowedListeners
 			}
 
-			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{})
+			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{})
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
 				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}

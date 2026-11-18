@@ -77,6 +77,13 @@ const (
 	// listenerReasonFrontendValidationConflict reports a frontend validation that differs from the one an older Gateway applies on the port.
 	listenerReasonFrontendValidationConflict gatev1.ListenerConditionReason = "FrontendValidationConflict"
 
+	// listenerReasonInvalidListenerFilterRef reports a listener filter reference that cannot be resolved (GEP-5224).
+	listenerReasonInvalidListenerFilterRef gatev1.ListenerConditionReason = "InvalidListenerFilterRef"
+
+	// listenerReasonListenerFiltersConflict reports a listener sharing its port with the listeners of an older Gateway,
+	// while one of them declares filters.
+	listenerReasonListenerFiltersConflict gatev1.ListenerConditionReason = "ListenerFiltersConflict"
+
 	conditionNoErrorMessage = "No error found"
 )
 
@@ -177,6 +184,10 @@ type gatewayListener struct {
 	// RouterNames holds one parent router per entry point hostname
 	// the listener is the most specific match for.
 	RouterNames []string
+
+	// Middlewares are the middlewares of the listener filters (GEP-5224), in their declaration order.
+	// They are set on the parent routers, so that they run before the route matching.
+	Middlewares []string
 
 	// ListenerSet is the ListenerSet declaring this listener, nil when the Gateway declares it itself.
 	ListenerSet *gatev1.ListenerSet
@@ -356,7 +367,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 	}
 
 	var supportedFeatures []gatev1.SupportedFeature
-	for _, feature := range SupportedFeatures() {
+	for _, feature := range SupportedFeatures(p.ExperimentalChannel) {
 		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
 	}
 	slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
@@ -414,13 +425,14 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 
 	var gatewaysWithListeners []gatewayWithListeners
 	frontendValidations := make(map[gatev1.PortNumber]*tls.ClientAuth)
+	listenerFilters := make(map[gatev1.PortNumber]listenerFiltersClaim)
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
 			Str("namespace", gateway.Namespace).
 			Logger()
 
-		claims := newListenerClaims(frontendValidations)
+		claims := newListenerClaims(frontendValidations, listenerFilters)
 
 		listeners := p.loadGatewayListeners(logger.WithContext(ctx), gateway, nil, claims, conf)
 
@@ -746,6 +758,37 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			continue
 		}
 
+		// The listener filters only apply to the listeners with a visible HTTP stream,
+		// which the CRD validation enforces.
+		if listener.Filters != nil && len(listener.Filters.Requests) > 0 &&
+			(listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType) {
+			// The listener filters are an Experimental Channel feature.
+			// The specification forbids skipping a filter, so the listener is rejected when they are not enabled.
+			if !p.ExperimentalChannel {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+					makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, gatev1.ListenerReasonUnsupportedValue,
+						"listener filters require the experimentalChannel option")...)
+				continue
+			}
+
+			middlewares, conditions := p.loadListenerFilters(ownerNamespace, generation, listener.Filters.Requests, conf)
+			if len(conditions) > 0 {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
+				continue
+			}
+
+			gatewayListeners[i].Middlewares = middlewares
+		}
+
+		// A port with listener filters belongs to a single Gateway, the oldest one wins.
+		gatewayKey := gateway.Namespace + "/" + gateway.Name
+		isHTTP := listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType
+		if isHTTP && claims.listenerFiltersConflict(listener.Port, gatewayKey, len(gatewayListeners[i].Middlewares) > 0) {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+				makeListenerConflictConditions(generation, listenerReasonListenerFiltersConflict, "Another Gateway already serves this port, while listener filters require the port to be served by a single Gateway")...)
+			continue
+		}
+
 		// TLS
 		if listener.Protocol == gatev1.HTTPSProtocolType || listener.Protocol == gatev1.TLSProtocolType {
 			if listener.TLS == nil {
@@ -904,6 +947,11 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			}
 		}
 
+		// The port is claimed once the listener is valid, so a rejected listener does not hold it.
+		if isHTTP {
+			claims.claimListenerFilters(listener.Port, gatewayKey, len(gatewayListeners[i].Middlewares) > 0)
+		}
+
 		gatewayListeners[i].Attached = true
 	}
 
@@ -972,6 +1020,12 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, fronten
 				}
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
+
+				// A port with listener filters belongs to a single Gateway,
+				// so a single listener elects the parent router (see listenerFiltersConflict).
+				if len(listener.Middlewares) > 0 {
+					listenerRouter.Middlewares = listener.Middlewares
+				}
 			}
 
 			if uniq.protocol == gatev1.HTTPSProtocolType {
@@ -1076,6 +1130,62 @@ func hostnameMatcherValue(hostname string) string {
 	}
 
 	return hostname
+}
+
+// loadListenerFilters loads the middlewares of the listener filters (GEP-5224),
+// in their declaration order, as the specification makes that order a guarantee.
+// It returns the conditions rejecting the listener when one of the filters cannot be loaded,
+// as the specification forbids skipping a filter.
+func (p *Provider) loadListenerFilters(namespace string, generation int64, filters []gatev1.ListenerFilter, conf *dynamic.Configuration) ([]string, []metav1.Condition) {
+	var middlewareNames []string
+	middlewares := map[string]*dynamic.Middleware{}
+
+	for i, filter := range filters {
+		switch filter.Type {
+		case gatev1.ListenerFilterExtensionRef:
+			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
+			if err != nil {
+				return nil, makeListenerFiltersConditions(generation, gatev1.ListenerConditionResolvedRefs, listenerReasonInvalidListenerFilterRef,
+					fmt.Sprintf("filters.requests[%d]: %v", i, err))
+			}
+
+			if middleware != nil {
+				middlewares[name] = middleware
+			}
+			middlewareNames = append(middlewareNames, name)
+
+		default:
+			// The ExternalAuth filter is not supported, like on the HTTPRoutes.
+			return nil, makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, gatev1.ListenerReasonUnsupportedValue,
+				fmt.Sprintf("filters.requests[%d]: unsupported filter type %s", i, filter.Type))
+		}
+	}
+
+	maps.Copy(conf.HTTP.Middlewares, middlewares)
+
+	return middlewareNames, nil
+}
+
+// makeListenerFiltersConditions makes the conditions of a listener rejected because of its filters.
+func makeListenerFiltersConditions(generation int64, conditionType gatev1.ListenerConditionType, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
+	return []metav1.Condition{
+		{
+			Type:               string(conditionType),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(reason),
+			Message:            message,
+		},
+		{
+			Type:               string(gatev1.ListenerConditionProgrammed),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalid),
+			Message:            "Invalid listener filters",
+		},
+	}
 }
 
 // loadListenerSetListeners loads the listeners of the ListenerSets referencing the given Gateway,
@@ -2197,14 +2307,49 @@ type listenerClaims struct {
 	tcpPorts map[gatev1.PortNumber]bool
 	// frontendValidations holds the frontend validation applied on each port, shared by every Gateway of the load.
 	frontendValidations map[gatev1.PortNumber]*tls.ClientAuth
+	// listenerFilters holds the listener filters claim of each port, shared by every Gateway of the load.
+	listenerFilters map[gatev1.PortNumber]listenerFiltersClaim
 }
 
-func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth) *listenerClaims {
+// listenerFiltersClaim holds the first Gateway serving HTTP and HTTPS listeners on a port,
+// and whether the listeners of this Gateway on the port declare filters.
+// The Gateways are loaded one after the other, the oldest first,
+// so another Gateway already serves the port when the first one is not the Gateway being loaded.
+type listenerFiltersClaim struct {
+	gateway  string
+	filtered bool
+}
+
+func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth, listenerFilters map[gatev1.PortNumber]listenerFiltersClaim) *listenerClaims {
 	return &listenerClaims{
 		listeners:           make(map[string]struct{}),
 		tcpPorts:            make(map[gatev1.PortNumber]bool),
 		frontendValidations: frontendValidations,
+		listenerFilters:     listenerFilters,
 	}
+}
+
+// listenerFiltersConflict reports whether an HTTP or HTTPS listener of the given Gateway conflicts
+// with the listeners of another Gateway on the port.
+// The listener filters are set on the parent routers, which the Gateways sharing a port share,
+// so a port with listener filters belongs to a single Gateway, the oldest one, as for the frontend validation.
+func (c *listenerClaims) listenerFiltersConflict(port gatev1.PortNumber, gateway string, filtered bool) bool {
+	claim, ok := c.listenerFilters[port]
+
+	return ok && claim.gateway != gateway && (filtered || claim.filtered)
+}
+
+// claimListenerFilters claims the port of a valid HTTP or HTTPS listener for the given Gateway,
+// once listenerFiltersConflict has reported no conflict.
+// The first Gateway is kept, as a younger one would hide that the port is shared.
+func (c *listenerClaims) claimListenerFilters(port gatev1.PortNumber, gateway string, filtered bool) {
+	claim, ok := c.listenerFilters[port]
+	if !ok {
+		claim.gateway = gateway
+	}
+
+	claim.filtered = claim.filtered || filtered
+	c.listenerFilters[port] = claim
 }
 
 func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {

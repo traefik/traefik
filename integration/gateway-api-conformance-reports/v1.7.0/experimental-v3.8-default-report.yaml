@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-11-02T10:10:26+01:00"
+date: "2026-11-18T17:04:45+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0
 implementation:
@@ -35,13 +35,13 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - GatewayStaticAddresses
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-GRPC
   summary: Core tests succeeded. Extended tests succeeded.
@@ -68,6 +68,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - GatewayStaticAddresses
     - HTTPRoute303RedirectStatusCode
@@ -100,7 +101,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
@@ -125,6 +125,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - GatewayStaticAddresses
     - ListenerSet
@@ -132,7 +133,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TCP
   summary: Core tests succeeded. Extended tests succeeded.
@@ -159,6 +159,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - GatewayStaticAddresses
     - ListenerSet
@@ -167,7 +168,6 @@ profiles:
     unsupportedFeatures:
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
   name: GATEWAY-TLS
   summary: Core tests succeeded. Extended tests succeeded.
