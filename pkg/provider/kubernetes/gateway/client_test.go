@@ -106,12 +106,12 @@ func Test_newWatchErrorHandler(t *testing.T) {
 		{
 			desc:        "Resource expired",
 			err:         kerror.NewResourceExpired("too old resource version"),
-			expectedLog: `"level":"debug","error":"too old resource version","message":"Watch of *v1.TCPRoute closed"`,
+			expectedLog: `"level":"debug","error":"too old resource version","message":"Watch of *v1.TCPRoute expired, listing the resources again"`,
 		},
 		{
 			desc:        "Resource gone",
 			err:         kerror.NewGone("gone"),
-			expectedLog: `"level":"debug","error":"gone","message":"Watch of *v1.TCPRoute closed"`,
+			expectedLog: `"level":"debug","error":"gone","message":"Watch of *v1.TCPRoute expired, listing the resources again"`,
 		},
 		{
 			desc: "Watch closed",
@@ -120,7 +120,7 @@ func Test_newWatchErrorHandler(t *testing.T) {
 		{
 			desc:        "Watch closed with unexpected EOF",
 			err:         io.ErrUnexpectedEOF,
-			expectedLog: `"level":"debug","error":"unexpected EOF","message":"Watch of *v1.TCPRoute closed with unexpected EOF"`,
+			expectedLog: `"level":"debug","error":"unexpected EOF","message":"Watch of *v1.TCPRoute interrupted, restarting it"`,
 		},
 		{
 			desc:        "Resource not served",

@@ -332,11 +332,11 @@ func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandlerWithCon
 		switch {
 		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
 			// The reflector lists the resources again from the last observed resource version.
-			logger.Debug().Err(err).Msgf("Watch of %s closed", r.TypeDescription())
+			logger.Debug().Err(err).Msgf("Watch of %s expired, listing the resources again", r.TypeDescription())
 		case errors.Is(err, io.EOF):
 			// The watch closed normally.
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			logger.Debug().Err(err).Msgf("Watch of %s closed with unexpected EOF", r.TypeDescription())
+			logger.Debug().Err(err).Msgf("Watch of %s interrupted, restarting it", r.TypeDescription())
 		case kerror.IsNotFound(err):
 			logger.Error().Err(err).Msgf("Cannot list or watch %s, the resource is not served: install the Gateway API CRDs %s or later", r.TypeDescription(), minGatewayAPIVersion)
 		case kerror.IsForbidden(err):
