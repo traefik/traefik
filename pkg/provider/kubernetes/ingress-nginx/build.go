@@ -36,7 +36,8 @@ type ingressEntry struct {
 type pathEntry struct {
 	netv1.HTTPIngressPath
 
-	config IngressConfig
+	config       IngressConfig
+	configSource dynamic.KubernetesRef
 }
 
 type namedServersTransport struct {
@@ -78,7 +79,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	tlsOptionCache := make(map[string]*tls.Options)
 
 	allHosts := make(map[string]bool)
-	hostsWithUseRegex := make(map[string]bool)
+	hostsWithUseRegex := make(map[string][]dynamic.KubernetesRef)
 	hostsWithRootPath := make(map[string]bool)
 	claimedAliases := make(map[string]string)
 
@@ -108,8 +109,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 	// key: namespace/host+path+pathType → (backend service, IngressConfig)
 	ingressPaths := make(map[string]pathEntry)
 
-	serverSnippets := make(map[string]string) // host → first server-snippet seen
-	serverAppRoots := make(map[string]string)
+	serverSnippets := make(map[string]hostSetting) // host → first server-snippet seen
+	serverAppRoots := make(map[string]hostSetting)
 
 	// Sort ingresses by creation timestamp (ascending). Ties are broken by
 	// descending namespace/name lexicographic order, matching ingress-nginx
@@ -171,17 +172,17 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 			}
 
 			if ptr.Deref(cfg.UseRegex, false) || ptr.Deref(cfg.RewriteTarget, "") != "" {
-				hostsWithUseRegex[rule.Host] = true
+				hostsWithUseRegex[rule.Host] = append(hostsWithUseRegex[rule.Host], annotationsSource(ingress))
 			}
 
 			if srvSnippet := ptr.Deref(cfg.ServerSnippet, ""); srvSnippet != "" {
-				if serverSnippets[rule.Host] == "" {
-					serverSnippets[rule.Host] = srvSnippet
+				if serverSnippets[rule.Host].value == "" {
+					serverSnippets[rule.Host] = hostSetting{value: srvSnippet, source: annotationsSource(ingress)}
 				}
 			}
 
-			if appRoot := ptr.Deref(cfg.AppRoot, ""); strings.HasPrefix(appRoot, "/") && serverAppRoots[rule.Host] == "" {
-				serverAppRoots[rule.Host] = appRoot
+			if appRoot := ptr.Deref(cfg.AppRoot, ""); strings.HasPrefix(appRoot, "/") && serverAppRoots[rule.Host].value == "" {
+				serverAppRoots[rule.Host] = hostSetting{value: appRoot, source: annotationsSource(ingress)}
 			}
 
 			if rule.HTTP != nil {
@@ -196,7 +197,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					}
 
 					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
-					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
+					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg, configSource: annotationsSource(ingress)}
 				}
 			}
 		}
@@ -265,7 +266,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: pa.Backend.Service.Name,
 						ServicePort: portString(pa.Backend.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     serviceSources,
+						Sources:     append(serviceSources, prodIngressPath.configSource),
 					}
 				}
 
@@ -356,7 +357,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: ingBackend.Service.Name,
 						ServicePort: portString(ingBackend.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     serviceSources,
+						Sources:     append(serviceSources, annotationsSource(ing.Ingress)),
 					}
 				}
 
@@ -441,7 +442,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					RuleIndex:            ri,
 					Config:               ing.config,
 					HasTLS:               hasTLS,
-					ServerSnippet:        serverSnippets[rule.Host],
+					ServerSnippet:        serverSnippets[rule.Host].value,
+					ServerSnippetSources: serverSnippets[rule.Host].Sources(),
 					Namespace:            ing.Namespace,
 					IngressName:          ing.Name,
 					ServiceName:          pa.Backend.Service.Name,
@@ -504,7 +506,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 										ServiceName: defaultSvcName,
 										ServicePort: "0",
 										Endpoints:   endpoints,
-										Sources:     serviceSources,
+										Sources:     append(serviceSources, annotationsSource(ing.Ingress)),
 									}
 								}
 							}
@@ -513,7 +515,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
-				loc.UseRegex = hostsWithUseRegex[rule.Host]
+				loc.UseRegexSources = hostsWithUseRegex[rule.Host]
+				loc.UseRegex = len(loc.UseRegexSources) > 0
 
 				// Build all middleware configurations so the translator only registers them.
 				endpointCount := 0
@@ -576,7 +579,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping ingress")
 						continue
 					}
-					p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
+					p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, annotationsSource(ing.Ingress), loc)
 
 					bk := &backend{
 						Name:        defaultBackendName,
@@ -624,7 +627,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServersTransport:        nst.ServersTransport,
 					Config:                  ing.config,
 					HasTLS:                  hasTLS,
-					ServerSnippet:           serverSnippets[rule.Host],
+					ServerSnippet:           serverSnippets[rule.Host].value,
+					ServerSnippetSources:    serverSnippets[rule.Host].Sources(),
 					Namespace:               ing.Namespace,
 					IngressName:             ing.Name,
 					ServiceName:             db.Service.Name,
@@ -637,7 +641,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
-				loc.UseRegex = hostsWithUseRegex[rule.Host]
+				loc.UseRegexSources = hostsWithUseRegex[rule.Host]
+				loc.UseRegex = len(loc.UseRegexSources) > 0
 
 				// Inherit basic/digest auth and custom headers like the rule paths
 				// do, so the per-host fallback is not an unauthenticated bypass.
@@ -645,7 +650,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping")
 					continue
 				}
-				p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
+				p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, annotationsSource(ing.Ingress), loc)
 
 				endpointCount := 0
 				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
@@ -675,11 +680,12 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 }
 
 // ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
-func inheritServerAppRoot(loc *location, appRoot string) {
-	if loc.AppRoot != nil || appRoot == "" {
+func inheritServerAppRoot(loc *location, appRoot hostSetting) {
+	if loc.AppRoot != nil || appRoot.value == "" {
 		return
 	}
-	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
+	loc.AppRoot = &dynamic.AppRoot{Path: appRoot.value}
+	loc.AppRootSources = appRoot.Sources()
 }
 
 func (p *Provider) buildServersTransport(ctx context.Context, ing *netv1.Ingress, cfg IngressConfig) (namedServersTransport, error) {
@@ -809,12 +815,32 @@ func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBa
 // makeIngressSources returns the references to the parts of the Ingress at the given paths, and to its annotations.
 // The annotations are a single source: an object does not record which of them it reads.
 func makeIngressSources(ing *netv1.Ingress, paths ...string) []dynamic.KubernetesRef {
-	sources := []dynamic.KubernetesRef{dynamic.MakeKubernetesRef(ing, "/metadata/annotations")}
+	sources := []dynamic.KubernetesRef{annotationsSource(ing)}
 	for _, path := range paths {
 		sources = append(sources, dynamic.MakeKubernetesRef(ing, path))
 	}
 
 	return sources
+}
+
+// annotationsSource returns the reference to the annotations of the Ingress, which its IngressConfig is parsed from.
+func annotationsSource(ing *netv1.Ingress) dynamic.KubernetesRef {
+	return dynamic.MakeKubernetesRef(ing, "/metadata/annotations")
+}
+
+// hostSetting is a value ingress-nginx applies to a whole server block, and the annotations of the Ingress declaring it.
+type hostSetting struct {
+	value  string
+	source dynamic.KubernetesRef
+}
+
+// Sources returns the source of the setting, if any.
+func (h hostSetting) Sources() []dynamic.KubernetesRef {
+	if h.value == "" {
+		return nil
+	}
+
+	return []dynamic.KubernetesRef{h.source}
 }
 
 // makeServicePortRef returns the reference to the given port of the service.
@@ -998,6 +1024,7 @@ func (p *Provider) buildServersClientAuth(ctx context.Context, servers map[strin
 		case srv.clientAuthIngress == "":
 			srv.TLSOption = clientAuthTLSOption
 			srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
+			srv.clientAuthSource = annotationsSource(ing.Ingress)
 			srv.clientAuthPassCertificate = passCertificate
 		case srv.TLSOption != clientAuthTLSOption || srv.clientAuthPassCertificate != passCertificate:
 			log.Ctx(ctx).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
@@ -1085,7 +1112,7 @@ func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, 
 // mirroring the inline resolution done for rule paths, so custom error pages
 // behave the same on the catch-all. Best-effort: when no per-ingress error
 // backend applies, buildCustomHTTPErrors falls back to the provider-level one.
-func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string, cfg IngressConfig, loc *location) {
+func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string, cfg IngressConfig, configSource dynamic.KubernetesRef, loc *location) {
 	if len(ptr.Deref(cfg.CustomHTTPErrors, nil)) == 0 {
 		return
 	}
@@ -1116,7 +1143,7 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 		Name:      errBackendName,
 		Namespace: namespace,
 		Endpoints: endpoints,
-		Sources:   sources,
+		Sources:   append(sources, configSource),
 	}
 }
 

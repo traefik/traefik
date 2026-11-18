@@ -7162,6 +7162,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-use-regex", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-use-regex", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-use-regex", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -7198,6 +7199,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-use-regex", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-use-regex", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-use-regex", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -8452,6 +8454,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-rewrite-target", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-rewrite-target", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-rewrite-target", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -8488,6 +8491,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-rewrite-target", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-rewrite-target", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-rewrite-target", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -9836,6 +9840,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host-root", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host-root", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -9849,6 +9854,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host-root", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-app-root-shared-host-root", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -19107,6 +19113,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "same-host-second-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -19120,6 +19127,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "same-host-second-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -19497,6 +19505,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -19510,6 +19519,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -19551,6 +19561,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "optional-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "optional-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -19564,6 +19575,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "optional-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "optional-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "protected-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -20606,6 +20618,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "forwarded-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "forwarded-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -20620,6 +20633,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "forwarded-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "forwarded-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -20662,6 +20676,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "inheriting-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "inheriting-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -20690,6 +20705,7 @@ func TestLoadIngresses(t *testing.T) {
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "inheriting-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "inheriting-ingress", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 									},
 								},
 							},
@@ -21194,6 +21210,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "without-ca-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "without-ca-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -21207,6 +21224,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "owner-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "without-ca-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "without-ca-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -21727,6 +21745,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "canary-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -21741,6 +21760,7 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "canary-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "public-ingress", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -22156,6 +22176,434 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"whoami.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc: "Custom HTTP Errors default backend shared across Ingresses",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-custom-http-errors-shared-default-backend.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("a.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-a-with-custom-http-errors-33-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-custom-http-errors", "default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-retry"},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("a.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-a-with-custom-http-errors-33-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-retry"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "a.localhost",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("b.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-b-with-custom-http-errors-33-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-custom-http-errors", "default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-retry"},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("b.localhost") && Path("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-b-with-custom-http-errors-33-whoami-6-80-2",
+							Middlewares: []string{"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-retry"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "b.localhost",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "415"},
+								Service: "default-backend-default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0",
+								NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-a-with-custom-http-errors"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "415"},
+								Service: "default-backend-default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls", NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-a-with-custom-http-errors"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "415"},
+								Service: "default-backend-default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0",
+								NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-b-with-custom-http-errors"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "415"},
+								Service: "default-backend-default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls", NginxHeaders: &http.Header{
+									"X-Namespaces":   {"default"},
+									"X-Ingress-Name": {"ingress-b-with-custom-http-errors"},
+									"X-Service-Name": {"whoami"},
+									"X-Service-Port": {"80"},
+								},
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{Kubernetes: &dynamic.KubernetesServiceMetadata{}},
+						},
+						"default-7-ingress-a-with-custom-http-errors-33-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-ingress-a-with-custom-http-errors-33",
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0/backend"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+						"default-backend-default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8000",
+									},
+									{
+										URL: "http://10.10.0.6:8000",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-b", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+									},
+									ServicePort: "0",
+								},
+							},
+						},
+						"default-backend-default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.5:8000"},
+									{URL: "http://10.10.0.6:8000"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-b", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+									},
+									ServicePort: "0",
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-7-ingress-b-with-custom-http-errors-33",
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0/backend"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+						"default-backend-default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.5:8000",
+									},
+									{
+										URL: "http://10.10.0.6:8000",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-b", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+									ServicePort: "0",
+								},
+							},
+						},
+						"default-backend-default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.5:8000"},
+									{URL: "http://10.10.0.6:8000"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-b", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/spec/rules/0/http/paths/0"},
+									},
+									ServicePort: "0",
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-a-with-custom-http-errors-33": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-custom-http-errors", Path: "/metadata/annotations"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-with-custom-http-errors-33": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-with-custom-http-errors", Path: "/metadata/annotations"},
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"a.localhost": hostTLSOption(),
+						"b.localhost": hostTLSOption(),
 					},
 				},
 			},
@@ -24641,6 +25089,312 @@ func TestLoadIngresses(t *testing.T) {
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-server-snippet", Path: "/metadata/annotations"},
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"snippet.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc:                    "Server snippet cross ingress",
+			allowSnippetAnnotations: true,
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-server-snippet-cross-ingress.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("snippet.localhost") && Path("/a")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-a-with-server-snippet-29-whoami-6-80-2",
+							Middlewares: []string{
+								"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-snippet",
+								"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-retry",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("snippet.localhost") && Path("/a")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-a-with-server-snippet-29-whoami-6-80-2",
+							Middlewares: []string{
+								"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls-snippet",
+								"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls-retry",
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("snippet.localhost") && Path("/b")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-b-without-server-snippet-32-whoami-6-80-2",
+							Middlewares: []string{
+								"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-snippet",
+								"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-retry",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("snippet.localhost") && Path("/b")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-ingress-b-without-server-snippet-32-whoami-6-80-2",
+							Middlewares: []string{
+								"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls-snippet",
+								"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls-retry",
+							},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "snippet.localhost",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-snippet": {
+							Snippet: &dynamic.Snippet{
+								ServerSnippet: "add_header X-Server-Snippet \"server-value\";\n",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls-snippet": {
+							Snippet: &dynamic.Snippet{
+								ServerSnippet: "add_header X-Server-Snippet \"server-value\";\n",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-snippet": {
+							Snippet: &dynamic.Snippet{
+								ServerSnippet: "add_header X-Server-Snippet \"server-value\";\n",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls-snippet": {
+							Snippet: &dynamic.Snippet{
+								ServerSnippet: "add_header X-Server-Snippet \"server-value\";\n",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0"},
+									},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{Kubernetes: &dynamic.KubernetesServiceMetadata{}},
+						},
+						"default-7-ingress-a-with-server-snippet-29-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-a-with-server-snippet-29",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/spec/rules/0/http/paths/0/backend"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-b-without-server-snippet-32",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/spec/rules/0/http/paths/0/backend"},
+									},
+									ServicePort: "80",
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-a-with-server-snippet-29": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-a-with-server-snippet", Path: "/metadata/annotations"},
+									},
+								},
+							},
+						},
+						"default-7-ingress-b-without-server-snippet-32": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-b-without-server-snippet", Path: "/metadata/annotations"},
 									},
 								},
 							},

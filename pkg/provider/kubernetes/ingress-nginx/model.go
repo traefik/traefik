@@ -98,6 +98,9 @@ type server struct {
 	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
 	clientAuthIngress string
 
+	// clientAuthSource is the annotations of that Ingress.
+	clientAuthSource dynamic.KubernetesRef
+
 	// clientAuthPassCertificate is the auth-tls-pass-certificate-to-upstream annotation of that Ingress,
 	// as ingress-nginx reads it from the server block and not from the location.
 	clientAuthPassCertificate bool
@@ -172,6 +175,12 @@ type location struct {
 	// (may come from a different ingress on the same host).
 	ServerSnippet string
 
+	// ServerSnippetSources are the annotations of the Ingress declaring ServerSnippet.
+	ServerSnippetSources []dynamic.KubernetesRef
+
+	// UseRegexSources are the annotations of the Ingresses of the host enabling UseRegex.
+	UseRegexSources []dynamic.KubernetesRef
+
 	// LocationIndex is the per-ingress-rule path index (pi) set by the builder.
 	// Used by the translator to build stable router key names that are independent
 	// of how many other ingresses share the same virtual host.
@@ -206,6 +215,9 @@ type location struct {
 
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
+
+	// AppRootSources are the annotations of the Ingress of the host declaring AppRoot, when it is not this location's one.
+	AppRootSources []dynamic.KubernetesRef
 
 	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
 	AppRootExtraRouterRule string
@@ -250,6 +262,9 @@ type location struct {
 
 	// AuthTLSPassCert, if non-nil, sets the Ssl-Client-* headers from the client TLS certificate, removing the values the client sent for them.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
+
+	// AuthTLSPassCertSources are the annotations of the Ingress declaring the client auth of the server.
+	AuthTLSPassCertSources []dynamic.KubernetesRef
 
 	// SnippetAuth, if non-nil, configures server/configuration snippets and forward auth.
 	SnippetAuth *dynamic.Snippet

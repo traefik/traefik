@@ -186,7 +186,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				Rule:        rule,
 				RuleSyntax:  "default",
 				Service:     routerSvcName,
-				Metadata:    loc.metadata(routerSources...),
+				Metadata:    loc.metadata(slices.Concat(routerSources, loc.UseRegexSources)...),
 			}
 
 			// TODO: in case we want to add the unavailable service only when it is used this should be done here.
@@ -213,7 +213,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					TLS: &dynamic.RouterTLSConfig{
 						Options: srv.TLSOptionName,
 					},
-					Metadata: loc.metadata(routerSources...),
+					Metadata: loc.metadata(slices.Concat(routerSources, loc.UseRegexSources)...),
 				}
 
 				if srv.TLSOption != nil {
@@ -563,7 +563,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 
 	if loc.AppRoot != nil {
 		name := routerKey + "-app-root"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot, Metadata: loc.metadata()}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AppRoot: loc.AppRoot, Metadata: loc.metadata(loc.AppRootSources...)}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -575,7 +575,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 
 	if loc.Redirect != nil {
 		name := routerKey + "-redirect"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RedirectRegex: loc.Redirect, Metadata: loc.metadata()}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{RedirectRegex: loc.Redirect, Metadata: loc.metadata(loc.UseRegexSources...)}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -655,7 +655,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 	// it owns the Ssl-Client-* headers, and is what removes the values a client supplied for them.
 	if loc.AuthTLSPassCert != nil {
 		name := routerKey + "-pass-certificate-to-upstream"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert, Metadata: loc.metadata()}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{AuthTLSPassCertificateToUpstream: loc.AuthTLSPassCert, Metadata: loc.metadata(loc.AuthTLSPassCertSources...)}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
@@ -670,7 +670,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 
 	if loc.SnippetAuth != nil {
 		name := routerKey + "-snippet"
-		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Snippet: loc.SnippetAuth, Metadata: loc.metadata()}
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Snippet: loc.SnippetAuth, Metadata: loc.metadata(loc.ServerSnippetSources...)}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
