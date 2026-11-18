@@ -245,12 +245,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
+			// The check is retried, as the CRDs or the RBAC can be applied after Traefik starts.
 			if err := p.client.checkGatewayAPIResources(ctxPool, p.Namespaces); err != nil {
-				// Retrying cannot help until the CRDs or the RBAC are updated, so the provider stops.
-				if errors.Is(err, errGatewayAPIResourceUnavailable) {
-					return backoff.Permanent(err)
-				}
-
 				return fmt.Errorf("checking Gateway API resources: %w", err)
 			}
 
@@ -309,7 +305,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
-			logger.Error().Err(err).Msg("Kubernetes Gateway API Provider stopped")
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
