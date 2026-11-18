@@ -315,7 +315,7 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespaces []string, stopC
 
 // addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
 func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
-	if err := informer.SetWatchErrorHandlerWithContext(newWatchErrorHandler(logger)); err != nil {
+	if err := informer.SetWatchErrorHandler(newWatchErrorHandler(logger)); err != nil {
 		return err
 	}
 
@@ -327,8 +327,8 @@ func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer,
 // It copies the cases of the client-go cache.DefaultWatchErrorHandler, which logs with klog,
 // and adds a hint on the fix to the errors keeping an informer from syncing until the CRDs or the RBAC are updated,
 // as the provider waits for all the informers to sync before loading any configuration.
-func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandlerWithContext {
-	return func(_ context.Context, r *cache.Reflector, err error) {
+func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandler {
+	return func(r *cache.Reflector, err error) {
 		switch {
 		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
 			// The reflector lists the resources again from the last observed resource version.

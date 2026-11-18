@@ -147,7 +147,7 @@ func Test_newWatchErrorHandler(t *testing.T) {
 			reflector := cache.NewReflector(&cache.ListWatch{}, &gatev1.TCPRoute{}, cache.NewStore(cache.MetaNamespaceKeyFunc), 0)
 
 			logger := zerolog.New(&buf)
-			newWatchErrorHandler(&logger)(t.Context(), reflector, test.err)
+			newWatchErrorHandler(&logger)(reflector, test.err)
 
 			if test.expectedLog == "" {
 				assert.Empty(t, buf.String())
