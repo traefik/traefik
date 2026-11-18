@@ -1060,11 +1060,17 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 }
 
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
+// When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
+// and the informer logs the error if it is not.
 func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
-		if kerror.IsNotFound(err) {
+		switch {
+		case kerror.IsNotFound(err):
 			return false, nil
+		case kerror.IsForbidden(err):
+			log.Warn().Str(logs.ProviderName, ProviderName).Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
+			return true, nil
 		}
 
 		return false, err
@@ -1074,6 +1080,8 @@ func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
 }
 
 // isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
+// When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
+// and the informer logs the error if it is not.
 func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
 	for _, verb := range []string{"list", "watch"} {
 		review := &authorizationv1.SelfSubjectAccessReview{
@@ -1087,6 +1095,10 @@ func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
 		}
 
 		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		if kerror.IsForbidden(err) {
+			log.Warn().Str(logs.ProviderName, ProviderName).Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
+			return true, nil
+		}
 		if err != nil {
 			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
 		}

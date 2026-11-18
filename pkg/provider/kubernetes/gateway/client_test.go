@@ -6,15 +6,97 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"testing"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	ktesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
+
+func TestWatchAll_clusterTrustBundleChecksError(t *testing.T) {
+	forbiddenErr := kerror.NewForbidden(authorizationv1.Resource(""), "", errors.New("RBAC denied"))
+	internalErr := kerror.NewInternalError(errors.New("internal error"))
+
+	testCases := []struct {
+		desc        string
+		verb        string
+		resource    string
+		err         error
+		expectedErr bool
+	}{
+		{
+			desc:     "Discovery forbidden",
+			verb:     "get",
+			resource: "resource",
+			err:      forbiddenErr,
+		},
+		{
+			desc:        "Discovery error",
+			verb:        "get",
+			resource:    "resource",
+			err:         internalErr,
+			expectedErr: true,
+		},
+		{
+			desc:     "Access review forbidden",
+			verb:     "create",
+			resource: "selfsubjectaccessreviews",
+			err:      forbiddenErr,
+		},
+		{
+			desc:        "Access review error",
+			verb:        "create",
+			resource:    "selfsubjectaccessreviews",
+			err:         internalErr,
+			expectedErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			csKube := kubefake.NewClientset()
+			csKube.Resources = []*metav1.APIResourceList{{
+				GroupVersion: certificatesv1.SchemeGroupVersion.String(),
+				APIResources: []metav1.APIResource{{Name: "clustertrustbundles"}},
+			}}
+			// The reactors are evaluated from the last prepended one, so the tested error comes first.
+			csKube.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+				return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+			})
+			csKube.PrependReactor(test.verb, test.resource, func(ktesting.Action) (bool, runtime.Object, error) {
+				return true, nil, test.err
+			})
+
+			client := newClientImpl(csKube, newGatewaySimpleClientSet(t))
+
+			stopCh := make(chan struct{})
+			t.Cleanup(func() { close(stopCh) })
+
+			_, err := client.WatchAll(nil, stopCh)
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.True(t, client.clusterTrustBundleAPIServed)
+			assert.True(t, client.clusterTrustBundleAllowed)
+			assert.Contains(t, client.factoryNamespace.WaitForCacheSync(stopCh), reflect.TypeFor[*certificatesv1.ClusterTrustBundle]())
+		})
+	}
+}
 
 func Test_newWatchErrorHandler(t *testing.T) {
 	testCases := []struct {
