@@ -33,7 +33,7 @@ When you run one Traefik instance with the [Kubernetes Gateway API provider](../
 * **Gateways share one instance.** Heavy traffic or a misconfiguration on one Gateway affects every other Gateway served by that instance.
 
 Use a single Traefik instance only when every Gateway it serves belongs to the same tenant.
-To isolate Gateways without the Traefik Operator, see [One Traefik Instance per Gateway](#one-traefik-instance-per-gateway).
+To isolate Gateways without the Traefik Operator, see [One Traefik Instance Per Gateway](#one-traefik-instance-per-gateway).
 
 ### Traefik Operator
 
@@ -45,7 +45,7 @@ Each data plane is a separate Traefik instance, with its own `Deployment`, `Serv
 * **Each Gateway carries its own infrastructure metadata.** The labels and annotations set in the Gateway `spec.infrastructure` are added to the resources generated for its data plane.
 * **Each data plane runs in the tenant's namespace.** Kubernetes deletes the data plane with its Gateway, and the data plane counts against the tenant's namespace quotas.
 
-To get the same isolation without the Traefik Operator, see [One Traefik Instance per Gateway](#one-traefik-instance-per-gateway).
+To get the same isolation without the Traefik Operator, see [One Traefik Instance Per Gateway](#one-traefik-instance-per-gateway).
 
 The Traefik Operator requires Traefik v3.8 or later as the data plane.
 To install it, follow the Traefik Operator [Getting Started guide](https://github.com/traefik/gateway-operator/blob/main/docs/getting-started.md).
@@ -58,7 +58,7 @@ Listeners add control inside each Gateway.
 A cluster operator can use the listener `hostname` to limit the domain names a Gateway serves, and `allowedRoutes` to limit which namespaces can attach routes to it.
 See [Gateway API routing configuration](../reference/routing-configuration/kubernetes/gateway-api.md) for the listener options Traefik supports.
 
-### One Traefik Instance per Gateway
+### One Traefik Instance Per Gateway
 
 Without the Traefik Operator, you can get the same isolation by deploying one Traefik instance per Gateway yourself.
 Set [`providers.kubernetesGateway.gateways`](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-gateways) on each instance to the Gateway it serves.
