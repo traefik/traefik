@@ -245,11 +245,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			// The check is retried, as the CRDs or the RBAC can be applied after Traefik starts.
-			if err := p.client.checkGatewayAPIResources(ctxPool, p.Namespaces); err != nil {
-				return fmt.Errorf("checking Gateway API resources: %w", err)
-			}
-
 			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")

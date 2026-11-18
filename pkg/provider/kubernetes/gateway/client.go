@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"slices"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
 	authorizationv1 "k8s.io/api/authorization/v1"
@@ -20,44 +23,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	kschema "k8s.io/apimachinery/pkg/runtime/schema"
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
-	"sigs.k8s.io/gateway-api/pkg/consts"
 )
 
-const resyncPeriod = 10 * time.Minute
+const (
+	resyncPeriod = 10 * time.Minute
 
-var errGatewayAPIResourceUnavailable = errors.New("gateway API resource unavailable")
-
-// gatewayAPIResources lists the Gateway API resources watched by the provider, through their v1 version.
-// Their availability is checked before starting the informers, as an informer on a resource that is not served,
-// or that Traefik is not allowed to list and watch, never syncs and blocks the provider,
-// and without the status update permission, the provider cannot report the state of the resources.
-// WatchAll starts the informers of the namespaced resources from this list, while GatewayClasses have their own filtered informer.
-var gatewayAPIResources = []struct {
-	name          string
-	namespaced    bool
-	updatesStatus bool
-}{
-	{name: "gatewayclasses", updatesStatus: true},
-	{name: "gateways", namespaced: true, updatesStatus: true},
-	{name: "httproutes", namespaced: true, updatesStatus: true},
-	{name: "grpcroutes", namespaced: true, updatesStatus: true},
-	{name: "tcproutes", namespaced: true, updatesStatus: true},
-	{name: "tlsroutes", namespaced: true, updatesStatus: true},
-	{name: "referencegrants", namespaced: true},
-	{name: "backendtlspolicies", namespaced: true, updatesStatus: true},
-	{name: "listenersets", namespaced: true, updatesStatus: true},
-}
+	// minGatewayAPIVersion is the minimum version of the Gateway API CRDs required by the provider.
+	// It is not the version of the Gateway API dependency, which can be a later patch version.
+	minGatewayAPIVersion = "v1.7.0"
+)
 
 type clientWrapper struct {
 	csGateway gateclientset.Interface
@@ -186,7 +171,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
-	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+	err := addEventHandler(c.factoryNamespace.Core().V1().Namespaces().Informer(), eventHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -204,21 +189,21 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if c.clusterTrustBundleAPIServed && c.clusterTrustBundleAllowed {
-		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(gatewayClassOptions), gateinformers.WithTransform(k8s.StripManagedFields))
-	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
+	err = addEventHandler(c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer(), eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ns := range namespaces {
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(factoryKube.Core().V1().Services().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -226,33 +211,54 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
 			return nil, err
 		}
-		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(endpointSliceInformer, eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
 		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
-		for _, resource := range gatewayAPIResources {
-			if !resource.namespaced {
-				continue
-			}
+		err = addEventHandler(factoryGateway.Gateway().V1().Gateways().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		err = addEventHandler(factoryGateway.Gateway().V1().HTTPRoutes().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		err = addEventHandler(factoryGateway.Gateway().V1().GRPCRoutes().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		err = addEventHandler(factoryGateway.Gateway().V1().ReferenceGrants().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		err = addEventHandler(factoryGateway.Gateway().V1().BackendTLSPolicies().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		err = addEventHandler(factoryKube.Core().V1().ConfigMaps().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
-			informer, err := factoryGateway.ForResource(kschema.GroupVersionResource{Group: gatev1.GroupName, Version: gatev1.GroupVersion.Version, Resource: resource.name})
-			if err != nil {
-				return nil, fmt.Errorf("creating %s informer: %w", resource.name, err)
-			}
+		err = addEventHandler(factoryGateway.Gateway().V1().TLSRoutes().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
-			if _, err = informer.Informer().AddEventHandler(eventHandler); err != nil {
-				return nil, fmt.Errorf("adding %s event handler: %w", resource.name, err)
-			}
+		err = addEventHandler(factoryGateway.Gateway().V1().ListenerSets().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
+		err = addEventHandler(factoryGateway.Gateway().V1().TCPRoutes().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(factorySecret.Core().V1().Secrets().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -304,6 +310,41 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	return eventCh, nil
+}
+
+// addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
+func addEventHandler(informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
+	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
+	if err := informer.SetWatchErrorHandlerWithContext(newWatchErrorHandler(logger)); err != nil {
+		return err
+	}
+
+	_, err := informer.AddEventHandler(eventHandler)
+	return err
+}
+
+// newWatchErrorHandler returns a handler logging the list and watch errors of an informer with the provider logger.
+// It copies the cases of the client-go cache.DefaultWatchErrorHandler, which logs with klog,
+// and adds a hint on the fix to the errors keeping an informer from syncing until the CRDs or the RBAC are updated,
+// as the provider waits for all the informers to sync before loading any configuration.
+func newWatchErrorHandler(logger zerolog.Logger) cache.WatchErrorHandlerWithContext {
+	return func(_ context.Context, r *cache.Reflector, err error) {
+		switch {
+		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
+			// The reflector lists the resources again from the last observed resource version.
+			logger.Debug().Err(err).Msgf("Watch of %s closed", r.TypeDescription())
+		case errors.Is(err, io.EOF):
+			// The watch closed normally.
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			logger.Debug().Err(err).Msgf("Watch of %s closed with unexpected EOF", r.TypeDescription())
+		case kerror.IsNotFound(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the resource is not served: install the Gateway API CRDs %s or later", r.TypeDescription(), minGatewayAPIVersion)
+		case kerror.IsForbidden(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider", r.TypeDescription())
+		default:
+			logger.Error().Err(err).Msgf("Cannot list or watch %s", r.TypeDescription())
+		}
+	}
 }
 
 func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, error) {
@@ -1016,91 +1057,6 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
-}
-
-// checkGatewayAPIResources ensures that the Gateway API resources watched by the provider are served as v1,
-// and that Traefik is allowed to list and watch them, and to update the status of those it reports on, in the given namespaces.
-func (c *clientWrapper) checkGatewayAPIResources(ctx context.Context, namespaces []string) error {
-	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(gatev1.GroupVersion.String())
-	if err != nil && !kerror.IsNotFound(err) {
-		return fmt.Errorf("discovering %s resources: %w", gatev1.GroupVersion, err)
-	}
-
-	if resourceList == nil || len(resourceList.APIResources) == 0 {
-		return fmt.Errorf("%w: %s is not served, install the Gateway API CRDs %s or later",
-			errGatewayAPIResourceUnavailable, gatev1.GroupVersion, consts.BundleVersion)
-	}
-
-	for _, resource := range gatewayAPIResources {
-		served := slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == resource.name })
-		if !served {
-			return fmt.Errorf("%w: %s.%s is not served as %s, update the Gateway API CRDs to %s or later",
-				errGatewayAPIResourceUnavailable, resource.name, gatev1.GroupName, gatev1.GroupVersion, consts.BundleVersion)
-		}
-
-		accesses := []authorizationv1.ResourceAttributes{{Verb: "list"}, {Verb: "watch"}}
-		if resource.updatesStatus {
-			accesses = append(accesses, authorizationv1.ResourceAttributes{Verb: "update", Subresource: "status"})
-		}
-
-		for _, access := range accesses {
-			err = c.checkAccess(ctx, resource.name, access, metav1.NamespaceAll)
-			if err == nil {
-				continue // cluster-wide permission granted, no need to check per namespace
-			}
-
-			// A cluster-wide permission covers every namespace,
-			// so the watched namespaces are only checked, for RBACs granted per namespace, when it is denied.
-			if !errors.Is(err, errGatewayAPIResourceUnavailable) || !resource.namespaced || len(namespaces) == 0 {
-				return err
-			}
-
-			for _, namespace := range namespaces {
-				if err = c.checkAccess(ctx, resource.name, access, namespace); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// checkAccess ensures that Traefik is granted the given access on the Gateway API resource in the namespace,
-// metav1.NamespaceAll standing for a cluster-wide access.
-func (c *clientWrapper) checkAccess(ctx context.Context, resource string, access authorizationv1.ResourceAttributes, namespace string) error {
-	access.Namespace = namespace
-	access.Group = gatev1.GroupName
-	access.Version = gatev1.GroupVersion.Version
-	access.Resource = resource
-
-	target := resource + "." + gatev1.GroupName
-	if access.Subresource != "" {
-		target += "/" + access.Subresource
-	}
-
-	// The GatewayClass informer only selects the configured GatewayClass by name,
-	// so an RBAC restricted to this name, with resourceNames, is enough.
-	if resource == "gatewayclasses" && c.gatewayClass != "" {
-		access.Name = c.gatewayClass
-		target += fmt.Sprintf(" named %q", c.gatewayClass)
-	}
-
-	review := &authorizationv1.SelfSubjectAccessReview{
-		Spec: authorizationv1.SelfSubjectAccessReviewSpec{ResourceAttributes: &access},
-	}
-
-	review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
-	if err != nil {
-		return fmt.Errorf("checking %s permission on %s in the namespace %q: %w", access.Verb, target, namespace, err)
-	}
-
-	if !review.Status.Allowed {
-		return fmt.Errorf("%w: not allowed to %s %s in the namespace %q, update the Traefik RBAC for the Kubernetes Gateway API provider",
-			errGatewayAPIResourceUnavailable, access.Verb, target, namespace)
-	}
-
-	return nil
 }
 
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.

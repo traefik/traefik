@@ -1,139 +1,60 @@
 package gateway
 
 import (
+	"bytes"
+	"context"
 	"errors"
-	"reflect"
-	"slices"
+	"fmt"
+	"io"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	authorizationv1 "k8s.io/api/authorization/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	discoveryfake "k8s.io/client-go/discovery/fake"
-	kubefake "k8s.io/client-go/kubernetes/fake"
-	ktesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/cache"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func TestWatchAll_gatewayAPIInformers(t *testing.T) {
-	client := newClientImpl(kubefake.NewClientset(), newGatewaySimpleClientSet(t))
-
-	stopCh := make(chan struct{})
-	t.Cleanup(func() { close(stopCh) })
-
-	_, err := client.WatchAll(nil, stopCh)
-	require.NoError(t, err)
-
-	assert.Equal(t, map[reflect.Type]bool{
-		reflect.TypeFor[*gatev1.GatewayClass](): true,
-	}, client.factoryGatewayClass.WaitForCacheSync(stopCh))
-
-	assert.Equal(t, map[reflect.Type]bool{
-		reflect.TypeFor[*gatev1.Gateway]():          true,
-		reflect.TypeFor[*gatev1.HTTPRoute]():        true,
-		reflect.TypeFor[*gatev1.GRPCRoute]():        true,
-		reflect.TypeFor[*gatev1.TCPRoute]():         true,
-		reflect.TypeFor[*gatev1.TLSRoute]():         true,
-		reflect.TypeFor[*gatev1.ReferenceGrant]():   true,
-		reflect.TypeFor[*gatev1.BackendTLSPolicy](): true,
-		reflect.TypeFor[*gatev1.ListenerSet]():      true,
-	}, client.factoriesGateway[metav1.NamespaceAll].WaitForCacheSync(stopCh))
-}
-
-func Test_checkGatewayAPIResources(t *testing.T) {
-	var servedResources []metav1.APIResource
-	for _, resource := range gatewayAPIResources {
-		servedResources = append(servedResources, metav1.APIResource{Name: resource.name})
-	}
-
-	errAccessReview := errors.New("access review error")
-
+func Test_newWatchErrorHandler(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		resources    []metav1.APIResource
-		namespaces   []string
-		gatewayClass string
-		denied       []string
-		apiError     error
-		expectedErr  error
+		desc        string
+		err         error
+		expectedLog string
 	}{
 		{
-			desc:      "Resources served and allowed",
-			resources: servedResources,
+			desc:        "Resource expired",
+			err:         kerror.NewResourceExpired("too old resource version"),
+			expectedLog: `"level":"debug","error":"too old resource version","message":"Watch of *v1.TCPRoute closed"`,
 		},
 		{
-			desc:        "Gateway API v1 not served",
-			expectedErr: errGatewayAPIResourceUnavailable,
+			desc:        "Resource gone",
+			err:         kerror.NewGone("gone"),
+			expectedLog: `"level":"debug","error":"gone","message":"Watch of *v1.TCPRoute closed"`,
 		},
 		{
-			desc:        "Gateway API v1 served without resources",
-			resources:   []metav1.APIResource{},
-			expectedErr: errGatewayAPIResourceUnavailable,
+			desc: "Watch closed",
+			err:  io.EOF,
 		},
 		{
-			desc: "TCPRoute not served",
-			resources: slices.DeleteFunc(slices.Clone(servedResources), func(r metav1.APIResource) bool {
-				return r.Name == "tcproutes"
-			}),
-			expectedErr: errGatewayAPIResourceUnavailable,
+			desc:        "Watch closed with unexpected EOF",
+			err:         io.ErrUnexpectedEOF,
+			expectedLog: `"level":"debug","error":"unexpected EOF","message":"Watch of *v1.TCPRoute closed with unexpected EOF"`,
 		},
 		{
-			desc:        "List not allowed cluster-wide",
-			resources:   servedResources,
-			denied:      []string{"list/tcproutes/"},
-			expectedErr: errGatewayAPIResourceUnavailable,
+			desc:        "Resource not served",
+			err:         fmt.Errorf("failed to list *v1.TCPRoute: %w", kerror.NewNotFound(gatev1.Resource("tcproutes"), "")),
+			expectedLog: `"level":"error",` + `"error":"failed to list *v1.TCPRoute: tcproutes.gateway.networking.k8s.io \"\" not found","message":"Cannot list or watch *v1.TCPRoute, the resource is not served: install the Gateway API CRDs v1.7.0 or later"`,
 		},
 		{
-			desc:       "Cluster-wide permission covers watched namespaces",
-			resources:  servedResources,
-			namespaces: []string{"foo"},
-			denied:     []string{"watch/listenersets/foo"},
+			desc:        "Access forbidden",
+			err:         kerror.NewForbidden(gatev1.Resource("tcproutes"), "", errors.New("RBAC denied")),
+			expectedLog: `"level":"error",` + `"error":"tcproutes.gateway.networking.k8s.io is forbidden: RBAC denied","message":"Cannot list or watch *v1.TCPRoute, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider"`,
 		},
 		{
-			desc:       "Permission granted per watched namespace",
-			resources:  servedResources,
-			namespaces: []string{"foo", "bar"},
-			denied:     []string{"watch/listenersets/"},
-		},
-		{
-			desc:        "Watch not allowed in a watched namespace",
-			resources:   servedResources,
-			namespaces:  []string{"foo", "bar"},
-			denied:      []string{"watch/listenersets/", "watch/listenersets/bar"},
-			expectedErr: errGatewayAPIResourceUnavailable,
-		},
-		{
-			desc:        "GatewayClass permission checked cluster-wide with watched namespaces",
-			resources:   servedResources,
-			namespaces:  []string{"foo"},
-			denied:      []string{"watch/gatewayclasses/"},
-			expectedErr: errGatewayAPIResourceUnavailable,
-		},
-		{
-			desc:         "GatewayClass permission checked by name",
-			resources:    servedResources,
-			gatewayClass: "traefik",
-			denied:       []string{"update/gatewayclasses/status:traefik/"},
-			expectedErr:  errGatewayAPIResourceUnavailable,
-		},
-		{
-			desc:        "Status update not allowed",
-			resources:   servedResources,
-			denied:      []string{"update/httproutes/status/"},
-			expectedErr: errGatewayAPIResourceUnavailable,
-		},
-		{
-			desc:      "ReferenceGrant status update not required",
-			resources: servedResources,
-			denied:    []string{"update/referencegrants/status/"},
-		},
-		{
-			desc:        "Access review error",
-			resources:   servedResources,
-			apiError:    errAccessReview,
-			expectedErr: errAccessReview,
+			desc:        "Other error",
+			err:         errors.New("connection refused"),
+			expectedLog: `"level":"error","error":"connection refused","message":"Cannot list or watch *v1.TCPRoute"`,
 		},
 	}
 
@@ -141,38 +62,17 @@ func Test_checkGatewayAPIResources(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			kubeClient := kubefake.NewClientset()
+			var buf bytes.Buffer
+			reflector := cache.NewReflector(&cache.ListWatch{}, &gatev1.TCPRoute{}, cache.NewStore(cache.MetaNamespaceKeyFunc), 0)
 
-			fakeDiscovery, ok := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
-			require.True(t, ok)
-			if test.resources != nil {
-				fakeDiscovery.Resources = []*metav1.APIResourceList{{GroupVersion: gatev1.GroupVersion.String(), APIResources: test.resources}}
+			newWatchErrorHandler(zerolog.New(&buf))(context.Background(), reflector, test.err)
+
+			if test.expectedLog == "" {
+				assert.Empty(t, buf.String())
+				return
 			}
 
-			kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(action ktesting.Action) (bool, runtime.Object, error) {
-				if test.apiError != nil {
-					return true, nil, test.apiError
-				}
-
-				review := action.(ktesting.CreateAction).GetObject().(*authorizationv1.SelfSubjectAccessReview)
-				attrs := review.Spec.ResourceAttributes
-				target := attrs.Resource
-				if attrs.Subresource != "" {
-					target += "/" + attrs.Subresource
-				}
-				if attrs.Name != "" {
-					target += ":" + attrs.Name
-				}
-				review.Status.Allowed = !slices.Contains(test.denied, attrs.Verb+"/"+target+"/"+attrs.Namespace)
-
-				return true, review, nil
-			})
-
-			client := newClientImpl(kubeClient, nil)
-			client.gatewayClass = test.gatewayClass
-
-			err := client.checkGatewayAPIResources(t.Context(), test.namespaces)
-			assert.ErrorIs(t, err, test.expectedErr)
+			assert.Contains(t, buf.String(), test.expectedLog)
 		})
 	}
 }
