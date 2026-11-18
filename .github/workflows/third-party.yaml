@@ -1,0 +1,106 @@
+name: 📄 Third-party attribution
+
+on:
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check selected branch
+        if: github.ref_type != 'branch'
+        run: |
+          echo "::error::Select a branch when running this workflow."
+          exit 1
+
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: '.go-version'
+          cache: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: webui/.nvmrc
+          cache: 'yarn'
+          cache-dependency-path: webui/yarn.lock
+
+      - name: Prepare dependency sources
+        run: |
+          go mod download
+          yarn --cwd webui install --frozen-lockfile --ignore-scripts --non-interactive
+
+      - name: Generate attribution files
+        id: generate
+        shell: bash
+        env:
+          AIK_CLIENT: ${{ secrets.AIK_CLIENT }}
+          AIK_SECRET: ${{ secrets.AIK_SECRET }}
+        run: |
+          make refresh-third-party 2>&1 | tee "${RUNNER_TEMP}/assimilis.log"
+          generated_at=$(cat third_party/.last_generated_at)
+          echo "generated_at=${generated_at}" >> "${GITHUB_OUTPUT}"
+
+        # needed for validation step
+      - name: Commit attribution files
+        env:
+          BASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add third_party/
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(deps): update third-party attributions for ${BASE_BRANCH}"
+          fi
+
+      - name: Validate attribution files
+        env:
+          MAX_AGE: "12h"
+        run: make validate-third-party
+
+      - name: Upload attribution files and log
+        if: ${{ !cancelled() && steps.generate.outcome != 'skipped' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: third-party-attributions
+          path: |
+            third_party/
+            ${{ runner.temp }}/assimilis.log
+          include-hidden-files: true
+
+      - name: Open or update attribution PR
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        with:
+          token: ${{ github.token }}
+          base: ${{ github.ref_name }}
+          branch: third-party/${{ github.ref_name }}
+          delete-branch: true
+          add-paths: third_party/
+          labels: kind/enhancement,status/2-needs-review
+          commit-message: "chore(deps): update third-party attributions for ${{ github.ref_name }}"
+          title: "chore(deps): update third-party attributions for ${{ github.ref_name }}"
+          body: |
+            Updates the Aikido SBOM and third-party attribution files using [Assimilis](https://github.com/traefik/assimilis) for ${{ github.ref_name }}.
+
+            Attributions generated at: `${{ steps.generate.outputs.generated_at }}`.
+
+            Review and merge this PR before tagging the release.
