@@ -183,6 +183,47 @@ func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 	}
 }
 
+func TestServiceTCPHealthChecker_executeHealthCheck_defaultTimeout(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		config *dynamic.TCPServerHealthCheck
+	}{
+		{
+			desc:   "unset timeout",
+			config: &dynamic.TCPServerHealthCheck{},
+		},
+		{
+			desc:   "negative timeout",
+			config: &dynamic.TCPServerHealthCheck{Timeout: ptypes.Duration(-time.Second)},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = listener.Close() })
+
+			dialerManager := tcp.NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{}, false)
+			require.NoError(t, err)
+
+			targets := []TCPHealthCheckTarget{{
+				Address: listener.Addr().String(),
+				Dialer:  dialer,
+			}}
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test")
+
+			err = healthChecker.executeHealthCheck(t.Context(), test.config, &targets[0])
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T) {
 	testCases := []struct {
 		desc             string
