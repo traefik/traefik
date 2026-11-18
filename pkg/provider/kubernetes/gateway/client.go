@@ -177,13 +177,13 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespaces []string, stopC
 		return nil, err
 	}
 
-	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed(logger)
+	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
 	}
 
 	if c.clusterTrustBundleAPIServed {
-		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed(logger)
+		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("checking ClusterTrustBundle permissions: %w", err)
 		}
@@ -1062,14 +1062,14 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
 // When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
 // and the informer logs the error if it is not.
-func (c *clientWrapper) isClusterTrustBundleAPIServed(logger *zerolog.Logger) (bool, error) {
+func (c *clientWrapper) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
 		switch {
 		case kerror.IsNotFound(err):
 			return false, nil
 		case kerror.IsForbidden(err):
-			logger.Warn().Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
 			return true, nil
 		}
 
@@ -1082,7 +1082,7 @@ func (c *clientWrapper) isClusterTrustBundleAPIServed(logger *zerolog.Logger) (b
 // isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
 // When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
 // and the informer logs the error if it is not.
-func (c *clientWrapper) isClusterTrustBundleAllowed(logger *zerolog.Logger) (bool, error) {
+func (c *clientWrapper) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
 	for _, verb := range []string{"list", "watch"} {
 		review := &authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
@@ -1094,9 +1094,9 @@ func (c *clientWrapper) isClusterTrustBundleAllowed(logger *zerolog.Logger) (boo
 			},
 		}
 
-		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
 		if kerror.IsForbidden(err) {
-			logger.Warn().Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
 			return true, nil
 		}
 		if err != nil {
