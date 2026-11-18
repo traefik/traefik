@@ -1076,7 +1076,7 @@ func (c *clientWrapper) isClusterTrustBundleAPIServed(ctx context.Context) (bool
 			return true, nil
 		}
 
-		return false, err
+		return false, fmt.Errorf("discovering %s resources: %w", certificatesv1.SchemeGroupVersion, err)
 	}
 
 	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
