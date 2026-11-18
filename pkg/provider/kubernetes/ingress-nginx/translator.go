@@ -663,7 +663,7 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 		name := routerKey + "-custom-headers"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{
 			Headers:  &dynamic.Headers{CustomResponseHeaders: loc.ResolvedCustomHeaders},
-			Metadata: loc.metadata(loc.CustomHeadersSources...),
+			Metadata: loc.metadata(),
 		}
 		rt.Middlewares = append(rt.Middlewares, name)
 	}

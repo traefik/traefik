@@ -193,9 +193,6 @@ type location struct {
 	// BackendSources are the parts of the Ingress declaring the backend of this location, and its annotations.
 	BackendSources []dynamic.KubernetesRef
 
-	// CustomHeadersSources are the parts of the ConfigMap holding ResolvedCustomHeaders.
-	CustomHeadersSources []dynamic.KubernetesRef
-
 	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
 	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
 	SSLPassthrough bool

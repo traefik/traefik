@@ -61,6 +61,8 @@ type KubernetesServiceMetadata struct {
 // A path such as /spec/rules/0/matches/0 selects all the fields of /spec, /spec/rules/0 and /spec/rules/0/matches/0,
 // except the other items of the arrays and maps along the way.
 // Use as few sources as possible.
+// To minimize the noise, Secrets, ConfigMaps, ClusterTrustBundles and EndpointSlices are never sources,
+// even when the provider reads them.
 //
 // With several sources, an item is left out only if one source leaves it out and no source goes through it.
 // For example, on an HTTPRoute with the parentRefs 0 and 1, and the rules 0, 1 and 2:

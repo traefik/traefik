@@ -682,7 +682,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -710,7 +709,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "other-namespace", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -738,7 +736,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -766,7 +763,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "other-namespace", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1094,7 +1090,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1108,7 +1103,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1344,7 +1338,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1358,7 +1351,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1400,7 +1392,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "other-namespace", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -1414,7 +1405,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "other-namespace", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-cross-namespace-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -11819,7 +11809,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-no-rules-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-no-rules-custom-headers", Path: "/spec/defaultBackend"},
 									},
@@ -11833,7 +11822,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-no-rules-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-no-rules-custom-headers", Path: "/spec/defaultBackend"},
 									},
@@ -12475,7 +12463,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/spec/rules/0/host"},
 									},
@@ -12489,7 +12476,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/spec/rules/0/host"},
 									},
@@ -12503,7 +12489,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},
@@ -12517,7 +12502,6 @@ func TestLoadIngresses(t *testing.T) {
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
-										{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "custom-headers-configmap", Path: "/data"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/metadata/annotations"},
 										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-default-backend-per-host-custom-headers", Path: "/spec/rules/0/http/paths/0"},
 									},

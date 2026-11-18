@@ -476,13 +476,12 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 
 				// Pre-resolve custom headers ConfigMap.
 				if ing.config.CustomHeaders != nil {
-					headers, headersSource, err := p.resolveCustomHeaders(ing.Namespace, *ing.config.CustomHeaders)
+					headers, err := p.resolveCustomHeaders(ing.Namespace, *ing.config.CustomHeaders)
 					if err != nil {
 						logger.Error().Err(err).Msg("Cannot resolve custom-headers ConfigMap")
 						loc.Error = true
 					} else {
 						loc.ResolvedCustomHeaders = headers
-						loc.CustomHeadersSources = []dynamic.KubernetesRef{headersSource}
 					}
 				}
 
@@ -1070,12 +1069,11 @@ func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, 
 	}
 
 	if cfg.CustomHeaders != nil {
-		headers, headersSource, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
+		headers, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
 		if err != nil {
 			loc.Error = true
 		} else {
 			loc.ResolvedCustomHeaders = headers
-			loc.CustomHeadersSources = []dynamic.KubernetesRef{headersSource}
 		}
 	}
 
@@ -1189,33 +1187,33 @@ func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynam
 	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
 }
 
-func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, dynamic.KubernetesRef, error) {
+func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
 	parts := strings.Split(customHeadersRef, "/")
 	if len(parts) != 2 {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("invalid custom-headers configmap reference %q", customHeadersRef)
+		return nil, fmt.Errorf("invalid custom-headers configmap reference %q", customHeadersRef)
 	}
 
 	configMapNamespace := parts[0]
 	configMapName := parts[1]
 
 	if !p.AllowCrossNamespaceResources && configMapNamespace != namespace {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, namespace)
+		return nil, fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, namespace)
 	}
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting configmap %s: %w", customHeadersRef, err)
+		return nil, fmt.Errorf("getting configmap %s: %w", customHeadersRef, err)
 	}
 
 	headers := make(map[string]string)
 	for key, value := range configMap.Data {
 		if !slices.Contains(p.allowedHeaders, key) {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("header %q is not in GlobalAllowedResponseHeaders", key)
+			return nil, fmt.Errorf("header %q is not in GlobalAllowedResponseHeaders", key)
 		}
 		headers[key] = value
 	}
 
-	return headers, dynamic.MakeKubernetesRef(configMap, "/data"), nil
+	return headers, nil
 }
 
 // resolveHTTPErrorBackend returns the metamodel backend key for a per-ingress

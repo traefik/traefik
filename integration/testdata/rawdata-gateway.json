@@ -57,7 +57,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "556",
+							"resourceVersion": "554",
 							"namespace": "default",
 							"name": "my-gateway",
 							"path": "/spec/listeners/0"
@@ -66,16 +66,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
-							"namespace": "default",
-							"name": "http-app-1",
-							"path": "/spec/hostnames"
-						},
-						{
-							"group": "gateway.networking.k8s.io",
-							"version": "v1",
-							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/parentRefs/0"
@@ -84,10 +75,10 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
-							"path": "/spec/rules/0"
+							"path": "/spec/rules/0/matches/0"
 						}
 					]
 				}
@@ -109,7 +100,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "557",
+							"resourceVersion": "555",
 							"namespace": "default",
 							"name": "my-https-gateway",
 							"path": "/spec/listeners/0"
@@ -118,16 +109,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
-							"namespace": "default",
-							"name": "http-app-1",
-							"path": "/spec/hostnames"
-						},
-						{
-							"group": "gateway.networking.k8s.io",
-							"version": "v1",
-							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/parentRefs/1"
@@ -136,10 +118,10 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
-							"path": "/spec/rules/0"
+							"path": "/spec/rules/0/matches/0"
 						}
 					]
 				}
@@ -165,7 +147,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "556",
+							"resourceVersion": "554",
 							"namespace": "default",
 							"name": "my-gateway",
 							"path": "/spec/listeners/0"
@@ -200,7 +182,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "557",
+							"resourceVersion": "555",
 							"namespace": "default",
 							"name": "my-https-gateway",
 							"path": "/spec/listeners/0"
@@ -256,10 +238,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"strategy": "wrr",
@@ -274,7 +256,15 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "340",
+							"resourceVersion": "339",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "339",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/spec/ports/0"
@@ -283,7 +273,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/rules/0/backendRefs/0"
@@ -294,8 +284,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr@kubernetesgateway": {
@@ -314,7 +304,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/rules/0/backendRefs"
@@ -331,10 +321,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"strategy": "wrr",
@@ -349,7 +339,15 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "340",
+							"resourceVersion": "339",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "339",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/spec/ports/0"
@@ -358,7 +356,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/rules/0/backendRefs/0"
@@ -369,8 +367,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.5:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-119934658cf45eae45a6-wrr@kubernetesgateway": {
@@ -389,7 +387,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "HTTPRoute",
-							"resourceVersion": "560",
+							"resourceVersion": "558",
 							"namespace": "default",
 							"name": "http-app-1",
 							"path": "/spec/rules/0/backendRefs"
@@ -445,7 +443,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "558",
+							"resourceVersion": "556",
 							"namespace": "default",
 							"name": "my-tcp-gateway",
 							"path": "/spec/listeners/0"
@@ -454,7 +452,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TCPRoute",
-							"resourceVersion": "561",
+							"resourceVersion": "559",
 							"namespace": "default",
 							"name": "tcp-app-1",
 							"path": "/spec/parentRefs/0"
@@ -463,7 +461,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TCPRoute",
-							"resourceVersion": "561",
+							"resourceVersion": "559",
 							"namespace": "default",
 							"name": "tcp-app-1",
 							"path": "/spec/rules/0"
@@ -494,7 +492,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "Gateway",
-							"resourceVersion": "559",
+							"resourceVersion": "557",
 							"namespace": "default",
 							"name": "my-tls-gateway",
 							"path": "/spec/listeners/0"
@@ -503,16 +501,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TLSRoute",
-							"resourceVersion": "562",
-							"namespace": "default",
-							"name": "tls-app-1",
-							"path": "/spec/hostnames"
-						},
-						{
-							"group": "gateway.networking.k8s.io",
-							"version": "v1",
-							"kind": "TLSRoute",
-							"resourceVersion": "562",
+							"resourceVersion": "560",
 							"namespace": "default",
 							"name": "tls-app-1",
 							"path": "/spec/parentRefs/0"
@@ -521,7 +510,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TLSRoute",
-							"resourceVersion": "562",
+							"resourceVersion": "560",
 							"namespace": "default",
 							"name": "tls-app-1",
 							"path": "/spec/rules/0"
@@ -547,10 +536,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.3:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.7:8080"
 					}
 				]
 			},
@@ -560,7 +549,15 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "342",
+							"resourceVersion": "341",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "341",
 							"namespace": "default",
 							"name": "whoamitcp",
 							"path": "/spec/ports/0"
@@ -569,7 +566,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TCPRoute",
-							"resourceVersion": "561",
+							"resourceVersion": "559",
 							"namespace": "default",
 							"name": "tcp-app-1",
 							"path": "/spec/rules/0/backendRefs/0"
@@ -580,8 +577,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.3:8080": "UP",
-				"10.42.0.5:8080": "UP"
+				"10.42.0.2:8080": "UP",
+				"10.42.0.7:8080": "UP"
 			}
 		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-ea7aa4e0bb352b30e06c-wrr@kubernetesgateway": {
@@ -600,7 +597,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TCPRoute",
-							"resourceVersion": "561",
+							"resourceVersion": "559",
 							"namespace": "default",
 							"name": "tcp-app-1",
 							"path": "/spec/rules/0/backendRefs"
@@ -617,10 +614,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.3:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.7:8080"
 					}
 				]
 			},
@@ -630,7 +627,15 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "342",
+							"resourceVersion": "341",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"resourceVersion": "341",
 							"namespace": "default",
 							"name": "whoamitcp",
 							"path": "/spec/ports/0"
@@ -639,7 +644,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TLSRoute",
-							"resourceVersion": "562",
+							"resourceVersion": "560",
 							"namespace": "default",
 							"name": "tls-app-1",
 							"path": "/spec/rules/0/backendRefs/0"
@@ -650,8 +655,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.3:8080": "UP",
-				"10.42.0.5:8080": "UP"
+				"10.42.0.2:8080": "UP",
+				"10.42.0.7:8080": "UP"
 			}
 		},
 		"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-42f3967530c6b666e7b4-wrr@kubernetesgateway": {
@@ -670,7 +675,7 @@
 							"group": "gateway.networking.k8s.io",
 							"version": "v1",
 							"kind": "TLSRoute",
-							"resourceVersion": "562",
+							"resourceVersion": "560",
 							"namespace": "default",
 							"name": "tls-app-1",
 							"path": "/spec/rules/0/backendRefs"
