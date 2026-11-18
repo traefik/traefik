@@ -1938,10 +1938,10 @@ func Test_LocationPrefixModifier(t *testing.T) {
 		path       string
 		wantStatus int
 	}{
-		{desc: "matching path", path: "/internal", wantStatus: http.StatusNotFound},
-		{desc: "matching subpath", path: "/internal/status", wantStatus: http.StatusNotFound},
-		{desc: "matching path with query", path: "/internal?check=true", wantStatus: http.StatusNotFound},
-		{desc: "prefix within path segment", path: "/internality", wantStatus: http.StatusNotFound},
+		{desc: "matching path", path: "/internal", wantStatus: http.StatusTeapot},
+		{desc: "matching subpath", path: "/internal/status", wantStatus: http.StatusTeapot},
+		{desc: "matching path with query", path: "/internal?check=true", wantStatus: http.StatusTeapot},
+		{desc: "prefix within path segment", path: "/internality", wantStatus: http.StatusTeapot},
 		{desc: "unrelated path", path: "/public", wantStatus: http.StatusOK},
 		{desc: "partial prefix", path: "/intern", wantStatus: http.StatusOK},
 		{desc: "case mismatch", path: "/Internal", wantStatus: http.StatusOK},
