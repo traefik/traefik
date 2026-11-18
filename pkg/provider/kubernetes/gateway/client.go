@@ -316,11 +316,14 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespaces []string, stopC
 // addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
 func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
 	if err := informer.SetWatchErrorHandler(newWatchErrorHandler(logger)); err != nil {
-		return err
+		return fmt.Errorf("setting watch error handler: %w", err)
 	}
 
-	_, err := informer.AddEventHandler(eventHandler)
-	return err
+	if _, err := informer.AddEventHandler(eventHandler); err != nil {
+		return fmt.Errorf("adding event handler: %w", err)
+	}
+
+	return nil
 }
 
 // newWatchErrorHandler returns a handler logging the list and watch errors of an informer with the provider logger.
