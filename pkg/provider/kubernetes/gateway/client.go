@@ -66,6 +66,19 @@ type Client struct {
 	clusterTrustBundleAllowed   bool
 }
 
+// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
+func NewClient(provider *Provider, csKube kclientset.Interface, csGateway gateclientset.Interface) *Client {
+	return &Client{
+		csGateway:        csGateway,
+		csKube:           csKube,
+		factoriesGateway: make(map[string]gateinformers.SharedInformerFactory),
+		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
+		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
+		gatewayClass:     provider.GatewayClass,
+		labelSelector:    provider.LabelSelector,
+	}
+}
+
 func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	c.QPS = float32(qps)
 	c.Burst = burst
@@ -81,19 +94,6 @@ func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Inte
 	}
 
 	return csKube, csGateway, nil
-}
-
-// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
-func NewClient(provider *Provider, csKube kclientset.Interface, csGateway gateclientset.Interface) *Client {
-	return &Client{
-		csGateway:        csGateway,
-		csKube:           csKube,
-		factoriesGateway: make(map[string]gateinformers.SharedInformerFactory),
-		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
-		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
-		gatewayClass:     provider.GatewayClass,
-		labelSelector:    provider.LabelSelector,
-	}
 }
 
 // newInClusterClientsets returns the clientsets of a Provider client that is expected to run

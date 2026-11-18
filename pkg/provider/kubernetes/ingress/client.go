@@ -58,6 +58,19 @@ type clientWrapper struct {
 	watchedNamespaces           []string
 }
 
+// NewClient creates a client that reads the resources from the given clientset, with the options of the provider.
+func NewClient(provider *Provider, clientset kclientset.Interface) Client {
+	return &clientWrapper{
+		clientset:                   clientset,
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		factoriesIngress:            make(map[string]kinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		ingressLabelSelector:        provider.LabelSelector,
+		disableIngressClassInformer: provider.DisableIngressClassLookup || provider.DisableClusterScopeResources,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
+	}
+}
+
 // newInClusterClientset returns the clientset of a Provider client that is expected to run
 // inside the cluster.
 func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
@@ -125,19 +138,6 @@ func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
 	}
 
 	return clientset, nil
-}
-
-// NewClient creates a client that reads the resources from the given clientset, with the options of the provider.
-func NewClient(provider *Provider, clientset kclientset.Interface) Client {
-	return &clientWrapper{
-		clientset:                   clientset,
-		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
-		factoriesIngress:            make(map[string]kinformers.SharedInformerFactory),
-		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
-		ingressLabelSelector:        provider.LabelSelector,
-		disableIngressClassInformer: provider.DisableIngressClassLookup || provider.DisableClusterScopeResources,
-		disableClusterScopeInformer: provider.DisableClusterScopeResources,
-	}
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.

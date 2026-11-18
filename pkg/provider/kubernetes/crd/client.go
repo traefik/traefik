@@ -70,6 +70,19 @@ type clientWrapper struct {
 	watchedNamespaces []string
 }
 
+// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
+func NewClient(provider *Provider, csKube kclientset.Interface, csCrd traefikclientset.Interface) Client {
+	return &clientWrapper{
+		csCrd:                       csCrd,
+		csKube:                      csKube,
+		factoriesCrd:                make(map[string]traefikinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		labelSelector:               provider.LabelSelector,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
+	}
+}
+
 func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikclientset.Interface, error) {
 	c.UserAgent = fmt.Sprintf(
 		"%s/%s (%s/%s) kubernetes/crd",
@@ -90,19 +103,6 @@ func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikcl
 	}
 
 	return csKube, csCrd, nil
-}
-
-// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
-func NewClient(provider *Provider, csKube kclientset.Interface, csCrd traefikclientset.Interface) Client {
-	return &clientWrapper{
-		csCrd:                       csCrd,
-		csKube:                      csKube,
-		factoriesCrd:                make(map[string]traefikinformers.SharedInformerFactory),
-		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
-		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
-		labelSelector:               provider.LabelSelector,
-		disableClusterScopeInformer: provider.DisableClusterScopeResources,
-	}
 }
 
 // newInClusterClientsets returns the clientsets of a Provider client that is expected to run

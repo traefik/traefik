@@ -45,6 +45,17 @@ type Client struct {
 	ignoreIngressClasses bool
 }
 
+// NewClient creates a client that reads the resources from the given clientset.
+func NewClient(clientSet kclientset.Interface) *Client {
+	return &Client{
+		clientset:          clientSet,
+		factoriesSecret:    make(map[string]kinformers.SharedInformerFactory),
+		factoriesConfigMap: make(map[string]kinformers.SharedInformerFactory),
+		factoriesIngress:   make(map[string]kinformers.SharedInformerFactory),
+		factoriesKube:      make(map[string]kinformers.SharedInformerFactory),
+	}
+}
+
 // newInClusterClientset returns the clientset of a Provider client that is expected to run inside the cluster.
 func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
 	config, err := rest.InClusterConfig()
@@ -111,17 +122,6 @@ func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
 	}
 
 	return clientset, nil
-}
-
-// NewClient creates a client that reads the resources from the given clientset.
-func NewClient(clientSet kclientset.Interface) *Client {
-	return &Client{
-		clientset:          clientSet,
-		factoriesSecret:    make(map[string]kinformers.SharedInformerFactory),
-		factoriesConfigMap: make(map[string]kinformers.SharedInformerFactory),
-		factoriesIngress:   make(map[string]kinformers.SharedInformerFactory),
-		factoriesKube:      make(map[string]kinformers.SharedInformerFactory),
-	}
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
