@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"slices"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -24,6 +26,7 @@ import (
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
@@ -32,7 +35,13 @@ import (
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
 
-const resyncPeriod = 10 * time.Minute
+const (
+	resyncPeriod = 10 * time.Minute
+
+	// minGatewayAPIVersion is the minimum version of the Gateway API CRDs required by the provider.
+	// It is not the version of the Gateway API dependency, which can be a later patch version.
+	minGatewayAPIVersion = "v1.7.0"
+)
 
 type clientWrapper struct {
 	csGateway gateclientset.Interface
@@ -136,7 +145,9 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+func (c *clientWrapper) WatchAll(ctx context.Context, namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+	logger := log.Ctx(ctx)
+
 	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
@@ -161,39 +172,39 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	c.factoryNamespace = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
-	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+	err := addEventHandler(logger, c.factoryNamespace.Core().V1().Namespaces().Informer(), eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed()
+	c.clusterTrustBundleAPIServed, err = c.isClusterTrustBundleAPIServed(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("checking ClusterTrustBundle API availability: %w", err)
 	}
 
 	if c.clusterTrustBundleAPIServed {
-		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed()
+		c.clusterTrustBundleAllowed, err = c.isClusterTrustBundleAllowed(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("checking ClusterTrustBundle permissions: %w", err)
 		}
 	}
 
 	if c.clusterTrustBundleAPIServed && c.clusterTrustBundleAllowed {
-		_, err = c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, c.factoryNamespace.Certificates().V1().ClusterTrustBundles().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	c.factoryGatewayClass = gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithTweakListOptions(gatewayClassOptions), gateinformers.WithTransform(k8s.StripManagedFields))
-	_, err = c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer().AddEventHandler(eventHandler)
+	err = addEventHandler(logger, c.factoryGatewayClass.Gateway().V1().GatewayClasses().Informer(), eventHandler)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ns := range namespaces {
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryKube.Core().V1().Services().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -201,54 +212,54 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
 			return nil, err
 		}
-		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
+		err = addEventHandler(logger, endpointSliceInformer, eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
 		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factoryGateway.Gateway().V1().Gateways().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().Gateways().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1().HTTPRoutes().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().HTTPRoutes().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1().GRPCRoutes().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().GRPCRoutes().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1().ReferenceGrants().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().ReferenceGrants().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryGateway.Gateway().V1().BackendTLSPolicies().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().BackendTLSPolicies().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = factoryGateway.Gateway().V1().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryKube.Core().V1().ConfigMaps().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = factoryGateway.Gateway().V1().ListenerSets().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().TLSRoutes().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = factoryGateway.Gateway().V1().TCPRoutes().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().ListenerSets().Informer(), eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
+		err = addEventHandler(logger, factoryGateway.Gateway().V1().TCPRoutes().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
-		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		err = addEventHandler(logger, factorySecret.Core().V1().Secrets().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -300,6 +311,43 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	return eventCh, nil
+}
+
+// addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
+func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
+	if err := informer.SetWatchErrorHandler(newWatchErrorHandler(logger)); err != nil {
+		return fmt.Errorf("setting watch error handler: %w", err)
+	}
+
+	if _, err := informer.AddEventHandler(eventHandler); err != nil {
+		return fmt.Errorf("adding event handler: %w", err)
+	}
+
+	return nil
+}
+
+// newWatchErrorHandler returns a handler logging the list and watch errors of an informer with the provider logger.
+// It copies the cases of the client-go cache.DefaultWatchErrorHandler, which logs with klog,
+// and adds a hint on the fix to the errors keeping an informer from syncing until the CRDs or the RBAC are updated,
+// as the provider waits for all the informers to sync before loading any configuration.
+func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandler {
+	return func(r *cache.Reflector, err error) {
+		switch {
+		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
+			// The reflector lists the resources again from the last observed resource version.
+			logger.Debug().Err(err).Msgf("Watch of %s expired, listing the resources again", r.TypeDescription())
+		case errors.Is(err, io.EOF):
+			// The watch closed normally.
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			logger.Debug().Err(err).Msgf("Watch of %s interrupted, restarting it", r.TypeDescription())
+		case kerror.IsNotFound(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the resource is not served: install the Gateway API CRDs %s or later", r.TypeDescription(), minGatewayAPIVersion)
+		case kerror.IsForbidden(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider", r.TypeDescription())
+		default:
+			logger.Error().Err(err).Msgf("Cannot list or watch %s", r.TypeDescription())
+		}
+	}
 }
 
 func (c *clientWrapper) ListNamespaces(selector labels.Selector) ([]string, error) {
@@ -1015,21 +1063,29 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 }
 
 // isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
-func (c *clientWrapper) isClusterTrustBundleAPIServed() (bool, error) {
+// When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
+// and the informer logs the error if it is not.
+func (c *clientWrapper) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
 	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
 	if err != nil {
-		if kerror.IsNotFound(err) {
+		switch {
+		case kerror.IsNotFound(err):
 			return false, nil
+		case kerror.IsForbidden(err):
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
+			return true, nil
 		}
 
-		return false, err
+		return false, fmt.Errorf("discovering %s resources: %w", certificatesv1.SchemeGroupVersion, err)
 	}
 
 	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
 }
 
 // isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
-func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
+// When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
+// and the informer logs the error if it is not.
+func (c *clientWrapper) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
 	for _, verb := range []string{"list", "watch"} {
 		review := &authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
@@ -1041,7 +1097,11 @@ func (c *clientWrapper) isClusterTrustBundleAllowed() (bool, error) {
 			},
 		}
 
-		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), review, metav1.CreateOptions{})
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
+		if kerror.IsForbidden(err) {
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
+			return true, nil
+		}
 		if err != nil {
 			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
 		}
