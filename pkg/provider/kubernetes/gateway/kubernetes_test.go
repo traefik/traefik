@@ -98,7 +98,7 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	// This is initialized by the Provider init method but this cannot be called in a unit test.
 	client.labelSelector = "name=traefik-internal"
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -139,7 +139,7 @@ func TestGatewayClassFieldSelector(t *testing.T) {
 	client := newClientImpl(kubefake.NewClientset(), gwClient)
 	client.gatewayClass = "traefik-internal"
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	<-eventCh
@@ -187,7 +187,7 @@ func TestGatewayScoping(t *testing.T) {
 
 	client := newClientImpl(kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -5555,7 +5555,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -6053,7 +6053,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -6414,7 +6414,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -7399,7 +7399,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -7711,7 +7711,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -8891,7 +8891,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -11091,7 +11091,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -12729,7 +12729,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -13226,7 +13226,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -13577,7 +13577,7 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 			<-eventCh
 
@@ -13646,7 +13646,7 @@ func Test_loadHTTPAndGRPCRoutes_hostnameConflict(t *testing.T) {
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 			<-eventCh
 
@@ -14755,7 +14755,7 @@ func Test_gatewayAddresses(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -14884,7 +14884,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 
 	client := newClientImpl(kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -14897,7 +14897,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	// A client on a cluster that does not serve the ClusterTrustBundle API.
 	clientWithoutAPI := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
 
-	_, err = clientWithoutAPI.WatchAll(nil, make(chan struct{}))
+	_, err = clientWithoutAPI.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	pWithoutAPI := Provider{client: clientWithoutAPI}
@@ -14912,7 +14912,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	})
 	clientForbidden := newClientImpl(kubeClientForbidden, newGatewaySimpleClientSet(t, gwObjects...))
 
-	_, err = clientForbidden.WatchAll(nil, make(chan struct{}))
+	_, err = clientForbidden.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	pForbidden := Provider{client: clientForbidden}
@@ -15233,7 +15233,7 @@ func Test_loadGatewayBackendTLS(t *testing.T) {
 
 	client := newClientImpl(kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	// just wait for the first event
@@ -15336,7 +15336,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 
 	client := newClientImpl(kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 	<-eventCh
 
@@ -15482,7 +15482,7 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 
 	client := newClientImpl(kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 	<-eventCh
 
@@ -15694,7 +15694,7 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15760,7 +15760,7 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15833,7 +15833,7 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15911,7 +15911,7 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 
 	client := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	// just wait for the first event
@@ -15971,7 +15971,7 @@ func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *tes
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			// just wait for the first event
@@ -16404,7 +16404,7 @@ func Test_isListenerSetAllowed(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 {

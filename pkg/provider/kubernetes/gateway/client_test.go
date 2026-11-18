@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -84,7 +83,7 @@ func TestWatchAll_clusterTrustBundleChecksError(t *testing.T) {
 			stopCh := make(chan struct{})
 			t.Cleanup(func() { close(stopCh) })
 
-			_, err := client.WatchAll(nil, stopCh)
+			_, err := client.WatchAll(t.Context(), nil, stopCh)
 			if test.expectedErr {
 				require.Error(t, err)
 				return
@@ -147,7 +146,8 @@ func Test_newWatchErrorHandler(t *testing.T) {
 			var buf bytes.Buffer
 			reflector := cache.NewReflector(&cache.ListWatch{}, &gatev1.TCPRoute{}, cache.NewStore(cache.MetaNamespaceKeyFunc), 0)
 
-			newWatchErrorHandler(zerolog.New(&buf))(context.Background(), reflector, test.err)
+			logger := zerolog.New(&buf)
+			newWatchErrorHandler(&logger)(t.Context(), reflector, test.err)
 
 			if test.expectedLog == "" {
 				assert.Empty(t, buf.String())
