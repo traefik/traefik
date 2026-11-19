@@ -78,21 +78,25 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		}
 	}
 
+	originAllowed := false
 	if res != nil && res.Request != nil {
 		match, ok := s.matchOrigin(res.Request.Header.Get("Origin"))
 		if ok {
 			res.Header.Set("Access-Control-Allow-Origin", match)
+			originAllowed = true
 		}
 	}
 
-	if s.headers.AccessControlAllowCredentials {
-		res.Header.Set("Access-Control-Allow-Credentials", "true")
-	}
+	if originAllowed || !s.headers.CORSStrict {
+		if s.headers.AccessControlAllowCredentials {
+			res.Header.Set("Access-Control-Allow-Credentials", "true")
+		}
 
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-		if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
-			res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+		if len(s.headers.AccessControlExposeHeaders) > 0 {
+			exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+			if !(slices.Contains(s.headers.AccessControlExposeHeaders, "*") && s.headers.AccessControlAllowCredentials) {
+				res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+			}
 		}
 	}
 
@@ -149,6 +153,11 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 	originHeader := req.Header.Get("Origin")
 
 	if reqAcMethod != "" && originHeader != "" && req.Method == http.MethodOptions {
+		match, ok := s.matchOrigin(originHeader)
+		if s.headers.CORSStrict && !ok {
+			return false
+		}
+
 		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
 		// and Origin headers, then it is a CORS preflight request,
 		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
@@ -172,7 +181,6 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		}
 
-		match, ok := s.matchOrigin(originHeader)
 		if ok {
 			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
