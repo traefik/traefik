@@ -29,8 +29,6 @@ import (
 
 const resyncPeriod = 10 * time.Minute
 
-// TODO: add tests for the Client (and its methods) itself.
-
 // Client reads the Kubernetes resources that the provider builds the configuration from.
 type Client struct {
 	csCrd  traefikclientset.Interface
@@ -60,81 +58,6 @@ func NewClient(provider *Provider, csKube kclientset.Interface, csCrd traefikcli
 		labelSelector:               provider.LabelSelector,
 		disableClusterScopeInformer: provider.DisableClusterScopeResources,
 	}
-}
-
-func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikclientset.Interface, error) {
-	c.UserAgent = fmt.Sprintf(
-		"%s/%s (%s/%s) kubernetes/crd",
-		filepath.Base(os.Args[0]),
-		version.Version,
-		runtime.GOOS,
-		runtime.GOARCH,
-	)
-
-	csCrd, err := traefikclientset.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	csKube, err := kclientset.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return csKube, csCrd, nil
-}
-
-// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
-// inside the cluster.
-func newInClusterClientsets(endpoint string) (kclientset.Interface, traefikclientset.Interface, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
-	}
-
-	if endpoint != "" {
-		config.Host = endpoint
-	}
-
-	return createClientsetsFromConfig(config)
-}
-
-func newExternalClusterClientsetsFromFile(file string) (kclientset.Interface, traefikclientset.Interface, error) {
-	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-	if err != nil {
-		return nil, nil, err
-	}
-	return createClientsetsFromConfig(configFromFlags)
-}
-
-// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside
-// of the cluster.
-// The endpoint parameter must not be empty.
-func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, traefikclientset.Interface, error) {
-	if endpoint == "" {
-		return nil, nil, errors.New("endpoint missing for external cluster client")
-	}
-
-	tokenData, err := token.Read()
-	if err != nil {
-		return nil, nil, fmt.Errorf("read token: %w", err)
-	}
-
-	config := &rest.Config{
-		Host:        endpoint,
-		BearerToken: string(tokenData),
-	}
-
-	if caFilePath != "" {
-		caData, err := os.ReadFile(caFilePath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
-		}
-
-		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
-	}
-
-	return createClientsetsFromConfig(config)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
@@ -503,6 +426,81 @@ func (c *Client) isWatchedNamespace(ns string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikclientset.Interface, error) {
+	c.UserAgent = fmt.Sprintf(
+		"%s/%s (%s/%s) kubernetes/crd",
+		filepath.Base(os.Args[0]),
+		version.Version,
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
+
+	csCrd, err := traefikclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	csKube, err := kclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return csKube, csCrd, nil
+}
+
+// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
+// inside the cluster.
+func newInClusterClientsets(endpoint string) (kclientset.Interface, traefikclientset.Interface, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+	}
+
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientsetsFromConfig(config)
+}
+
+func newExternalClusterClientsetsFromFile(file string) (kclientset.Interface, traefikclientset.Interface, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, nil, err
+	}
+	return createClientsetsFromConfig(configFromFlags)
+}
+
+// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside
+// of the cluster.
+// The endpoint parameter must not be empty.
+func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, traefikclientset.Interface, error) {
+	if endpoint == "" {
+		return nil, nil, errors.New("endpoint missing for external cluster client")
+	}
+
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, nil, fmt.Errorf("read token: %w", err)
+	}
+
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: string(tokenData),
+	}
+
+	if caFilePath != "" {
+		caData, err := os.ReadFile(caFilePath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+
+	return createClientsetsFromConfig(config)
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return

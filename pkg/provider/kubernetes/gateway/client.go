@@ -248,43 +248,6 @@ func (c *Client) WatchAll(ctx context.Context, namespaces []string, stopCh <-cha
 	return eventCh, nil
 }
 
-// addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
-func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
-	if err := informer.SetWatchErrorHandler(newWatchErrorHandler(logger)); err != nil {
-		return fmt.Errorf("setting watch error handler: %w", err)
-	}
-
-	if _, err := informer.AddEventHandler(eventHandler); err != nil {
-		return fmt.Errorf("adding event handler: %w", err)
-	}
-
-	return nil
-}
-
-// newWatchErrorHandler returns a handler logging the list and watch errors of an informer with the provider logger.
-// It copies the cases of the client-go cache.DefaultWatchErrorHandler, which logs with klog,
-// and adds a hint on the fix to the errors keeping an informer from syncing until the CRDs or the RBAC are updated,
-// as the provider waits for all the informers to sync before loading any configuration.
-func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandler {
-	return func(r *cache.Reflector, err error) {
-		switch {
-		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
-			// The reflector lists the resources again from the last observed resource version.
-			logger.Debug().Err(err).Msgf("Watch of %s expired, listing the resources again", r.TypeDescription())
-		case errors.Is(err, io.EOF):
-			// The watch closed normally.
-		case errors.Is(err, io.ErrUnexpectedEOF):
-			logger.Debug().Err(err).Msgf("Watch of %s interrupted, restarting it", r.TypeDescription())
-		case kerror.IsNotFound(err):
-			logger.Error().Err(err).Msgf("Cannot list or watch %s, the resource is not served: install the Gateway API CRDs %s or later", r.TypeDescription(), minGatewayAPIVersion)
-		case kerror.IsForbidden(err):
-			logger.Error().Err(err).Msgf("Cannot list or watch %s, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider", r.TypeDescription())
-		default:
-			logger.Error().Err(err).Msgf("Cannot list or watch %s", r.TypeDescription())
-		}
-	}
-}
-
 func (c *Client) ListNamespaces(selector labels.Selector) ([]string, error) {
 	ns, err := c.factoryNamespace.Core().V1().Namespaces().Lister().List(selector)
 	if err != nil {
@@ -785,6 +748,118 @@ func (c *Client) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes
 	return nil
 }
 
+// lookupNamespace returns the lookup namespace listenerKey for the given namespace.
+// When listening on all namespaces, it returns the client-go identifier ("")
+// for all-namespaces. Otherwise, it returns the given namespace.
+// The distinction is necessary because we index all informers on the special
+// identifier iff all-namespaces are requested but receive specific namespace
+// identifiers from the Kubernetes API, so we have to bridge this gap.
+func (c *Client) lookupNamespace(namespace string) string {
+	if c.isNamespaceAll {
+		return metav1.NamespaceAll
+	}
+	return namespace
+}
+
+// isWatchedNamespace checks to ensure that the namespace is being watched before we request
+// it to ensure we don't panic by requesting an out-of-watch object.
+func (c *Client) isWatchedNamespace(namespace string) bool {
+	if c.isNamespaceAll {
+		return true
+	}
+
+	return slices.Contains(c.watchedNamespaces, namespace)
+}
+
+// isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
+// When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
+// and the informer logs the error if it is not.
+func (c *Client) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
+	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
+	if err != nil {
+		switch {
+		case kerror.IsNotFound(err):
+			return false, nil
+		case kerror.IsForbidden(err):
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
+			return true, nil
+		}
+
+		return false, fmt.Errorf("discovering %s resources: %w", certificatesv1.SchemeGroupVersion, err)
+	}
+
+	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
+}
+
+// isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
+// When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
+// and the informer logs the error if it is not.
+func (c *Client) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
+	for _, verb := range []string{"list", "watch"} {
+		review := &authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{
+					Group:    certificatesv1.GroupName,
+					Resource: "clustertrustbundles",
+					Verb:     verb,
+				},
+			},
+		}
+
+		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
+		if kerror.IsForbidden(err) {
+			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
+			return true, nil
+		}
+		if err != nil {
+			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
+		}
+
+		if !review.Status.Allowed {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// addEventHandler adds the event handler to the informer, and logs the errors preventing the informer from listing and watching its resource.
+func addEventHandler(logger *zerolog.Logger, informer cache.SharedIndexInformer, eventHandler cache.ResourceEventHandler) error {
+	if err := informer.SetWatchErrorHandler(newWatchErrorHandler(logger)); err != nil {
+		return fmt.Errorf("setting watch error handler: %w", err)
+	}
+
+	if _, err := informer.AddEventHandler(eventHandler); err != nil {
+		return fmt.Errorf("adding event handler: %w", err)
+	}
+
+	return nil
+}
+
+// newWatchErrorHandler returns a handler logging the list and watch errors of an informer with the provider logger.
+// It copies the cases of the client-go cache.DefaultWatchErrorHandler, which logs with klog,
+// and adds a hint on the fix to the errors keeping an informer from syncing until the CRDs or the RBAC are updated,
+// as the provider waits for all the informers to sync before loading any configuration.
+func newWatchErrorHandler(logger *zerolog.Logger) cache.WatchErrorHandler {
+	return func(r *cache.Reflector, err error) {
+		switch {
+		case kerror.IsResourceExpired(err) || kerror.IsGone(err):
+			// The reflector lists the resources again from the last observed resource version.
+			logger.Debug().Err(err).Msgf("Watch of %s expired, listing the resources again", r.TypeDescription())
+		case errors.Is(err, io.EOF):
+			// The watch closed normally.
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			logger.Debug().Err(err).Msgf("Watch of %s interrupted, restarting it", r.TypeDescription())
+		case kerror.IsNotFound(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the resource is not served: install the Gateway API CRDs %s or later", r.TypeDescription(), minGatewayAPIVersion)
+		case kerror.IsForbidden(err):
+			logger.Error().Err(err).Msgf("Cannot list or watch %s, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider", r.TypeDescription())
+		default:
+			logger.Error().Err(err).Msgf("Cannot list or watch %s", r.TypeDescription())
+		}
+	}
+}
+
 func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
 	c.QPS = float32(qps)
 	c.Burst = burst
@@ -852,29 +927,6 @@ func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileO
 	}
 
 	return createClientsetsFromConfig(config, qps, burst)
-}
-
-// lookupNamespace returns the lookup namespace listenerKey for the given namespace.
-// When listening on all namespaces, it returns the client-go identifier ("")
-// for all-namespaces. Otherwise, it returns the given namespace.
-// The distinction is necessary because we index all informers on the special
-// identifier iff all-namespaces are requested but receive specific namespace
-// identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *Client) lookupNamespace(namespace string) string {
-	if c.isNamespaceAll {
-		return metav1.NamespaceAll
-	}
-	return namespace
-}
-
-// isWatchedNamespace checks to ensure that the namespace is being watched before we request
-// it to ensure we don't panic by requesting an out-of-watch object.
-func (c *Client) isWatchedNamespace(namespace string) bool {
-	if c.isNamespaceAll {
-		return true
-	}
-
-	return slices.Contains(c.watchedNamespaces, namespace)
 }
 
 // mergeRouteParentStatuses returns the desired parentStatuses augmented with the current parentStatuses Traefik does not own.
@@ -1064,56 +1116,4 @@ func listenerEntryStatusesEqual(listenersA, listenersB []gatev1.ListenerEntrySta
 			lA.AttachedRoutes == lB.AttachedRoutes &&
 			conditionsEqual(lA.Conditions, lB.Conditions)
 	})
-}
-
-// isClusterTrustBundleAPIServed reports whether the cluster serves the ClusterTrustBundle API.
-// When the discovery is forbidden, for example on hardened clusters, the API is assumed to be served,
-// and the informer logs the error if it is not.
-func (c *Client) isClusterTrustBundleAPIServed(ctx context.Context) (bool, error) {
-	resourceList, err := c.csKube.Discovery().ServerResourcesForGroupVersion(certificatesv1.SchemeGroupVersion.String())
-	if err != nil {
-		switch {
-		case kerror.IsNotFound(err):
-			return false, nil
-		case kerror.IsForbidden(err):
-			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle API availability, assuming it is served")
-			return true, nil
-		}
-
-		return false, fmt.Errorf("discovering %s resources: %w", certificatesv1.SchemeGroupVersion, err)
-	}
-
-	return slices.ContainsFunc(resourceList.APIResources, func(r metav1.APIResource) bool { return r.Name == "clustertrustbundles" }), nil
-}
-
-// isClusterTrustBundleAllowed reports whether Traefik is allowed to list and watch ClusterTrustBundles.
-// When the access review is forbidden, for example on hardened clusters, the access is assumed to be granted,
-// and the informer logs the error if it is not.
-func (c *Client) isClusterTrustBundleAllowed(ctx context.Context) (bool, error) {
-	for _, verb := range []string{"list", "watch"} {
-		review := &authorizationv1.SelfSubjectAccessReview{
-			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
-				ResourceAttributes: &authorizationv1.ResourceAttributes{
-					Group:    certificatesv1.GroupName,
-					Resource: "clustertrustbundles",
-					Verb:     verb,
-				},
-			},
-		}
-
-		review, err := c.csKube.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, review, metav1.CreateOptions{})
-		if kerror.IsForbidden(err) {
-			log.Ctx(ctx).Warn().Err(err).Msg("Cannot check ClusterTrustBundle permissions, assuming they are granted")
-			return true, nil
-		}
-		if err != nil {
-			return false, fmt.Errorf("checking %s permission on clustertrustbundles: %w", verb, err)
-		}
-
-		if !review.Status.Allowed {
-			return false, nil
-		}
-	}
-
-	return true, nil
 }
