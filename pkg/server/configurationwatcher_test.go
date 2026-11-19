@@ -150,8 +150,11 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, []string{}, "required", false)
 
 	publishedConfigCount := 0
+	var captureMu sync.Mutex
 	watcher.AddListener(func(_ dynamic.Configuration) {
+		captureMu.Lock()
 		publishedConfigCount++
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -163,7 +166,10 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 
 	// after 20 milliseconds we should have 2 configs published
-	assert.Equal(t, 2, publishedConfigCount, "times configs were published")
+	captureMu.Lock()
+	count := publishedConfigCount
+	captureMu.Unlock()
+	assert.Equal(t, 2, count, "times configs were published")
 }
 
 func TestIgnoreTransientConfiguration(t *testing.T) {
@@ -345,8 +351,11 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "", false)
 
 	publishedConfigCount := 0
+	var captureMu sync.Mutex
 	watcher.AddListener(func(_ dynamic.Configuration) {
+		captureMu.Lock()
 		publishedConfigCount++
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -359,8 +368,11 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 	// To load 5 new configs it would require 150ms (5 configs * 30ms).
 	// In 100ms, we should only have time to load 3 configs.
-	assert.LessOrEqual(t, publishedConfigCount, 3, "config was applied too many times")
-	assert.Positive(t, publishedConfigCount, "config was not applied at least once")
+	captureMu.Lock()
+	count := publishedConfigCount
+	captureMu.Unlock()
+	assert.LessOrEqual(t, count, 3, "config was applied too many times")
+	assert.Positive(t, count, "config was not applied at least once")
 }
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
@@ -406,8 +418,11 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var configurationReloads int
+	var captureMu sync.Mutex
 	watcher.AddListener(func(_ dynamic.Configuration) {
+		captureMu.Lock()
 		configurationReloads++
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -417,7 +432,10 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 1, configurationReloads, "Same configuration should not be published multiple times")
+	captureMu.Lock()
+	reloadCount := configurationReloads
+	captureMu.Unlock()
+	assert.Equal(t, 1, reloadCount, "Same configuration should not be published multiple times")
 }
 
 func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
@@ -454,8 +472,11 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var lastConfig dynamic.Configuration
+	var captureMu sync.RWMutex
 	watcher.AddListener(func(conf dynamic.Configuration) {
-		lastConfig = conf
+		captureMu.Lock()
+		lastConfig = *conf.DeepCopy()
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -493,7 +514,10 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	captureMu.RLock()
+	snapshot := lastConfig.DeepCopy()
+	captureMu.RUnlock()
+	assert.Equal(t, expected, *snapshot)
 }
 
 func TestListenProvidersIgnoreSameConfig(t *testing.T) {
@@ -542,10 +566,13 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
+	var captureMu sync.RWMutex
 	var once sync.Once
 	watcher.AddListener(func(conf dynamic.Configuration) {
+		captureMu.Lock()
 		configurationReloads++
-		lastConfig = conf
+		lastConfig = *conf.DeepCopy()
+		captureMu.Unlock()
 
 		// Allows next configurations to be sent by the mock provider as soon as the first configuration message is applied.
 		once.Do(func() {
@@ -590,9 +617,13 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	captureMu.RLock()
+	snapshot := lastConfig.DeepCopy()
+	reloadCount := configurationReloads
+	captureMu.RUnlock()
+	assert.Equal(t, expected, *snapshot)
 
-	assert.Equal(t, 1, configurationReloads)
+	assert.Equal(t, 1, reloadCount)
 }
 
 func TestApplyConfigUnderStress(t *testing.T) {
@@ -620,8 +651,11 @@ func TestApplyConfigUnderStress(t *testing.T) {
 	})
 
 	var configurationReloads int
+	var captureMu sync.Mutex
 	watcher.AddListener(func(conf dynamic.Configuration) {
+		captureMu.Lock()
 		configurationReloads++
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -636,8 +670,11 @@ func TestApplyConfigUnderStress(t *testing.T) {
 	// In theory, checking at least one would be sufficient,
 	// but checking for two also ensures that we're looping properly,
 	// and that the whole algo holds, etc.
-	t.Log(configurationReloads)
-	assert.GreaterOrEqual(t, configurationReloads, 2)
+	captureMu.Lock()
+	reloadCount := configurationReloads
+	captureMu.Unlock()
+	t.Log(reloadCount)
+	assert.GreaterOrEqual(t, reloadCount, 2)
 }
 
 func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
@@ -698,9 +735,12 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
+	var captureMu sync.RWMutex
 	watcher.AddListener(func(conf dynamic.Configuration) {
+		captureMu.Lock()
 		configurationReloads++
-		lastConfig = conf
+		lastConfig = *conf.DeepCopy()
+		captureMu.Unlock()
 	})
 
 	watcher.Start()
@@ -738,9 +778,13 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, lastConfig)
+	captureMu.RLock()
+	snapshot := lastConfig.DeepCopy()
+	reloadCount := configurationReloads
+	captureMu.RUnlock()
+	assert.Equal(t, expected, *snapshot)
 
-	assert.Equal(t, 2, configurationReloads)
+	assert.Equal(t, 2, reloadCount)
 }
 
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
@@ -765,9 +809,12 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	var publishedProviderConfig dynamic.Configuration
+	var publishedProviderMu sync.RWMutex
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
-		publishedProviderConfig = conf
+		publishedProviderMu.Lock()
+		publishedProviderConfig = *conf.DeepCopy()
+		publishedProviderMu.Unlock()
 	})
 
 	watcher.Start()
@@ -809,7 +856,10 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, publishedProviderConfig)
+	publishedProviderMu.RLock()
+	snapshot := publishedProviderConfig.DeepCopy()
+	publishedProviderMu.RUnlock()
+	assert.Equal(t, expected, *snapshot)
 }
 
 func TestPublishConfigUpdatedByProvider(t *testing.T) {
@@ -824,7 +874,8 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	}
 
 	pvd := &mockProvider{
-		wait: 10 * time.Millisecond,
+		first: make(chan struct{}),
+		wait:  10 * time.Millisecond,
 		messages: []dynamic.Message{
 			{
 				ProviderName:  "mock",
@@ -840,11 +891,16 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	publishedConfigCount := 0
+	var captureMu sync.Mutex
+	var firstMutation sync.Once
 	watcher.AddListener(func(configuration dynamic.Configuration) {
+		captureMu.Lock()
 		publishedConfigCount++
+		captureMu.Unlock()
 
 		// Update the provider configuration published in next dynamic Message which should trigger a new publishing.
 		pvdConfiguration.TCP.Routers["bar"] = &dynamic.TCPRouter{}
+		firstMutation.Do(func() { close(pvd.first) })
 	})
 
 	watcher.Start()
@@ -855,7 +911,10 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
 
-	assert.Equal(t, 2, publishedConfigCount)
+	captureMu.Lock()
+	count := publishedConfigCount
+	captureMu.Unlock()
+	assert.Equal(t, 2, count)
 }
 
 func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
@@ -890,8 +949,11 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "", false)
 
 	publishedConfigCount := 0
+	var publishedConfigMu sync.Mutex
 	watcher.AddListener(func(configuration dynamic.Configuration) {
+		publishedConfigMu.Lock()
 		publishedConfigCount++
+		publishedConfigMu.Unlock()
 
 		// Modify the provided configuration.
 		// This should not modify the configuration stored in the configuration watcher and therefore there will be no new publishing.
@@ -906,7 +968,10 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
 
-	assert.Equal(t, 1, publishedConfigCount)
+	publishedConfigMu.Lock()
+	count := publishedConfigCount
+	publishedConfigMu.Unlock()
+	assert.Equal(t, 1, count)
 }
 
 func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {

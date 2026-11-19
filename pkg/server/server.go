@@ -44,7 +44,17 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 }
 
 // Start starts the server and Stop/Close it when context is Done.
-func (s *Server) Start(ctx context.Context) {
+func (s *Server) Start(ctx context.Context) error {
+	s.watcher.Start()
+	if err := s.watcher.WaitInitialConfiguration(ctx); err != nil {
+		s.closeUnstartedEntryPoints()
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		s.closeUnstartedEntryPoints()
+		return err
+	}
+
 	go func() {
 		<-ctx.Done()
 		logger := log.Ctx(ctx)
@@ -55,9 +65,9 @@ func (s *Server) Start(ctx context.Context) {
 
 	s.tcpEntryPoints.Start()
 	s.udpEntryPoints.Start()
-	s.watcher.Start()
 
 	s.routinesPool.GoCtx(s.listenSignals)
+	return nil
 }
 
 // Wait blocks until the server shutdown.
@@ -100,6 +110,23 @@ func (s *Server) Close() {
 	s.observabilityMgr.Close()
 
 	cancel()
+}
+
+// Construction binds sockets and starts HTTP forwarders before the accept loops.
+// Startup failure must release these without entering graceful serving shutdown.
+func (s *Server) closeUnstartedEntryPoints() {
+	for _, ep := range s.tcpEntryPoints {
+		_ = ep.listener.Close()
+		_ = ep.httpServer.Server.Close()
+		_ = ep.httpsServer.Server.Close()
+		if ep.http3Server != nil {
+			_ = ep.http3Server.Close()
+		}
+		ep.tracker.Close()
+	}
+	for _, ep := range s.udpEntryPoints {
+		_ = ep.listener.Close()
+	}
 }
 
 func stopMetricsClients() {
