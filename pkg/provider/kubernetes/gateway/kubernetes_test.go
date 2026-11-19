@@ -15796,7 +15796,7 @@ func Test_loadListenerFilters(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			p := Provider{}
+			p := Provider{ExperimentalChannel: true}
 			p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
 				return namespace + "-" + name, nil, nil
 			})
@@ -15806,7 +15806,8 @@ func Test_loadListenerFilters(t *testing.T) {
 
 			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}}}
 
-			names, conditions := p.loadListenerFilters("ns", 1, test.filters, conf)
+			listener := gatev1.Listener{Protocol: gatev1.HTTPProtocolType, Filters: &gatev1.ListenerFilters{Requests: test.filters}}
+			names, conditions := p.loadListenerFilters("ns", 1, listener, conf)
 
 			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
 			for i := range conditions {
@@ -15838,9 +15839,7 @@ func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
 	}
 
 	newGateway := func(name string, listeners []listener) *gatev1.Gateway {
-		gateway := &gatev1.Gateway{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default", Generation: 1},
-		}
+		gateway := &gatev1.Gateway{Name: name, Namespace: "default", Generation: 1}
 
 		for i, l := range listeners {
 			gl := gatev1.Listener{
@@ -15987,7 +15986,9 @@ func Test_loadGatewayListeners_listenerFiltersProtocol(t *testing.T) {
 	}
 
 	gateway := &gatev1.Gateway{
-		ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default", Generation: 1},
+		Name:       "gateway",
+		Namespace:  "default",
+		Generation: 1,
 		Spec: gatev1.GatewaySpec{
 			Listeners: []gatev1.Listener{{
 				Name:     "tcp",
