@@ -77,6 +77,9 @@ const (
 	// listenerReasonFrontendValidationConflict reports a frontend validation that differs from the one an older Gateway applies on the port.
 	listenerReasonFrontendValidationConflict gatev1.ListenerConditionReason = "FrontendValidationConflict"
 
+	// listenerReasonInvalidListenerFilter reports a listener filter that is structurally invalid (GEP-5224).
+	listenerReasonInvalidListenerFilter gatev1.ListenerConditionReason = "InvalidListenerFilter"
+
 	// listenerReasonInvalidListenerFilterRef reports a listener filter reference that cannot be resolved (GEP-5224).
 	listenerReasonInvalidListenerFilterRef gatev1.ListenerConditionReason = "InvalidListenerFilterRef"
 
@@ -758,10 +761,19 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			continue
 		}
 
-		// The listener filters only apply to the listeners with a visible HTTP stream,
-		// which the CRD validation enforces.
-		if listener.Filters != nil && len(listener.Filters.Requests) > 0 &&
-			(listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType) {
+		isHTTP := listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType
+
+		if listener.Filters != nil && len(listener.Filters.Requests) > 0 {
+			// The listener filters only apply to the listeners with a visible HTTP stream.
+			// The CRD validation enforces it on the Gateway listeners,
+			// but not on the ListenerSet entries (Gateway API v1.7.0).
+			if !isHTTP {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+					makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, listenerReasonInvalidListenerFilter,
+						"listener filters require the HTTP or HTTPS protocol")...)
+				continue
+			}
+
 			// The listener filters are an Experimental Channel feature.
 			// The specification forbids skipping a filter, so the listener is rejected when they are not enabled.
 			if !p.ExperimentalChannel {
@@ -782,7 +794,6 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 
 		// A port with listener filters belongs to a single Gateway, the oldest one wins.
 		gatewayKey := gateway.Namespace + "/" + gateway.Name
-		isHTTP := listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType
 		if isHTTP && claims.listenerFiltersConflict(listener.Port, gatewayKey, len(gatewayListeners[i].Middlewares) > 0) {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
 				makeListenerConflictConditions(generation, listenerReasonListenerFiltersConflict, "Another Gateway already serves this port, while listener filters require the port to be served by a single Gateway")...)

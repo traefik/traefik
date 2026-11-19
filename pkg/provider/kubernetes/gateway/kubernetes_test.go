@@ -15962,6 +15962,46 @@ func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
 	}
 }
 
+func Test_loadGatewayListeners_listenerFiltersProtocol(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"tcp": {Address: ":9000"}},
+		ExperimentalChannel: true,
+	}
+
+	gateway := &gatev1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{Name: "gateway", Namespace: "default", Generation: 1},
+		Spec: gatev1.GatewaySpec{
+			Listeners: []gatev1.Listener{{
+				Name:     "tcp",
+				Protocol: gatev1.TCPProtocolType,
+				Port:     9000,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+				Filters: &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: "auth"},
+				}}},
+			}},
+		},
+	}
+
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+		TLS:  &dynamic.TLSConfiguration{},
+	}
+	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{})
+
+	listeners := p.loadGatewayListeners(t.Context(), gateway, nil, claims, conf)
+	require.Len(t, listeners, 1)
+	assert.False(t, listeners[0].Attached)
+
+	accepted := meta.FindStatusCondition(listeners[0].Status.Conditions, string(gatev1.ListenerConditionAccepted))
+	require.NotNil(t, accepted)
+	assert.Equal(t, metav1.ConditionFalse, accepted.Status)
+	assert.Equal(t, string(listenerReasonInvalidListenerFilter), accepted.Reason)
+}
+
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 	testCases := []struct {
 		desc      string

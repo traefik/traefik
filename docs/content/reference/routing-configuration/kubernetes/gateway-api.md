@@ -307,6 +307,8 @@ spec:
     The `ExternalAuth` filter type is not supported.
     A listener declaring it is not accepted, with the `UnsupportedValue` reason,
     and a listener referencing an unknown `ExtensionRef` group or kind is not programmed, with the `InvalidListenerFilterRef` reason.
+    Filters only apply to `HTTP` and `HTTPS` listeners:
+    a ListenerSet listener with another protocol declaring filters is not accepted, with the `InvalidListenerFilter` reason.
 
 !!! warning "Host header"
 
