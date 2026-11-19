@@ -113,7 +113,7 @@ type Provider struct {
 	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
 
 	routerTransform k8s.RouterTransform
-	client          *Client
+	k8sClient       *Client
 }
 
 func (p *Provider) SetDefaults() {
@@ -241,7 +241,7 @@ func (p *Provider) InitWithClient(client *Client) error {
 		return errors.New("client must not be nil")
 	}
 
-	p.client = client
+	p.k8sClient = client
 
 	return nil
 }
@@ -257,7 +257,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := p.client.WatchAll(ctxLog, p.Namespaces, ctxPool.Done())
+			eventsChan, err := p.k8sClient.WatchAll(ctxLog, p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
@@ -296,7 +296,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						// statusReport is independent of confHash and may carry writes even
 						// when the data plane has nothing new to consume (e.g. a GatewayClass
 						// that's now Accepted but has no Gateway pointing at it yet).
-						statusReport.Flush(ctxLog, p.client)
+						statusReport.Flush(ctxLog, p.k8sClient)
 					}
 
 					// If we're throttling,
@@ -350,7 +350,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 		return nil, nil, fmt.Errorf("getting gateway addresses: %w", err)
 	}
 
-	gatewayClasses, err := p.client.ListGatewayClasses()
+	gatewayClasses, err := p.k8sClient.ListGatewayClasses()
 	if err != nil {
 		return nil, nil, fmt.Errorf("listing gateway classes: %w", err)
 	}
@@ -387,7 +387,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 	}
 
 	var gateways []*gatev1.Gateway
-	for _, gateway := range p.client.ListGateways() {
+	for _, gateway := range p.k8sClient.ListGateways() {
 		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
 			continue
 		}
@@ -405,7 +405,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 
 	// ListenerSets are listed once and dispatched to their parent Gateway below,
 	// oldest first, as the oldest ListenerSet wins a listener conflict with its siblings (GEP-1713).
-	listenerSets := p.client.ListListenerSets()
+	listenerSets := p.k8sClient.ListListenerSets()
 	slices.SortStableFunc(listenerSets, func(a, b *gatev1.ListenerSet) int {
 		return cmp.Or(a.GetCreationTimestamp().Time.Compare(b.GetCreationTimestamp().Time),
 			strings.Compare(a.GetNamespace(), b.GetNamespace()),
@@ -584,7 +584,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*Client, error) {
 func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *StatusReport) {
 	routes := make([]metav1.Object, 0)
 
-	httpRoutes, err := p.client.ListHTTPRoutes()
+	httpRoutes, err := p.k8sClient.ListHTTPRoutes()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list HTTPRoutes")
 	}
@@ -592,7 +592,7 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 		routes = append(routes, route)
 	}
 
-	grpcRoutes, err := p.client.ListGRPCRoutes()
+	grpcRoutes, err := p.k8sClient.ListGRPCRoutes()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GRPCRoutes")
 	}
@@ -1181,7 +1181,7 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 		}
 	}
 
-	cm, err := p.client.GetConfigMap(refNamespace, string(ref.Name))
+	cm, err := p.k8sClient.GetConfigMap(refNamespace, string(ref.Name))
 	if err != nil {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -1211,7 +1211,7 @@ func (p *Provider) resolveCACertificateRefs(gateway *gatev1.Gateway, refs []gate
 // resolveClusterTrustBundleRef returns the trust bundle of the referenced ClusterTrustBundle, or the ResolvedRefs condition explaining why it cannot.
 // Per GEP-5075, the reference needs no ReferenceGrant, and an unsupported API is reported as an invalid kind.
 func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gatev1.ObjectReference) (string, *metav1.Condition) {
-	if !p.client.clusterTrustBundleAPIServed {
+	if !p.k8sClient.clusterTrustBundleAPIServed {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -1222,7 +1222,7 @@ func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gat
 		}
 	}
 
-	if !p.client.clusterTrustBundleAllowed {
+	if !p.k8sClient.clusterTrustBundleAllowed {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -1244,7 +1244,7 @@ func (p *Provider) resolveClusterTrustBundleRef(gateway *gatev1.Gateway, ref gat
 		}
 	}
 
-	ctb, err := p.client.GetClusterTrustBundle(string(ref.Name))
+	ctb, err := p.k8sClient.GetClusterTrustBundle(string(ref.Name))
 	if err != nil {
 		return "", &metav1.Condition{
 			Type:               string(gatev1.ListenerConditionResolvedRefs),
@@ -1462,7 +1462,7 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 
 	svcRef := p.StatusAddress.Service
 	if svcRef.Name != "" && svcRef.Namespace != "" {
-		svc, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
+		svc, err := p.k8sClient.GetService(svcRef.Namespace, svcRef.Name)
 		if err != nil {
 			return nil, fmt.Errorf("getting service: %w", err)
 		}
@@ -1512,7 +1512,7 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 		return nil
 	}
 
-	refGrants, err := p.client.ListReferenceGrants(toNamespace)
+	refGrants, err := p.k8sClient.ListReferenceGrants(toNamespace)
 	if err != nil {
 		return fmt.Errorf("listing ReferenceGrant: %w", err)
 	}
@@ -1577,7 +1577,7 @@ func (p *Provider) loadGatewayBackendTLS(gateway *gatev1.Gateway) (tls.Certifica
 }
 
 func (p *Provider) getTLSCert(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, err := p.client.GetSecret(namespace, string(secretName))
+	secret, err := p.k8sClient.GetSecret(namespace, string(secretName))
 	if err != nil {
 		return nil, fmt.Errorf("getting secret: %w", err)
 	}
@@ -1616,7 +1616,7 @@ func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *g
 			return nil, fmt.Errorf("malformed selector: %w", err)
 		}
 
-		return p.client.ListNamespaces(selector)
+		return p.k8sClient.ListNamespaces(selector)
 	}
 
 	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
@@ -1632,7 +1632,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
 	}
 
-	service, err := p.client.GetService(namespace, string(ref.Name))
+	service, err := p.k8sClient.GetService(namespace, string(ref.Name))
 	if err != nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
 	}
@@ -1672,7 +1672,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}}, *svcPort, nil
 	}
 
-	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
+	endpointSlices, err := p.k8sClient.ListEndpointSlicesForService(namespace, string(ref.Name))
 	if err != nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("getting endpointslices: %w", err)
 	}
@@ -2284,7 +2284,7 @@ func (p *Provider) isListenerSetAllowed(ctx context.Context, gw *gatev1.Gateway,
 			log.Ctx(ctx).Error().Err(err).Msg("Invalid AllowedListeners namespace selector")
 			return false
 		}
-		namespaces, err := p.client.ListNamespaces(selector)
+		namespaces, err := p.k8sClient.ListNamespaces(selector)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("Unable to list namespaces for AllowedListeners selector")
 			return false

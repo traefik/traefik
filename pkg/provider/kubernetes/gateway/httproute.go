@@ -571,7 +571,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 		}
 	}
 
-	backendTLSPolicies, err := p.client.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
+	backendTLSPolicies, err := p.k8sClient.ListBackendTLSPoliciesForService(namespace, string(backendRef.Name))
 	if err != nil {
 		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -771,7 +771,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 		}
 
 		// GEP-5075 requires the InvalidKind reason when the cluster does not serve the ClusterTrustBundle API.
-		if isClusterTrustBundle && !p.client.clusterTrustBundleAPIServed {
+		if isClusterTrustBundle && !p.k8sClient.clusterTrustBundleAPIServed {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
@@ -782,7 +782,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 			}
 		}
 
-		if isClusterTrustBundle && !p.client.clusterTrustBundleAllowed {
+		if isClusterTrustBundle && !p.k8sClient.clusterTrustBundleAllowed {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
@@ -796,7 +796,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 		var caCRT string
 		switch caCertRef.Kind {
 		case kindConfigMap:
-			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+			configmap, err := p.k8sClient.GetConfigMap(namespace, string(caCertRef.Name))
 			if err != nil {
 				return nil, metav1.Condition{
 					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
@@ -809,7 +809,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 			}
 			caCRT = configmap.Data["ca.crt"]
 		case kindSecret:
-			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
+			secret, err := p.k8sClient.GetSecret(namespace, string(caCertRef.Name))
 			if err != nil {
 				return nil, metav1.Condition{
 					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
@@ -823,7 +823,7 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 			caCRT = string(secret.Data["ca.crt"])
 
 		case kindClusterTrustBundle:
-			ctb, err := p.client.GetClusterTrustBundle(string(caCertRef.Name))
+			ctb, err := p.k8sClient.GetClusterTrustBundle(string(caCertRef.Name))
 			if err != nil {
 				return nil, metav1.Condition{
 					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),

@@ -109,13 +109,13 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	p := Provider{
 		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
 		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
-		client:        client,
+		k8sClient:     client,
 	}
 
 	_, statusReport, err := p.BuildConfiguration(t.Context())
 	require.NoError(t, err)
 
-	statusReport.Flush(t.Context(), p.client)
+	statusReport.Flush(t.Context(), p.k8sClient)
 
 	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -198,14 +198,14 @@ func TestGatewayScoping(t *testing.T) {
 		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
 		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
 		// Scope the provider to a single Gateway.
-		Gateways: []NamespacedName{{Namespace: "default", Name: "traefik-internal"}},
-		client:   client,
+		Gateways:  []NamespacedName{{Namespace: "default", Name: "traefik-internal"}},
+		k8sClient: client,
 	}
 
 	_, statusReport, err := p.BuildConfiguration(t.Context())
 	require.NoError(t, err)
 
-	statusReport.Flush(t.Context(), p.client)
+	statusReport.Flush(t.Context(), p.k8sClient)
 
 	// The scoped Gateway is managed and gets a status address.
 	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
@@ -5567,7 +5567,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				EntryPoints:              test.entryPoints,
 				NativeLBByDefault:        test.nativeLB,
 				RetryMaxRequestBodyBytes: test.retryMaxRequestBodyBytes,
-				client:                   client,
+				k8sClient:                client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -6063,7 +6063,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindBackendFuncs {
@@ -6424,7 +6424,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindFilterFuncs {
@@ -7408,7 +7408,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -7721,7 +7721,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindFilterFuncs {
@@ -8902,7 +8902,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 			p := Provider{
 				EntryPoints:       test.entryPoints,
 				NativeLBByDefault: test.nativeLB,
-				client:            client,
+				k8sClient:         client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -11102,7 +11102,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 			p := Provider{
 				EntryPoints:       test.entryPoints,
 				NativeLBByDefault: test.nativeLB,
-				client:            client,
+				k8sClient:         client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -12739,7 +12739,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -13236,7 +13236,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -13583,7 +13583,7 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			_, statusReport, err := p.BuildConfiguration(t.Context())
@@ -13652,7 +13652,7 @@ func Test_loadHTTPAndGRPCRoutes_hostnameConflict(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: map[string]Entrypoint{"web": {Address: ":9080"}},
-				client:      client,
+				k8sClient:   client,
 			}
 
 			_, statusReport, err := p.BuildConfiguration(t.Context())
@@ -14765,7 +14765,7 @@ func Test_gatewayAddresses(t *testing.T) {
 
 			p := Provider{
 				StatusAddress: test.statusAddress,
-				client:        client,
+				k8sClient:     client,
 			}
 
 			got, err := p.gatewayAddresses()
@@ -14892,7 +14892,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 		<-eventCh
 	}
 
-	p := Provider{client: client}
+	p := Provider{k8sClient: client}
 
 	// A client on a cluster that does not serve the ClusterTrustBundle API.
 	clientWithoutAPI := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
@@ -14900,7 +14900,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	_, err = clientWithoutAPI.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
-	pWithoutAPI := Provider{client: clientWithoutAPI}
+	pWithoutAPI := Provider{k8sClient: clientWithoutAPI}
 
 	// A client that is not allowed to list ClusterTrustBundles.
 	kubeClientForbidden := kubefake.NewClientset(k8sObjects...)
@@ -14915,7 +14915,7 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	_, err = clientForbidden.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
-	pForbidden := Provider{client: clientForbidden}
+	pForbidden := Provider{k8sClient: clientForbidden}
 
 	gateway := &gatev1.Gateway{
 		Name:       "my-gateway",
@@ -15239,7 +15239,7 @@ func Test_loadGatewayBackendTLS(t *testing.T) {
 	// just wait for the first event
 	<-eventCh
 
-	p := Provider{client: client}
+	p := Provider{k8sClient: client}
 
 	testCases := []struct {
 		desc           string
@@ -15342,7 +15342,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	newGateway := func(caCertificateRefs []gatev1.ObjectReference) *gatev1.Gateway {
@@ -15488,7 +15488,7 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	newValidation := func(caConfigMap string, mode gatev1.FrontendValidationModeType) *gatev1.FrontendTLSValidation {
@@ -15705,7 +15705,7 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"web": {Address: ":80"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -15771,7 +15771,7 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"tcp": {Address: ":9000"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -15844,7 +15844,7 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"tls": {Address: ":9000"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
 			conf, _, err := p.BuildConfiguration(t.Context())
@@ -15919,7 +15919,7 @@ func TestProvider_BuildConfiguration_TLSCertificatesOrder(t *testing.T) {
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	// Gateways are listed from a map, so build the configuration several times to
@@ -15979,7 +15979,7 @@ func TestProvider_BuildConfiguration_BackendTLSPolicyAncestorNamespace(t *testin
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			_, statusReport, err := p.BuildConfiguration(t.Context())
@@ -16411,7 +16411,7 @@ func Test_isListenerSetAllowed(t *testing.T) {
 				<-eventCh
 			}
 
-			p := Provider{client: client}
+			p := Provider{k8sClient: client}
 
 			assert.Equal(t, test.expected, p.isListenerSetAllowed(t.Context(), test.gw, test.ls))
 		})
