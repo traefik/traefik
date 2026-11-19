@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/zstd"
@@ -300,6 +301,84 @@ func Test_FlushBeforeWrite(t *testing.T) {
 	}
 }
 
+func Test_FlushBeforeWriteSendsHeaders(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		contentType      string
+		expectedEncoding string
+	}{
+		{
+			desc:             "compressible content type",
+			contentType:      "application/json",
+			expectedEncoding: zstdName,
+		},
+		{
+			desc:             "excluded content type",
+			contentType:      "text/event-stream",
+			expectedEncoding: "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// The handler only writes its body once the client got the response headers,
+			// like a stream (e.g. a Kubernetes watch) that has nothing to send yet.
+			headersReceived := make(chan struct{})
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set(contentType, test.contentType)
+				rw.WriteHeader(http.StatusOK)
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+
+				select {
+				case <-headersReceived:
+				case <-req.Context().Done():
+					return
+				}
+
+				_, err := rw.Write(smallTestBody)
+				assert.NoError(t, err)
+			})
+
+			cfg := Config{
+				MinSize:              1024,
+				MiddlewareName:       "Test",
+				ExcludedContentTypes: []string{"text/event-stream"},
+			}
+			srv := httptest.NewServer(mustNewCompressionHandler(t, cfg, zstdName, next))
+			defer srv.Close()
+
+			req, err := http.NewRequest(http.MethodGet, srv.URL, http.NoBody)
+			require.NoError(t, err)
+
+			req.Header.Set(acceptEncoding, zstdName)
+
+			client := &http.Client{Timeout: 5 * time.Second}
+			res, err := client.Do(req)
+			require.NoError(t, err)
+
+			defer res.Body.Close()
+
+			close(headersReceived)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, test.expectedEncoding, res.Header.Get(contentEncoding))
+
+			var reader io.Reader = res.Body
+			if test.expectedEncoding != "" {
+				reader, err = zstd.NewReader(res.Body)
+				require.NoError(t, err)
+			}
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, smallTestBody, got)
+		})
+	}
+}
+
 func Test_FlushAfterWrite(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -374,18 +453,25 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		desc           string
 		cfg            Config
 		algo           string
+		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
-			desc:           "brotli",
-			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo:           brotliName,
+			desc: "brotli",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
 			acceptEncoding: "br",
 		},
 		{
-			desc:           "zstd",
-			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo:           zstdName,
+			desc: "zstd",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
 			acceptEncoding: "zstd",
 		},
 	}
@@ -415,8 +501,16 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 			defer res.Body.Close()
 
 			assert.Equal(t, http.StatusOK, res.StatusCode)
-			assert.Empty(t, res.Header.Get(contentEncoding))
-			assert.Equal(t, http.NoBody, res.Body)
+			// The flush sends the headers right away, and starts the compressed
+			// stream like a flush before any write does.
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
+
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Empty(t, got)
 		})
 	}
 }
