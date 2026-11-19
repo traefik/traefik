@@ -227,18 +227,19 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 func (p *Provider) Init() error {
 	logger := log.With().Str(logs.ProviderName, ProviderName).Logger()
 
-	var err error
-	p.client, err = p.newK8sClient(logger.WithContext(context.Background()))
+	client, err := p.newK8sClient(logger.WithContext(context.Background()))
 	if err != nil {
 		return fmt.Errorf("creating k8s client: %w", err)
 	}
 
-	return nil
+	return p.InitWithClient(client)
 }
 
 // InitWithClient initializes the provider with the given client.
-func (p *Provider) InitWithClient(client *Client) {
+func (p *Provider) InitWithClient(client *Client) error {
 	p.client = client
+
+	return nil
 }
 
 // Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.

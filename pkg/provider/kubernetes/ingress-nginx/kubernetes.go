@@ -166,6 +166,16 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	client, err := p.newK8sClient()
+	if err != nil {
+		return fmt.Errorf("creating kubernetes client: %w", err)
+	}
+
+	return p.InitWithClient(client)
+}
+
+// InitWithClient initializes the provider with the given client.
+func (p *Provider) InitWithClient(client *Client) error {
 	if err := p.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating %s provider configuration: %w", ProviderName, err)
 	}
@@ -177,21 +187,9 @@ func (p *Provider) Init() error {
 		p.TLSEntryPoints = []string{p.HTTPSEntryPoint}
 	}
 
-	// Initializes Kubernetes client.
-	if p.k8sClient == nil {
-		var err error
-		p.k8sClient, err = p.newK8sClient()
-		if err != nil {
-			return fmt.Errorf("creating kubernetes client: %w", err)
-		}
-	}
+	p.k8sClient = client
 
 	return nil
-}
-
-// InitWithClient initializes the provider with the given client.
-func (p *Provider) InitWithClient(client *Client) {
-	p.k8sClient = client
 }
 
 // Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
