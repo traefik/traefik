@@ -299,7 +299,7 @@ func getCertificatesSection(tlsManager *tls.Manager) *section {
 	var countErrors int
 
 	for _, cert := range x509Certs {
-		status := getCertificateStatus(cert.NotAfter)
+		status := getCertificateStatus(cert.NotBefore, cert.NotAfter)
 		switch status {
 		case certStatusExpired:
 			countErrors++
