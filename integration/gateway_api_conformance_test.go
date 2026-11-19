@@ -238,10 +238,8 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 			},
 			// Here we are concatenating the features supported by the Traefik Gateway API implementation with the
 			// features supported by the Traefik Gateway API operator.
-			// TCPRoute is only supported with the experimental channel enabled,
-			// which is why it is not part of the provider supported features.
-			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(), []features.FeatureName{
-				features.SupportTCPRoute,
+			// The operator enables the experimentalChannel option on the data planes it provisions.
+			SupportedFeatures: slices.Concat(gateway.SupportedFeatures(true), []features.FeatureName{
 				features.GatewayEmptyAddressFeature.Name,
 				features.GatewayInfrastructureFeature.Name,
 				features.GatewayStaticAddressesFeature.Name,

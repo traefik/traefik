@@ -263,6 +263,77 @@ spec:
     `Gateway` resources with HTTPS listeners on the same port must declare the same validation, or none.
     Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer ones on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason.
 
+### Listener Filters
+
+The `filters` field on an HTTP or HTTPS listener (`spec.listeners[].filters`) defines pre-routing filters, as defined by [GEP-5224](https://gateway-api.sigs.k8s.io/geps/gep-5224/).
+They run on every request accepted on the listener, before the route matching,
+so they can change the request inputs the routes match on, such as the path or a header.
+The filters run in the order they are declared in `filters.requests`.
+
+Traefik supports the `ExtensionRef` filter type,
+which references a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource in the namespace of the `Gateway`, or of the `ListenerSet` declaring the listener.
+As for the `HTTPRoute` filters, the Kubernetes CRD provider must be enabled to use them.
+
+```yaml tab="Gateway"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      filters:
+        requests:
+          - type: ExtensionRef
+            extensionRef:
+              group: traefik.io
+              kind: Middleware
+              name: add-tenant-header
+```
+
+```yaml tab="Headers middleware"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: add-tenant-header
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Tenant: acme
+```
+
+!!! info "Experimental Channel"
+
+    The `filters` field is part of the Gateway API Experimental Channel, and requires the Experimental Channel CRDs.
+    Its support also requires the [`experimentalChannel`](../../install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-experimentalChannel) option,
+    otherwise a listener declaring filters is not accepted, with the `UnsupportedValue` reason.
+
+!!! info "Unsupported filters"
+
+    The `ExternalAuth` filter type is not supported.
+    A listener declaring it is not accepted, with the `UnsupportedValue` reason,
+    and a listener referencing an unknown `ExtensionRef` group or kind has unresolved references, with the `InvalidListenerFilterRef` reason.
+    Filters only apply to `HTTP` and `HTTPS` listeners:
+    a ListenerSet listener with another protocol declaring filters is not accepted, with the `InvalidListenerFilter` reason.
+
+!!! warning "Host header"
+
+    GEP-5224 forbids the listener filters to modify the `Host` header, as it selects the listener.
+    Traefik does not enforce it: a middleware changing the `Host` header changes it for the route matching too.
+
+!!! warning "Gateways sharing an entry point"
+
+    Listeners of different `Gateway` resources on the same port can declare different filters only when their hostnames are disjoint,
+    such as `foo.example.com` and `bar.example.com`.
+    Otherwise, the oldest `Gateway` keeps its listeners, and the listeners of the newer ones are reported as `Conflicted` with the `ListenerFiltersConflict` reason.
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
