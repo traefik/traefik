@@ -103,6 +103,15 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// prepare request, update body from buffer
 			r := rr.Clone(req.Context())
 
+			if !m.mirrorBody {
+				// The main handler has consumed the shared body.
+				// The mirrored request must not carry or advertise it.
+				r.Body = http.NoBody
+				r.ContentLength = 0
+				r.TransferEncoding = nil
+				r.Header.Del("Content-Length")
+			}
+
 			// In ServeHTTP, we rely on the presence of the accessLog datatable found in the request's context
 			// to know whether we should mutate said datatable (and contribute some fields to the log).
 			// In this instance, we do not want the mirrors mutating (i.e. changing the service name in)
