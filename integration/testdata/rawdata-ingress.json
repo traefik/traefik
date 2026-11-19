@@ -57,6 +57,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
+						"namespace": "default",
+						"name": "test.ingress.https"
+					},
 					"sources": [
 						{
 							"group": "networking.k8s.io",
@@ -97,6 +104,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
+						"namespace": "default",
+						"name": "test.ingress"
+					},
 					"sources": [
 						{
 							"group": "networking.k8s.io",
@@ -137,6 +151,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
+						"namespace": "default",
+						"name": "whoami-drop-route"
+					},
 					"sources": [
 						{
 							"group": "networking.k8s.io",
@@ -177,6 +198,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
+						"namespace": "default",
+						"name": "whoami-keep-route"
+					},
 					"sources": [
 						{
 							"group": "networking.k8s.io",
@@ -259,6 +287,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
 					"sources": [
 						{
 							"version": "v1",
@@ -322,6 +356,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
 					"sources": [
 						{
 							"version": "v1",

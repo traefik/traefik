@@ -23,17 +23,16 @@ func TestAddRouterMetadataFields(t *testing.T) {
 			expected: CoreLogData{},
 		},
 		{
-			desc: "no matching source",
-			metadata: newMetadata(
-				dynamic.KubernetesRef{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute", Namespace: "default", Name: "route", Path: "/spec/rules/0"},
-				dynamic.KubernetesRef{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "config", Path: "/data"},
+			desc: "no primary",
+			metadata: newMetadata(nil,
+				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress", Path: "/spec/rules/0/http/paths/0"},
 			),
 			expected: CoreLogData{},
 		},
 		{
-			desc: "Ingress",
+			desc: "Ingress primary",
 			metadata: newMetadata(
-				dynamic.KubernetesRef{Version: "v1", Kind: "ConfigMap", Namespace: "default", Name: "config", Path: "/data"},
+				&dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress"},
 				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress", Path: "/spec/rules/0/http/paths/0"},
 			),
 			expected: CoreLogData{
@@ -42,42 +41,33 @@ func TestAddRouterMetadataFields(t *testing.T) {
 			},
 		},
 		{
-			desc: "first of several Ingresses",
+			desc: "Ingress primary among several Ingresses",
 			metadata: newMetadata(
+				&dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "main"},
 				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "main", Path: "/spec/rules/0/http/paths/0"},
 				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "canary", Path: "/spec/rules/0/http/paths/0"},
 			),
 			expected: CoreLogData{
 				KubernetesIngressNamespace: "default",
-				KubernetesIngressName:      "canary",
+				KubernetesIngressName:      "main",
 			},
 		},
 		{
-			desc: "IngressRoute",
+			desc: "IngressRoute primary with a parent IngressRoute",
 			metadata: newMetadata(
-				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "route", Path: "/spec/entryPoints"},
-				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "route", Path: "/spec/routes/0"},
+				&dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child"},
+				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "child", Path: "/spec/routes/0"},
+				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "alpha", Path: "/spec/routes"},
 			),
 			expected: CoreLogData{
 				KubernetesIngressRouteNamespace: "default",
-				KubernetesIngressRouteName:      "route",
-			},
-		},
-		{
-			desc: "Ingress before IngressRoute",
-			metadata: newMetadata(
-				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "route", Path: "/spec/routes/0"},
-				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress", Path: "/spec/rules/0/http/paths/0"},
-			),
-			expected: CoreLogData{
-				KubernetesIngressNamespace: "default",
-				KubernetesIngressName:      "ingress",
+				KubernetesIngressRouteName:      "child",
 			},
 		},
 		{
 			desc: "Ingress kind of another group",
 			metadata: newMetadata(
-				dynamic.KubernetesRef{Group: "example.com", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress"},
+				&dynamic.KubernetesRef{Group: "example.com", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress"},
 			),
 			expected: CoreLogData{},
 		},
@@ -111,15 +101,24 @@ func TestAddServiceMetadataFields(t *testing.T) {
 			expected: CoreLogData{},
 		},
 		{
-			desc: "no Service source",
+			desc: "no primary",
+			metadata: newServiceMetadata("80", nil,
+				dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/0"},
+			),
+			expected: CoreLogData{},
+		},
+		{
+			desc: "TraefikService primary",
 			metadata: newServiceMetadata("",
+				&dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "TraefikService", Namespace: "default", Name: "wrr"},
 				dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "TraefikService", Namespace: "default", Name: "wrr", Path: "/spec"},
 			),
 			expected: CoreLogData{},
 		},
 		{
-			desc: "Service",
+			desc: "Service primary",
 			metadata: newServiceMetadata("80",
+				&dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami"},
 				dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/0"},
 				dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress", Path: "/spec/rules/0/http/paths/0/backend"},
 			),
@@ -130,20 +129,22 @@ func TestAddServiceMetadataFields(t *testing.T) {
 			},
 		},
 		{
-			desc: "ExternalName Service",
-			metadata: newServiceMetadata("http",
-				dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "external", Path: "/spec/externalName"},
+			desc: "Service primary with a fallback Service",
+			metadata: newServiceMetadata("80",
+				&dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami"},
+				dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/0"},
+				dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "fallback", Path: "/spec/ports/0"},
 			),
 			expected: CoreLogData{
 				KubernetesServiceNamespace: "default",
-				KubernetesServiceName:      "external",
-				KubernetesServicePort:      "http",
+				KubernetesServiceName:      "whoami",
+				KubernetesServicePort:      "80",
 			},
 		},
 		{
 			desc: "Service kind of another group",
 			metadata: newServiceMetadata("80",
-				dynamic.KubernetesRef{Group: "serving.knative.dev", Version: "v1", Kind: "Service", Namespace: "default", Name: "knative"},
+				&dynamic.KubernetesRef{Group: "serving.knative.dev", Version: "v1", Kind: "Service", Namespace: "default", Name: "knative"},
 			),
 			expected: CoreLogData{},
 		},
@@ -161,15 +162,15 @@ func TestAddServiceMetadataFields(t *testing.T) {
 	}
 }
 
-func newMetadata(refs ...dynamic.KubernetesRef) *dynamic.Metadata {
-	metadata := &dynamic.Metadata{Kubernetes: &dynamic.KubernetesMetadata{}}
+func newMetadata(primary *dynamic.KubernetesRef, refs ...dynamic.KubernetesRef) *dynamic.Metadata {
+	metadata := &dynamic.Metadata{Kubernetes: &dynamic.KubernetesMetadata{Primary: primary}}
 	metadata.Kubernetes.Sources.Add(refs...)
 
 	return metadata
 }
 
-func newServiceMetadata(port string, refs ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
-	metadata := &dynamic.ServiceMetadata{Kubernetes: &dynamic.KubernetesServiceMetadata{ServicePort: port}}
+func newServiceMetadata(port string, primary *dynamic.KubernetesRef, refs ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
+	metadata := &dynamic.ServiceMetadata{Kubernetes: &dynamic.KubernetesServiceMetadata{Primary: primary, ServicePort: port}}
 	metadata.Kubernetes.Sources.Add(refs...)
 
 	return metadata

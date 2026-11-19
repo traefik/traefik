@@ -15,6 +15,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "traefik.io",
+						"version": "v1alpha1",
+						"kind": "IngressRoute",
+						"namespace": "default",
+						"name": "api.route"
+					},
 					"sources": [
 						{
 							"group": "traefik.io",
@@ -50,6 +57,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "traefik.io",
+						"version": "v1alpha1",
+						"kind": "IngressRoute",
+						"namespace": "default",
+						"name": "test.route"
+					},
 					"sources": [
 						{
 							"group": "traefik.io",
@@ -96,6 +110,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
 					"sources": [
 						{
 							"version": "v1",

@@ -482,15 +482,12 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 		}
 	}
 
-	servers, ref, err := c.loadServers(svc)
+	servers, metadata, err := c.loadServers(svc)
 	if err != nil {
 		return nil, err
 	}
 
 	lb.Servers = servers
-
-	metadata := k8s.NewServiceMetadata(ref)
-	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	if svc.HealthCheck != nil {
 		lb.HealthCheck = &dynamic.ServerHealthCheck{
@@ -623,39 +620,40 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 	return c.nameBuilder.makeID(parentNamespace, serversTransportName), nil
 }
 
-func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, dynamic.KubernetesRef, error) {
+func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, *dynamic.ServiceMetadata, error) {
 	service, exists, err := c.client.GetService(svc.Namespace, svc.Name)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 	if !exists {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("kubernetes service not found: %s/%s", svc.Namespace, svc.Name)
+		return nil, nil, fmt.Errorf("kubernetes service not found: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 
-	ref := dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort))
+	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort)))
+	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", svc.Namespace, svc.Name)
+		return nil, nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", svc.Namespace, svc.Name)
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("externalName services not allowed: %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("externalName services not allowed: %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, err
+			return nil, nil, err
 		}
 
 		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port)))
 
-		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, ref, nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, hostPort)}}, metadata, nil
 	}
 
 	nativeLB := c.nativeLBByDefault
@@ -665,34 +663,34 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 	if nativeLB {
 		address, err := getNativeServiceAddress(*service, *svcPort)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			return nil, nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, err
+			return nil, nil, err
 		}
 
-		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, ref, nil
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, metadata, nil
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		if c.disableClusterScopeResources {
-			return nil, dynamic.KubernetesRef{}, errors.New("nodes lookup is disabled")
+			return nil, nil, errors.New("nodes lookup is disabled")
 		}
 
 		nodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
-			return nil, dynamic.KubernetesRef{}, nodesErr
+			return nil, nil, nodesErr
 		}
 		if !nodesExists || len(nodes) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, err
+			return nil, nil, err
 		}
 
 		for _, node := range nodes {
@@ -708,15 +706,15 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 		}
 
 		if len(servers) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers were generated for service %s in namespace", svc.Name)
+			return nil, nil, fmt.Errorf("no servers were generated for service %s in namespace", svc.Name)
 		}
 
-		return servers, ref, nil
+		return servers, metadata, nil
 	}
 
 	endpointSlices, err := c.client.GetEndpointSlicesForService(svc.Namespace, svc.Name)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
+		return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
 	addresses := map[string]struct{}{}
@@ -734,7 +732,7 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, err
+			return nil, nil, err
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
@@ -760,10 +758,10 @@ func (c configBuilder) loadServers(svc traefikv1alpha1.LoadBalancerSpec) ([]dyna
 	}
 
 	if len(servers) == 0 && !c.allowEmptyServices {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers found for %s/%s", svc.Namespace, svc.Name)
+		return nil, nil, fmt.Errorf("no servers found for %s/%s", svc.Namespace, svc.Name)
 	}
 
-	return servers, ref, nil
+	return servers, metadata, nil
 }
 
 // nameAndService returns the name that should be used for the svc service in the generated config.

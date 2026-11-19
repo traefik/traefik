@@ -247,7 +247,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				}
 
 				// The canary backend's addresses are checked using the original ingress config.
-				endpoints, serviceSources, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
+				endpoints, metadata, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
 				if err != nil || len(endpoints) == 0 {
 					continue
 				}
@@ -266,7 +266,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: pa.Backend.Service.Name,
 						ServicePort: portString(pa.Backend.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     append(serviceSources, prodIngressPath.configSource),
+						Metadata:    withServiceSources(metadata, prodIngressPath.configSource),
 					}
 				}
 
@@ -343,7 +343,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					continue
 				}
 
-				endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
+				endpoints, metadata, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot resolve passthrough backend for host %q", rule.Host)
 					continue
@@ -357,7 +357,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: ingBackend.Service.Name,
 						ServicePort: portString(ingBackend.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     append(serviceSources, annotationsSource(ing.Ingress)),
+						Metadata:    withServiceSources(metadata, annotationsSource(ing.Ingress)),
 					}
 				}
 
@@ -409,7 +409,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// the location is still emitted with an empty backend so the router
 				// (and its middlewares) exist, mirroring ingress-nginx's 503-on-no-servers
 				// behavior.
-				endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
+				endpoints, metadata, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
 				if err != nil {
 					logger.Warn().
 						Str("service", pa.Backend.Service.Name).
@@ -426,7 +426,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: pa.Backend.Service.Name,
 						ServicePort: portString(pa.Backend.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     serviceSources,
+						Metadata:    metadata,
 					}
 				}
 
@@ -496,7 +496,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 							// Build the error backend using defaultBackend annotation or provider default.
 							defaultSvcName := ptr.Deref(ing.config.DefaultBackend, "")
 							if defaultSvcName != "" {
-								endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace,
+								endpoints, metadata, err := p.getBackendEndpoints(ing.Namespace,
 									netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
 									ing.config)
 								if err == nil {
@@ -506,7 +506,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 										ServiceName: defaultSvcName,
 										ServicePort: "0",
 										Endpoints:   endpoints,
-										Sources:     append(serviceSources, annotationsSource(ing.Ingress)),
+										Metadata:    withServiceSources(metadata, annotationsSource(ing.Ingress)),
 									}
 								}
 							}
@@ -548,7 +548,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 		// (default-backend / default-backend-tls routers) so it still serves traffic.
 		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
 			db := ing.Spec.DefaultBackend
-			endpoints, serviceSources, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
+			endpoints, metadata, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
 			if err != nil {
 				logger.Warn().
 					Str("service", db.Service.Name).
@@ -587,7 +587,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						ServiceName: db.Service.Name,
 						ServicePort: portString(db.Service.Port),
 						Endpoints:   endpoints,
-						Sources:     serviceSources,
+						Metadata:    metadata,
 					}
 					mc.Backends[defaultBackendName] = bk
 					mc.DefaultBackend = bk
@@ -607,7 +607,7 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					ServiceName: db.Service.Name,
 					ServicePort: portString(db.Service.Port),
 					Endpoints:   endpoints,
-					Sources:     serviceSources,
+					Metadata:    metadata,
 				}
 			}
 
@@ -752,7 +752,7 @@ func (p *Provider) buildServersTransport(ctx context.Context, ing *netv1.Ingress
 	return nst, nil
 }
 
-func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, []dynamic.KubernetesRef, error) {
+func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, *dynamic.ServiceMetadata, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting service: %w", err)
@@ -767,14 +767,14 @@ func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBa
 		return nil, nil, errors.New("service port not found")
 	}
 
-	sources := []dynamic.KubernetesRef{makeServicePortRef(service, servicePort)}
+	metadata := k8s.NewServiceMetadata(makeServicePortRef(service, servicePort))
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, sources, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, metadata, nil
 	}
 
 	if ptr.Deref(cfg.ServiceUpstream, false) {
-		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, sources, nil
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, metadata, nil
 	}
 
 	endpoints, err := p.getEndpointsFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
@@ -785,7 +785,7 @@ func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBa
 	// Fall back to default-backend annotation if no endpoints.
 	defaultBackend := ptr.Deref(cfg.DefaultBackend, "")
 	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(endpoints) > 0 {
-		return endpoints, sources, nil
+		return endpoints, metadata, nil
 	}
 
 	fallbackSvc, err := p.k8sClient.GetService(namespace, defaultBackend)
@@ -802,14 +802,14 @@ func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBa
 		return nil, nil, errors.New("fallback service port not found")
 	}
 
-	sources = append(sources, makeServicePortRef(fallbackSvc, servicePort))
+	metadata.Kubernetes.Sources.Add(makeServicePortRef(fallbackSvc, servicePort))
 
 	endpoints, err = p.getEndpointsFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return endpoints, sources, nil
+	return endpoints, metadata, nil
 }
 
 // makeIngressSources returns the references to the parts of the Ingress at the given paths, and to its annotations.
@@ -896,7 +896,7 @@ func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName stri
 }
 
 func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig) (*backend, error) {
-	endpoints, sources, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
+	endpoints, metadata, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +908,7 @@ func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBack
 		ServiceName: ingBackend.Service.Name,
 		ServicePort: portString(ingBackend.Service.Port),
 		Endpoints:   endpoints,
-		Sources:     sources,
+		Metadata:    metadata,
 	}, nil
 }
 
@@ -1132,7 +1132,7 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 		return
 	}
 
-	endpoints, sources, err := p.getBackendEndpoints(namespace,
+	endpoints, metadata, err := p.getBackendEndpoints(namespace,
 		netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
 		cfg)
 	if err != nil {
@@ -1143,7 +1143,7 @@ func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string
 		Name:      errBackendName,
 		Namespace: namespace,
 		Endpoints: endpoints,
-		Sources:   append(sources, configSource),
+		Metadata:  withServiceSources(metadata, configSource),
 	}
 }
 

@@ -373,7 +373,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 					continue
 				}
 
-				rt.Metadata.Kubernetes.Sources.Add(
+				rt.Metadata = k8s.NewMetadata(
 					dynamic.MakeKubernetesRef(ingress, "/metadata/annotations"),
 					dynamic.MakeKubernetesRef(ingress, pathSource),
 				)
@@ -772,8 +772,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 
 func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) (*dynamic.Router, error) {
 	rt := &dynamic.Router{
-		Service:  serviceName,
-		Metadata: k8s.NewMetadata(),
+		Service: serviceName,
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {

@@ -184,13 +184,10 @@ func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace s
 		return nil, fmt.Errorf("tcp service %s/%s is not in the parent resource namespace %s", ns, service.Name, parentNamespace)
 	}
 
-	servers, ref, err := p.loadTCPServers(client, ns, service)
+	servers, metadata, err := p.loadTCPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
-
-	metadata := k8s.NewServiceMetadata(ref)
-	metadata.Kubernetes.ServicePort = service.Port.String()
 
 	tcpService := &dynamic.TCPService{
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
@@ -222,40 +219,41 @@ func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace s
 	return tcpService, nil
 }
 
-func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, dynamic.KubernetesRef, error) {
+func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, *dynamic.ServiceMetadata, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 
 	if !exists {
-		return nil, dynamic.KubernetesRef{}, errors.New("service not found")
+		return nil, nil, errors.New("service not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 
-	ref := dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort))
+	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort)))
+	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		if p.DisableClusterScopeResources {
-			return nil, dynamic.KubernetesRef{}, errors.New("nodes lookup is disabled")
+			return nil, nil, errors.New("nodes lookup is disabled")
 		}
 
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
-			return nil, dynamic.KubernetesRef{}, nodesErr
+			return nil, nil, nodesErr
 		}
 
 		if !nodesExists || len(nodes) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		for _, node := range nodes {
@@ -270,10 +268,10 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 		}
 
 		if len(servers) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
 		}
 
-		return servers, ref, nil
+		return servers, metadata, nil
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -289,15 +287,15 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 		if nativeLB {
 			address, err := getNativeServiceAddress(*service, *svcPort)
 			if err != nil {
-				return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+				return nil, nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
 
-			return []dynamic.TCPServer{{Address: address, TLS: svc.TLS}}, ref, nil
+			return []dynamic.TCPServer{{Address: address, TLS: svc.TLS}}, metadata, nil
 		}
 
 		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
+			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
 
 		addresses := map[string]struct{}{}
@@ -334,10 +332,10 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 	}
 
 	if len(servers) == 0 && !p.AllowEmptyServices {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
-	return servers, ref, nil
+	return servers, metadata, nil
 }
 
 func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {

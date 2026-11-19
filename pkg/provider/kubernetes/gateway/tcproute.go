@@ -319,19 +319,18 @@ func (p *Provider) loadTCPService(routerName string, route *gatev1.TCPRoute, bac
 		}
 	}
 
-	lb, serviceSources, errCondition := p.loadTCPServers(namespace, route, backendRef)
+	lb, metadata, errCondition := p.loadTCPServers(namespace, route, backendRef)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
 
-	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
-	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
+	metadata.Kubernetes.Sources.Add(backendSource)
 
 	return serviceName, &dynamic.TCPService{LoadBalancer: lb, Metadata: metadata}, nil
 }
 
-func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, []dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef)
+func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, backendRef gatev1.BackendRef) (*dynamic.TCPServersLoadBalancer, *dynamic.ServiceMetadata, *metav1.Condition) {
+	backendAddresses, svcPort, metadata, err := p.getBackendAddresses(namespace, backendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -361,7 +360,7 @@ func (p *Provider) loadTCPServers(namespace string, route *gatev1.TCPRoute, back
 			Address: net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port))),
 		})
 	}
-	return lb, serviceSources, nil
+	return lb, metadata, nil
 }
 
 func (p *Provider) loadTCPBackendRef(routeNamespace string, backendRef gatev1.BackendRef) (string, error) {

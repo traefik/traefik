@@ -421,16 +421,17 @@ func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespac
 		}
 	}
 
-	lb, st, serviceSources, errCondition := p.loadHTTPServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
+	lb, st, metadata, errCondition := p.loadHTTPServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
 
 	if responseHeaderTimeout > 0 {
+		timeoutsSource := dynamic.MakeKubernetesRef(route, ruleSource.Path+"/timeouts")
 		if st == nil {
-			st = &dynamic.ServersTransport{Metadata: k8s.NewMetadata()}
+			st = &dynamic.ServersTransport{Metadata: k8s.NewMetadata(timeoutsSource)}
 		}
-		st.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(route, ruleSource.Path+"/timeouts"))
+		st.Metadata.Kubernetes.Sources.Add(timeoutsSource)
 
 		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{}
 		st.ForwardingTimeouts.SetDefaults()
@@ -442,8 +443,7 @@ func (p *Provider) loadService(ctx context.Context, gatewayName, gatewayNamespac
 		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
-	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
-	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
+	metadata.Kubernetes.Sources.Add(backendSource)
 
 	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb, Middlewares: middlewares, Metadata: metadata}
 
@@ -581,8 +581,8 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, []dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
+func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *dynamic.ServiceMetadata, *metav1.Condition) {
+	backendAddresses, svcPort, metadata, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -732,7 +732,7 @@ func (p *Provider) loadHTTPServers(gatewayName, gatewayNamespace, namespace stri
 			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
 		})
 	}
-	return lb, serversTransport, serviceSources, nil
+	return lb, serversTransport, metadata, nil
 }
 
 func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy, clientCertificates tls.Certificates) (*dynamic.ServersTransport, metav1.Condition) {

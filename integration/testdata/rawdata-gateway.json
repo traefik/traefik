@@ -52,6 +52,13 @@
 			"priority": 100008,
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -92,6 +99,13 @@
 			"priority": 100008,
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -244,6 +258,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
 					"sources": [
 						{
 							"version": "v1",
@@ -288,6 +308,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -323,6 +350,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
 					"sources": [
 						{
 							"version": "v1",
@@ -367,6 +400,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -422,6 +462,13 @@
 			"priority": -1,
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TCPRoute",
+						"namespace": "default",
+						"name": "tcp-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -468,6 +515,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TLSRoute",
+						"namespace": "default",
+						"name": "tls-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -523,6 +577,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoamitcp"
+					},
 					"sources": [
 						{
 							"version": "v1",
@@ -567,6 +627,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TCPRoute",
+						"namespace": "default",
+						"name": "tcp-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",
@@ -597,6 +664,12 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoamitcp"
+					},
 					"sources": [
 						{
 							"version": "v1",
@@ -641,6 +714,13 @@
 			},
 			"metadata": {
 				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TLSRoute",
+						"namespace": "default",
+						"name": "tls-app-1"
+					},
 					"sources": [
 						{
 							"group": "gateway.networking.k8s.io",

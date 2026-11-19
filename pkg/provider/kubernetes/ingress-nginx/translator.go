@@ -41,7 +41,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
-	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb, Metadata: k8s.NewServiceMetadata()}
+	conf.HTTP.Services[unavailableServiceName] = &dynamic.Service{LoadBalancer: lb, Metadata: newServiceMetadata()}
 
 	for _, k := range slices.Sorted(maps.Keys(mc.Certs)) {
 		cp := mc.Certs[k]
@@ -72,7 +72,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			RuleSyntax:  "default",
 			Priority:    math.MinInt32,
 			Service:     defaultBackendName,
-			Metadata:    k8s.NewMetadata(),
+			Metadata:    newMetadata(),
 		}
 		rtTLS := &dynamic.Router{
 			EntryPoints: p.TLSEntryPoints,
@@ -81,7 +81,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			Priority:    math.MinInt32,
 			Service:     defaultBackendName,
 			TLS:         &dynamic.RouterTLSConfig{},
-			Metadata:    k8s.NewMetadata(),
+			Metadata:    newMetadata(),
 		}
 
 		registered := p.addNonTLSRouter(conf, defaultBackendName, rt)
@@ -121,7 +121,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			RuleSyntax:  "default",
 			Service:     pt.BackendName,
 			TLS:         &dynamic.RouterTCPTLSConfig{Passthrough: true},
-			Metadata:    k8s.NewMetadata(pt.Sources...),
+			Metadata:    newMetadata(pt.Sources...),
 		}
 	}
 
@@ -165,7 +165,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 								{Name: canarySvcName, Weight: new(loc.Canary.Weight)},
 							},
 						},
-						Metadata: k8s.NewServiceMetadata(slices.Concat(loc.BackendSources, loc.Canary.Sources)...),
+						Metadata: newServiceMetadata(slices.Concat(loc.BackendSources, loc.Canary.Sources)...),
 					})
 					routerSvcName = canaryWRRName
 					routerSources = loc.Canary.Sources
@@ -240,7 +240,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Rule:        appendCanaryRule(rule, loc.Canary),
 					RuleSyntax:  rt.RuleSyntax,
 					Service:     canarySvcName,
-					Metadata:    buildDerivedMetadata(rt, loc.Canary.Sources...),
+					Metadata:    withRouterSources(rt.Metadata, loc.Canary.Sources...),
 				}
 				if p.addNonTLSRouter(conf, canaryKey, canaryRouter) {
 					p.applyMiddlewares(mc, loc, canaryKey, canaryRouter, conf)
@@ -254,7 +254,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						RuleSyntax:  rtTLS.RuleSyntax,
 						Service:     canarySvcName,
 						TLS:         rtTLS.TLS,
-						Metadata:    buildDerivedMetadata(rtTLS, loc.Canary.Sources...),
+						Metadata:    withRouterSources(rtTLS.Metadata, loc.Canary.Sources...),
 					}
 					conf.HTTP.Routers[canaryKeyTLS] = canaryRouterTLS
 					p.applyMiddlewares(mc, loc, canaryKeyTLS, canaryRouterTLS, conf)
@@ -268,7 +268,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					Rule:        appendNonCanaryRule(rule, loc.Canary),
 					RuleSyntax:  rt.RuleSyntax,
 					Service:     primarySvcName,
-					Metadata:    buildDerivedMetadata(rt, loc.Canary.Sources...),
+					Metadata:    withRouterSources(rt.Metadata, loc.Canary.Sources...),
 				}
 				if p.addNonTLSRouter(conf, nonCanaryKey, nonCanaryRouter) {
 					p.applyMiddlewares(mc, loc, nonCanaryKey, nonCanaryRouter, conf)
@@ -282,7 +282,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						RuleSyntax:  rtTLS.RuleSyntax,
 						Service:     primarySvcName,
 						TLS:         rtTLS.TLS,
-						Metadata:    buildDerivedMetadata(rtTLS, loc.Canary.Sources...),
+						Metadata:    withRouterSources(rtTLS.Metadata, loc.Canary.Sources...),
 					}
 					conf.HTTP.Routers[nonCanaryKeyTLS] = nonCanaryRouterTLS
 					p.applyMiddlewares(mc, loc, nonCanaryKeyTLS, nonCanaryRouterTLS, conf)
@@ -329,23 +329,55 @@ func addServersTransport(conf *dynamic.Configuration, loc *location) {
 	conf.HTTP.ServersTransports[loc.ServersTransportName] = loc.ServersTransport
 }
 
-// metadata returns the metadata of an object built from the location, and from the given parts of Kubernetes resources.
-func (l *location) metadata(sources ...dynamic.KubernetesRef) *dynamic.Metadata {
-	return k8s.NewMetadata(slices.Concat(l.Sources, sources)...)
+// newMetadata returns the metadata of an object built for the resource of the first of the given sources.
+func newMetadata(sources ...dynamic.KubernetesRef) *dynamic.Metadata {
+	if len(sources) == 0 {
+		return &dynamic.Metadata{Kubernetes: &dynamic.KubernetesMetadata{}}
+	}
+
+	return k8s.NewMetadata(sources[0], sources[1:]...)
 }
 
-// buildDerivedMetadata returns the metadata of a router derived from rt, and from the given parts of Kubernetes resources.
-func buildDerivedMetadata(rt *dynamic.Router, sources ...dynamic.KubernetesRef) *dynamic.Metadata {
-	metadata := k8s.NewMetadata(sources...)
-	if rt.Metadata != nil {
-		metadata.Merge(rt.Metadata)
+// newServiceMetadata returns the metadata of a service built for the resource of the first of the given sources.
+func newServiceMetadata(sources ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
+	if len(sources) == 0 {
+		return &dynamic.ServiceMetadata{Kubernetes: &dynamic.KubernetesServiceMetadata{}}
 	}
+
+	return k8s.NewServiceMetadata(sources[0], sources[1:]...)
+}
+
+// withServiceSources returns a copy of metadata with the given parts of Kubernetes resources, or nil when metadata is nil.
+func withServiceSources(metadata *dynamic.ServiceMetadata, sources ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
+	if metadata == nil {
+		return nil
+	}
+
+	metadata = metadata.DeepCopy()
+	metadata.Kubernetes.Sources.Add(sources...)
+
+	return metadata
+}
+
+// metadata returns the metadata of an object built from the location, and from the given parts of Kubernetes resources.
+func (l *location) metadata(sources ...dynamic.KubernetesRef) *dynamic.Metadata {
+	return newMetadata(slices.Concat(l.Sources, sources)...)
+}
+
+// withRouterSources returns a copy of metadata with the given parts of Kubernetes resources.
+func withRouterSources(metadata *dynamic.Metadata, sources ...dynamic.KubernetesRef) *dynamic.Metadata {
+	metadata = metadata.DeepCopy()
+	metadata.Kubernetes.Sources.Add(sources...)
 
 	return metadata
 }
 
 func buildServiceMetadata(b *backend, sources ...dynamic.KubernetesRef) *dynamic.ServiceMetadata {
-	metadata := k8s.NewServiceMetadata(slices.Concat(b.Sources, sources)...)
+	// The primary resource is the backend Service, or the Ingress declaring the backend when the Service is missing.
+	metadata := withServiceSources(b.Metadata, sources...)
+	if metadata == nil {
+		metadata = newServiceMetadata(sources...)
+	}
 	metadata.Kubernetes.ServicePort = b.ServicePort
 
 	return metadata

@@ -41,6 +41,10 @@ func (m *ServiceMetadata) Merge(other *ServiceMetadata) {
 // +k8s:deepcopy-gen=true
 
 type KubernetesMetadata struct {
+	// Primary is the resource the object is built for, one of the resources of Sources.
+	// It is nil when no single resource declares the object.
+	Primary *KubernetesRef `json:"primary,omitempty"`
+
 	// Sources are the parts of the Kubernetes resources that the provider reads
 	// to build the object.
 	Sources KubernetesSources `json:"sources"`

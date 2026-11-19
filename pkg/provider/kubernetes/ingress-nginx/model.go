@@ -64,8 +64,8 @@ type backend struct {
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
 
-	// Sources are the parts of the Kubernetes Services the endpoints come from.
-	Sources []dynamic.KubernetesRef
+	// Metadata is the metadata of the services built from the backend, nil when the Service is missing.
+	Metadata *dynamic.ServiceMetadata
 }
 
 // endpoint is a single resolved pod address.

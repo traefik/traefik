@@ -308,7 +308,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName, gatewayNamespace string, list
 		}
 	}
 
-	lb, st, serviceSources, errCondition := p.loadGRPCServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
+	lb, st, metadata, errCondition := p.loadGRPCServers(gatewayName, gatewayNamespace, namespace, route, backendRef, listener, statusReport)
 	if errCondition != nil {
 		return serviceName, nil, errCondition
 	}
@@ -318,8 +318,7 @@ func (p *Provider) loadGRPCBackendRef(gatewayName, gatewayNamespace string, list
 		conf.HTTP.ServersTransports[serviceName] = st
 	}
 
-	metadata := k8s.NewServiceMetadata(append(serviceSources, backendSource)...)
-	metadata.Kubernetes.ServicePort = strconv.Itoa(int(port))
+	metadata.Kubernetes.Sources.Add(backendSource)
 
 	return serviceName, &dynamic.Service{LoadBalancer: lb, Metadata: metadata}, nil
 }
@@ -372,8 +371,8 @@ func (p *Provider) loadGRPCMiddlewares(conf *dynamic.Configuration, route *gatev
 	return middlewareNames, nil
 }
 
-func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, []dynamic.KubernetesRef, *metav1.Condition) {
-	backendAddresses, svcPort, serviceSources, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
+func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace string, route *gatev1.GRPCRoute, backendRef gatev1.GRPCBackendRef, listener gatewayListener, statusReport *StatusReport) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *dynamic.ServiceMetadata, *metav1.Condition) {
+	backendAddresses, svcPort, metadata, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, nil, &metav1.Condition{
 			Type:               string(gatev1.RouteConditionResolvedRefs),
@@ -523,7 +522,7 @@ func (p *Provider) loadGRPCServers(gatewayName, gatewayNamespace, namespace stri
 		})
 	}
 
-	return lb, serversTransport, serviceSources, nil
+	return lb, serversTransport, metadata, nil
 }
 
 func buildGRPCMatchRule(hostnames []gatev1.Hostname, match gatev1.GRPCRouteMatch) (string, int) {

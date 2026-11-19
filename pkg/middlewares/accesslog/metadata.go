@@ -1,51 +1,36 @@
 package accesslog
 
-import (
-	"slices"
-
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-)
+import "github.com/traefik/traefik/v3/pkg/config/dynamic"
 
 // addRouterMetadataFields adds the fields of the Kubernetes Ingress and IngressRoute that the router comes from.
 func addRouterMetadataFields(core CoreLogData, metadata *dynamic.Metadata) {
-	if metadata == nil || metadata.Kubernetes == nil {
+	if metadata == nil || metadata.Kubernetes == nil || metadata.Kubernetes.Primary == nil {
 		return
 	}
 
-	if ref, ok := firstKubernetesRef(metadata.Kubernetes.Sources, "networking.k8s.io", "Ingress"); ok {
-		core[KubernetesIngressNamespace] = ref.Namespace
-		core[KubernetesIngressName] = ref.Name
-	} else if ref, ok = firstKubernetesRef(metadata.Kubernetes.Sources, "traefik.io", "IngressRoute"); ok {
-		core[KubernetesIngressRouteNamespace] = ref.Namespace
-		core[KubernetesIngressRouteName] = ref.Name
+	primary := metadata.Kubernetes.Primary
+	switch {
+	case primary.Group == "networking.k8s.io" && primary.Kind == "Ingress":
+		core[KubernetesIngressNamespace] = primary.Namespace
+		core[KubernetesIngressName] = primary.Name
+	case primary.Group == "traefik.io" && primary.Kind == "IngressRoute":
+		core[KubernetesIngressRouteNamespace] = primary.Namespace
+		core[KubernetesIngressRouteName] = primary.Name
 	}
 }
 
 // addServiceMetadataFields adds the fields of the Kubernetes Service that the service comes from.
 func addServiceMetadataFields(core CoreLogData, metadata *dynamic.ServiceMetadata) {
-	if metadata == nil || metadata.Kubernetes == nil {
+	if metadata == nil || metadata.Kubernetes == nil || metadata.Kubernetes.Primary == nil {
 		return
 	}
 
-	ref, ok := firstKubernetesRef(metadata.Kubernetes.Sources, "", "Service")
-	if !ok {
+	primary := metadata.Kubernetes.Primary
+	if primary.Group != "" || primary.Kind != "Service" {
 		return
 	}
 
-	core[KubernetesServiceNamespace] = ref.Namespace
-	core[KubernetesServiceName] = ref.Name
+	core[KubernetesServiceNamespace] = primary.Namespace
+	core[KubernetesServiceName] = primary.Name
 	core[KubernetesServicePort] = metadata.Kubernetes.ServicePort
-}
-
-// firstKubernetesRef returns the first source of the given group and kind.
-// The sources are sorted, so the same source is returned for each request.
-func firstKubernetesRef(sources dynamic.KubernetesSources, group, kind string) (dynamic.KubernetesRef, bool) {
-	i := slices.IndexFunc(sources, func(ref dynamic.KubernetesRef) bool {
-		return ref.Group == group && ref.Kind == kind
-	})
-	if i < 0 {
-		return dynamic.KubernetesRef{}, false
-	}
-
-	return sources[i], true
 }

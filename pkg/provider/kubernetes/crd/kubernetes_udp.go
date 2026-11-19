@@ -118,13 +118,10 @@ func (p *Provider) createLoadBalancerServerUDP(client *Client, parentNamespace s
 		ns = service.Namespace
 	}
 
-	servers, ref, err := p.loadUDPServers(client, ns, service)
+	servers, metadata, err := p.loadUDPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
-
-	metadata := k8s.NewServiceMetadata(ref)
-	metadata.Kubernetes.ServicePort = service.Port.String()
 
 	udpService := &dynamic.UDPService{
 		LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -137,40 +134,41 @@ func (p *Provider) createLoadBalancerServerUDP(client *Client, parentNamespace s
 }
 
 // loadUDPServers returns the servers of svc, along with a reference to the Service port they are built from.
-func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceUDP) ([]dynamic.UDPServer, dynamic.KubernetesRef, error) {
+func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceUDP) ([]dynamic.UDPServer, *dynamic.ServiceMetadata, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 
 	if !exists {
-		return nil, dynamic.KubernetesRef{}, errors.New("service not found")
+		return nil, nil, errors.New("service not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, dynamic.KubernetesRef{}, err
+		return nil, nil, err
 	}
 
-	ref := dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort))
+	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort)))
+	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		if p.DisableClusterScopeResources {
-			return nil, dynamic.KubernetesRef{}, errors.New("nodes lookup is disabled")
+			return nil, nil, errors.New("nodes lookup is disabled")
 		}
 
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
-			return nil, dynamic.KubernetesRef{}, nodesErr
+			return nil, nil, nodesErr
 		}
 
 		if !nodesExists || len(nodes) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		for _, node := range nodes {
@@ -184,10 +182,10 @@ func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv
 		}
 
 		if len(servers) == 0 {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
 		}
 
-		return servers, ref, nil
+		return servers, metadata, nil
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -202,15 +200,15 @@ func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv
 		if nativeLB {
 			address, err := getNativeServiceAddress(*service, *svcPort)
 			if err != nil {
-				return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+				return nil, nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
 
-			return []dynamic.UDPServer{{Address: address}}, ref, nil
+			return []dynamic.UDPServer{{Address: address}}, metadata, nil
 		}
 
 		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
 		if err != nil {
-			return nil, dynamic.KubernetesRef{}, fmt.Errorf("getting endpointslices: %w", err)
+			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
 
 		addresses := map[string]struct{}{}
@@ -246,8 +244,8 @@ func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv
 	}
 
 	if len(servers) == 0 && !p.AllowEmptyServices {
-		return nil, dynamic.KubernetesRef{}, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
-	return servers, ref, nil
+	return servers, metadata, nil
 }
