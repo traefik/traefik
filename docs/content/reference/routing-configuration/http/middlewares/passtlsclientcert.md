@@ -254,7 +254,8 @@ The `info` option selects the specific client certificate details you want to ad
 The value of the header is an escaped concatenation of all the selected certificate details.
 Unless specified otherwise, all the header values examples are shown unescaped, for readability.
 
-If there are more than one certificate, they are separated by a `,`.
+Only the client leaf certificate (the first certificate of the chain presented during the TLS handshake) is described.
+Any intermediate CA certificate sent by the client is ignored: use the [`pem`](#pem) option to forward the whole chain.
 
 The following example shows such a concatenation, when all the available fields are selected:
 
