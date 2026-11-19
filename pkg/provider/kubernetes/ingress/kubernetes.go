@@ -33,6 +33,9 @@ import (
 )
 
 const (
+	// ProviderName is the Kubernetes Ingress provider name.
+	ProviderName = "kubernetes"
+
 	annotationKubernetesIngressClass     = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass           = "traefik"
 	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
@@ -81,9 +84,6 @@ func (p *Provider) Init() error {
 
 	return nil
 }
-
-// ProviderName is the Kubernetes Ingress provider name.
-const ProviderName = "kubernetes"
 
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
