@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/cenkalti/backoff/v4"
 	eventtypes "github.com/moby/moby/api/types/events"
 	"github.com/moby/moby/client"
@@ -33,6 +34,7 @@ type Provider struct {
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.Watch = true
+	p.WatchTimeout = ptypes.Duration(5 * time.Minute)
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.DefaultRule = DefaultTemplateRule
@@ -114,6 +116,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 				}
 
+				watchdog := time.NewTimer(time.Duration(p.WatchTimeout))
+				defer watchdog.Stop()
+
 				res := dockerClient.Events(ctx, client.EventsListOptions{
 					Filters: make(client.Filters).Add("type", string(eventtypes.ContainerEventType)),
 				})
@@ -125,11 +130,17 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							strings.HasPrefix(string(event.Action), "health_status") {
 							startStopHandle(event)
 						}
+						if !watchdog.Stop() {
+							<-watchdog.C
+						}
+						watchdog.Reset(time.Duration(p.WatchTimeout))
 					case err := <-res.Err:
 						if errors.Is(err, io.EOF) {
 							logger.Debug().Msg("Provider event stream closed")
 						}
 						return err
+					case <-watchdog.C:
+						return fmt.Errorf("docker events stream timed out after %s, forcing reconnection", p.WatchTimeout)
 					case <-ctx.Done():
 						return nil
 					}
