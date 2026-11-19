@@ -631,8 +631,6 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 
 // loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
 // and records what the valid ones claim in claims.
-//
-//nolint:funlen // The listener checks are kept inline to read in the order they are applied.
 func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration) []gatewayListener {
 	listeners, generation := gateway.Spec.Listeners, gateway.Generation
 	// The resource declaring the listeners drives the ReferenceGrant checks,
