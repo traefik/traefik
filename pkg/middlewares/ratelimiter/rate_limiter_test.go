@@ -176,10 +176,12 @@ func TestRateLimitCanceledContext(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithCancel(t.Context())
+			var ctx context.Context
+			var cancel context.CancelFunc
 			if test.deadlineExceeded {
-				cancel()
 				ctx, cancel = context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+			} else {
+				ctx, cancel = context.WithCancel(t.Context())
 			}
 			cancel()
 
