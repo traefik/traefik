@@ -1,11 +1,13 @@
 package observability
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -80,6 +82,51 @@ func TestNewRouter(t *testing.T) {
 				assert.Equal(t, test.expected[i].name, span.name)
 				assert.Equal(t, test.expected[i].attributes, span.attributes)
 			}
+		})
+	}
+}
+
+func TestNewRouter_HTTPRoute(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		seeded bool
+	}{
+		{
+			desc:   "route holder seeded",
+			seeded: true,
+		},
+		{
+			desc: "route holder not seeded",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search", nil)
+			if test.seeded {
+				req = req.WithContext(context.WithValue(req.Context(), httpRouteKey{}, &httpRouteHolder{}))
+			}
+
+			var nextReq *http.Request
+			next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+				nextReq = r
+			})
+
+			handler := newRouter(t.Context(), "myRouter", "PathPrefix(`/search`)", "myService", next)
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			require.NotNil(t, nextReq)
+
+			route, ok := HTTPRoute(nextReq.Context())
+			require.True(t, ok)
+			assert.Equal(t, "PathPrefix(`/search`)", route)
+
+			// The request is only re-wrapped when no route holder was already seeded,
+			// in which case the route is visible to the caller through its own context.
+			assert.Equal(t, test.seeded, nextReq == req)
+
+			_, ok = HTTPRoute(req.Context())
+			assert.Equal(t, test.seeded, ok)
 		})
 	}
 }

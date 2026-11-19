@@ -51,11 +51,16 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	ctx := req.Context()
+	if _, ok := ctx.Value(httpRouteKey{}).(*httpRouteHolder); !ok {
+		ctx = context.WithValue(ctx, httpRouteKey{}, &httpRouteHolder{})
+		req = req.WithContext(ctx)
+	}
+
 	start := time.Now()
 	e.next.ServeHTTP(rw, req)
 	end := time.Now()
 
-	ctx := req.Context()
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Str(logs.MiddlewareType, semConvServerMetricsTypeName).Msg("Could not get Capture")
@@ -75,6 +80,10 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
+
+	if route, ok := HTTPRoute(ctx); ok {
+		attrs = append(attrs, semconv.HTTPRoute(route))
+	}
 
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
 		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)

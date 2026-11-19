@@ -3,6 +3,7 @@ package observability
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -21,6 +22,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 	tests := []struct {
 		desc           string
 		statusCode     int
+		routerRules    []string
 		wantAttributes attribute.Set
 	}{
 		{
@@ -42,6 +44,48 @@ func TestSemConvServerMetrics(t *testing.T) {
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(201),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "no matching router",
+			statusCode: http.StatusNotFound,
+			wantAttributes: attribute.NewSet(
+				attribute.Key("error.type").String("404"),
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(404),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:        "with router rule",
+			statusCode:  http.StatusOK,
+			routerRules: []string{"PathPrefix(`/search`)"},
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("PathPrefix(`/search`)"),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			// With multi-layer routing, the innermost (child) router rule wins.
+			desc:        "with nested router rules",
+			statusCode:  http.StatusOK,
+			routerRules: []string{"Host(`www.test.com`)", "PathPrefix(`/search`)"},
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("PathPrefix(`/search`)"),
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
@@ -72,9 +116,14 @@ func TestSemConvServerMetrics(t *testing.T) {
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			var next http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(test.statusCode)
 			})
+
+			// Router rules are ordered from the outermost (parent) to the innermost (child) router.
+			for _, rule := range slices.Backward(test.routerRules) {
+				next = newRouter(t.Context(), "test-router", rule, "test-service", next)
+			}
 
 			handler := newServerMetricsSemConv(t.Context(), semConvMetricRegistry, next)
 
