@@ -115,12 +115,15 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	// Keep an empty server load-balancer for non-running containers.
-	if container.Status != "" && container.Status != containertypes.StateRunning {
-		return nil
-	}
-	// Keep an empty server load-balancer for unhealthy containers.
-	if container.Health != "" && container.Health != containertypes.Healthy {
+	// Drop any label-defined servers to keep the load-balancer empty (503 instead of 500).
+	// https://github.com/traefik/traefik/issues/13261
+	if (container.Status != "" && container.Status != containertypes.StateRunning) ||
+		(container.Health != "" && container.Health != containertypes.Healthy) {
+		for _, service := range configuration.Services {
+			if service.LoadBalancer != nil {
+				service.LoadBalancer.Servers = nil
+			}
+		}
 		return nil
 	}
 
@@ -144,12 +147,15 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	// Keep an empty server load-balancer for non-running containers.
-	if container.Status != "" && container.Status != containertypes.StateRunning {
-		return nil
-	}
-	// Keep an empty server load-balancer for unhealthy containers.
-	if container.Health != "" && container.Health != containertypes.Healthy {
+	// Drop any label-defined servers to keep the load-balancer empty (503 instead of 500).
+	// https://github.com/traefik/traefik/issues/13261
+	if (container.Status != "" && container.Status != containertypes.StateRunning) ||
+		(container.Health != "" && container.Health != containertypes.Healthy) {
+		for _, service := range configuration.Services {
+			if service.LoadBalancer != nil {
+				service.LoadBalancer.Servers = nil
+			}
+		}
 		return nil
 	}
 
@@ -175,12 +181,15 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		}
 	}
 
-	// Keep an empty server load-balancer for non-running containers.
-	if container.Status != "" && container.Status != containertypes.StateRunning {
-		return nil
-	}
-	// Keep an empty server load-balancer for unhealthy containers.
-	if container.Health != "" && container.Health != containertypes.Healthy {
+	// Drop any label-defined servers to keep the load-balancer empty (503 instead of 500).
+	// https://github.com/traefik/traefik/issues/13261
+	if (container.Status != "" && container.Status != containertypes.StateRunning) ||
+		(container.Health != "" && container.Health != containertypes.Healthy) {
+		for _, service := range configuration.Services {
+			if service.LoadBalancer != nil {
+				service.LoadBalancer.Servers = nil
+			}
+		}
 		return nil
 	}
 
