@@ -307,6 +307,19 @@ func (p *Provider) validateConfiguration() error {
 	}
 
 	p.allowedHeaders = allowedHeaders
+
+	// Validates the IP strategies once, instead of failing every generated middleware.
+	if p.IPAllowListStrategy != nil {
+		if _, err := p.IPAllowListStrategy.Get(); err != nil {
+			return fmt.Errorf("invalid ipAllowListStrategy: %w", err)
+		}
+	}
+	if p.LimitIPStrategy != nil {
+		if _, err := p.LimitIPStrategy.Get(); err != nil {
+			return fmt.Errorf("invalid limitIPStrategy: %w", err)
+		}
+	}
+
 	return nil
 }
 

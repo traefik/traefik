@@ -135,6 +135,32 @@ func TestBuildLimits(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:            "with excluded IPs limit IP strategy",
+			limitIPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+			expectedRateLimitRPS: &dynamic.RateLimit{
+				Average: 10,
+				Period:  ptypes.Duration(time.Second),
+				Burst:   50,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+			expectedRateLimitRPM: &dynamic.RateLimit{
+				Average: 120,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   600,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+			expectedLimitConnections: &dynamic.InFlightReq{
+				Amount: 5,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

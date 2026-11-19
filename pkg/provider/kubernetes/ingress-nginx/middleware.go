@@ -382,6 +382,8 @@ func (p *Provider) buildLimitConnections(loc *location) {
 		return
 	}
 
+	// The in-flight request middleware defaults to the request host when no source criterion is set,
+	// so an empty IP strategy is needed to count connections per remote address, as ingress-nginx does.
 	ipStrategy := p.LimitIPStrategy
 	if ipStrategy == nil {
 		ipStrategy = &dynamic.IPStrategy{}

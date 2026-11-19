@@ -383,6 +383,11 @@ The following annotations are organized by category for easier navigation.
     By default, requests and connections are counted per remote address of the incoming request.
     When Traefik is behind a reverse proxy, all clients share the remote address of the proxy, and the actual client IP is often found in the `X-Forwarded-For` header instead.
     This can be configured globally using the provider option [`limitIPStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-limitIPStrategy).
+    Since ingress-nginx uses a single real IP configuration for both, `limitIPStrategy` is usually set to the same value as [`ipAllowListStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-ipAllowListStrategy).
+
+    Every proxy in front of Traefik that appends to `X-Forwarded-For` counts toward `depth`: for example, a CDN followed by an HTTP load balancer requires `depth: 2`.
+    The addresses of these proxies must be listed in the entry point [`forwardedHeaders.trustedIPs`](../../../install-configuration/entrypoints/#forwarded-headers), otherwise Traefik removes the `X-Forwarded-For` header.
+    When no client IP can be found (header missing or shorter than `depth`), there is no fallback to the remote address and all those requests share a single limit.
 
 | Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |-----------------------------------------------------------------------------------------------------------|
