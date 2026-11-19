@@ -174,8 +174,12 @@ func (p *Provider) Init() error {
 	return p.InitWithClient(client)
 }
 
-// InitWithClient initializes the provider with the given client.
+// InitWithClient initializes the provider with the given client instead of creating one.
 func (p *Provider) InitWithClient(client *Client) error {
+	if client == nil {
+		return errors.New("client must not be nil")
+	}
+
 	if err := p.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating %s provider configuration: %w", ProviderName, err)
 	}
