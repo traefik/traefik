@@ -43,7 +43,52 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 
 	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 		rc := newRingChannel()
+		providerChan := make(chan dynamic.Message)
+		firstForwarded := make(chan struct{})
+		synced := make(chan struct{})
+		stopped := make(chan struct{})
+
+		// The first message bypasses the ring channel and, when sent while the provider is starting,
+		// is delivered before Provide returns, to preserve the providers launch order the aggregator relies on:
+		// the file provider configuration must reach the ConfigurationWatcher before the internal provider one,
+		// which triggers the first configuration apply.
 		pool.GoCtx(func(ctx context.Context) {
+			defer close(stopped)
+
+			sync := synced
+			first := true
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case sync <- struct{}{}:
+					sync = nil
+				case msg := <-providerChan:
+					if !first {
+						rc.in() <- msg
+						continue
+					}
+
+					select {
+					case <-ctx.Done():
+						return
+					case configurationChan <- msg:
+					}
+
+					first = false
+					close(firstForwarded)
+				}
+			}
+		})
+
+		pool.GoCtx(func(ctx context.Context) {
+			select {
+			case <-ctx.Done():
+				return
+			case <-firstForwarded:
+				time.Sleep(providerThrottleDuration)
+			}
+
 			for {
 				select {
 				case <-ctx.Done():
@@ -55,7 +100,14 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 			}
 		})
 
-		return prd.Provide(rc.in(), pool)
+		err := prd.Provide(providerChan, pool)
+
+		select {
+		case <-synced:
+		case <-stopped:
+		}
+
+		return err
 	}
 }
 
