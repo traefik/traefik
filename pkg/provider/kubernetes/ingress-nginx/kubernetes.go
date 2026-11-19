@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	kclientset "k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -136,7 +137,7 @@ type Provider struct {
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
-	k8sClient           *clientWrapper
+	k8sClient           *Client
 	applyMiddlewareFunc func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error
 }
 
@@ -165,6 +166,20 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	client, err := p.newK8sClient()
+	if err != nil {
+		return fmt.Errorf("creating kubernetes client: %w", err)
+	}
+
+	return p.InitWithClient(client)
+}
+
+// InitWithClient initializes the provider with the given client instead of creating one.
+func (p *Provider) InitWithClient(client *Client) error {
+	if client == nil {
+		return errors.New("client must not be nil")
+	}
+
 	if err := p.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating %s provider configuration: %w", ProviderName, err)
 	}
@@ -176,12 +191,7 @@ func (p *Provider) Init() error {
 		p.TLSEntryPoints = []string{p.HTTPSEntryPoint}
 	}
 
-	// Initializes Kubernetes client.
-	var err error
-	p.k8sClient, err = p.newK8sClient()
-	if err != nil {
-		return fmt.Errorf("creating kubernetes client: %w", err)
-	}
+	p.k8sClient = client
 
 	return nil
 }
@@ -221,7 +231,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// dropped events. This is fine, because we don't treat different
 					// event types differently. But if we do in the future, we'll need to
 					// track more information about the dropped events.
-					conf := p.loadConfiguration(ctxLog)
+					conf := p.BuildConfiguration(ctxLog)
 
 					configurationChan <- dynamic.Message{
 						ProviderName:  ProviderName,
@@ -249,7 +259,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration {
+// BuildConfiguration builds the dynamic configuration from the resources that the client gives.
+func (p *Provider) BuildConfiguration(ctx context.Context) *dynamic.Configuration {
 	var ingressClasses []*netv1.IngressClass
 	ics, err := p.k8sClient.ListIngressClasses()
 	if err != nil {
@@ -303,23 +314,33 @@ func (p *Provider) validateConfiguration() error {
 	return nil
 }
 
-func (p *Provider) newK8sClient() (*clientWrapper, error) {
+func (p *Provider) newK8sClient() (*Client, error) {
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
 	}
 
+	var (
+		clientset kclientset.Interface
+		err       error
+	)
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
 		log.Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		return newInClusterClient(p.Endpoint)
+		clientset, err = newInClusterClientset(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
 		log.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		return newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+		clientset, err = newExternalClusterClientsetFromFile(os.Getenv("KUBECONFIG"))
 	default:
 		log.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		return newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+		clientset, err = newExternalClusterClientset(p.Endpoint, p.CertAuthFilePath, p.Token)
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(clientset), nil
 }
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {

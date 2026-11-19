@@ -9,9 +9,9 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-// statusReport collects the status writes produced by a single rebuild so they
+// StatusReport collects the status writes produced by a single rebuild so they
 // can be flushed to the apiserver after the dynamic configuration has been published.
-type statusReport struct {
+type StatusReport struct {
 	gatewayClasses     map[string]gatev1.GatewayClassStatus
 	gateways           map[ktypes.NamespacedName]gatev1.GatewayStatus
 	listenerSets       map[ktypes.NamespacedName]gatev1.ListenerSetStatus
@@ -24,8 +24,8 @@ type statusReport struct {
 	gatewayListeners []gatewayWithListeners
 }
 
-func newStatusReport() *statusReport {
-	return &statusReport{
+func newStatusReport() *StatusReport {
+	return &StatusReport{
 		gatewayClasses:     map[string]gatev1.GatewayClassStatus{},
 		gateways:           map[ktypes.NamespacedName]gatev1.GatewayStatus{},
 		listenerSets:       map[ktypes.NamespacedName]gatev1.ListenerSetStatus{},
@@ -39,7 +39,7 @@ func newStatusReport() *statusReport {
 
 // Flush sends every status write collected during the
 // routing configuration build to the Kubernetes API server.
-func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
+func (r *StatusReport) Flush(ctx context.Context, client *Client) {
 	logger := log.Ctx(ctx)
 
 	for name, status := range r.gatewayClasses {
@@ -95,43 +95,43 @@ func (r *statusReport) Flush(ctx context.Context, client *clientWrapper) {
 	}
 }
 
-func (r *statusReport) RecordGatewayClassStatus(gatewayClassName string, status gatev1.GatewayClassStatus) {
+func (r *StatusReport) RecordGatewayClassStatus(gatewayClassName string, status gatev1.GatewayClassStatus) {
 	r.gatewayClasses[gatewayClassName] = status
 }
 
-func (r *statusReport) RecordGatewayStatus(gateway ktypes.NamespacedName, status gatev1.GatewayStatus) {
+func (r *StatusReport) RecordGatewayStatus(gateway ktypes.NamespacedName, status gatev1.GatewayStatus) {
 	r.gateways[gateway] = status
 }
 
-func (r *statusReport) RecordListenerSetStatus(listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) {
+func (r *StatusReport) RecordListenerSetStatus(listenerSet ktypes.NamespacedName, status gatev1.ListenerSetStatus) {
 	r.listenerSets[listenerSet] = status
 }
 
-func (r *statusReport) RecordHTTPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
+func (r *StatusReport) RecordHTTPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
 	r.httpRoutes[route] = gatev1.RouteStatus{
 		Parents: append(r.httpRoutes[route].Parents, status),
 	}
 }
 
-func (r *statusReport) RecordGRPCRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
+func (r *StatusReport) RecordGRPCRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
 	r.grpcRoutes[route] = gatev1.RouteStatus{
 		Parents: append(r.grpcRoutes[route].Parents, status),
 	}
 }
 
-func (r *statusReport) RecordTCPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
+func (r *StatusReport) RecordTCPRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
 	r.tcpRoutes[route] = gatev1.RouteStatus{
 		Parents: append(r.tcpRoutes[route].Parents, status),
 	}
 }
 
-func (r *statusReport) RecordTLSRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
+func (r *StatusReport) RecordTLSRouteStatus(route ktypes.NamespacedName, status gatev1.RouteParentStatus) {
 	r.tlsRoutes[route] = gatev1.RouteStatus{
 		Parents: append(r.tlsRoutes[route].Parents, status),
 	}
 }
 
-func (r *statusReport) RecordBackendTLSPolicyStatus(policy ktypes.NamespacedName, status gatev1.PolicyAncestorStatus) {
+func (r *StatusReport) RecordBackendTLSPolicyStatus(policy ktypes.NamespacedName, status gatev1.PolicyAncestorStatus) {
 	var ancestors []gatev1.PolicyAncestorStatus
 
 	// Keep existing ancestor statuses, except if it matches the status to merge.

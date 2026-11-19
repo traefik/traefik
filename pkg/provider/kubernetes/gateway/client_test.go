@@ -78,7 +78,7 @@ func TestWatchAll_clusterTrustBundleChecksError(t *testing.T) {
 				return true, nil, test.err
 			})
 
-			client := newClientImpl(csKube, newGatewaySimpleClientSet(t))
+			client := NewClient(&Provider{}, csKube, newGatewaySimpleClientSet(t))
 
 			stopCh := make(chan struct{})
 			t.Cleanup(func() { close(stopCh) })

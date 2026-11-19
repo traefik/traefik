@@ -15,6 +15,17 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
+// Aggregate merges the configurations of the providers into the configuration that the ConfigurationWatcher gives to its listeners.
+func Aggregate(configurations dynamic.Configurations, defaultEntryPoints []string, strictTLSOptions bool) dynamic.Configuration {
+	conf := mergeConfiguration(configurations.DeepCopy(), defaultEntryPoints)
+	conf = applyModel(conf)
+	if conf.HTTP != nil {
+		conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers, strictTLSOptions)
+	}
+
+	return conf
+}
+
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
 	// TODO: see if we can use DeepCopies inside, so that the given argument is left
 	// untouched, and the modified copy is returned.

@@ -58,81 +58,16 @@ type clientWrapper struct {
 	watchedNamespaces           []string
 }
 
-// newInClusterClient returns a new Provider client that is expected to run
-// inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
-	}
-
-	if endpoint != "" {
-		config.Host = endpoint
-	}
-
-	return createClientFromConfig(config)
-}
-
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
-	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-	if err != nil {
-		return nil, err
-	}
-	return createClientFromConfig(configFromFlags)
-}
-
-// newExternalClusterClient returns a new Provider client that may run outside
-// of the cluster.
-// The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
-	if endpoint == "" {
-		return nil, errors.New("endpoint missing for external cluster client")
-	}
-
-	tokenData, err := token.Read()
-	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
-	}
-
-	config := &rest.Config{
-		Host:        endpoint,
-		BearerToken: string(tokenData),
-	}
-
-	if caFilePath != "" {
-		caData, err := os.ReadFile(caFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
-		}
-
-		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
-	}
-	return createClientFromConfig(config)
-}
-
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
-	c.UserAgent = fmt.Sprintf(
-		"%s/%s (%s/%s) kubernetes/ingress",
-		filepath.Base(os.Args[0]),
-		traefikversion.Version,
-		runtime.GOOS,
-		runtime.GOARCH,
-	)
-
-	clientset, err := kclientset.NewForConfig(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return newClientImpl(clientset), nil
-}
-
-func newClientImpl(clientset kclientset.Interface) *clientWrapper {
+// NewClient creates a client that reads the resources from the given clientset, with the options of the provider.
+func NewClient(provider *Provider, clientset kclientset.Interface) Client {
 	return &clientWrapper{
-		clientset:        clientset,
-		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
-		factoriesIngress: make(map[string]kinformers.SharedInformerFactory),
-		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
+		clientset:                   clientset,
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		factoriesIngress:            make(map[string]kinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		ingressLabelSelector:        provider.LabelSelector,
+		disableIngressClassInformer: provider.DisableIngressClassLookup || provider.DisableClusterScopeResources,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
 	}
 }
 
@@ -293,26 +228,6 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv
 	return nil
 }
 
-// isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
-func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
-	if len(aSlice) != len(bSlice) {
-		return false
-	}
-
-	aMap := make(map[string]struct{})
-	for _, aIngress := range aSlice {
-		aMap[aIngress.Hostname+aIngress.IP] = struct{}{}
-	}
-
-	for _, bIngress := range bSlice {
-		if _, exists := aMap[bIngress.Hostname+bIngress.IP]; !exists {
-			return false
-		}
-	}
-
-	return true
-}
-
 // GetService returns the named service from the given namespace.
 func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
@@ -387,15 +302,6 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 	return ns
 }
 
-// translateNotFoundError will translate a "not found" error to a boolean return
-// value which indicates if the resource exists and a nil error.
-func translateNotFoundError(err error) (bool, error) {
-	if kerror.IsNotFound(err) {
-		return false, nil
-	}
-	return err == nil, err
-}
-
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
 // it to ensure we don't panic by requesting an out-of-watch object.
 func (c *clientWrapper) isWatchedNamespace(ns string) bool {
@@ -404,6 +310,104 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+// newInClusterClientset returns the clientset of a Provider client that is expected to run
+// inside the cluster.
+func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+	}
+
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientsetFromConfig(config)
+}
+
+func newExternalClusterClientsetFromFile(file string) (kclientset.Interface, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, err
+	}
+	return createClientsetFromConfig(configFromFlags)
+}
+
+// newExternalClusterClientset returns the clientset of a Provider client that may run outside
+// of the cluster.
+// The endpoint parameter must not be empty.
+func newExternalClusterClientset(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, error) {
+	if endpoint == "" {
+		return nil, errors.New("endpoint missing for external cluster client")
+	}
+
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, fmt.Errorf("read token: %w", err)
+	}
+
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: string(tokenData),
+	}
+
+	if caFilePath != "" {
+		caData, err := os.ReadFile(caFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+	return createClientsetFromConfig(config)
+}
+
+func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
+	c.UserAgent = fmt.Sprintf(
+		"%s/%s (%s/%s) kubernetes/ingress",
+		filepath.Base(os.Args[0]),
+		traefikversion.Version,
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
+
+	clientset, err := kclientset.NewForConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
+// isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
+func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
+	if len(aSlice) != len(bSlice) {
+		return false
+	}
+
+	aMap := make(map[string]struct{})
+	for _, aIngress := range aSlice {
+		aMap[aIngress.Hostname+aIngress.IP] = struct{}{}
+	}
+
+	for _, bIngress := range bSlice {
+		if _, exists := aMap[bIngress.Hostname+bIngress.IP]; !exists {
+			return false
+		}
+	}
+
+	return true
+}
+
+// translateNotFoundError will translate a "not found" error to a boolean return
+// value which indicates if the resource exists and a nil error.
+func translateNotFoundError(err error) (bool, error) {
+	if kerror.IsNotFound(err) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 // filterIngressClassByName return a slice containing ingressclasses with the correct name.

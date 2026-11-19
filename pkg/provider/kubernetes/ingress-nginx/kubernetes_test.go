@@ -28610,7 +28610,7 @@ func TestLoadIngresses(t *testing.T) {
 
 			k8sObjects := readResources(t, test.paths)
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			client := newClient(kubeClient)
+			client := NewClient(kubeClient)
 
 			eventCh, err := client.WatchAll(t.Context(), "", "")
 			require.NoError(t, err)
@@ -28644,7 +28644,7 @@ func TestLoadIngresses(t *testing.T) {
 				p.StrictValidatePathType = *test.strictValidatePathType
 			}
 
-			conf := p.loadConfiguration(t.Context())
+			conf := p.BuildConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
 
 			for name, middleware := range conf.HTTP.Middlewares {
@@ -28784,7 +28784,7 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 			paths := append([]string{"services.yml", "ingressclasses.yml"}, test.paths...)
 			k8sObjects := readResources(t, paths)
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			client := newClient(kubeClient)
+			client := NewClient(kubeClient)
 
 			eventCh, err := client.WatchAll(t.Context(), "", "")
 			require.NoError(t, err)
@@ -28798,7 +28798,7 @@ func TestLoadConfigurationIngressStatus(t *testing.T) {
 			}
 			p.SetDefaults()
 
-			require.NotNil(t, p.loadConfiguration(t.Context()))
+			require.NotNil(t, p.BuildConfiguration(t.Context()))
 
 			for _, name := range test.ingressNames {
 				ing, err := kubeClient.NetworkingV1().Ingresses("default").Get(t.Context(), name, metav1.GetOptions{})
