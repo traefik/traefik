@@ -16139,6 +16139,50 @@ func Test_loadGatewayListeners_listenerFiltersProtocol(t *testing.T) {
 	assert.Equal(t, string(listenerReasonInvalidListenerFilter), accepted.Reason)
 }
 
+func Test_loadGatewayListeners_listenerSetFilters(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
+		ExperimentalChannel: true,
+	}
+	p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
+	})
+
+	gateway := &gatev1.Gateway{Name: "gateway", Namespace: "default", Generation: 1}
+	listenerSet := &gatev1.ListenerSet{
+		Name:       "listener-set",
+		Namespace:  "team",
+		Generation: 1,
+		Spec: gatev1.ListenerSetSpec{
+			Listeners: []gatev1.ListenerEntry{{
+				Name:     "http",
+				Protocol: gatev1.HTTPProtocolType,
+				Port:     80,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+				Filters: &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: "auth"},
+				}}},
+			}},
+		},
+	}
+
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+		TLS:  &dynamic.TLSConfiguration{},
+	}
+	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
+
+	listeners := p.loadGatewayListeners(t.Context(), gateway, listenerSet, claims, conf)
+	require.Len(t, listeners, 1)
+	assert.True(t, listeners[0].Attached)
+
+	// The ExtensionRef filter is a local reference, resolved in the namespace of the ListenerSet declaring it.
+	assert.Equal(t, []string{"team-auth"}, listeners[0].Middlewares)
+}
+
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 	testCases := []struct {
 		desc      string

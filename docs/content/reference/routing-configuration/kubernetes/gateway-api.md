@@ -274,7 +274,7 @@ Traefik supports the `ExtensionRef` filter type,
 which references a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource in the namespace of the `Gateway`, or of the `ListenerSet` declaring the listener.
 As for the `HTTPRoute` filters, the Kubernetes CRD provider must be enabled to use them.
 
-```yaml
+```yaml tab="Gateway"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -296,6 +296,19 @@ spec:
               name: add-tenant-header
 ```
 
+```yaml tab="Headers middleware"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: add-tenant-header
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Tenant: acme
+```
+
 !!! info "Experimental Channel"
 
     The `filters` field is part of the Gateway API Experimental Channel, and requires the Experimental Channel CRDs.
@@ -306,7 +319,7 @@ spec:
 
     The `ExternalAuth` filter type is not supported.
     A listener declaring it is not accepted, with the `UnsupportedValue` reason,
-    and a listener referencing an unknown `ExtensionRef` group or kind is not programmed, with the `InvalidListenerFilterRef` reason.
+    and a listener referencing an unknown `ExtensionRef` group or kind has unresolved references, with the `InvalidListenerFilterRef` reason.
     Filters only apply to `HTTP` and `HTTPS` listeners:
     a ListenerSet listener with another protocol declaring filters is not accepted, with the `InvalidListenerFilter` reason.
 
@@ -319,8 +332,9 @@ spec:
 
     The listener filters run before the route matching of all the `Gateway` resources sharing the port,
     for the hostnames their listeners have in common.
-    So, on a port, the listeners of different `Gateway` resources with overlapping hostnames must declare the same filters,
-    where a hostname overlaps the hostnames it covers, such as `*.example.com` and `foo.example.com`, and a listener without hostname overlaps all of them.
+    So, on a port, the listeners of different `Gateway` resources with overlapping hostnames must declare the same filters.
+    A hostname overlaps the hostnames it covers, such as `*.example.com` and `foo.example.com`,
+    and a listener without a hostname overlaps all of them.
     Otherwise, the oldest `Gateway` wins, and the listeners of the newer ones are reported as `Conflicted` with the `ListenerFiltersConflict` reason.
 
 ## Exposing a Route
