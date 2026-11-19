@@ -79,75 +79,6 @@ func NewClient(provider *Provider, csKube kclientset.Interface, csGateway gatecl
 	}
 }
 
-func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
-	c.QPS = float32(qps)
-	c.Burst = burst
-
-	csGateway, err := gateclientset.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	csKube, err := kclientset.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return csKube, csGateway, nil
-}
-
-// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
-// inside the cluster.
-func newInClusterClientsets(endpoint string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
-	}
-
-	if endpoint != "" {
-		config.Host = endpoint
-	}
-
-	return createClientsetsFromConfig(config, qps, burst)
-}
-
-func newExternalClusterClientsetsFromFile(file string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
-	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-	if err != nil {
-		return nil, nil, err
-	}
-	return createClientsetsFromConfig(configFromFlags, qps, burst)
-}
-
-// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside of the cluster.
-// The endpoint parameter must not be empty.
-func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
-	if endpoint == "" {
-		return nil, nil, errors.New("endpoint missing for external cluster client")
-	}
-
-	tokenData, err := token.Read()
-	if err != nil {
-		return nil, nil, fmt.Errorf("read token: %w", err)
-	}
-
-	config := &rest.Config{
-		Host:        endpoint,
-		BearerToken: string(tokenData),
-	}
-
-	if caFilePath != "" {
-		caData, err := os.ReadFile(caFilePath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
-		}
-
-		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
-	}
-
-	return createClientsetsFromConfig(config, qps, burst)
-}
-
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *Client) WatchAll(ctx context.Context, namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
 	logger := log.Ctx(ctx)
@@ -852,6 +783,75 @@ func (c *Client) UpdateListenerSetStatus(ctx context.Context, listenerSet ktypes
 	}
 
 	return nil
+}
+
+func createClientsetsFromConfig(c *rest.Config, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
+	c.QPS = float32(qps)
+	c.Burst = burst
+
+	csGateway, err := gateclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	csKube, err := kclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return csKube, csGateway, nil
+}
+
+// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
+// inside the cluster.
+func newInClusterClientsets(endpoint string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+	}
+
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientsetsFromConfig(config, qps, burst)
+}
+
+func newExternalClusterClientsetsFromFile(file string, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, nil, err
+	}
+	return createClientsetsFromConfig(configFromFlags, qps, burst)
+}
+
+// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside of the cluster.
+// The endpoint parameter must not be empty.
+func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent, qps, burst int) (kclientset.Interface, gateclientset.Interface, error) {
+	if endpoint == "" {
+		return nil, nil, errors.New("endpoint missing for external cluster client")
+	}
+
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, nil, fmt.Errorf("read token: %w", err)
+	}
+
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: string(tokenData),
+	}
+
+	if caFilePath != "" {
+		caData, err := os.ReadFile(caFilePath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+
+	return createClientsetsFromConfig(config, qps, burst)
 }
 
 // lookupNamespace returns the lookup namespace listenerKey for the given namespace.
