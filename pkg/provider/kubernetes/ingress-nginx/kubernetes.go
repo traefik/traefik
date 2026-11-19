@@ -147,10 +147,6 @@ func (p *Provider) SetApplyMiddlewareFunc(fn func(routerKey string, router *dyna
 	p.applyMiddlewareFunc = fn
 }
 
-func (p *Provider) SetClient(client *Client) {
-	p.k8sClient = client
-}
-
 // SetDefaults sets the default values for the provider.
 func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
@@ -191,6 +187,11 @@ func (p *Provider) Init() error {
 	}
 
 	return nil
+}
+
+// InitWithClient initializes the provider with the given client.
+func (p *Provider) InitWithClient(client *Client) {
+	p.k8sClient = client
 }
 
 // Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
