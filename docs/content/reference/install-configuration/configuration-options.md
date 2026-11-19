@@ -39,6 +39,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog-otlp-http-tls-key" href="#opt-accesslog-otlp-http-tls-key" title="#opt-accesslog-otlp-http-tls-key">accesslog.otlp.http.tls.key</a> | TLS key | |
 | <a id="opt-accesslog-otlp-resourceattributes-name" href="#opt-accesslog-otlp-resourceattributes-name" title="#opt-accesslog-otlp-resourceattributes-name">accesslog.otlp.resourceattributes._name_</a> | Defines additional resource attributes (key:value). | |
 | <a id="opt-accesslog-otlp-servicename" href="#opt-accesslog-otlp-servicename" title="#opt-accesslog-otlp-servicename">accesslog.otlp.servicename</a> | Defines the service name resource attribute. | traefik |
+| <a id="opt-accesslog-samplerate" href="#opt-accesslog-samplerate" title="#opt-accesslog-samplerate">accesslog.samplerate</a> | Sampling rate for the OpenTelemetry access logs, between 0.0 and 1.0. Access log records are dropped randomly and independently of tracing. | 1.000000 |
 | <a id="opt-api" href="#opt-api" title="#opt-api">api</a> | Enable api/dashboard. | false |
 | <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">api.dashboard</a> | Activate dashboard. | true |
