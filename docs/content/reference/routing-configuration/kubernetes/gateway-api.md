@@ -318,8 +318,10 @@ spec:
 !!! warning "Gateways sharing an entry point"
 
     The listener filters run before the route matching of all the `Gateway` resources sharing the port,
-    so a port where a listener declares filters must be served by a single `Gateway`.
-    Otherwise, the oldest `Gateway` keeps the port, and the HTTP and HTTPS listeners of the newer ones on that port are reported as `Conflicted` with the `ListenerFiltersConflict` reason.
+    for the hostnames their listeners have in common.
+    So, on a port, the listeners of different `Gateway` resources with overlapping hostnames must declare the same filters,
+    where a hostname overlaps the hostnames it covers, such as `*.example.com` and `foo.example.com`, and a listener without hostname overlaps all of them.
+    Otherwise, the oldest `Gateway` wins, and the listeners of the newer ones are reported as `Conflicted` with the `ListenerFiltersConflict` reason.
 
 ## Exposing a Route
 

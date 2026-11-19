@@ -15461,7 +15461,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
-			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{}), conf)
+			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{}), conf)
 
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
@@ -15604,7 +15604,7 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
-			listenerFilters := map[gatev1.PortNumber]listenerFiltersClaim{}
+			listenerFilters := map[gatev1.PortNumber][]listenerFiltersClaim{}
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
 
 			gateway := newGateway("my-gateway", nil, newValidation("ca-configmap", gatev1.AllowValidOnly))
@@ -15883,22 +15883,40 @@ func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
 			expected: []bool{true},
 		},
 		{
-			desc:     "a Gateway with filters owns its port",
+			desc:     "a listener without filters conflicts with an overlapping listener with filters",
 			older:    []listener{{port: 80, filter: "a"}},
 			younger:  []listener{{port: 80, hostname: "foo.com"}},
 			expected: []bool{false},
 		},
 		{
-			desc:     "a Gateway cannot add filters on a shared port",
+			desc:     "a listener with filters conflicts with an overlapping listener without filters",
 			older:    []listener{{port: 80}},
 			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
 			expected: []bool{false},
 		},
 		{
-			desc:     "the same filters on a shared port are conflicted",
+			desc:     "a listener with other filters conflicts with an overlapping listener",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "b"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "overlapping listeners with the same filters share a port",
 			older:    []listener{{port: 80, filter: "a"}},
 			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a wildcard hostname overlaps the hostnames it covers",
+			older:    []listener{{port: 80, hostname: "*.foo.com", filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "bar.foo.com"}},
 			expected: []bool{false},
+		},
+		{
+			desc:     "listeners with disjoint hostnames declare their own filters",
+			older:    []listener{{port: 80, hostname: "foo.com", filter: "a"}, {port: 80, hostname: "*.foo.com", filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "bar.com", filter: "b"}, {port: 80, hostname: "*.bar.com"}},
+			expected: []bool{true, true},
 		},
 		{
 			desc:     "the listeners on another port are not conflicted",
@@ -15907,19 +15925,19 @@ func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
 			expected: []bool{false, true},
 		},
 		{
-			desc:     "a Gateway with filters owning its port can declare different filters per listener",
+			desc:     "the listeners of a Gateway can declare different filters",
 			older:    []listener{{port: 8080}},
 			younger:  []listener{{port: 80, filter: "a"}, {port: 80, hostname: "foo.com", filter: "b"}, {port: 80, hostname: "bar.com"}},
 			expected: []bool{true, true, true},
 		},
 		{
-			desc:     "a rejected listener with filters does not own its port",
+			desc:     "a rejected listener with filters is not recorded",
 			older:    []listener{{port: 80, filter: "a", invalid: true}},
 			younger:  []listener{{port: 80, hostname: "foo.com"}},
 			expected: []bool{true},
 		},
 		{
-			desc:     "a rejected listener does not share its port",
+			desc:     "a rejected listener without filters is not recorded",
 			older:    []listener{{port: 80, invalid: true}},
 			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
 			expected: []bool{true},
@@ -15931,7 +15949,7 @@ func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
 			t.Parallel()
 
 			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
-			listenerFilters := map[gatev1.PortNumber]listenerFiltersClaim{}
+			listenerFilters := map[gatev1.PortNumber][]listenerFiltersClaim{}
 			conf := &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
 				TLS:  &dynamic.TLSConfiguration{},
@@ -15990,7 +16008,7 @@ func Test_loadGatewayListeners_listenerFiltersProtocol(t *testing.T) {
 		HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
 		TLS:  &dynamic.TLSConfiguration{},
 	}
-	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{})
+	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
 
 	listeners := p.loadGatewayListeners(t.Context(), gateway, nil, claims, conf)
 	require.Len(t, listeners, 1)
@@ -17067,7 +17085,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				gateway.Spec.AllowedListeners = test.allowedListeners
 			}
 
-			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber]listenerFiltersClaim{})
+			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
 				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}

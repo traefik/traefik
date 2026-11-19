@@ -83,8 +83,8 @@ const (
 	// listenerReasonInvalidListenerFilterRef reports a listener filter reference that cannot be resolved (GEP-5224).
 	listenerReasonInvalidListenerFilterRef gatev1.ListenerConditionReason = "InvalidListenerFilterRef"
 
-	// listenerReasonListenerFiltersConflict reports a listener sharing its port with the listeners of an older Gateway,
-	// while one of them declares filters.
+	// listenerReasonListenerFiltersConflict reports a listener declaring other filters than a listener of an older Gateway
+	// with an overlapping hostname on the same port.
 	listenerReasonListenerFiltersConflict gatev1.ListenerConditionReason = "ListenerFiltersConflict"
 
 	conditionNoErrorMessage = "No error found"
@@ -428,7 +428,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context) (*dynamic.Configurati
 
 	var gatewaysWithListeners []gatewayWithListeners
 	frontendValidations := make(map[gatev1.PortNumber]*tls.ClientAuth)
-	listenerFilters := make(map[gatev1.PortNumber]listenerFiltersClaim)
+	listenerFilters := make(map[gatev1.PortNumber][]listenerFiltersClaim)
 	for _, gateway := range gateways {
 		logger := log.Ctx(ctx).With().
 			Str("gateway", gateway.Name).
@@ -792,11 +792,12 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			gatewayListeners[i].Middlewares = middlewares
 		}
 
-		// A port with listener filters belongs to a single Gateway, the oldest one wins.
+		// Listeners of different Gateways with overlapping hostnames must declare the same filters, the oldest Gateway wins.
 		gatewayKey := gateway.Namespace + "/" + gateway.Name
-		if isHTTP && claims.listenerFiltersConflict(listener.Port, gatewayKey, len(gatewayListeners[i].Middlewares) > 0) {
+		hostname := string(ptr.Deref(listener.Hostname, ""))
+		if isHTTP && claims.listenerFiltersConflict(listener.Port, gatewayKey, hostname, gatewayListeners[i].Middlewares) {
 			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
-				makeListenerConflictConditions(generation, listenerReasonListenerFiltersConflict, "Another Gateway already serves this port, while listener filters require the port to be served by a single Gateway")...)
+				makeListenerConflictConditions(generation, listenerReasonListenerFiltersConflict, "An older Gateway already declares different listener filters for an overlapping hostname on this port")...)
 			continue
 		}
 
@@ -958,9 +959,9 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			}
 		}
 
-		// The port is claimed once the listener is valid, so a rejected listener does not hold it.
+		// The filters are recorded once the listener is valid, so a rejected listener does not hold them.
 		if isHTTP {
-			claims.claimListenerFilters(listener.Port, gatewayKey, len(gatewayListeners[i].Middlewares) > 0)
+			claims.claimListenerFilters(listener.Port, gatewayKey, hostname, gatewayListeners[i].Middlewares)
 		}
 
 		gatewayListeners[i].Attached = true
@@ -1032,8 +1033,8 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, fronten
 
 				listener.RouterNames = append(listener.RouterNames, listenerRouterName)
 
-				// A port with listener filters belongs to a single Gateway,
-				// so a single listener elects the parent router (see listenerFiltersConflict).
+				// The listeners electing a parent router have overlapping hostnames,
+				// so they declare the same filters (see listenerFiltersConflict).
 				if len(listener.Middlewares) > 0 {
 					listenerRouter.Middlewares = listener.Middlewares
 				}
@@ -2318,20 +2319,18 @@ type listenerClaims struct {
 	tcpPorts map[gatev1.PortNumber]bool
 	// frontendValidations holds the frontend validation applied on each port, shared by every Gateway of the load.
 	frontendValidations map[gatev1.PortNumber]*tls.ClientAuth
-	// listenerFilters holds the listener filters claim of each port, shared by every Gateway of the load.
-	listenerFilters map[gatev1.PortNumber]listenerFiltersClaim
+	// listenerFilters holds the filters of the HTTP and HTTPS listeners on each port, shared by every Gateway of the load.
+	listenerFilters map[gatev1.PortNumber][]listenerFiltersClaim
 }
 
-// listenerFiltersClaim holds the first Gateway serving HTTP and HTTPS listeners on a port,
-// and whether the listeners of this Gateway on the port declare filters.
-// The Gateways are loaded one after the other, the oldest first,
-// so another Gateway already serves the port when the first one is not the Gateway being loaded.
+// listenerFiltersClaim holds the filter middlewares of a valid HTTP or HTTPS listener.
 type listenerFiltersClaim struct {
-	gateway  string
-	filtered bool
+	gateway     string
+	hostname    string
+	middlewares []string
 }
 
-func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth, listenerFilters map[gatev1.PortNumber]listenerFiltersClaim) *listenerClaims {
+func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth, listenerFilters map[gatev1.PortNumber][]listenerFiltersClaim) *listenerClaims {
 	return &listenerClaims{
 		listeners:           make(map[string]struct{}),
 		tcpPorts:            make(map[gatev1.PortNumber]bool),
@@ -2340,27 +2339,22 @@ func newListenerClaims(frontendValidations map[gatev1.PortNumber]*tls.ClientAuth
 	}
 }
 
-// listenerFiltersConflict reports whether an HTTP or HTTPS listener of the given Gateway conflicts
-// with the listeners of another Gateway on the port.
-// The listener filters are set on the parent routers, which the Gateways sharing a port share,
-// so a port with listener filters belongs to a single Gateway, the oldest one, as for the frontend validation.
-func (c *listenerClaims) listenerFiltersConflict(port gatev1.PortNumber, gateway string, filtered bool) bool {
-	claim, ok := c.listenerFilters[port]
-
-	return ok && claim.gateway != gateway && (filtered || claim.filtered)
+// listenerFiltersConflict reports whether an HTTP or HTTPS listener declares other filters
+// than a listener of another Gateway with an overlapping hostname on the port.
+// The listener filters are set on the parent routers, which the listeners with overlapping hostnames share across Gateways,
+// so these listeners must declare the same filters, the oldest Gateway wins, as for the frontend validation.
+// Within a Gateway, a parent router is elected from a single listener, so its listeners can declare different filters.
+func (c *listenerClaims) listenerFiltersConflict(port gatev1.PortNumber, gateway, hostname string, middlewares []string) bool {
+	return slices.ContainsFunc(c.listenerFilters[port], func(claim listenerFiltersClaim) bool {
+		return claim.gateway != gateway &&
+			(hostnameCovers(claim.hostname, hostname) || hostnameCovers(hostname, claim.hostname)) &&
+			!slices.Equal(claim.middlewares, middlewares)
+	})
 }
 
-// claimListenerFilters claims the port of a valid HTTP or HTTPS listener for the given Gateway,
-// once listenerFiltersConflict has reported no conflict.
-// The first Gateway is kept, as a younger one would hide that the port is shared.
-func (c *listenerClaims) claimListenerFilters(port gatev1.PortNumber, gateway string, filtered bool) {
-	claim, ok := c.listenerFilters[port]
-	if !ok {
-		claim.gateway = gateway
-	}
-
-	claim.filtered = claim.filtered || filtered
-	c.listenerFilters[port] = claim
+// claimListenerFilters records the filters of a valid HTTP or HTTPS listener.
+func (c *listenerClaims) claimListenerFilters(port gatev1.PortNumber, gateway, hostname string, middlewares []string) {
+	c.listenerFilters[port] = append(c.listenerFilters[port], listenerFiltersClaim{gateway: gateway, hostname: hostname, middlewares: middlewares})
 }
 
 func makeListenerConflictConditions(generation int64, reason gatev1.ListenerConditionReason, message string) []metav1.Condition {
