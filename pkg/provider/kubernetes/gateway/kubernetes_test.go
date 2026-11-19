@@ -15924,8 +15924,7 @@ func Test_loadListenerFilters(t *testing.T) {
 
 			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}}}
 
-			listener := gatev1.Listener{Protocol: gatev1.HTTPProtocolType, Filters: &gatev1.ListenerFilters{Requests: test.filters}}
-			names, conditions := p.loadListenerFilters("ns", 1, listener, conf)
+			names, conditions := p.loadListenerFilters("ns", 1, test.filters, conf)
 
 			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
 			for i := range conditions {

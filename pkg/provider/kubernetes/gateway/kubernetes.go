@@ -631,6 +631,8 @@ func (p *Provider) loadHTTPAndGRPCRoutes(ctx context.Context, gateways []gateway
 
 // loadGatewayListeners loads the listeners of the given ListenerSet, or of the given Gateway when nil,
 // and records what the valid ones claim in claims.
+//
+//nolint:funlen // The listener checks are kept inline to read in the order they are applied.
 func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, listenerSet *gatev1.ListenerSet, claims *listenerClaims, conf *dynamic.Configuration) []gatewayListener {
 	listeners, generation := gateway.Spec.Listeners, gateway.Generation
 	// The resource declaring the listeners drives the ReferenceGrant checks,
@@ -764,7 +766,26 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		isHTTP := listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.HTTPSProtocolType
 
 		if listener.Filters != nil && len(listener.Filters.Requests) > 0 {
-			middlewares, conditions := p.loadListenerFilters(ownerNamespace, generation, listener, conf)
+			// The listener filters only apply to the listeners with a visible HTTP stream.
+			// The CRD validation enforces it on the Gateway listeners,
+			// but not on the ListenerSet entries (Gateway API v1.7.0).
+			if !isHTTP {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+					makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, listenerReasonInvalidListenerFilter,
+						"listener filters require the HTTP or HTTPS protocol")...)
+				continue
+			}
+
+			// The listener filters are an Experimental Channel feature.
+			// The specification forbids skipping a filter, so the listener is rejected when they are not enabled.
+			if !p.ExperimentalChannel {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+					makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, gatev1.ListenerReasonUnsupportedValue,
+						"listener filters require the experimentalChannel option")...)
+				continue
+			}
+
+			middlewares, conditions := p.loadListenerFilters(ownerNamespace, generation, listener.Filters.Requests, conf)
 			if len(conditions) > 0 {
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 				continue
@@ -1129,25 +1150,11 @@ func hostnameMatcherValue(hostname string) string {
 // in their declaration order, as the specification makes that order a guarantee.
 // It returns the conditions rejecting the listener when one of the filters cannot be loaded,
 // as the specification forbids skipping a filter.
-func (p *Provider) loadListenerFilters(namespace string, generation int64, listener gatev1.Listener, conf *dynamic.Configuration) ([]string, []metav1.Condition) {
-	// The listener filters only apply to the listeners with a visible HTTP stream.
-	// The CRD validation enforces it on the Gateway listeners,
-	// but not on the ListenerSet entries (Gateway API v1.7.0).
-	if listener.Protocol != gatev1.HTTPProtocolType && listener.Protocol != gatev1.HTTPSProtocolType {
-		return nil, makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, listenerReasonInvalidListenerFilter,
-			"listener filters require the HTTP or HTTPS protocol")
-	}
-
-	// The listener filters are an Experimental Channel feature.
-	if !p.ExperimentalChannel {
-		return nil, makeListenerFiltersConditions(generation, gatev1.ListenerConditionAccepted, gatev1.ListenerReasonUnsupportedValue,
-			"listener filters require the experimentalChannel option")
-	}
-
+func (p *Provider) loadListenerFilters(namespace string, generation int64, filters []gatev1.ListenerFilter, conf *dynamic.Configuration) ([]string, []metav1.Condition) {
 	var middlewareNames []string
 	middlewares := map[string]*dynamic.Middleware{}
 
-	for i, filter := range listener.Filters.Requests {
+	for i, filter := range filters {
 		switch filter.Type {
 		case gatev1.ListenerFilterExtensionRef:
 			name, middleware, err := p.loadHTTPRouteFilterExtensionRef(namespace, filter.ExtensionRef)
