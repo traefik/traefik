@@ -72,6 +72,14 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	// A malformed value here is silently published into the status of every Ingress, and it is
+	// easy to produce: a CLI flag written without its value swallows the next argument.
+	if p.IngressEndpoint != nil && p.IngressEndpoint.IP != "" && net.ParseIP(p.IngressEndpoint.IP) == nil {
+		log.Warn().
+			Str(logs.ProviderName, ProviderName).
+			Msgf("The ingressEndpoint.ip option is not a valid IPv4 or IPv6 address: %q. It is published as is in the Ingress statuses.", p.IngressEndpoint.IP)
+	}
+
 	return nil
 }
 
