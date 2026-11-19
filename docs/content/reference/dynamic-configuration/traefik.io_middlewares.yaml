@@ -533,6 +533,13 @@ spec:
                               name:
                                 description: Name defines the Cookie name.
                                 type: string
+                              partitioned:
+                                description: |-
+                                  Partitioned defines whether the cookie is stored using partitioned storage (CHIPS),
+                                  which keeps it available when the service is embedded in a third-party context.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies
+                                  When enabled, the cookie is also marked as Secure, because browsers reject partitioned cookies that are not.
+                                type: boolean
                               path:
                                 description: |-
                                   Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
@@ -1671,6 +1678,13 @@ spec:
                                   name:
                                     description: Name defines the Cookie name.
                                     type: string
+                                  partitioned:
+                                    description: |-
+                                      Partitioned defines whether the cookie is stored using partitioned storage (CHIPS),
+                                      which keeps it available when the service is embedded in a third-party context.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies
+                                      When enabled, the cookie is also marked as Secure, because browsers reject partitioned cookies that are not.
+                                    type: boolean
                                   path:
                                     description: |-
                                       Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
@@ -1975,6 +1989,13 @@ spec:
                                   name:
                                     description: Name defines the Cookie name.
                                     type: string
+                                  partitioned:
+                                    description: |-
+                                      Partitioned defines whether the cookie is stored using partitioned storage (CHIPS),
+                                      which keeps it available when the service is embedded in a third-party context.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies
+                                      When enabled, the cookie is also marked as Secure, because browsers reject partitioned cookies that are not.
+                                    type: boolean
                                   path:
                                     description: |-
                                       Path defines the path that must exist in the requested URL for the browser to send the Cookie header.

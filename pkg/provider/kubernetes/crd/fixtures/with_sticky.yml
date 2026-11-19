@@ -31,6 +31,7 @@ spec:
         name: cookie
         secure: true
         sameSite: none
+        partitioned: true
         maxAge: 42
         path: /foo
     services:
@@ -68,6 +69,7 @@ spec:
               name: cookie
               secure: true
               sameSite: none
+              partitioned: true
               maxAge: 42
               path: /foo
         - name: whoami2
