@@ -17,7 +17,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client *Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
 		Routers:           map[string]*dynamic.TCPRouter{},
 		Middlewares:       map[string]*dynamic.TCPMiddleware{},
@@ -170,7 +170,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	return mds, nil
 }
 
-func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service traefikv1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace string, service traefikv1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
 	ns := namespaceOrParentNamespace(service.Namespace, parentNamespace)
 
 	if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, ns) {
@@ -211,7 +211,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 	return tcpService, nil
 }
 
-func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
+func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -351,7 +351,7 @@ func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTra
 }
 
 // getTLSTCP mutates tlsConfigs.
-func getTLSTCP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getTLSTCP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRouteTCP, k8sClient *Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}

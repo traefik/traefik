@@ -26,7 +26,7 @@ const (
 	httpProtocol  = "http"
 )
 
-func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client *Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:           map[string]*dynamic.Router{},
 		Middlewares:       map[string]*dynamic.Middleware{},
@@ -265,7 +265,7 @@ func makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewar
 
 // resolveParentRouterNames resolves parent IngressRoute references to router names.
 // It returns the list of parent router names and an error if one occurred during processing.
-func (p *Provider) resolveParentRouterNames(client Client, ingressRoute *traefikv1alpha1.IngressRoute) ([]string, error) {
+func (p *Provider) resolveParentRouterNames(client *Client, ingressRoute *traefikv1alpha1.IngressRoute) ([]string, error) {
 	// If no parent refs, return empty list (not an error).
 	if len(ingressRoute.Spec.ParentRefs) == 0 {
 		return nil, nil
@@ -316,7 +316,7 @@ func (p *Provider) resolveParentRouterNames(client Client, ingressRoute *traefik
 }
 
 type configBuilder struct {
-	client                       Client
+	client                       *Client
 	allowCrossNamespace          bool
 	allowExternalNameServices    bool
 	allowEmptyServices           bool
@@ -946,7 +946,7 @@ func namespaceOrParentNamespace(namespace, parentNamespace string) string {
 }
 
 // getTLSHTTP mutates tlsConfigs.
-func getTLSHTTP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getTLSHTTP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRoute, k8sClient *Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}
