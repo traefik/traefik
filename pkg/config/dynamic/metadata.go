@@ -85,8 +85,6 @@ type KubernetesRef struct {
 	Version string `json:"version"`
 	Kind    string `json:"kind"`
 
-	ResourceVersion string `json:"resourceVersion"`
-
 	Namespace string `json:"namespace,omitempty"`
 	Name      string `json:"name"`
 
@@ -99,13 +97,12 @@ func MakeKubernetesRef(v client.Object, path string) KubernetesRef {
 	gvk := v.GetObjectKind().GroupVersionKind()
 
 	return KubernetesRef{
-		Group:           gvk.Group,
-		Version:         gvk.Version,
-		Kind:            gvk.Kind,
-		ResourceVersion: v.GetResourceVersion(),
-		Namespace:       v.GetNamespace(),
-		Name:            v.GetName(),
-		Path:            path,
+		Group:     gvk.Group,
+		Version:   gvk.Version,
+		Kind:      gvk.Kind,
+		Namespace: v.GetNamespace(),
+		Name:      v.GetName(),
+		Path:      path,
 	}
 }
 

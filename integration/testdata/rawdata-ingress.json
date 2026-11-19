@@ -62,7 +62,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "320",
 							"namespace": "default",
 							"name": "test.ingress.https",
 							"path": "/metadata/annotations"
@@ -71,7 +70,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "320",
 							"namespace": "default",
 							"name": "test.ingress.https",
 							"path": "/spec/rules/0/http/paths/0"
@@ -104,7 +102,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "328",
 							"namespace": "default",
 							"name": "test.ingress",
 							"path": "/metadata/annotations"
@@ -113,7 +110,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "328",
 							"namespace": "default",
 							"name": "test.ingress",
 							"path": "/spec/rules/0/http/paths/0"
@@ -146,7 +142,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "473",
 							"namespace": "default",
 							"name": "whoami-drop-route",
 							"path": "/metadata/annotations"
@@ -155,7 +150,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "473",
 							"namespace": "default",
 							"name": "whoami-drop-route",
 							"path": "/spec/rules/0/http/paths/0"
@@ -188,7 +182,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "474",
 							"namespace": "default",
 							"name": "whoami-keep-route",
 							"path": "/metadata/annotations"
@@ -197,7 +190,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "474",
 							"namespace": "default",
 							"name": "whoami-keep-route",
 							"path": "/spec/rules/0/http/paths/0"
@@ -271,7 +263,6 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "311",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/metadata/annotations"
@@ -279,7 +270,6 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "311",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/spec/ports/0"
@@ -288,7 +278,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "473",
 							"namespace": "default",
 							"name": "whoami-drop-route",
 							"path": "/spec/rules/0/http/paths/0/backend"
@@ -297,7 +286,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "474",
 							"namespace": "default",
 							"name": "whoami-keep-route",
 							"path": "/spec/rules/0/http/paths/0/backend"
@@ -338,7 +326,6 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "311",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/metadata/annotations"
@@ -346,7 +333,6 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "311",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/spec/ports/0"
@@ -355,7 +341,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "328",
 							"namespace": "default",
 							"name": "test.ingress",
 							"path": "/spec/rules/0/http/paths/0/backend"
@@ -364,7 +349,6 @@
 							"group": "networking.k8s.io",
 							"version": "v1",
 							"kind": "Ingress",
-							"resourceVersion": "320",
 							"namespace": "default",
 							"name": "test.ingress.https",
 							"path": "/spec/rules/0/http/paths/0/backend"

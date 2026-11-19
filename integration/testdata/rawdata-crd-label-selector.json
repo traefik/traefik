@@ -20,7 +20,6 @@
 							"group": "traefik.io",
 							"version": "v1alpha1",
 							"kind": "IngressRoute",
-							"resourceVersion": "444",
 							"namespace": "default",
 							"name": "api.route",
 							"path": "/spec/routes/0"
@@ -56,7 +55,6 @@
 							"group": "traefik.io",
 							"version": "v1alpha1",
 							"kind": "IngressRoute",
-							"resourceVersion": "342",
 							"namespace": "default",
 							"name": "test.route",
 							"path": "/spec/routes/0"
@@ -102,7 +100,6 @@
 						{
 							"version": "v1",
 							"kind": "Service",
-							"resourceVersion": "316",
 							"namespace": "default",
 							"name": "whoami",
 							"path": "/spec/ports/0"
@@ -111,7 +108,6 @@
 							"group": "traefik.io",
 							"version": "v1alpha1",
 							"kind": "IngressRoute",
-							"resourceVersion": "342",
 							"namespace": "default",
 							"name": "test.route",
 							"path": "/spec/routes/0/services/0"
