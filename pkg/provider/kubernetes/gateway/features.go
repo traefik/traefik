@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"slices"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -11,25 +10,16 @@ import (
 // SupportedFeatures returns the supported features,
 // including the ones requiring the experimentalChannel option when it is enabled.
 func SupportedFeatures(experimentalChannel bool) []features.FeatureName {
-	featureNames := slices.Clone(standardFeatures())
+	standard, experimental := supportedFeatures()
 	if experimentalChannel {
-		for f := range experimentalChannelFeatures() {
-			featureNames = append(featureNames, f.Name)
-		}
+		return experimental
 	}
 
-	return featureNames
+	return standard
 }
 
-// experimentalChannelFeatures returns the supported features requiring the experimentalChannel option.
-func experimentalChannelFeatures() sets.Set[features.Feature] {
-	return sets.New(
-		features.GatewayListenerFiltersFeature,
-	)
-}
-
-var standardFeatures = sync.OnceValue(func() []features.FeatureName {
-	featureSet := sets.New[features.Feature]().
+var supportedFeatures = sync.OnceValues(func() (standard, experimental []features.FeatureName) {
+	standardSet := sets.New[features.Feature]().
 		Insert(features.GatewayCoreFeatures.UnsortedList()...).
 		Insert(features.GatewayExtendedFeatures.Intersection(extendedGatewayFeatures()).UnsortedList()...).
 		Insert(features.HTTPRouteCoreFeatures.UnsortedList()...).
@@ -43,12 +33,23 @@ var standardFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.TLSRouteExtendedFeatures.Intersection(extendedTLSRouteFeatures()).UnsortedList()...).
 		Insert(features.TCPRouteFeature)
 
-	featureNames := make([]features.FeatureName, 0, featureSet.Len())
-	for f := range featureSet {
-		featureNames = append(featureNames, f.Name)
-	}
-	return featureNames
+	return featureNames(standardSet), featureNames(standardSet.Union(experimentalChannelFeatures()))
 })
+
+func featureNames(featureSet sets.Set[features.Feature]) []features.FeatureName {
+	names := make([]features.FeatureName, 0, featureSet.Len())
+	for f := range featureSet {
+		names = append(names, f.Name)
+	}
+	return names
+}
+
+// experimentalChannelFeatures returns the supported features requiring the experimentalChannel option.
+func experimentalChannelFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GatewayListenerFiltersFeature,
+	)
+}
 
 // extendedGatewayFeatures returns the supported extended Gateway features.
 func extendedGatewayFeatures() sets.Set[features.Feature] {
