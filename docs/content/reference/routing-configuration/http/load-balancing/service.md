@@ -4,9 +4,10 @@ description: "A service is in charge of connecting incoming requests to the Serv
 ---
 
 Traefik services define how to distribute incoming traffic across your backend servers.
-This page covers two main concepts:
+This page covers three main concepts:
 
 - **Service Load Balancer**: Routes traffic to backend servers using various load balancing strategies
+- **Noop Service**: A built-in service for routers whose middlewares answer the request themselves
 - **Advanced Service Types**: Compose multiple services together for weighted distribution, mirroring, or failover
 
 ## Service Load Balancer
@@ -543,6 +544,89 @@ The middlewares will take effect for all requests handled by the service, regard
       # Configure the service
       - "traefik.http.services.my-service.loadbalancer.server.port=8080"
     ```
+
+## Noop Service
+
+To define a router that only redirects, without any backend, use the built-in `noop@internal` service.
+This service does not forward requests to any server and does not need to be defined.
+It is meant for routers whose middlewares answer the request themselves,
+such as a [RedirectRegex](../middlewares/redirectregex.md) or a [RedirectScheme](../middlewares/redirectscheme.md) middleware.
+Traefik also uses it for the routers created by the [entry point redirections](../../../install-configuration/entrypoints.md#opt-http-redirections-entryPoint-to).
+
+!!! warning "HTTP 418 Responses"
+
+    `noop@internal` responds with the `418 I'm a teapot` status code to every request that reaches it,
+    which happens when no middleware of the router answers the request.
+    For example, a `RedirectRegex` middleware passes the request on when its `regex` does not match the request URL,
+    or when its replacement leaves the URL unchanged.
+    A `RedirectScheme` middleware passes the request on when the request already uses the target scheme and port.
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  routers:
+    legacy-domain:
+      rule: "Host(`old.example.com`)"
+      middlewares:
+        - redirect-to-new-domain
+      service: noop@internal
+
+  middlewares:
+    redirect-to-new-domain:
+      redirectRegex:
+        regex: "^https?://[^/]+/(.*)"
+        replacement: "https://new.example.com/${1}"
+        permanent: true
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.routers]
+  [http.routers.legacy-domain]
+    rule = "Host(`old.example.com`)"
+    middlewares = ["redirect-to-new-domain"]
+    service = "noop@internal"
+
+[http.middlewares]
+  [http.middlewares.redirect-to-new-domain.redirectRegex]
+    regex = "^https?://[^/]+/(.*)"
+    replacement = "https://new.example.com/${1}"
+    permanent = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: legacy-domain
+spec:
+  routes:
+    - match: Host(`old.example.com`)
+      kind: Rule
+      middlewares:
+        - name: redirect-to-new-domain
+      services:
+        - name: noop@internal
+          kind: TraefikService
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-to-new-domain
+spec:
+  redirectRegex:
+    regex: ^https?://[^/]+/(.*)
+    replacement: https://new.example.com/${1}
+    permanent: true
+```
+
+!!! info "Kubernetes IngressRoute"
+
+    In an `IngressRoute`, `noop@internal` must be referenced with `kind: TraefikService`,
+    even though no `TraefikService` resource exists for it.
+    If the [`crossProviderNamespaces`](../../../install-configuration/providers/kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-crossProviderNamespaces) option is set,
+    it must include the namespace of the `IngressRoute`, as `noop@internal` is a cross-provider reference.
 
 ## Advanced Service Types
 
