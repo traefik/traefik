@@ -15634,66 +15634,184 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 }
 
 func TestLoadHTTPRoutes_listenerFilters(t *testing.T) {
-	k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/listener_filters.yml"})
-
-	kubeClient := kubefake.NewClientset(k8sObjects...)
-	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-
-	client := NewClient(&Provider{}, kubeClient, gwClient)
-
-	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
-	require.NoError(t, err)
-	<-eventCh
-
-	newProvider := func(experimentalChannel bool) *Provider {
-		p := &Provider{
-			EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
-			ExperimentalChannel: experimentalChannel,
-			k8sClient:           client,
-		}
-		p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
-			return namespace + "-" + name, nil, nil
-		})
-
-		return p
+	middlewareFilterFunc := func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
 	}
 
-	t.Run("experimental channel enabled", func(t *testing.T) {
-		conf, statusReport, err := newProvider(true).BuildConfiguration(t.Context())
-		require.NoError(t, err)
+	emptyConfiguration := func() *dynamic.Configuration {
+		return &dynamic.Configuration{
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  map[string]*dynamic.UDPRouter{},
+				Services: map[string]*dynamic.UDPService{},
+			},
+			TCP: &dynamic.TCPConfiguration{
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			},
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:           map[string]*dynamic.Router{},
+				Middlewares:       map[string]*dynamic.Middleware{},
+				Services:          map[string]*dynamic.Service{},
+				ServersTransports: map[string]*dynamic.ServersTransport{},
+			},
+			TLS: &dynamic.TLSConfiguration{
+				Options: map[string]tls.Options{},
+			},
+		}
+	}
 
-		// The filters are set on the parent router, so that they run before the route matching.
-		require.Contains(t, conf.HTTP.Routers, "listener-web-http-5b3226d4ebd42b7200f1")
-		assert.Equal(t, []string{"default-my-first-middleware", "default-my-second-middleware"}, conf.HTTP.Routers["listener-web-http-5b3226d4ebd42b7200f1"].Middlewares)
+	// The filters are set on the parent router, so that they run before the route matching.
+	filteredConfiguration := func(middlewares map[string]*dynamic.Middleware) *dynamic.Configuration {
+		conf := emptyConfiguration()
+		conf.HTTP.Routers = map[string]*dynamic.Router{
+			"listener-web-http-5b3226d4ebd42b7200f1": {
+				EntryPoints: []string{"web"},
+				Rule:        `Host("*")`,
+				Middlewares: []string{"default-my-first-middleware", "default-my-second-middleware"},
+			},
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+				Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+				Rule:       `Host("foo.com") && Path("/bar")`,
+				Priority:   100008,
+				RuleSyntax: "default",
+				ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+			},
+		}
+		conf.HTTP.Middlewares = middlewares
+		conf.HTTP.Services = map[string]*dynamic.Service{
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+				Weighted: &dynamic.WeightedRoundRobin{
+					Services: []dynamic.WRRService{
+						{
+							Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+							Weight: new(1),
+						},
+					},
+				},
+			},
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+				LoadBalancer: &dynamic.ServersLoadBalancer{
+					Strategy: dynamic.BalancerStrategyWRR,
+					Servers: []dynamic.Server{
+						{URL: "http://10.10.0.1:80"},
+						{URL: "http://10.10.0.2:80"},
+					},
+					PassHostHeader: new(true),
+					ResponseForwarding: &dynamic.ResponseForwarding{
+						FlushInterval: ptypes.Duration(100 * time.Millisecond),
+					},
+				},
+			},
+		}
 
-		routerName := "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93"
-		require.Contains(t, conf.HTTP.Routers, routerName)
-		assert.Equal(t, []string{"listener-web-http-5b3226d4ebd42b7200f1"}, conf.HTTP.Routers[routerName].ParentRefs)
-		assert.Empty(t, conf.HTTP.Routers[routerName].Middlewares)
+		return conf
+	}
 
-		require.Len(t, statusReport.gatewayListeners, 1)
-		require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
-		assert.True(t, statusReport.gatewayListeners[0].listeners[0].Attached)
-	})
+	testCases := []struct {
+		desc                 string
+		experimentalChannel  bool
+		groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+		expected             *dynamic.Configuration
+		expectedRejection    *metav1.Condition
+	}{
+		{
+			desc:                "Listener filters",
+			experimentalChannel: true,
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": middlewareFilterFunc},
+			},
+			expected: filteredConfiguration(map[string]*dynamic.Middleware{}),
+		},
+		{
+			desc:                "Listener filters with middleware creation",
+			experimentalChannel: true,
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": name}}}, nil
+				}},
+			},
+			expected: filteredConfiguration(map[string]*dynamic.Middleware{
+				"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "my-first-middleware"}}},
+				"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "my-second-middleware"}}},
+			}),
+		},
+		{
+			desc: "Listener filters without the experimentalChannel option",
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": middlewareFilterFunc},
+			},
+			// The listener is rejected, as the specification forbids skipping its filters.
+			expected: emptyConfiguration(),
+			expectedRejection: &metav1.Condition{
+				Type:    string(gatev1.ListenerConditionAccepted),
+				Status:  metav1.ConditionFalse,
+				Reason:  string(gatev1.ListenerReasonUnsupportedValue),
+				Message: "listener filters require the experimentalChannel option",
+			},
+		},
+		{
+			desc:                "Unknown ExtensionRef listener filter",
+			experimentalChannel: true,
+			expected:            emptyConfiguration(),
+			expectedRejection: &metav1.Condition{
+				Type:    string(gatev1.ListenerConditionResolvedRefs),
+				Status:  metav1.ConditionFalse,
+				Reason:  string(listenerReasonInvalidListenerFilterRef),
+				Message: "filters.requests[0]: unsupported filter extension ref traefik.io/Middleware/my-first-middleware",
+			},
+		},
+	}
 
-	t.Run("experimental channel disabled", func(t *testing.T) {
-		conf, statusReport, err := newProvider(false).BuildConfiguration(t.Context())
-		require.NoError(t, err)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-		// The listener is rejected, as the specification forbids skipping its filters.
-		assert.Empty(t, conf.HTTP.Routers)
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/listener_filters.yml"})
 
-		require.Len(t, statusReport.gatewayListeners, 1)
-		require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
-		listener := statusReport.gatewayListeners[0].listeners[0]
-		assert.False(t, listener.Attached)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-		accepted := meta.FindStatusCondition(listener.Status.Conditions, string(gatev1.ListenerConditionAccepted))
-		require.NotNil(t, accepted)
-		assert.Equal(t, metav1.ConditionFalse, accepted.Status)
-		assert.Equal(t, string(gatev1.ListenerReasonUnsupportedValue), accepted.Reason)
-		assert.Equal(t, "listener filters require the experimentalChannel option", accepted.Message)
-	})
+			client := NewClient(&Provider{}, kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
+				ExperimentalChannel: test.experimentalChannel,
+				k8sClient:           client,
+			}
+
+			for group, kindFuncs := range test.groupKindFilterFuncs {
+				for kind, filterFunc := range kindFuncs {
+					p.RegisterFilterFuncs(group, kind, filterFunc)
+				}
+			}
+
+			conf, statusReport, err := p.BuildConfiguration(t.Context())
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, conf)
+
+			require.Len(t, statusReport.gatewayListeners, 1)
+			require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
+			listener := statusReport.gatewayListeners[0].listeners[0]
+			assert.Equal(t, test.expectedRejection == nil, listener.Attached)
+
+			if test.expectedRejection == nil {
+				return
+			}
+
+			condition := meta.FindStatusCondition(listener.Status.Conditions, test.expectedRejection.Type)
+			require.NotNil(t, condition)
+			assert.Equal(t, test.expectedRejection.Status, condition.Status)
+			assert.Equal(t, test.expectedRejection.Reason, condition.Reason)
+			assert.Equal(t, test.expectedRejection.Message, condition.Message)
+		})
+	}
 }
 
 func TestSupportedFeatures_experimentalChannel(t *testing.T) {
