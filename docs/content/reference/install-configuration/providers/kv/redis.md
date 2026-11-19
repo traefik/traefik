@@ -5,6 +5,12 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 # Traefik & Redis
 
+!!! info "KV Store Unreachable at Startup"
+
+    If the KV store cannot be reached when Traefik starts, the provider is not disabled:
+    Traefik retries creating the connection with an exponential backoff until it succeeds,
+    then reads the dynamic configuration.
+
 !!! tip "Routing configuration updates"
 
     Updates to the routing configuration require Redis [keyspace notifications](https://redis.io/docs/latest/develop/use/keyspace-notifications/) to be enabled.

@@ -5,6 +5,12 @@ description: "For configuration discovery in Traefik Proxy, you can store your c
 
 # Traefik & ZooKeeper
 
+!!! info "KV Store Unreachable at Startup"
+
+    If the KV store cannot be reached when Traefik starts, the provider is not disabled:
+    Traefik retries creating the connection with an exponential backoff until it succeeds,
+    then reads the dynamic configuration.
+
 ## Configuration Example
 
 You can enable the ZooKeeper provider as detailed below:
