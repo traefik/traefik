@@ -273,7 +273,7 @@ func (o *OTelLog) buildGRPCExporter() (*otlploggrpc.Exporter, error) {
 	}
 
 	opts := []otlploggrpc.Option{
-		otlploggrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlploggrpc.WithEndpoint(net.JoinHostPort(host, port)),
 		otlploggrpc.WithHeaders(o.GRPC.Headers),
 		otlploggrpc.WithCompressor(gzip.Name),
 	}
