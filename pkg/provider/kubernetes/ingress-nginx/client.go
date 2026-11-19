@@ -56,74 +56,6 @@ func NewClient(clientSet kclientset.Interface) *Client {
 	}
 }
 
-// newInClusterClientset returns the clientset of a Provider client that is expected to run inside the cluster.
-func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
-	}
-
-	if endpoint != "" {
-		config.Host = endpoint
-	}
-
-	return createClientsetFromConfig(config)
-}
-
-func newExternalClusterClientsetFromFile(file string) (kclientset.Interface, error) {
-	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-	if err != nil {
-		return nil, err
-	}
-	return createClientsetFromConfig(configFromFlags)
-}
-
-// newExternalClusterClientset returns the clientset of a Provider client that may run outside
-// of the cluster.
-// The endpoint parameter must not be empty.
-func newExternalClusterClientset(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, error) {
-	if endpoint == "" {
-		return nil, errors.New("endpoint missing for external cluster client")
-	}
-
-	tokenData, err := token.Read()
-	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
-	}
-
-	config := &rest.Config{
-		Host:        endpoint,
-		BearerToken: string(tokenData),
-	}
-
-	if caFilePath != "" {
-		caData, err := os.ReadFile(caFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
-		}
-
-		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
-	}
-	return createClientsetFromConfig(config)
-}
-
-func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
-	c.UserAgent = fmt.Sprintf(
-		"%s/%s (%s/%s) kubernetes/ingress",
-		filepath.Base(os.Args[0]),
-		traefikversion.Version,
-		runtime.GOOS,
-		runtime.GOARCH,
-	)
-
-	clientset, err := kclientset.NewForConfig(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return clientset, nil
-}
-
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *Client) WatchAll(ctx context.Context, namespace, namespaceSelector string) (<-chan any, error) {
 	stopCh := ctx.Done()
@@ -370,6 +302,74 @@ func (c *Client) isWatchedNamespace(ns string) bool {
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+// newInClusterClientset returns the clientset of a Provider client that is expected to run inside the cluster.
+func newInClusterClientset(endpoint string) (kclientset.Interface, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+	}
+
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientsetFromConfig(config)
+}
+
+func newExternalClusterClientsetFromFile(file string) (kclientset.Interface, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, err
+	}
+	return createClientsetFromConfig(configFromFlags)
+}
+
+// newExternalClusterClientset returns the clientset of a Provider client that may run outside
+// of the cluster.
+// The endpoint parameter must not be empty.
+func newExternalClusterClientset(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, error) {
+	if endpoint == "" {
+		return nil, errors.New("endpoint missing for external cluster client")
+	}
+
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, fmt.Errorf("read token: %w", err)
+	}
+
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: string(tokenData),
+	}
+
+	if caFilePath != "" {
+		caData, err := os.ReadFile(caFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+	return createClientsetFromConfig(config)
+}
+
+func createClientsetFromConfig(c *rest.Config) (kclientset.Interface, error) {
+	c.UserAgent = fmt.Sprintf(
+		"%s/%s (%s/%s) kubernetes/ingress",
+		filepath.Base(os.Args[0]),
+		traefikversion.Version,
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
+
+	clientset, err := kclientset.NewForConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }
 
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
