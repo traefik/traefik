@@ -409,8 +409,7 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 }
 
 // createProxyHideHeaderAction hides the specified header from the upstream response.
-// It registers a deferred hook on the response writer to delete the header when
-// the response status is being written.
+// It runs in the header filter phase, on the upstream response headers.
 func createProxyHideHeaderAction(d config.IDirective) (action, error) {
 	params := d.GetParameters()
 	if len(params) == 0 {
@@ -419,12 +418,8 @@ func createProxyHideHeaderAction(d config.IDirective) (action, error) {
 
 	headerName := trimQuote(params[0].String())
 
-	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
-		if wrapper, ok := rw.(*snippetResponseWriter); ok {
-			wrapper.onWriteHeader = append(wrapper.onWriteHeader, func(_ int, h http.Header) {
-				h.Del(headerName)
-			})
-		}
+	return func(rw http.ResponseWriter, _ *http.Request, _ *actionContext) (bool, error) {
+		rw.Header().Del(headerName)
 		return false, nil
 	}, nil
 }
