@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -341,6 +343,53 @@ func TestInMemoryRateLimit(t *testing.T) {
 				t.Fatalf("rate was faster than expected: %d requests (wanted < %d) (dropped %d) in %v", reqCount, maxCount, dropped, elapsed)
 			}
 		})
+	}
+}
+
+func TestInMemoryRateLimitConcurrentFirstRequests(t *testing.T) {
+	const (
+		rounds      = 50
+		concurrency = 64
+		burst       = 5
+	)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	// The next token is a minute away, far beyond maxDelay,
+	// so a source cannot get more than burst requests through during the test.
+	h, err := New(t.Context(), next, dynamic.RateLimit{
+		Average: 1,
+		Period:  ptypes.Duration(time.Minute),
+		Burst:   burst,
+	}, "rate-limiter")
+	require.NoError(t, err)
+
+	for round := range rounds {
+		// Each round uses a source which has no bucket yet.
+		remoteAddr := fmt.Sprintf("127.0.0.%d:1234", round+1)
+
+		var accepted atomic.Int64
+		start := make(chan struct{})
+
+		var wg sync.WaitGroup
+		for range concurrency {
+			wg.Go(func() {
+				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+				req.RemoteAddr = remoteAddr
+				w := httptest.NewRecorder()
+
+				<-start
+				h.ServeHTTP(w, req)
+
+				if w.Code == http.StatusOK {
+					accepted.Add(1)
+				}
+			})
+		}
+
+		close(start)
+		wg.Wait()
+
+		require.Equal(t, int64(burst), accepted.Load())
 	}
 }
 
