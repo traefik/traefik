@@ -19,9 +19,9 @@ import (
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *statusReport) {
+func (p *Provider) loadTCPRoutes(ctx context.Context, gateways []gatewayWithListeners, conf *dynamic.Configuration, statusReport *StatusReport) {
 	logger := log.Ctx(ctx)
-	routes, err := p.client.ListTCPRoutes()
+	routes, err := p.k8sClient.ListTCPRoutes()
 	if err != nil {
 		logger.Error().Err(err).Msgf("Unable to list TCPRoutes")
 		return

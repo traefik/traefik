@@ -1,5 +1,5 @@
 apiVersion: gateway.networking.k8s.io/v1
-date: "2026-11-02T10:13:28+01:00"
+date: "2026-11-18T17:08:05+01:00"
 gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.7.0
 implementation:
@@ -38,13 +38,13 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - ListenerSet
     unsupportedFeatures:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-GRPC
@@ -80,6 +80,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - HTTPRoute303RedirectStatusCode
     - HTTPRoute307RedirectStatusCode
@@ -112,7 +113,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-HTTP
@@ -140,6 +140,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - ListenerSet
     - TCPRoute
@@ -147,7 +148,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-TCP
@@ -178,6 +178,7 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructure
+    - GatewayListenerFilters
     - GatewayPort8080
     - ListenerSet
     - TLSRouteModeMixed
@@ -186,7 +187,6 @@ profiles:
     - GatewayAddressEmpty
     - GatewayAddressRoutability
     - GatewayAddressRoutabilityCluster
-    - GatewayListenerFilters
     - GatewayRouteHostnameIntersectionPrecedence
     - GatewayStaticAddresses
   name: GATEWAY-TLS

@@ -394,7 +394,7 @@ nav:
         - 'Content-Length': 'security/content-length.md'
         - 'HTTP/2 Header Memory': 'security/http2-header-memory.md'
         - 'Headers with Aliasing Names': 'security/header-aliases.md'
-        - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
+        - 'Multi-Tenancy in Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'

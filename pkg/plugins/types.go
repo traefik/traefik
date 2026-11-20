@@ -17,9 +17,10 @@ const (
 )
 
 type Settings struct {
-	Envs      []string `description:"Environment variables to forward to the wasm guest." json:"envs,omitempty" toml:"envs,omitempty" yaml:"envs,omitempty"`
-	Mounts    []string `description:"Directory to mount to the wasm guest." json:"mounts,omitempty" toml:"mounts,omitempty" yaml:"mounts,omitempty"`
-	UseUnsafe bool     `description:"Allow the plugin to use unsafe and syscall packages." json:"useUnsafe,omitempty" toml:"useUnsafe,omitempty" yaml:"useUnsafe,omitempty"`
+	Envs        []string `description:"Environment variables to forward to the wasm guest." json:"envs,omitempty" toml:"envs,omitempty" yaml:"envs,omitempty"`
+	Mounts      []string `description:"Directory to mount to the wasm guest. For Yaegi v2 plugins, the only directories the plugin can reach by path." json:"mounts,omitempty" toml:"mounts,omitempty" yaml:"mounts,omitempty"`
+	UseUnsafe   bool     `description:"Allow the plugin to use unsafe and syscall packages." json:"useUnsafe,omitempty" toml:"useUnsafe,omitempty" yaml:"useUnsafe,omitempty"`
+	FileMapping bool     `description:"Allow a Yaegi v2 plugin to lock and map its own files (flock, mmap). Requires useUnsafe." json:"fileMapping,omitempty" toml:"fileMapping,omitempty" yaml:"fileMapping,omitempty"`
 }
 
 // Descriptor The static part of a plugin configuration.

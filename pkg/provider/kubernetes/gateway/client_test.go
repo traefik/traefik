@@ -1,12 +1,163 @@
 package gateway
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"reflect"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	ktesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/cache"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
+
+func TestWatchAll_clusterTrustBundleChecksError(t *testing.T) {
+	forbiddenErr := kerror.NewForbidden(authorizationv1.Resource(""), "", errors.New("RBAC denied"))
+	internalErr := kerror.NewInternalError(errors.New("internal error"))
+
+	testCases := []struct {
+		desc        string
+		verb        string
+		resource    string
+		err         error
+		expectedErr bool
+	}{
+		{
+			desc:     "Discovery forbidden",
+			verb:     "get",
+			resource: "resource",
+			err:      forbiddenErr,
+		},
+		{
+			desc:        "Discovery error",
+			verb:        "get",
+			resource:    "resource",
+			err:         internalErr,
+			expectedErr: true,
+		},
+		{
+			desc:     "Access review forbidden",
+			verb:     "create",
+			resource: "selfsubjectaccessreviews",
+			err:      forbiddenErr,
+		},
+		{
+			desc:        "Access review error",
+			verb:        "create",
+			resource:    "selfsubjectaccessreviews",
+			err:         internalErr,
+			expectedErr: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			csKube := kubefake.NewClientset()
+			csKube.Resources = []*metav1.APIResourceList{{
+				GroupVersion: certificatesv1.SchemeGroupVersion.String(),
+				APIResources: []metav1.APIResource{{Name: "clustertrustbundles"}},
+			}}
+			// The reactors are evaluated from the last prepended one, so the tested error comes first.
+			csKube.PrependReactor("create", "selfsubjectaccessreviews", func(ktesting.Action) (bool, runtime.Object, error) {
+				return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+			})
+			csKube.PrependReactor(test.verb, test.resource, func(ktesting.Action) (bool, runtime.Object, error) {
+				return true, nil, test.err
+			})
+
+			client := NewClient(&Provider{}, csKube, newGatewaySimpleClientSet(t))
+
+			stopCh := make(chan struct{})
+			t.Cleanup(func() { close(stopCh) })
+
+			_, err := client.WatchAll(t.Context(), nil, stopCh)
+			if test.expectedErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.True(t, client.clusterTrustBundleAPIServed)
+			assert.True(t, client.clusterTrustBundleAllowed)
+			assert.Contains(t, client.factoryNamespace.WaitForCacheSync(stopCh), reflect.TypeFor[*certificatesv1.ClusterTrustBundle]())
+		})
+	}
+}
+
+func Test_newWatchErrorHandler(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		err         error
+		expectedLog string
+	}{
+		{
+			desc:        "Resource expired",
+			err:         kerror.NewResourceExpired("too old resource version"),
+			expectedLog: `"level":"debug","error":"too old resource version","message":"Watch of *v1.TCPRoute expired, listing the resources again"`,
+		},
+		{
+			desc:        "Resource gone",
+			err:         kerror.NewGone("gone"),
+			expectedLog: `"level":"debug","error":"gone","message":"Watch of *v1.TCPRoute expired, listing the resources again"`,
+		},
+		{
+			desc: "Watch closed",
+			err:  io.EOF,
+		},
+		{
+			desc:        "Watch closed with unexpected EOF",
+			err:         io.ErrUnexpectedEOF,
+			expectedLog: `"level":"debug","error":"unexpected EOF","message":"Watch of *v1.TCPRoute interrupted, restarting it"`,
+		},
+		{
+			desc:        "Resource not served",
+			err:         fmt.Errorf("failed to list *v1.TCPRoute: %w", kerror.NewNotFound(gatev1.Resource("tcproutes"), "")),
+			expectedLog: `"level":"error",` + `"error":"failed to list *v1.TCPRoute: tcproutes.gateway.networking.k8s.io \"\" not found","message":"Cannot list or watch *v1.TCPRoute, the resource is not served: install the Gateway API CRDs v1.7.0 or later"`,
+		},
+		{
+			desc:        "Access forbidden",
+			err:         kerror.NewForbidden(gatev1.Resource("tcproutes"), "", errors.New("RBAC denied")),
+			expectedLog: `"level":"error",` + `"error":"tcproutes.gateway.networking.k8s.io is forbidden: RBAC denied","message":"Cannot list or watch *v1.TCPRoute, the access is forbidden: update the Traefik RBAC for the Kubernetes Gateway API provider"`,
+		},
+		{
+			desc:        "Other error",
+			err:         errors.New("connection refused"),
+			expectedLog: `"level":"error","error":"connection refused","message":"Cannot list or watch *v1.TCPRoute"`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			reflector := cache.NewReflector(&cache.ListWatch{}, &gatev1.TCPRoute{}, cache.NewStore(cache.MetaNamespaceKeyFunc), 0)
+
+			logger := zerolog.New(&buf)
+			newWatchErrorHandler(&logger)(reflector, test.err)
+
+			if test.expectedLog == "" {
+				assert.Empty(t, buf.String())
+				return
+			}
+
+			assert.Contains(t, buf.String(), test.expectedLog)
+		})
+	}
+}
 
 func Test_gatewayStatusEquals(t *testing.T) {
 	testCases := []struct {

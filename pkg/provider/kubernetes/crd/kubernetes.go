@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	traefikclientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
@@ -35,6 +36,7 @@ import (
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	kclientset "k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -151,7 +153,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
+					conf := p.BuildConfiguration(ctxLog, k8sClient)
 
 					configurationChan <- dynamic.Message{
 						ProviderName:  ProviderName,
@@ -200,52 +202,8 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 	})
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, ingress)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
-
-	var client *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		client, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.labelSelector = p.LabelSelector
-	client.disableClusterScopeInformer = p.DisableClusterScopeResources
-	return client, nil
-}
-
-func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
+// BuildConfiguration builds the dynamic configuration from the resources that the client gives.
+func (p *Provider) BuildConfiguration(ctx context.Context, client *Client) *dynamic.Configuration {
 	stores, tlsConfigs := p.buildTLSStores(ctx, client)
 	if tlsConfigs == nil {
 		tlsConfigs = make(map[string]*tls.CertAndStores)
@@ -700,7 +658,53 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*Client, error) {
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+	}
+	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
+
+	withEndpoint := ""
+	if p.Endpoint != "" {
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
+	}
+
+	var (
+		csKube kclientset.Interface
+		csCrd  traefikclientset.Interface
+	)
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
+		csKube, csCrd, err = newInClusterClientsets(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		csKube, csCrd, err = newExternalClusterClientsetsFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
+		csKube, csCrd, err = newExternalClusterClientsets(p.Endpoint, p.CertAuthFilePath, p.Token)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(p, csKube, csCrd), nil
+}
+
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client *Client, namespace, serviceKey string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -735,7 +739,7 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 
 // createTapMiddleware returns the tap middleware configuration,
 // along with the services to register for the destinations referencing a Kubernetes Service.
-func (p *Provider) createTapMiddleware(ctx context.Context, client Client, namespace, id string, tap *traefikv1alpha1.Tap) (*dynamic.Tap, map[string]*dynamic.Service, error) {
+func (p *Provider) createTapMiddleware(ctx context.Context, client *Client, namespace, id string, tap *traefikv1alpha1.Tap) (*dynamic.Tap, map[string]*dynamic.Service, error) {
 	if tap == nil {
 		return nil, nil, nil
 	}
@@ -875,7 +879,7 @@ func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort)
 	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
-func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON, refs k8s.URNRefs) (map[string]dynamic.PluginConf, error) {
+func createPluginMiddleware(k8sClient *Client, ns string, plugins map[string]apiextensionv1.JSON, refs k8s.URNRefs) (map[string]dynamic.PluginConf, error) {
 	if plugins == nil {
 		return nil, nil
 	}
@@ -908,7 +912,7 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 
 // loadSecretKeys records in refs the value of every Secret URN found in value, under the JSON Pointer of the URN.
 // The URNs stay in the configuration: the middleware builder replaces them with their values.
-func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.URNRefs) error {
+func loadSecretKeys(k8sClient *Client, ns, pointer string, value any, refs k8s.URNRefs) error {
 	switch v := value.(type) {
 	case string:
 		if !strings.HasPrefix(v, k8s.SecretURNPrefix) {
@@ -941,7 +945,7 @@ func loadSecretKeys(k8sClient Client, ns, pointer string, value any, refs k8s.UR
 }
 
 // loadConfigMapValues returns value where every ConfigMap URN is replaced with the value it references.
-func loadConfigMapValues(k8sClient Client, ns string, value any) (any, error) {
+func loadConfigMapValues(k8sClient *Client, ns string, value any) (any, error) {
 	var err error
 	switch v := value.(type) {
 	case string:
@@ -970,7 +974,7 @@ func loadConfigMapValues(k8sClient Client, ns string, value any) (any, error) {
 }
 
 // getConfigMapValue reads one key of a ConfigMap, from Data or BinaryData alike: a reference names a key, not a shape.
-func getConfigMapValue(c Client, ns, urn string) (string, error) {
+func getConfigMapValue(c *Client, ns, urn string) (string, error) {
 	name, key, err := parseURN(urn)
 	if err != nil {
 		return "", err
@@ -996,7 +1000,7 @@ func getConfigMapValue(c Client, ns, urn string) (string, error) {
 	return "", fmt.Errorf("key %q not found in configMap %s/%s", key, ns, name)
 }
 
-func getSecretValue(c Client, ns, urn string) (string, error) {
+func getSecretValue(c *Client, ns, urn string) (string, error) {
 	secretName, secretKey, err := parseURN(urn)
 	if err != nil {
 		return "", err
@@ -1094,7 +1098,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit, refs k8s.URNRefs) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client *Client, namespace string, rateLimit *traefikv1alpha1.RateLimit, refs k8s.URNRefs) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -1191,7 +1195,7 @@ func createRateLimitMiddleware(client Client, namespace string, rateLimit *traef
 	return rl, nil
 }
 
-func loadRedisCredentials(namespace, secretName string, k8sClient Client) (string, string, error) {
+func loadRedisCredentials(namespace, secretName string, k8sClient *Client) (string, string, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
@@ -1243,7 +1247,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth, refs k8s.URNRefs) (*dynamic.ForwardAuth, error) {
+func createForwardAuthMiddleware(k8sClient *Client, namespace string, auth *traefikv1alpha1.ForwardAuth, refs k8s.URNRefs) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
@@ -1302,7 +1306,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 	return forwardAuth, nil
 }
 
-func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
+func loadCASecret(namespace, secretName string, k8sClient *Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
@@ -1332,7 +1336,7 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 	return "", fmt.Errorf("secret '%s/%s' has no CA block: %w", namespace, secretName, err)
 }
 
-func loadCAConfigMap(namespace, name string, k8sClient Client) (string, error) {
+func loadCAConfigMap(namespace, name string, k8sClient *Client) (string, error) {
 	configMap, ok, err := k8sClient.GetConfigMap(namespace, name)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch configMap '%s/%s': %w", namespace, name, err)
@@ -1354,7 +1358,7 @@ func loadCAConfigMap(namespace, name string, k8sClient Client) (string, error) {
 	return "", fmt.Errorf("configMap '%s/%s' has no CA block: %w", namespace, name, err)
 }
 
-func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
+func loadAuthTLSSecret(namespace, secretName string, k8sClient *Client) (string, string, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
@@ -1371,7 +1375,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth, refs k8s.URNRefs) (*dynamic.BasicAuth, error) {
+func createBasicAuthMiddleware(client *Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth, refs k8s.URNRefs) (*dynamic.BasicAuth, error) {
 	if basicAuth == nil {
 		return nil, nil
 	}
@@ -1419,7 +1423,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}, nil
 }
 
-func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth, refs k8s.URNRefs) (*dynamic.DigestAuth, error) {
+func createDigestAuthMiddleware(client *Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth, refs k8s.URNRefs) (*dynamic.DigestAuth, error) {
 	if digestAuth == nil {
 		return nil, nil
 	}
@@ -1514,7 +1518,7 @@ func loadAuthCredentials(secret *corev1.Secret) (string, []string, error) {
 	return key, credentials, nil
 }
 
-func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
+func (p *Provider) buildTLSOptions(ctx context.Context, client *Client) map[string]tls.Options {
 	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
 
@@ -1598,7 +1602,7 @@ func (p *Provider) buildTLSOptions(ctx context.Context, client Client) map[strin
 	return tlsOptions
 }
 
-func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
+func (p *Provider) buildTLSStores(ctx context.Context, client *Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
 	tlsStoreCRD := client.GetTLSStores()
 	if len(tlsStoreCRD) == 0 {
 		return nil, nil
@@ -1679,7 +1683,7 @@ func (p *Provider) buildTLSStores(ctx context.Context, client Client) (map[strin
 // It continues processing other certificates even if one fails, making the TLS store resilient
 // to missing or invalid secrets. Missing secrets are logged as errors but don't prevent
 // the TLS store from being created with the certificates that are available.
-func buildCertificates(ctx context.Context, client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) {
+func buildCertificates(ctx context.Context, client *Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) {
 	logger := log.Ctx(ctx).With().Str("TLSStore", tlsStore).Str("namespace", namespace).Logger()
 
 	for _, c := range certificates {
@@ -1726,7 +1730,7 @@ func getIngressClassName(specIngressClassName *string, annotations map[string]st
 	return "", false
 }
 
-func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
+func getTLS(k8sClient *Client, secretName, namespace string) (*tls.CertAndStores, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)

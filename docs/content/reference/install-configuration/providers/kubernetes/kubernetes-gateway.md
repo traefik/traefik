@@ -29,6 +29,9 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.7.0/standard-install.yaml
     ```
 
+    The provider waits for all the resources it watches to be listed before loading any configuration.
+    While a resource is not served, or Traefik is not allowed to list and watch it, the provider logs an error naming it.
+
 2. If you are not using the Helm Chart, install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-gateway-rbac.yml) for Gateway API.
 
     ```bash

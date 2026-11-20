@@ -33,6 +33,7 @@ import (
 	ktesting "k8s.io/client-go/testing"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatefake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
+	"sigs.k8s.io/gateway-api/pkg/features"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -93,12 +94,12 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
 	// This is initialized by the Provider init method but this cannot be called in a unit test.
 	client.labelSelector = "name=traefik-internal"
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -109,13 +110,13 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	p := Provider{
 		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
 		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
-		client:        client,
+		k8sClient:     client,
 	}
 
-	_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+	_, statusReport, err := p.BuildConfiguration(t.Context())
 	require.NoError(t, err)
 
-	statusReport.Flush(t.Context(), p.client)
+	statusReport.Flush(t.Context(), p.k8sClient)
 
 	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
@@ -136,10 +137,10 @@ func TestGatewayClassFieldSelector(t *testing.T) {
 	_, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
 
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-	client := newClientImpl(kubefake.NewClientset(), gwClient)
+	client := NewClient(&Provider{}, kubefake.NewClientset(), gwClient)
 	client.gatewayClass = "traefik-internal"
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	<-eventCh
@@ -185,9 +186,9 @@ func TestGatewayScoping(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -198,14 +199,14 @@ func TestGatewayScoping(t *testing.T) {
 		EntryPoints:   map[string]Entrypoint{"http": {Address: ":9080"}},
 		StatusAddress: &StatusAddress{IP: "1.2.3.4"},
 		// Scope the provider to a single Gateway.
-		Gateways: []NamespacedName{{Namespace: "default", Name: "traefik-internal"}},
-		client:   client,
+		Gateways:  []NamespacedName{{Namespace: "default", Name: "traefik-internal"}},
+		k8sClient: client,
 	}
 
-	_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+	_, statusReport, err := p.BuildConfiguration(t.Context())
 	require.NoError(t, err)
 
-	statusReport.Flush(t.Context(), p.client)
+	statusReport.Flush(t.Context(), p.k8sClient)
 
 	// The scoped Gateway is managed and gets a status address.
 	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
@@ -5553,9 +5554,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -5567,10 +5568,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				EntryPoints:              test.entryPoints,
 				NativeLBByDefault:        test.nativeLB,
 				RetryMaxRequestBodyBytes: test.retryMaxRequestBodyBytes,
-				client:                   client,
+				k8sClient:                client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -6051,9 +6052,9 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -6063,7 +6064,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindBackendFuncs {
@@ -6071,7 +6072,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -6412,9 +6413,9 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -6424,7 +6425,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindFilterFuncs {
@@ -6432,7 +6433,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -7397,9 +7398,9 @@ func TestLoadGRPCRoutes(t *testing.T) {
 			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -7408,10 +7409,10 @@ func TestLoadGRPCRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -7709,9 +7710,9 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -7721,7 +7722,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
 			for group, kindFuncs := range test.groupKindFilterFuncs {
@@ -7729,7 +7730,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -8889,9 +8890,9 @@ func TestLoadTCPRoutes(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -8902,10 +8903,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 			p := Provider{
 				EntryPoints:       test.entryPoints,
 				NativeLBByDefault: test.nativeLB,
-				client:            client,
+				k8sClient:         client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -11089,9 +11090,9 @@ func TestLoadTLSRoutes(t *testing.T) {
 			}
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -11102,10 +11103,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 			p := Provider{
 				EntryPoints:       test.entryPoints,
 				NativeLBByDefault: test.nativeLB,
-				client:            client,
+				k8sClient:         client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -12727,9 +12728,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -12739,10 +12740,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -13224,9 +13225,9 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -13236,10 +13237,10 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, conf)
@@ -13575,18 +13576,18 @@ func Test_loadRoutes_multipleGatewaysParentRefs(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
 
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+			client := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 			<-eventCh
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
-			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+			_, statusReport, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			statusReport.Flush(t.Context(), client)
@@ -13644,18 +13645,18 @@ func Test_loadHTTPAndGRPCRoutes_hostnameConflict(t *testing.T) {
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
 
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+			client := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 			<-eventCh
 
 			p := Provider{
 				EntryPoints: map[string]Entrypoint{"web": {Address: ":9080"}},
-				client:      client,
+				k8sClient:   client,
 			}
 
-			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+			_, statusReport, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			statusReport.Flush(t.Context(), client)
@@ -14753,9 +14754,9 @@ func Test_gatewayAddresses(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -14765,7 +14766,7 @@ func Test_gatewayAddresses(t *testing.T) {
 
 			p := Provider{
 				StatusAddress: test.statusAddress,
-				client:        client,
+				k8sClient:     client,
 			}
 
 			got, err := p.gatewayAddresses()
@@ -14882,9 +14883,9 @@ func Test_resolveFrontendValidation(t *testing.T) {
 	})
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -14892,15 +14893,15 @@ func Test_resolveFrontendValidation(t *testing.T) {
 		<-eventCh
 	}
 
-	p := Provider{client: client}
+	p := Provider{k8sClient: client}
 
 	// A client on a cluster that does not serve the ClusterTrustBundle API.
-	clientWithoutAPI := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+	clientWithoutAPI := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
 
-	_, err = clientWithoutAPI.WatchAll(nil, make(chan struct{}))
+	_, err = clientWithoutAPI.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
-	pWithoutAPI := Provider{client: clientWithoutAPI}
+	pWithoutAPI := Provider{k8sClient: clientWithoutAPI}
 
 	// A client that is not allowed to list ClusterTrustBundles.
 	kubeClientForbidden := kubefake.NewClientset(k8sObjects...)
@@ -14910,12 +14911,12 @@ func Test_resolveFrontendValidation(t *testing.T) {
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false},
 		}, nil
 	})
-	clientForbidden := newClientImpl(kubeClientForbidden, newGatewaySimpleClientSet(t, gwObjects...))
+	clientForbidden := NewClient(&Provider{}, kubeClientForbidden, newGatewaySimpleClientSet(t, gwObjects...))
 
-	_, err = clientForbidden.WatchAll(nil, make(chan struct{}))
+	_, err = clientForbidden.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
-	pForbidden := Provider{client: clientForbidden}
+	pForbidden := Provider{k8sClient: clientForbidden}
 
 	gateway := &gatev1.Gateway{
 		Name:       "my-gateway",
@@ -15231,15 +15232,15 @@ func Test_loadGatewayBackendTLS(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	// just wait for the first event
 	<-eventCh
 
-	p := Provider{client: client}
+	p := Provider{k8sClient: client}
 
 	testCases := []struct {
 		desc           string
@@ -15334,15 +15335,15 @@ func Test_loadGatewayListeners(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 	<-eventCh
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	newGateway := func(caCertificateRefs []gatev1.ObjectReference) *gatev1.Gateway {
@@ -15460,7 +15461,7 @@ func Test_loadGatewayListeners(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
-			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}), conf)
+			listeners := p.loadGatewayListeners(t.Context(), test.gateway, nil, newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{}), conf)
 
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
@@ -15480,15 +15481,15 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-	client := newClientImpl(kubeClient, gwClient)
+	client := NewClient(&Provider{}, kubeClient, gwClient)
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 	<-eventCh
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	newValidation := func(caConfigMap string, mode gatev1.FrontendValidationModeType) *gatev1.FrontendTLSValidation {
@@ -15603,15 +15604,16 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
+			listenerFilters := map[gatev1.PortNumber][]listenerFiltersClaim{}
 			conf := &dynamic.Configuration{TLS: &dynamic.TLSConfiguration{}}
 
 			gateway := newGateway("my-gateway", nil, newValidation("ca-configmap", gatev1.AllowValidOnly))
-			listeners := p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			listeners := p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations, listenerFilters), conf)
 			require.Len(t, listeners, 1)
 			require.True(t, listeners[0].Attached)
 
 			gateway = newGateway("my-other-gateway", test.hostname, test.validation)
-			listeners = p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations), conf)
+			listeners = p.loadGatewayListeners(t.Context(), gateway, nil, newListenerClaims(frontendValidations, listenerFilters), conf)
 			require.Len(t, listeners, 1)
 			assert.Equal(t, test.expectedAttached, listeners[0].Attached)
 
@@ -15629,6 +15631,555 @@ func Test_loadGatewayListeners_frontendValidationConflict(t *testing.T) {
 			assert.Len(t, conf.TLS.Certificates, expectedCertificates)
 		})
 	}
+}
+
+func TestLoadHTTPRoutes_listenerFilters(t *testing.T) {
+	middlewareFilterFunc := func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
+	}
+
+	emptyConfiguration := func() *dynamic.Configuration {
+		return &dynamic.Configuration{
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  map[string]*dynamic.UDPRouter{},
+				Services: map[string]*dynamic.UDPService{},
+			},
+			TCP: &dynamic.TCPConfiguration{
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			},
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:           map[string]*dynamic.Router{},
+				Middlewares:       map[string]*dynamic.Middleware{},
+				Services:          map[string]*dynamic.Service{},
+				ServersTransports: map[string]*dynamic.ServersTransport{},
+			},
+			TLS: &dynamic.TLSConfiguration{
+				Options: map[string]tls.Options{},
+			},
+		}
+	}
+
+	// The filters are set on the parent router, so that they run before the route matching.
+	filteredConfiguration := func(middlewares map[string]*dynamic.Middleware) *dynamic.Configuration {
+		conf := emptyConfiguration()
+		conf.HTTP.Routers = map[string]*dynamic.Router{
+			"listener-web-http-5b3226d4ebd42b7200f1": {
+				EntryPoints: []string{"web"},
+				Rule:        `Host("*")`,
+				Middlewares: []string{"default-my-first-middleware", "default-my-second-middleware"},
+			},
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93": {
+				Service:    "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr",
+				Rule:       `Host("foo.com") && Path("/bar")`,
+				Priority:   100008,
+				RuleSyntax: "default",
+				ParentRefs: []string{"listener-web-http-5b3226d4ebd42b7200f1"},
+			},
+		}
+		conf.HTTP.Middlewares = middlewares
+		conf.HTTP.Services = map[string]*dynamic.Service{
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-wrr": {
+				Weighted: &dynamic.WeightedRoundRobin{
+					Services: []dynamic.WRRService{
+						{
+							Name:   "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0",
+							Weight: new(1),
+						},
+					},
+				},
+			},
+			"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93-svc-default-whoami-0": {
+				LoadBalancer: &dynamic.ServersLoadBalancer{
+					Strategy: dynamic.BalancerStrategyWRR,
+					Servers: []dynamic.Server{
+						{URL: "http://10.10.0.1:80"},
+						{URL: "http://10.10.0.2:80"},
+					},
+					PassHostHeader: new(true),
+					ResponseForwarding: &dynamic.ResponseForwarding{
+						FlushInterval: ptypes.Duration(100 * time.Millisecond),
+					},
+				},
+			},
+		}
+
+		return conf
+	}
+
+	testCases := []struct {
+		desc                 string
+		experimentalChannel  bool
+		groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+		expected             *dynamic.Configuration
+		expectedRejection    *metav1.Condition
+	}{
+		{
+			desc:                "Listener filters",
+			experimentalChannel: true,
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": middlewareFilterFunc},
+			},
+			expected: filteredConfiguration(map[string]*dynamic.Middleware{}),
+		},
+		{
+			desc:                "Listener filters with middleware creation",
+			experimentalChannel: true,
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": name}}}, nil
+				}},
+			},
+			expected: filteredConfiguration(map[string]*dynamic.Middleware{
+				"default-my-first-middleware":  {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "my-first-middleware"}}},
+				"default-my-second-middleware": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "my-second-middleware"}}},
+			}),
+		},
+		{
+			desc: "Listener filters without the experimentalChannel option",
+			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
+				traefikv1alpha1.GroupName: {"Middleware": middlewareFilterFunc},
+			},
+			// The listener is rejected, as the specification forbids skipping its filters.
+			expected: emptyConfiguration(),
+			expectedRejection: &metav1.Condition{
+				Type:    string(gatev1.ListenerConditionAccepted),
+				Status:  metav1.ConditionFalse,
+				Reason:  string(gatev1.ListenerReasonUnsupportedValue),
+				Message: "listener filters require the experimentalChannel option",
+			},
+		},
+		{
+			desc:                "Unknown ExtensionRef listener filter",
+			experimentalChannel: true,
+			expected:            emptyConfiguration(),
+			expectedRejection: &metav1.Condition{
+				Type:    string(gatev1.ListenerConditionResolvedRefs),
+				Status:  metav1.ConditionFalse,
+				Reason:  string(listenerReasonInvalidListenerFilterRef),
+				Message: "filters.requests[0]: unsupported filter extension ref traefik.io/Middleware/my-first-middleware",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/listener_filters.yml"})
+
+			kubeClient := kubefake.NewClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := NewClient(&Provider{}, kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
+			require.NoError(t, err)
+			<-eventCh
+
+			p := Provider{
+				EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
+				ExperimentalChannel: test.experimentalChannel,
+				k8sClient:           client,
+			}
+
+			for group, kindFuncs := range test.groupKindFilterFuncs {
+				for kind, filterFunc := range kindFuncs {
+					p.RegisterFilterFuncs(group, kind, filterFunc)
+				}
+			}
+
+			conf, statusReport, err := p.BuildConfiguration(t.Context())
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, conf)
+
+			require.Len(t, statusReport.gatewayListeners, 1)
+			require.Len(t, statusReport.gatewayListeners[0].listeners, 1)
+			listener := statusReport.gatewayListeners[0].listeners[0]
+			assert.Equal(t, test.expectedRejection == nil, listener.Attached)
+
+			if test.expectedRejection == nil {
+				return
+			}
+
+			condition := meta.FindStatusCondition(listener.Status.Conditions, test.expectedRejection.Type)
+			require.NotNil(t, condition)
+			assert.Equal(t, test.expectedRejection.Status, condition.Status)
+			assert.Equal(t, test.expectedRejection.Reason, condition.Reason)
+			assert.Equal(t, test.expectedRejection.Message, condition.Message)
+		})
+	}
+}
+
+func TestSupportedFeatures_experimentalChannel(t *testing.T) {
+	assert.NotContains(t, SupportedFeatures(false), features.SupportGatewayListenerFilters)
+	assert.Contains(t, SupportedFeatures(true), features.SupportGatewayListenerFilters)
+	assert.Len(t, SupportedFeatures(true), len(SupportedFeatures(false))+1)
+}
+
+func Test_loadListenerFilters(t *testing.T) {
+	extensionRef := func(kind, name string) gatev1.ListenerFilter {
+		return gatev1.ListenerFilter{
+			Type: gatev1.ListenerFilterExtensionRef,
+			ExtensionRef: &gatev1.LocalObjectReference{
+				Group: traefikv1alpha1.GroupName,
+				Kind:  gatev1.Kind(kind),
+				Name:  gatev1.ObjectName(name),
+			},
+		}
+	}
+
+	testCases := []struct {
+		desc                string
+		filters             []gatev1.ListenerFilter
+		expectedNames       []string
+		expectedMiddlewares map[string]*dynamic.Middleware
+		expectedConditions  []metav1.Condition
+	}{
+		{
+			desc:                "no filter",
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+		},
+		{
+			desc: "ExtensionRef filters keep their order",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Middleware", "second"),
+				extensionRef("Middleware", "first"),
+			},
+			expectedNames:       []string{"ns-second", "ns-first"},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+		},
+		{
+			desc:          "ExtensionRef filter creating a middleware",
+			filters:       []gatev1.ListenerFilter{extensionRef("Created", "created")},
+			expectedNames: []string{"ns-created"},
+			expectedMiddlewares: map[string]*dynamic.Middleware{
+				"ns-created": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "test"}}},
+			},
+		},
+		{
+			desc: "unsupported ExtensionRef kind",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Created", "created"),
+				extensionRef("Unknown", "unknown"),
+			},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(listenerReasonInvalidListenerFilterRef),
+					Message:            "filters.requests[1]: unsupported filter extension ref traefik.io/Unknown/unknown",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalid),
+					Message:            "Invalid listener filters",
+				},
+			},
+		},
+		{
+			desc: "ExternalAuth filter is not supported",
+			filters: []gatev1.ListenerFilter{
+				extensionRef("Middleware", "first"),
+				{Type: gatev1.ListenerFilterExternalAuth, ExternalAuth: &gatev1.HTTPExternalAuthFilter{}},
+			},
+			expectedMiddlewares: map[string]*dynamic.Middleware{},
+			expectedConditions: []metav1.Condition{
+				{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonUnsupportedValue),
+					Message:            "filters.requests[1]: unsupported filter type ExternalAuth",
+				},
+				{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+					Reason:             string(gatev1.ListenerReasonInvalid),
+					Message:            "Invalid listener filters",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{ExperimentalChannel: true}
+			p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+				return namespace + "-" + name, nil, nil
+			})
+			p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Created", func(name, namespace string) (string, *dynamic.Middleware, error) {
+				return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "test"}}}, nil
+			})
+
+			conf := &dynamic.Configuration{HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}}}
+
+			names, conditions := p.loadListenerFilters("ns", 1, test.filters, conf)
+
+			// LastTransitionTime is set with metav1.Now() and is not relevant to this test.
+			for i := range conditions {
+				conditions[i].LastTransitionTime = metav1.Time{}
+			}
+
+			assert.Equal(t, test.expectedNames, names)
+			assert.Equal(t, test.expectedConditions, conditions)
+			assert.Equal(t, test.expectedMiddlewares, conf.HTTP.Middlewares)
+		})
+	}
+}
+
+func Test_loadGatewayListeners_listenerFiltersConflict(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}, "web8080": {Address: ":8080"}},
+		ExperimentalChannel: true,
+	}
+	p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
+	})
+
+	type listener struct {
+		port     gatev1.PortNumber
+		hostname gatev1.Hostname
+		filter   string
+		// invalid makes an HTTPS listener without TLS configuration, rejected after the listener filters.
+		invalid bool
+	}
+
+	newGateway := func(name string, listeners []listener) *gatev1.Gateway {
+		gateway := &gatev1.Gateway{Name: name, Namespace: "default", Generation: 1}
+
+		for i, l := range listeners {
+			gl := gatev1.Listener{
+				Name:     gatev1.SectionName("http-" + string(rune('a'+i))),
+				Protocol: gatev1.HTTPProtocolType,
+				Port:     l.port,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+			}
+			if l.hostname != "" {
+				gl.Hostname = new(l.hostname)
+			}
+			if l.invalid {
+				gl.Protocol = gatev1.HTTPSProtocolType
+			}
+			if l.filter != "" {
+				gl.Filters = &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: gatev1.ObjectName(l.filter)},
+				}}}
+			}
+
+			gateway.Spec.Listeners = append(gateway.Spec.Listeners, gl)
+		}
+
+		return gateway
+	}
+
+	testCases := []struct {
+		desc     string
+		older    []listener
+		younger  []listener
+		expected []bool
+	}{
+		{
+			desc:     "Gateways without filters share a port",
+			older:    []listener{{port: 80}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a listener without filters conflicts with an overlapping listener with filters",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "a listener with filters conflicts with an overlapping listener without filters",
+			older:    []listener{{port: 80}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "a listener with other filters conflicts with an overlapping listener",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "b"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "overlapping listeners with the same filters share a port",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a wildcard hostname overlaps the hostnames it covers",
+			older:    []listener{{port: 80, hostname: "*.foo.com", filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "bar.foo.com"}},
+			expected: []bool{false},
+		},
+		{
+			desc:     "listeners with disjoint hostnames declare their own filters",
+			older:    []listener{{port: 80, hostname: "foo.com", filter: "a"}, {port: 80, hostname: "*.foo.com", filter: "a"}},
+			younger:  []listener{{port: 80, hostname: "bar.com", filter: "b"}, {port: 80, hostname: "*.bar.com"}},
+			expected: []bool{true, true},
+		},
+		{
+			desc:     "the listeners on another port are not conflicted",
+			older:    []listener{{port: 80, filter: "a"}},
+			younger:  []listener{{port: 80}, {port: 8080, filter: "b"}},
+			expected: []bool{false, true},
+		},
+		{
+			desc:     "the listeners of a Gateway can declare different filters",
+			older:    []listener{{port: 8080}},
+			younger:  []listener{{port: 80, filter: "a"}, {port: 80, hostname: "foo.com", filter: "b"}, {port: 80, hostname: "bar.com"}},
+			expected: []bool{true, true, true},
+		},
+		{
+			desc:     "a rejected listener with filters is not recorded",
+			older:    []listener{{port: 80, filter: "a", invalid: true}},
+			younger:  []listener{{port: 80, hostname: "foo.com"}},
+			expected: []bool{true},
+		},
+		{
+			desc:     "a rejected listener without filters is not recorded",
+			older:    []listener{{port: 80, invalid: true}},
+			younger:  []listener{{port: 80, hostname: "foo.com", filter: "a"}},
+			expected: []bool{true},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			frontendValidations := map[gatev1.PortNumber]*tls.ClientAuth{}
+			listenerFilters := map[gatev1.PortNumber][]listenerFiltersClaim{}
+			conf := &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+				TLS:  &dynamic.TLSConfiguration{},
+			}
+
+			listeners := p.loadGatewayListeners(t.Context(), newGateway("older", test.older), nil, newListenerClaims(frontendValidations, listenerFilters), conf)
+			for i, l := range listeners {
+				require.Equal(t, !test.older[i].invalid, l.Attached)
+			}
+
+			listeners = p.loadGatewayListeners(t.Context(), newGateway("younger", test.younger), nil, newListenerClaims(frontendValidations, listenerFilters), conf)
+			require.Len(t, listeners, len(test.expected))
+
+			for i, l := range listeners {
+				assert.Equal(t, test.expected[i], l.Attached, "listener %s", l.SectionName)
+
+				if test.expected[i] {
+					assert.Empty(t, l.Status.Conditions)
+					continue
+				}
+
+				conflicted := meta.FindStatusCondition(l.Status.Conditions, string(gatev1.ListenerConditionConflicted))
+				require.NotNil(t, conflicted)
+				assert.Equal(t, metav1.ConditionTrue, conflicted.Status)
+				assert.Equal(t, string(listenerReasonListenerFiltersConflict), conflicted.Reason)
+			}
+		})
+	}
+}
+
+func Test_loadGatewayListeners_listenerFiltersProtocol(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"tcp": {Address: ":9000"}},
+		ExperimentalChannel: true,
+	}
+
+	gateway := &gatev1.Gateway{
+		Name:       "gateway",
+		Namespace:  "default",
+		Generation: 1,
+		Spec: gatev1.GatewaySpec{
+			Listeners: []gatev1.Listener{{
+				Name:     "tcp",
+				Protocol: gatev1.TCPProtocolType,
+				Port:     9000,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+				Filters: &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: "auth"},
+				}}},
+			}},
+		},
+	}
+
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+		TLS:  &dynamic.TLSConfiguration{},
+	}
+	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
+
+	listeners := p.loadGatewayListeners(t.Context(), gateway, nil, claims, conf)
+	require.Len(t, listeners, 1)
+	assert.False(t, listeners[0].Attached)
+
+	accepted := meta.FindStatusCondition(listeners[0].Status.Conditions, string(gatev1.ListenerConditionAccepted))
+	require.NotNil(t, accepted)
+	assert.Equal(t, metav1.ConditionFalse, accepted.Status)
+	assert.Equal(t, string(listenerReasonInvalidListenerFilter), accepted.Reason)
+}
+
+func Test_loadGatewayListeners_listenerSetFilters(t *testing.T) {
+	p := Provider{
+		EntryPoints:         map[string]Entrypoint{"web": {Address: ":80"}},
+		ExperimentalChannel: true,
+	}
+	p.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		return namespace + "-" + name, nil, nil
+	})
+
+	gateway := &gatev1.Gateway{Name: "gateway", Namespace: "default", Generation: 1}
+	listenerSet := &gatev1.ListenerSet{
+		Name:       "listener-set",
+		Namespace:  "team",
+		Generation: 1,
+		Spec: gatev1.ListenerSetSpec{
+			Listeners: []gatev1.ListenerEntry{{
+				Name:     "http",
+				Protocol: gatev1.HTTPProtocolType,
+				Port:     80,
+				AllowedRoutes: &gatev1.AllowedRoutes{
+					Namespaces: &gatev1.RouteNamespaces{From: new(gatev1.NamespacesFromSame)},
+				},
+				Filters: &gatev1.ListenerFilters{Requests: []gatev1.ListenerFilter{{
+					Type:         gatev1.ListenerFilterExtensionRef,
+					ExtensionRef: &gatev1.LocalObjectReference{Group: traefikv1alpha1.GroupName, Kind: "Middleware", Name: "auth"},
+				}}},
+			}},
+		},
+	}
+
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{Middlewares: map[string]*dynamic.Middleware{}},
+		TLS:  &dynamic.TLSConfiguration{},
+	}
+	claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
+
+	listeners := p.loadGatewayListeners(t.Context(), gateway, listenerSet, claims, conf)
+	require.Len(t, listeners, 1)
+	assert.True(t, listeners[0].Attached)
+
+	// The ExtensionRef filter is a local reference, resolved in the namespace of the ListenerSet declaring it.
+	assert.Equal(t, []string{"team-auth"}, listeners[0].Middlewares)
 }
 
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
@@ -15692,9 +16243,9 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15705,10 +16256,10 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"web": {Address: ":80"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			router, ok := conf.HTTP.Routers["httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93"]
@@ -15758,9 +16309,9 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15771,10 +16322,10 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"tcp": {Address: ":9000"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			router, ok := conf.TCP.Routers["tcproute-default-tcp-app-1-gw-default-my-gateway-ep-tcp-0-5840f3c3c21dcf0402da"]
@@ -15831,9 +16382,9 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
@@ -15844,10 +16395,10 @@ func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 			p := Provider{
 				EntryPoints:             map[string]Entrypoint{"tls": {Address: ":9000"}},
 				CrossProviderNamespaces: test.crossProviderNamespaces,
-				client:                  client,
+				k8sClient:               client,
 			}
 
-			conf, _, err := p.loadConfigurationFromGateways(t.Context())
+			conf, _, err := p.BuildConfiguration(t.Context())
 			assert.NoError(t, err)
 
 			router, ok := conf.TCP.Routers["tlsroute-default-tls-app-1-gw-default-my-gateway-ep-tls-0-efc0f8d903baa9fb6592"]
@@ -15906,12 +16457,12 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 	return client
 }
 
-func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
+func TestProvider_BuildConfiguration_TLSCertificatesOrder(t *testing.T) {
 	k8sObjects, gwObjects := readResources(t, []string{"multiple_gateways_tls_certificates.yml"})
 
-	client := newClientImpl(kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
+	client := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), newGatewaySimpleClientSet(t, gwObjects...))
 
-	eventCh, err := client.WatchAll(nil, make(chan struct{}))
+	eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 	require.NoError(t, err)
 
 	// just wait for the first event
@@ -15919,12 +16470,12 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 
 	p := Provider{
 		EntryPoints: map[string]Entrypoint{"websecure": {Address: ":443"}},
-		client:      client,
+		k8sClient:   client,
 	}
 
 	// Gateways are listed from a map, so build the configuration several times to
 	// make sure the certificates do not follow the iteration order.
-	conf, _, err := p.loadConfigurationFromGateways(t.Context())
+	conf, _, err := p.BuildConfiguration(t.Context())
 	require.NoError(t, err)
 
 	var commonNames []string
@@ -15935,7 +16486,7 @@ func Test_loadConfigurationFromGateways_TLSCertificatesOrder(t *testing.T) {
 	assert.Equal(t, []string{"bar.example.com", "foo.example.com", "default-b.example.com", "default-a.example.com"}, commonNames)
 }
 
-func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *testing.T) {
+func TestProvider_BuildConfiguration_BackendTLSPolicyAncestorNamespace(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		path        string
@@ -15969,9 +16520,9 @@ func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *tes
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", test.path})
 
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
-			client := newClientImpl(kubefake.NewClientset(k8sObjects...), gwClient)
+			client := NewClient(&Provider{}, kubefake.NewClientset(k8sObjects...), gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			// just wait for the first event
@@ -15979,10 +16530,10 @@ func Test_loadConfigurationFromGateways_BackendTLSPolicyAncestorNamespace(t *tes
 
 			p := Provider{
 				EntryPoints: test.entryPoints,
-				client:      client,
+				k8sClient:   client,
 			}
 
-			_, statusReport, err := p.loadConfigurationFromGateways(t.Context())
+			_, statusReport, err := p.BuildConfiguration(t.Context())
 			require.NoError(t, err)
 
 			statusReport.Flush(t.Context(), client)
@@ -16402,16 +16953,16 @@ func Test_isListenerSetAllowed(t *testing.T) {
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t)
 
-			client := newClientImpl(kubeClient, gwClient)
+			client := NewClient(&Provider{}, kubeClient, gwClient)
 
-			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			eventCh, err := client.WatchAll(t.Context(), nil, make(chan struct{}))
 			require.NoError(t, err)
 
 			if len(k8sObjects) > 0 {
 				<-eventCh
 			}
 
-			p := Provider{client: client}
+			p := Provider{k8sClient: client}
 
 			assert.Equal(t, test.expected, p.isListenerSetAllowed(t.Context(), test.gw, test.ls))
 		})
@@ -16696,7 +17247,7 @@ func Test_loadListenerSetListeners(t *testing.T) {
 				gateway.Spec.AllowedListeners = test.allowedListeners
 			}
 
-			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{})
+			claims := newListenerClaims(map[gatev1.PortNumber]*tls.ClientAuth{}, map[gatev1.PortNumber][]listenerFiltersClaim{})
 			if test.gatewayListener != nil {
 				gatewayWithListener := gateway.DeepCopy()
 				gatewayWithListener.Spec.Listeners = []gatev1.Listener{*test.gatewayListener}

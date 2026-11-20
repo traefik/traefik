@@ -183,11 +183,7 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 				continue
 			}
 
-			conf := mergeConfiguration(newConfigs.DeepCopy(), c.defaultEntryPoints)
-			conf = applyModel(conf)
-			if conf.HTTP != nil {
-				conf.HTTP.Routers = resolveHTTPTLSOptions(conf.HTTP.Routers, c.strictTLSOptions)
-			}
+			conf := Aggregate(newConfigs, c.defaultEntryPoints, c.strictTLSOptions)
 
 			for _, listener := range c.configurationListeners {
 				listener(conf)

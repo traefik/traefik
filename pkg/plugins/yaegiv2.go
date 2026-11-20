@@ -8,12 +8,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/yaegi/v2/host"
+	// Gives plugins the expvar package (used by prometheus/client_golang).
+	// Traefik already imports expvar and net/http/pprof, so the side effects
+	// on http.DefaultServeMux are already there.
+	_ "github.com/traefik/yaegi/v2/stdsyms/sideeffect"
 	"github.com/traefik/yaegi/v2/vm"
 )
 
@@ -29,6 +34,14 @@ func loadYaegiV2Plugin(ctx context.Context, goPath string, manifest *Manifest, m
 	opts.Root = filepath.Join(goPath, "src")
 	opts.Dir = filepath.Join(opts.Root, filepath.FromSlash(moduleName))
 	opts.UseUnsafe = settings.UseUnsafe && manifest.UseUnsafe
+	opts.FileMapping = opts.UseUnsafe && settings.FileMapping
+
+	mounts, err := yaegiV2Mounts(settings.Mounts)
+	if err != nil {
+		return nil, err
+	}
+	opts.Mounts = mounts
+
 	// Same environment as with Yaegi v1, host.Options gives none.
 	opts.Env = os.Environ()
 	opts.Stdout = logs.NoLevel(*logger, zerolog.DebugLevel)
@@ -52,6 +65,34 @@ func loadYaegiV2Plugin(ctx context.Context, goPath string, manifest *Manifest, m
 	}
 
 	return plugin, nil
+}
+
+// yaegiV2Mounts converts the mounts of the settings ("dir" or "dir:ro").
+// Yaegi v2 cannot map a directory to another path, so "host:guest" is only
+// accepted when both paths are the same.
+// No mount gives the plugin the whole file system.
+func yaegiV2Mounts(mounts []string) ([]vm.Mount, error) {
+	if len(mounts) == 0 {
+		return nil, nil
+	}
+
+	result := make([]vm.Mount, 0, len(mounts))
+	for _, mount := range mounts {
+		dir, readOnly := strings.CutSuffix(mount, ":ro")
+
+		parts := strings.Split(dir, ":")
+		switch {
+		case len(parts) == 1:
+		case len(parts) == 2 && parts[0] == parts[1]:
+			dir = parts[0]
+		default:
+			return nil, fmt.Errorf("invalid mount %q: Yaegi v2 plugins cannot mount a directory on another path", mount)
+		}
+
+		result = append(result, vm.Mount{Dir: dir, ReadOnly: readOnly})
+	}
+
+	return result, nil
 }
 
 func createYaegiV2Config(plugin *vm.Plugin, config map[string]any) (*vm.Object, error) {

@@ -12,6 +12,43 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
+func TestAggregate(t *testing.T) {
+	newConfigurations := func() dynamic.Configurations {
+		return dynamic.Configurations{
+			"provider": &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"router": {
+							Rule: "Host(`example.com`)",
+							TLS:  &dynamic.RouterTLSConfig{Options: "options"},
+						},
+					},
+				},
+			},
+			"internal": &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Models: map[string]*dynamic.Model{
+						"websecure": {Middlewares: []string{"middleware@provider"}},
+					},
+				},
+			},
+		}
+	}
+
+	configurations := newConfigurations()
+
+	conf := Aggregate(configurations, []string{"websecure"}, false)
+
+	router := conf.HTTP.Routers["router@provider"]
+	require.NotNil(t, router)
+
+	assert.Equal(t, []string{"websecure"}, router.EntryPoints)
+	assert.Equal(t, []string{"middleware@provider"}, router.Middlewares)
+	assert.Equal(t, "options@provider", router.TLS.ResolvedOptions)
+
+	assert.Equal(t, newConfigurations(), configurations)
+}
+
 func Test_mergeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -1268,6 +1305,18 @@ func Test_resolveHTTPTLSOptions(t *testing.T) {
 			unexpectedRouters: []string{"router-a@file", "router-b@file"},
 		},
 		{
+			desc: "same host with a trailing dot, different options, same entryPoint: conflict falls back to default",
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+				"router-b@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com.`)", TLS: &dynamic.RouterTLSConfig{Options: "optsB"}},
+			},
+			expected: map[string]string{
+				"ep-a-conflicted-router-a@file": "default",
+				"ep-a-conflicted-router-b@file": "default",
+			},
+			unexpectedRouters: []string{"router-a@file", "router-b@file"},
+		},
+		{
 			desc: "same host, same options, same entryPoint: keeps the configured options",
 			routers: map[string]*dynamic.Router{
 				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
@@ -1333,6 +1382,20 @@ func Test_resolveHTTPTLSOptions(t *testing.T) {
 			expected: map[string]string{
 				"ep-a-conflicted-router-a@file": "optsA@file",
 				"ep-a-conflicted-router-b@file": "optsB@file",
+			},
+			conflicting:       []string{"ep-a-conflicted-router-a@file", "ep-a-conflicted-router-b@file"},
+			unexpectedRouters: []string{"router-a@file", "router-b@file"},
+		},
+		{
+			desc:             "strict: same host with a trailing dot, different options, same entryPoint: conflict is not arbitrated",
+			strictTLSOptions: true,
+			routers: map[string]*dynamic.Router{
+				"router-a@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com`)", TLS: &dynamic.RouterTLSConfig{Options: "optsA"}},
+				"router-b@file": {EntryPoints: []string{"ep-a"}, Rule: "Host(`example.com.`)", TLS: &dynamic.RouterTLSConfig{}},
+			},
+			expected: map[string]string{
+				"ep-a-conflicted-router-a@file": "optsA@file",
+				"ep-a-conflicted-router-b@file": "default",
 			},
 			conflicting:       []string{"ep-a-conflicted-router-a@file", "ep-a-conflicted-router-b@file"},
 			unexpectedRouters: []string{"router-a@file", "router-b@file"},

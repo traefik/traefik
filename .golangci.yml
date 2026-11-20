@@ -262,6 +262,10 @@ linters:
         text: Function 'loadConfiguration' has too many statements
         linters:
           - funlen
+      - path: pkg/provider/kubernetes/gateway/kubernetes.go
+        text: Function 'loadGatewayListeners' has too many statements
+        linters:
+          - funlen
       - path: pkg/tracing/haystack/logger.go
         linters:
           - goprintffuncname
@@ -342,7 +346,7 @@ linters:
       - path: pkg/middlewares/auth/digest_auth_test.go
         text: 'SA1008: keys in http.Header are canonicalized, "x-user" is not canonical; fix the constant or use http.CanonicalHeaderKey'
       - path: pkg/provider/kubernetes/crd/kubernetes.go
-        text: "Function 'loadConfigurationFromCRD' has too many statements"
+        text: "Function 'BuildConfiguration' has too many statements"
         linters:
           - funlen
       - path: pkg/plugins/middlewarewasm.go

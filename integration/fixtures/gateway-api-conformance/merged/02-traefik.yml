@@ -95,6 +95,8 @@ spec:
             # the routers. Conformance tests probe the data plane right after seeing the
             # Accepted status, so the default 2s interval loses the race.
             - --providers.providersThrottleDuration=0s
+            # Enables the Experimental Channel features, such as the listener filters.
+            - --providers.kubernetesgateway.experimentalchannel=true
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik
           ports:

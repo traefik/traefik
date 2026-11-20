@@ -14,7 +14,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
+func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client *Client) *dynamic.UDPConfiguration {
 	conf := &dynamic.UDPConfiguration{
 		Routers:  map[string]*dynamic.UDPRouter{},
 		Services: map[string]*dynamic.UDPService{},
@@ -101,7 +101,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service traefikv1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
+func (p *Provider) createLoadBalancerServerUDP(client *Client, parentNamespace string, service traefikv1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
 	ns := parentNamespace
 	if len(service.Namespace) > 0 {
 		if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, service.Namespace) {
@@ -125,7 +125,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 	return udpService, nil
 }
 
-func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
+func (p *Provider) loadUDPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
