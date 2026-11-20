@@ -40,7 +40,7 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 
 - Use IngressClass to specify which Ingresses should be handled by this provider
 - Configure `watchNamespace` to limit discovery to a single namespace
-- Use `watchNamespaceSelector` to target Ingresses based on namespace labels
+- Use `watchNamespaceSelector` to target Ingresses based on namespace labels. Namespaces matching the selector are discovered dynamically: new namespaces created after Traefik starts are picked up automatically without requiring a restart.
 
 ### IngressClass Selection Logic
 
