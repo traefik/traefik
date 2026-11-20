@@ -165,6 +165,12 @@ a Tailscale certificate resolver needs to be configured as below.
     Defining a certificate resolver does not imply that routers are going to use it automatically.
     Each router or entrypoint that is meant to use the resolver must explicitly [reference](../../../routing-configuration/http/routing/router.md#opt-tls-certResolver) it.
 
+## Configuration Options
+
+| Field | Description | Default | Required |
+|-------|-------------|---------|----------|
+| <a id="opt-tailscale-socket" href="#opt-tailscale-socket" title="#opt-tailscale-socket">`tailscale.socket`</a> | Defines the socket path to the `tailscaled` process, overriding the default platform location (`/var/run/tailscale/tailscaled.sock` on Unix). | "" | No |
+
 ## Domain Definition
 
 A certificate resolver requests certificates for a set of domain names inferred from routers, according to the following:

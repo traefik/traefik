@@ -4,10 +4,53 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/tailscale/tscert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
+
+func TestProvider_Init(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		socket          string
+		wantSocket      string
+		wantSetExplicit bool
+	}{
+		{
+			desc:            "custom socket overrides the tscert defaults",
+			socket:          "/custom/run/tailscaled.sock",
+			wantSocket:      "/custom/run/tailscaled.sock",
+			wantSetExplicit: true,
+		},
+		{
+			desc:            "empty socket keeps the tscert defaults",
+			socket:          "",
+			wantSocket:      tscert.TailscaledSocket,
+			wantSetExplicit: tscert.TailscaledSocketSetExplicitly,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// tscert resolves the socket from package-level variables, so save and
+			// restore them to keep the test cases independent.
+			socket := tscert.TailscaledSocket
+			setExplicitly := tscert.TailscaledSocketSetExplicitly
+			t.Cleanup(func() {
+				tscert.TailscaledSocket = socket
+				tscert.TailscaledSocketSetExplicitly = setExplicitly
+			})
+
+			p := &Provider{ResolverName: "test", Socket: test.socket}
+			require.NoError(t, p.Init())
+
+			assert.Equal(t, test.wantSocket, tscert.TailscaledSocket)
+			assert.Equal(t, test.wantSetExplicit, tscert.TailscaledSocketSetExplicitly)
+		})
+	}
+}
 
 func TestProvider_findDomains(t *testing.T) {
 	testCases := []struct {
