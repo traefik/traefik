@@ -336,12 +336,26 @@ type connPool struct {
 	// garbage collected with that frontend connection, hence their idle connections self-expire through a
 	// read deadline instead.
 	dedicated bool
+
+	disableReuse bool
 }
 
 // newConnPool creates a new connPool.
+// maxIdleConn follows the net/http MaxIdleConnsPerHost semantics, as documented for the ServersTransport option:
+// zero falls back to http.DefaultMaxIdleConnsPerHost, and a negative value disables connection reuse.
 func newConnPool(maxIdleConn int, idleConnTimeout, responseHeaderTimeout time.Duration, dialer func() (net.Conn, error)) *connPool {
+	var disableReuse bool
+	switch {
+	case maxIdleConn == 0:
+		maxIdleConn = http.DefaultMaxIdleConnsPerHost
+	case maxIdleConn < 0:
+		maxIdleConn = 0
+		disableReuse = true
+	}
+
 	c := &connPool{
 		dialer:                dialer,
+		disableReuse:          disableReuse,
 		idleConns:             make(chan *conn, maxIdleConn),
 		idleConnTimeout:       idleConnTimeout,
 		responseHeaderTimeout: responseHeaderTimeout,
@@ -407,6 +421,15 @@ func (c *connPool) ReleaseConn(co *conn) {
 		return
 	}
 
+	if c.disableReuse {
+		if err := co.Close(); err != nil {
+			log.Debug().
+				Err(err).
+				Msg("Unexpected error while closing the connection")
+		}
+		return
+	}
+
 	co.idleAt = time.Now()
 	c.releaseConn(co)
 }
@@ -423,6 +446,7 @@ func (c *connPool) clone() *connPool {
 		idleConnTimeout:       c.idleConnTimeout,
 		responseHeaderTimeout: c.responseHeaderTimeout,
 		dedicated:             true,
+		disableReuse:          c.disableReuse,
 	}
 }
 
@@ -475,6 +499,13 @@ func (c *connPool) cleanIdleConns() {
 }
 
 func (c *connPool) acquireConn() (*conn, error) {
+	// Without reuse, a dialed connection must go straight to its caller: handing it over through the shared idle
+	// channel lets concurrent callers take each other's connection, and as released connections are closed rather
+	// than returned to the pool, the caller left without one would wait forever.
+	if c.disableReuse {
+		return c.newConn()
+	}
+
 	select {
 	case co := <-c.idleConns:
 		return co, nil
@@ -516,10 +547,19 @@ func (c *connPool) releaseConn(co *conn) {
 }
 
 func (c *connPool) askForNewConn(errCh chan<- error) {
+	co, err := c.newConn()
+	if err != nil {
+		errCh <- err
+		return
+	}
+
+	c.releaseConn(co)
+}
+
+func (c *connPool) newConn() (*conn, error) {
 	co, err := c.dialer()
 	if err != nil {
-		errCh <- fmt.Errorf("create conn: %w", err)
-		return
+		return nil, fmt.Errorf("create conn: %w", err)
 	}
 
 	newConn := &conn{
@@ -535,7 +575,7 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 	}
 	go newConn.readLoop()
 
-	c.releaseConn(newConn)
+	return newConn, nil
 }
 
 type connPoolsKeyType string
