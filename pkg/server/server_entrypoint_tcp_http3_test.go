@@ -2,14 +2,20 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -496,6 +502,173 @@ func TestNewHTTP3ServerTimeouts(t *testing.T) {
 	assert.Equal(t, 42*time.Second, entryPoint.http3Server.Server.IdleTimeout)
 	assert.Equal(t, 12345, entryPoint.http3Server.Server.MaxHeaderBytes)
 	assert.NotNil(t, entryPoint.http3Server.Server.Handler)
+}
+
+func TestHTTP3QUICLBConnectionIDs(t *testing.T) {
+	serverID := []byte{0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE}
+	t.Setenv("AWS_LBC_QUIC_SERVER_ID", base64.StdEncoding.EncodeToString(serverID))
+
+	certContent, err := localhostCert.Read()
+	require.NoError(t, err)
+
+	keyContent, err := localhostKey.Read()
+	require.NoError(t, err)
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	require.NoError(t, err)
+
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
+		Address:          "127.0.0.1:0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
+		HTTP3:            &static.HTTP3Config{},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	router, err := tcprouter.NewRouter(nil)
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("*", &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, traefiktls.DefaultTLSConfigName)
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), nil)
+
+	ctx := t.Context()
+	go entryPoint.Start(ctx)
+	entryPoint.SwitchRouter(router)
+
+	h3Addr := entryPoint.http3Server.http3conn.LocalAddr()
+
+	clientConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	require.NoError(t, err)
+
+	recorder := &connIDRecorder{PacketConn: clientConn}
+	clientTransport := &quic.Transport{Conn: recorder}
+	t.Cleanup(func() {
+		_ = clientTransport.Close()
+		_ = clientConn.Close()
+	})
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(certContent)
+	tlsConf := &tls.Config{RootCAs: certPool, NextProtos: []string{http3.NextProtoH3}}
+
+	h3Transport := &http3.Transport{
+		TLSClientConfig: tlsConf,
+		Dial: func(ctx context.Context, _ string, tlsCfg *tls.Config, cfg *quic.Config) (*quic.Conn, error) {
+			return clientTransport.DialEarly(ctx, h3Addr, tlsCfg, cfg)
+		},
+	}
+	t.Cleanup(func() { _ = h3Transport.Close() })
+
+	resp, err := (&http.Client{Transport: h3Transport}).Get("https://" + h3Addr.String())
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// The request may be coalesced with a long header packet, which the recorder skips,
+	// but the client acknowledges the response in a short header packet.
+	require.Eventually(t, func() bool {
+		_, clientDCIDs := recorder.connIDs()
+		return len(clientDCIDs) > 0
+	}, 2*time.Second, 10*time.Millisecond)
+
+	serverSCIDs, clientDCIDs := recorder.connIDs()
+
+	require.NotEmpty(t, serverSCIDs)
+	for _, scid := range serverSCIDs {
+		require.Len(t, scid, quicLBConnIDLen)
+		assert.Equal(t, byte(0x0F), scid[0])
+		assert.Equal(t, serverID, scid[1:9])
+	}
+
+	for _, dcid := range clientDCIDs {
+		assert.Equal(t, serverID, dcid[1:9])
+	}
+
+	tlsConn, err := tls.Dial("tcp", entryPoint.listener.Addr().String(), &tls.Config{RootCAs: certPool})
+	require.NoError(t, err)
+
+	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1", nil)
+	require.NoError(t, err)
+	require.NoError(t, request.Write(tlsConn))
+
+	r, err := http.ReadResponse(bufio.NewReader(tlsConn), nil)
+	require.NoError(t, err)
+	_ = r.Body.Close()
+	_ = tlsConn.Close()
+
+	assert.Contains(t, r.Header.Get("Alt-Svc"), fmt.Sprintf(`":%d"`, h3Addr.(*net.UDPAddr).Port))
+
+	entryPoint.Shutdown(ctx)
+
+	// The UDP connection stays open after shutdown, so a server still handshaking would answer.
+	dialCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	_, err = clientTransport.Dial(dialCtx, h3Addr, tlsConf, &quic.Config{})
+	assert.Error(t, err)
+}
+
+func TestNewHTTP3ServerInvalidQUICLBServerID(t *testing.T) {
+	t.Setenv("AWS_LBC_QUIC_SERVER_ID", "invalid")
+
+	_, err := newHTTP3Server(t.Context(), "foo", &static.EntryPoint{
+		Address: "127.0.0.1:0",
+		HTTP3:   &static.HTTP3Config{},
+	}, nil)
+	require.ErrorContains(t, err, "invalid AWS_LBC_QUIC_SERVER_ID")
+}
+
+const quicLBConnIDLen = 17
+
+// connIDRecorder records the connection IDs seen on the wire, which quic-go does not expose.
+type connIDRecorder struct {
+	net.PacketConn
+
+	mu          sync.Mutex
+	serverSCIDs [][]byte
+	clientDCIDs [][]byte
+}
+
+func (c *connIDRecorder) ReadFrom(p []byte) (int, net.Addr, error) {
+	n, addr, err := c.PacketConn.ReadFrom(p)
+
+	// A long header holds the first byte, the version (4 bytes), then the length-prefixed DCID and SCID.
+	if n > 6 && p[0]&0x80 != 0 {
+		scidLenOffset := 6 + int(p[5])
+		if scidLenOffset < n && scidLenOffset+1+int(p[scidLenOffset]) <= n {
+			c.mu.Lock()
+			c.serverSCIDs = append(c.serverSCIDs, bytes.Clone(p[scidLenOffset+1:scidLenOffset+1+int(p[scidLenOffset])]))
+			c.mu.Unlock()
+		}
+	}
+
+	return n, addr, err
+}
+
+func (c *connIDRecorder) WriteTo(p []byte, addr net.Addr) (int, error) {
+	// A short header holds the DCID right after the first byte, without its length.
+	if len(p) > 1+quicLBConnIDLen && p[0]&0x80 == 0 {
+		c.mu.Lock()
+		c.clientDCIDs = append(c.clientDCIDs, bytes.Clone(p[1:1+quicLBConnIDLen]))
+		c.mu.Unlock()
+	}
+
+	return c.PacketConn.WriteTo(p, addr)
+}
+
+func (c *connIDRecorder) connIDs() (serverSCIDs, clientDCIDs [][]byte) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return slices.Clone(c.serverSCIDs), slices.Clone(c.clientDCIDs)
 }
 
 type clientSessionCache struct {
