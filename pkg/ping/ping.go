@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 )
 
 // Handler expose ping routes.
@@ -11,7 +12,7 @@ type Handler struct {
 	EntryPoint            string `description:"EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 	ManualRouting         bool   `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty" export:"true"`
 	TerminatingStatusCode int    `description:"Terminating status code" json:"terminatingStatusCode,omitempty" toml:"terminatingStatusCode,omitempty" yaml:"terminatingStatusCode,omitempty" export:"true"`
-	terminating           bool
+	terminating           atomic.Bool
 }
 
 // SetDefaults sets the default values.
@@ -24,13 +25,13 @@ func (h *Handler) SetDefaults() {
 func (h *Handler) WithContext(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
-		h.terminating = true
+		h.terminating.Store(true)
 	}()
 }
 
 func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	statusCode := http.StatusOK
-	if h.terminating {
+	if h.terminating.Load() {
 		statusCode = h.TerminatingStatusCode
 	}
 	response.WriteHeader(statusCode)
