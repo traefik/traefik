@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/zip"
 	"gopkg.in/yaml.v3"
@@ -77,10 +78,38 @@ func NewManager(downloader PluginDownloader, opts ManagerOptions) (*Manager, err
 }
 
 // InstallPlugin download and unzip the given plugin.
+//
+// When a previously downloaded archive is present on disk and the registry
+// download fails, the install falls back to the cached archive instead of
+// wiping the plugin environment. This decouples ongoing Traefik restarts from
+// plugins.traefik.io reachability. In that fallback path, a subsequent
+// integrity check failure is also tolerated, because the cached archive was
+// validated on the prior successful install.
+//
+// Fresh installs (no cached archive) and integrity check failures that follow
+// a successful download remain fatal, so security guarantees for new or
+// updated plugins are unchanged. Hash pinning (plugin.Hash) is always enforced,
+// including in the cached-fallback path.
 func (m *Manager) InstallPlugin(ctx context.Context, plugin Descriptor) error {
+	archivePath := m.buildArchivePath(plugin.ModuleName, plugin.Version)
+
+	var fallback bool
 	hash, err := m.downloader.Download(ctx, plugin.ModuleName, plugin.Version)
 	if err != nil {
-		return fmt.Errorf("unable to download plugin %s: %w", plugin.ModuleName, err)
+		if _, statErr := os.Stat(archivePath); statErr != nil {
+			return fmt.Errorf("unable to download plugin %s: %w", plugin.ModuleName, err)
+		}
+
+		log.Ctx(ctx).Warn().Err(err).
+			Str("module", plugin.ModuleName).
+			Str("version", plugin.Version).
+			Msg("Plugin download failed; falling back to previously cached archive")
+
+		fallback = true
+		hash, err = computeHash(archivePath)
+		if err != nil {
+			return fmt.Errorf("unable to hash cached plugin archive %s: %w", archivePath, err)
+		}
 	}
 
 	if plugin.Hash != "" {
@@ -88,9 +117,15 @@ func (m *Manager) InstallPlugin(ctx context.Context, plugin Descriptor) error {
 			return fmt.Errorf("invalid hash for plugin %s, expected %s, got %s", plugin.ModuleName, plugin.Hash, hash)
 		}
 	} else {
-		err = m.downloader.Check(ctx, plugin.ModuleName, plugin.Version, hash)
-		if err != nil {
-			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", plugin.ModuleName, err)
+		if checkErr := m.downloader.Check(ctx, plugin.ModuleName, plugin.Version, hash); checkErr != nil {
+			if !fallback {
+				return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", plugin.ModuleName, checkErr)
+			}
+
+			log.Ctx(ctx).Warn().Err(checkErr).
+				Str("module", plugin.ModuleName).
+				Str("version", plugin.Version).
+				Msg("Plugin integrity check against registry failed; using previously validated cached archive")
 		}
 	}
 
