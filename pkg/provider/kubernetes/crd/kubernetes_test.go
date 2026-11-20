@@ -7519,6 +7519,21 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"/digestAuth/users/1": "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 							},
 						},
+						"default-forwardauth-configmap": {
+							ForwardAuth: &dynamic.ForwardAuth{
+								Address:     "https://auth.example.com",
+								MaxBodySize: new(int64(-1)),
+								TLS: &dynamic.ClientTLS{
+									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+									Cert: "urn:k8s:secret:tlssecret:tls.crt",
+									Key:  "urn:k8s:secret:tlssecret:tls.key",
+								},
+							},
+							URNRefs: map[string]string{
+								"/forwardAuth/tls/cert": "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+								"/forwardAuth/tls/key":  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+							},
+						},
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:     "test.com",
@@ -10577,6 +10592,99 @@ func TestLoadIngressRoutes(t *testing.T) {
 				_, err := middleware.ResolveURNRefs()
 				assert.NoError(t, err, name)
 			}
+		})
+	}
+}
+
+func TestCreateForwardAuthMiddleware_CAConfigMap(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		configMap     *corev1.ConfigMap
+		caSecret      string
+		expectedCA    string
+		expectedError string
+	}{
+		{
+			desc: "tls.ca",
+			configMap: &corev1.ConfigMap{
+				Namespace: "default", Name: "auth-ca",
+				Data: map[string]string{"tls.ca": "ca-bundle"},
+			},
+			expectedCA: "ca-bundle",
+		},
+		{
+			desc: "ca.crt",
+			configMap: &corev1.ConfigMap{
+				Namespace: "default", Name: "auth-ca",
+				Data: map[string]string{"ca.crt": "ca-bundle"},
+			},
+			expectedCA: "ca-bundle",
+		},
+		{
+			desc: "tls.ca takes precedence over ca.crt",
+			configMap: &corev1.ConfigMap{
+				Namespace: "default", Name: "auth-ca",
+				Data: map[string]string{"tls.ca": "preferred-bundle", "ca.crt": "other-bundle"},
+			},
+			expectedCA: "preferred-bundle",
+		},
+		{
+			desc:          "missing ConfigMap",
+			expectedError: "failed to load auth ca configMap: configMap 'default/auth-ca' not found",
+		},
+		{
+			desc: "ConfigMap in another namespace",
+			configMap: &corev1.ConfigMap{
+				Namespace: "other", Name: "auth-ca",
+				Data: map[string]string{"ca.crt": "ca-bundle"},
+			},
+			expectedError: "failed to load auth ca configMap: configMap 'default/auth-ca' not found",
+		},
+		{
+			desc: "missing CA key",
+			configMap: &corev1.ConfigMap{
+				Namespace: "default", Name: "auth-ca",
+				Data: map[string]string{"unrelated": "value"},
+			},
+			expectedError: "failed to load auth ca configMap: configMap 'default/auth-ca' has no CA block: config map default/auth-ca contains neither tls.ca nor ca.crt",
+		},
+		{
+			desc:          "conflicting CA sources",
+			caSecret:      "auth-ca",
+			expectedError: "forward authentication TLS caSecret and caConfigMap are mutually exclusive",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var objects []runtime.Object
+			if test.configMap != nil {
+				objects = append(objects, test.configMap)
+			}
+			client := newClientImpl(kubefake.NewClientset(objects...), traefikcrdfake.NewClientset())
+			stopCh := make(chan struct{})
+			defer close(stopCh)
+			_, err := client.WatchAll(nil, stopCh)
+			require.NoError(t, err)
+
+			middleware, err := createForwardAuthMiddleware(client, "default", &traefikv1alpha1.ForwardAuth{
+				Address: "https://auth.example.com",
+				TLS: &traefikv1alpha1.ClientTLSWithCAOptional{
+					CASecret:    test.caSecret,
+					CAConfigMap: "auth-ca",
+				},
+			}, k8s.URNRefs{})
+			if test.expectedError != "" {
+				require.EqualError(t, err, test.expectedError)
+				assert.Nil(t, middleware)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, middleware.TLS)
+			assert.Equal(t, test.expectedCA, middleware.TLS.CA)
 		})
 	}
 }
