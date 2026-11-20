@@ -350,19 +350,28 @@ func (p *Provider) buildRateLimit(loc *location) {
 		return
 	}
 
+	// Without a configured strategy, the source criterion is left unset and the rate limit
+	// middleware falls back to the request remote address.
+	var sourceCriterion *dynamic.SourceCriterion
+	if p.LimitIPStrategy != nil {
+		sourceCriterion = &dynamic.SourceCriterion{IPStrategy: p.LimitIPStrategy}
+	}
+
 	burst := getLimitBurstMultiplier(loc.Config)
 	if rpm > 0 {
 		loc.RateLimitRPM = &dynamic.RateLimit{
-			Average: int64(rpm),
-			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(rpm) * burst,
+			Average:         int64(rpm),
+			Period:          ptypes.Duration(time.Minute),
+			Burst:           int64(rpm) * burst,
+			SourceCriterion: sourceCriterion,
 		}
 	}
 	if rps > 0 {
 		loc.RateLimitRPS = &dynamic.RateLimit{
-			Average: int64(rps),
-			Period:  ptypes.Duration(time.Second),
-			Burst:   int64(rps) * burst,
+			Average:         int64(rps),
+			Period:          ptypes.Duration(time.Second),
+			Burst:           int64(rps) * burst,
+			SourceCriterion: sourceCriterion,
 		}
 	}
 }
@@ -373,10 +382,17 @@ func (p *Provider) buildLimitConnections(loc *location) {
 		return
 	}
 
+	// The in-flight request middleware defaults to the request host when no source criterion is set,
+	// so an empty IP strategy is needed to count connections per remote address, as ingress-nginx does.
+	ipStrategy := p.LimitIPStrategy
+	if ipStrategy == nil {
+		ipStrategy = &dynamic.IPStrategy{}
+	}
+
 	loc.LimitConnections = &dynamic.InFlightReq{
 		Amount: int64(limit),
 		SourceCriterion: &dynamic.SourceCriterion{
-			IPStrategy: &dynamic.IPStrategy{},
+			IPStrategy: ipStrategy,
 		},
 	}
 }
