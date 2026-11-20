@@ -286,6 +286,11 @@
         "key": "xxxx",
         "insecureSkipVerify": true
       }
+    },
+    "plugin": {
+      "foo": {
+        "foo": {}
+      }
     }
   },
   "api": {
