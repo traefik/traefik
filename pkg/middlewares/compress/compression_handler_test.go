@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -374,18 +375,34 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 		desc           string
 		cfg            Config
 		algo           string
+		readerBuilder  func(io.Reader) (io.Reader, error)
 		acceptEncoding string
 	}{
 		{
-			desc:           "brotli",
-			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo:           brotliName,
+			desc: "gzip",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: gzipName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return gzip.NewReader(reader)
+			},
+			acceptEncoding: "gzip",
+		},
+		{
+			desc: "brotli",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: brotliName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return brotli.NewReader(reader), nil
+			},
 			acceptEncoding: "br",
 		},
 		{
-			desc:           "zstd",
-			cfg:            Config{MinSize: 1024, MiddlewareName: "Test"},
-			algo:           zstdName,
+			desc: "zstd",
+			cfg:  Config{MinSize: 1024, MiddlewareName: "Test"},
+			algo: zstdName,
+			readerBuilder: func(reader io.Reader) (io.Reader, error) {
+				return zstd.NewReader(reader)
+			},
 			acceptEncoding: "zstd",
 		},
 	}
@@ -415,8 +432,15 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 			defer res.Body.Close()
 
 			assert.Equal(t, http.StatusOK, res.StatusCode)
-			assert.Empty(t, res.Header.Get(contentEncoding))
-			assert.Equal(t, http.NoBody, res.Body)
+			// The flush sends the headers right away, which starts the compressed stream.
+			assert.Equal(t, test.acceptEncoding, res.Header.Get(contentEncoding))
+
+			reader, err := test.readerBuilder(res.Body)
+			require.NoError(t, err)
+
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Empty(t, got)
 		})
 	}
 }
@@ -1029,6 +1053,8 @@ func mustNewCompressionHandler(t *testing.T, cfg Config, algo string, next http.
 
 	var writer NewCompressionWriter
 	switch algo {
+	case gzipName:
+		writer = newGzipWriter
 	case zstdName:
 		writer = func(rw http.ResponseWriter) (CompressionWriter, string, error) {
 			writer, err := zstd.NewWriter(rw)

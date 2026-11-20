@@ -68,8 +68,19 @@ If the `Accept-Encoding` request header is absent, the response won't be encoded
 When `defaultEncoding` is configured, the response is encoded even when `Accept-Encoding` is absent.
 If it is present, but its value is the empty string, then compression is turned off.
 - The response is not already compressed, that is the `Content-Encoding` response header is not already set.
+- The response is not a partial response, that is the `Content-Range` response header is not set.
 - The response`Content-Type` header is not one among the `excludedContentTypes` options, or is one among the `includedContentTypes` options.
 - The response body is larger than the configured minimum amount of bytes(option `minResponseBodyBytes`) (default is `1024`).
+
+When a response is compressed, its `Content-Length` and `Accept-Ranges` headers are removed.
+
+## Streaming Responses
+
+When the backend flushes the response before its body reaches `minResponseBodyBytes`,
+as streaming responses such as Kubernetes watches do,
+the middleware sends the response headers right away instead of waiting for more of the body.
+Unless the criteria above exclude it, or its `Content-Length` header is below `minResponseBodyBytes`,
+the response is then compressed whatever its final size.
 
 ## Empty Content-Type Header
 

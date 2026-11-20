@@ -8,6 +8,8 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"slices"
+	"strconv"
 	"sync"
 
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -17,10 +19,15 @@ import (
 const (
 	vary            = "Vary"
 	acceptEncoding  = "Accept-Encoding"
+	acceptRanges    = "Accept-Ranges"
 	contentEncoding = "Content-Encoding"
 	contentLength   = "Content-Length"
+	contentRange    = "Content-Range"
 	contentType     = "Content-Type"
 )
+
+// sniffLen is the number of bytes http.DetectContentType looks at.
+const sniffLen = 512
 
 // CompressionWriter compresses the written bytes.
 type CompressionWriter interface {
@@ -60,7 +67,7 @@ type Config struct {
 	MiddlewareName string
 }
 
-// CompressionHandler handles Brolti and Zstd compression.
+// CompressionHandler handles Gzip, Brotli and Zstd compression.
 type CompressionHandler struct {
 	cfg                  Config
 	excludedContentTypes []parsedContentType
@@ -164,8 +171,21 @@ func (c *compressionWriterWrapper) ContentEncoding() string {
 	return c.algo
 }
 
-// TODO: check whether we want to implement content-type sniffing (as gzip does)
-// TODO: check whether we should support Accept-Ranges (as gzip does, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges)
+// writerState tracks the compress-or-not decision of a response.
+// The headers are held back until the decision is made, as compressing changes them.
+type writerState int
+
+const (
+	// stateHeadersPending means nothing was written or flushed yet.
+	stateHeadersPending writerState = iota
+	// stateBuffering means the headers allow compression, and the body is buffered until it reaches minSize.
+	stateBuffering
+	// statePlain means the headers are sent and the body goes out uncompressed.
+	statePlain
+	// stateCompressing means the headers are sent and the body goes through the compression writer.
+	stateCompressing
+)
+
 type responseWriter struct {
 	rw                http.ResponseWriter
 	compressionWriter *compressionWriterWrapper
@@ -174,15 +194,12 @@ type responseWriter struct {
 	excludedContentTypes []parsedContentType
 	includedContentTypes []parsedContentType
 
-	buf                 []byte
-	hijacked            bool
-	compressionStarted  bool
-	compressionDisabled bool
-	headersSent         bool
+	state    writerState
+	buf      []byte
+	hijacked bool
 
-	// Mostly needed to avoid calling bw.Flush/bw.Close when no data was
-	// written in bw.
-	seenData bool
+	// declaredSize is the body size announced by the Content-Length header, or -1 when unknown.
+	declaredSize int
 
 	statusCodeSet bool
 	statusCode    int
@@ -207,162 +224,72 @@ func (r *responseWriter) WriteHeader(statusCode int) {
 }
 
 func (r *responseWriter) Write(p []byte) (int, error) {
-	// i.e. has write ever been called at least once with non nil data.
-	if !r.seenData && len(p) > 0 {
-		r.seenData = true
+	if r.state == stateHeadersPending {
+		r.checkHeaders()
 	}
 
-	// We do not compress, either for contentEncoding or contentType reasons.
-	if r.compressionDisabled {
-		return r.rw.Write(p)
+	// The headers are already handled, and some writers reject even an empty body for statuses such as 204.
+	if len(p) == 0 {
+		return 0, nil
 	}
 
-	// We have already buffered more than minSize,
-	// We are now in compression cruise mode until the end of times.
-	if r.compressionStarted {
-		// If compressionStarted we assume we have sent headers already
+	switch r.state {
+	case stateCompressing:
 		return r.compressionWriter.Write(p)
-	}
-
-	// If we detect a contentEncoding, we know we are never going to compress.
-	if r.rw.Header().Get(contentEncoding) != "" {
-		r.compressionDisabled = true
-		r.rw.WriteHeader(r.statusCode)
+	case statePlain:
 		return r.rw.Write(p)
 	}
 
-	// Disable compression according to user wishes in excludedContentTypes or includedContentTypes.
-	if ct := r.rw.Header().Get(contentType); ct != "" {
-		mediaType, params, err := mime.ParseMediaType(ct)
-		// To align the behavior with the klauspost handler for Gzip,
-		// if the MIME type is not parsable the compression is disabled.
-		if err != nil {
-			r.compressionDisabled = true
-			r.rw.WriteHeader(r.statusCode)
-			return r.rw.Write(p)
+	// Only what is needed to reach minSize and to sniff the content type is buffered,
+	// so the rest of a large write is not copied.
+	n := min(len(p), max(r.minSize, sniffLen)-len(r.buf))
+	r.buf = append(r.buf, p[:n]...)
+
+	compress := r.declaredSize >= r.minSize
+	if r.declaredSize < 0 {
+		if len(r.buf) < r.minSize {
+			// The whole write fits in the buffer, as it can hold at least minSize bytes.
+			return len(p), nil
 		}
 
-		if len(r.includedContentTypes) > 0 {
-			var found bool
-			for _, includedContentType := range r.includedContentTypes {
-				if includedContentType.equals(mediaType, params) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				r.compressionDisabled = true
-				r.rw.WriteHeader(r.statusCode)
-				return r.rw.Write(p)
-			}
-		}
-
-		for _, excludedContentType := range r.excludedContentTypes {
-			if excludedContentType.equals(mediaType, params) {
-				r.compressionDisabled = true
-				r.rw.WriteHeader(r.statusCode)
-				return r.rw.Write(p)
-			}
-		}
+		compress = true
 	}
 
-	// We buffer until we know whether to compress (i.e. when we reach minSize received).
-	if len(r.buf)+len(p) < r.minSize {
-		r.buf = append(r.buf, p...)
-		return len(p), nil
-	}
-
-	// If we ever make it here, we have received at least minSize, which means we want to compress,
-	// and we are going to send headers right away.
-	r.compressionStarted = true
-
-	// Since we know we are going to compress we will never be able to know the actual length.
-	r.rw.Header().Del(contentLength)
-
-	r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
-	r.rw.WriteHeader(r.statusCode)
-	r.headersSent = true
-
-	// Start with sending what we have previously buffered, before actually writing
-	// the bytes in argument.
-	n, err := r.compressionWriter.Write(r.buf)
-	if err != nil {
-		r.buf = r.buf[n:]
-		// Return zero because we haven't taken care of the bytes in argument yet.
+	if err := r.start(compress); err != nil {
 		return 0, err
 	}
 
-	// If we wrote less than what we wanted, we need to reclaim the leftovers + the bytes in argument,
-	// and keep them for a subsequent Write.
-	if n < len(r.buf) {
-		r.buf = r.buf[n:]
-		r.buf = append(r.buf, p...)
-		return len(p), nil
+	if n == len(p) {
+		return n, nil
 	}
 
-	// Otherwise just reset the buffer.
-	r.buf = r.buf[:0]
-
-	// Now that we emptied the buffer, we can actually write the given bytes.
-	return r.compressionWriter.Write(p)
+	m, err := r.Write(p[n:])
+	return n + m, err
 }
 
-// FlushError flushes data to the appropriate underlying writer(s), although it does
-// not guarantee that all buffered data will be sent.
-// If not enough bytes have been written to determine whether to enable compression,
-// no flushing will take place.
-func (r *responseWriter) FlushError() (err error) {
-	if !r.seenData {
-		// we should not flush if there never was any data, because flushing the bw
-		// (just like closing) would send some extra end of compressionStarted stream bytes.
-		return nil
+// FlushError sends the headers and everything written so far to the client.
+func (r *responseWriter) FlushError() error {
+	if r.state == stateHeadersPending {
+		r.checkHeaders()
 	}
 
-	// It was already established by Write that compression is disabled, we only
-	// have to flush the uncompressed writer.
-	if r.compressionDisabled {
-		return http.NewResponseController(r.rw).Flush()
+	if r.state == stateBuffering {
+		// The handler wants what it wrote so far, headers included, to reach the client now.
+		// Streams such as Kubernetes watches flush their headers and may then send nothing for minutes,
+		// so the decision cannot wait for minSize bytes: without a Content-Length,
+		// the body is a stream of unknown size, which is worth compressing.
+		if err := r.start(r.declaredSize < 0 || r.declaredSize >= r.minSize); err != nil {
+			return err
+		}
 	}
 
-	// Here, nothing was ever written either to rw or to bw (since we're still
-	// waiting to decide whether to compress), so to be aligned with klauspost's
-	// gzip behavior we force the compression and flush whatever was in the buffer in this case.
-	if !r.compressionStarted {
-		r.rw.Header().Del(contentLength)
-
-		r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
-		r.rw.WriteHeader(r.statusCode)
-		r.headersSent = true
-
-		r.compressionStarted = true
+	if r.state == stateCompressing {
+		if err := r.compressionWriter.Flush(); err != nil {
+			return err
+		}
 	}
 
-	// Conversely, we here know that something was already written to bw (or is
-	// going to be written right after anyway), so bw will have to be flushed.
-	// Also, since we know that bw writes to rw, but (apparently) never flushes it,
-	// we have to do it ourselves.
-	defer func() {
-		// because we also ignore the error returned by Write anyway
-		_ = r.compressionWriter.Flush()
-
-		err = http.NewResponseController(r.rw).Flush()
-	}()
-
-	// We empty whatever is left of the buffer that Write never took care of.
-	n, werr := r.compressionWriter.Write(r.buf)
-	if werr != nil {
-		return nil
-	}
-
-	// And just like in Write we also handle "short writes".
-	if n < len(r.buf) {
-		r.buf = r.buf[n:]
-		return nil
-	}
-
-	r.buf = r.buf[:0]
-
-	return nil
+	return http.NewResponseController(r.rw).Flush()
 }
 
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -384,63 +311,135 @@ func (r *responseWriter) Unwrap() http.ResponseWriter {
 	return r.rw
 }
 
-// close closes the underlying writers if/when appropriate.
-// Note that the compressed writer should not be closed if we never used it,
-// as it would otherwise send some extra "end of compression" bytes.
-// Close also makes sure to flush whatever was left to write from the buffer.
+// checkHeaders runs on the first write or flush, as the handler cannot change the headers after that.
+func (r *responseWriter) checkHeaders() {
+	r.declaredSize = -1
+	if size, err := strconv.Atoi(r.rw.Header().Get(contentLength)); err == nil && size >= 0 {
+		r.declaredSize = size
+	}
+
+	if !r.compressionAllowed() {
+		// Nothing is buffered yet, so this only sends the headers and cannot fail.
+		_ = r.start(false)
+		return
+	}
+
+	r.state = stateBuffering
+}
+
+// compressionAllowed reports whether the response headers allow compression.
+func (r *responseWriter) compressionAllowed() bool {
+	header := r.rw.Header()
+
+	// Compressing an already encoded body would need a stacked Content-Encoding, which few clients decode.
+	if header.Get(contentEncoding) != "" {
+		return false
+	}
+
+	// A partial body is a byte range of the uncompressed representation, compressing it would break the range.
+	if header.Get(contentRange) != "" {
+		return false
+	}
+
+	if r.statusCode == http.StatusNoContent || r.statusCode == http.StatusNotModified {
+		return false
+	}
+
+	// Without a Content-Type, the type is sniffed from the body once it is buffered.
+	ct := header.Get(contentType)
+	if ct == "" {
+		return true
+	}
+
+	return r.contentTypeAllowed(ct)
+}
+
+// contentTypeAllowed reports whether the configured content types allow compressing this one.
+func (r *responseWriter) contentTypeAllowed(ct string) bool {
+	mediaType, params, err := mime.ParseMediaType(ct)
+	// An unparsable type cannot be matched against the configured ones, so it is left uncompressed.
+	if err != nil {
+		return false
+	}
+
+	matches := func(pct parsedContentType) bool {
+		return pct.equals(mediaType, params)
+	}
+
+	if len(r.includedContentTypes) > 0 {
+		return slices.ContainsFunc(r.includedContentTypes, matches)
+	}
+
+	return !slices.ContainsFunc(r.excludedContentTypes, matches)
+}
+
+// start makes the compress-or-not decision final, and sends the headers followed by the buffered body.
+func (r *responseWriter) start(compress bool) error {
+	header := r.rw.Header()
+
+	if compress && header.Get(contentType) == "" && len(r.buf) > 0 {
+		ct := http.DetectContentType(r.buf)
+		// The stdlib only sniffs the type of bodies that are not encoded, so it has to be set here.
+		if _, ok := header[contentType]; !ok {
+			header.Set(contentType, ct)
+		}
+
+		compress = r.contentTypeAllowed(ct)
+	}
+
+	var w io.Writer = r.rw
+	r.state = statePlain
+
+	if compress {
+		w = r.compressionWriter
+		r.state = stateCompressing
+
+		// The compressed size is only known at the end,
+		// and a range request would apply to the uncompressed representation.
+		header.Del(contentLength)
+		header.Del(acceptRanges)
+		header.Set(contentEncoding, r.compressionWriter.ContentEncoding())
+	}
+
+	r.rw.WriteHeader(r.statusCode)
+
+	if len(r.buf) == 0 {
+		return nil
+	}
+
+	n, err := w.Write(r.buf)
+	if err == nil && n < len(r.buf) {
+		err = io.ErrShortWrite
+	}
+
+	r.buf = r.buf[:0]
+
+	return err
+}
+
+// close sends whatever the handler left pending, and terminates the compressed stream.
+// The compression writer is only closed once compression started,
+// as closing it writes end-of-stream bytes.
 func (r *responseWriter) close() error {
 	if r.hijacked {
 		return nil
 	}
 
-	// We have to take care of statusCode ourselves (in case there was never any
-	// call to Write or WriteHeader before us) as it's the only header we buffer.
-	if !r.headersSent {
+	switch r.state {
+	case stateHeadersPending:
 		r.rw.WriteHeader(r.statusCode)
-		r.headersSent = true
-	}
-
-	// Nothing was ever written anywhere, nothing to flush.
-	if !r.seenData {
 		return nil
-	}
 
-	// If compression was disabled, there never was anything in the buffer to flush,
-	// and nothing was ever written to bw.
-	if r.compressionDisabled {
-		return nil
-	}
+	case stateBuffering:
+		// The body ended before reaching minSize.
+		return r.start(false)
 
-	if len(r.buf) == 0 {
-		// If we got here we know compression has started, so we can safely flush on bw.
+	case stateCompressing:
 		return r.compressionWriter.Close()
-	}
 
-	// There is still data in the buffer, because we never reached minSize (to
-	// determine whether to compress). We therefore flush it uncompressed.
-	if !r.compressionStarted {
-		n, err := r.rw.Write(r.buf)
-		if err != nil {
-			return err
-		}
-		if n < len(r.buf) {
-			return io.ErrShortWrite
-		}
+	default:
 		return nil
 	}
-
-	// There is still data in the buffer, simply because Write did not take care of it all.
-	// We flush it to the compressed writer.
-	n, err := r.compressionWriter.Write(r.buf)
-	if err != nil {
-		r.compressionWriter.Close()
-		return err
-	}
-	if n < len(r.buf) {
-		r.compressionWriter.Close()
-		return io.ErrShortWrite
-	}
-	return r.compressionWriter.Close()
 }
 
 // parsedContentType is the parsed representation of one of the inputs to ContentTypes.

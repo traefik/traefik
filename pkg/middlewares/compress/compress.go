@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/andybalholm/brotli"
-	"github.com/klauspost/compress/gzhttp"
+	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -98,17 +98,17 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 
 	var err error
 
-	c.zstdHandler, err = c.newZstdHandler(name)
+	c.zstdHandler, err = c.newCompressionHandler(name, newZstdWriter)
 	if err != nil {
 		return nil, err
 	}
 
-	c.brotliHandler, err = c.newBrotliHandler(name)
+	c.brotliHandler, err = c.newCompressionHandler(name, newBrotliWriter)
 	if err != nil {
 		return nil, err
 	}
 
-	c.gzipHandler, err = c.newGzipHandler()
+	c.gzipHandler, err = c.newCompressionHandler(name, newGzipWriter)
 	if err != nil {
 		return nil, err
 	}
@@ -184,67 +184,39 @@ func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.R
 	}
 }
 
-func (c *compress) newGzipHandler() (http.Handler, error) {
-	var wrapper func(http.Handler) http.HandlerFunc
-	var err error
-
+// newCompressionHandler returns a handler compressing with the given writer.
+// All encodings share it, so they make the same compression decisions and handle flushes the same way.
+func (c *compress) newCompressionHandler(middlewareName string, newWriter NewCompressionWriter) (http.Handler, error) {
+	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
 	if len(c.includes) > 0 {
-		wrapper, err = gzhttp.NewWrapper(
-			gzhttp.EnableZstd(false),
-			gzhttp.ContentTypes(c.includes),
-			gzhttp.MinSize(c.minSize),
-		)
+		cfg.IncludedContentTypes = c.includes
 	} else {
-		wrapper, err = gzhttp.NewWrapper(
-			gzhttp.EnableZstd(false),
-			gzhttp.ExceptContentTypes(c.excludes),
-			gzhttp.MinSize(c.minSize),
-		)
+		cfg.ExcludedContentTypes = c.excludes
 	}
 
+	return NewCompressionHandler(cfg, newWriter, c.next)
+}
+
+func newGzipWriter(rw http.ResponseWriter) (CompressionWriter, string, error) {
+	return gzip.NewWriter(rw), gzipName, nil
+}
+
+func newBrotliWriter(rw http.ResponseWriter) (CompressionWriter, string, error) {
+	return brotli.NewWriter(rw), brotliName, nil
+}
+
+func newZstdWriter(rw http.ResponseWriter) (CompressionWriter, string, error) {
+	// Each in-flight response holds one encoder until it is fully written.
+	// The default options (8 MiB window) use about 18 MiB per encoder, the options below (taken from gzhttp) use less than 1 MiB.
+	// See https://github.com/klauspost/compress/blob/35c6f98a5cb955b838d313596dd86c882a9f6d3f/gzhttp/writer/zstdkp/zstdkp.go#L35-L40.
+	writer, err := zstd.NewWriter(rw,
+		zstd.WithEncoderLevel(zstd.SpeedFastest),
+		zstd.WithEncoderConcurrency(1),
+		zstd.WithLowerEncoderMem(true),
+		zstd.WithWindowSize(128<<10),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("new gzip wrapper: %w", err)
+		return nil, "", fmt.Errorf("creating zstd writer: %w", err)
 	}
-
-	return wrapper(c.next), nil
-}
-
-func (c *compress) newBrotliHandler(middlewareName string) (http.Handler, error) {
-	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
-	if len(c.includes) > 0 {
-		cfg.IncludedContentTypes = c.includes
-	} else {
-		cfg.ExcludedContentTypes = c.excludes
-	}
-
-	newBrotliWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
-		return brotli.NewWriter(rw), brotliName, nil
-	}
-	return NewCompressionHandler(cfg, newBrotliWriter, c.next)
-}
-
-func (c *compress) newZstdHandler(middlewareName string) (http.Handler, error) {
-	cfg := Config{MinSize: c.minSize, MiddlewareName: middlewareName}
-	if len(c.includes) > 0 {
-		cfg.IncludedContentTypes = c.includes
-	} else {
-		cfg.ExcludedContentTypes = c.excludes
-	}
-
-	newZstdWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
-		// Each in-flight response holds one encoder until it is fully written.
-		// The default options (8 MiB window) use about 18 MiB per encoder, the gzhttp options below use less than 1 MiB.
-		// See https://github.com/klauspost/compress/blob/35c6f98a5cb955b838d313596dd86c882a9f6d3f/gzhttp/writer/zstdkp/zstdkp.go#L35-L40.
-		writer, err := zstd.NewWriter(rw,
-			zstd.WithEncoderLevel(zstd.SpeedFastest),
-			zstd.WithEncoderConcurrency(1),
-			zstd.WithLowerEncoderMem(true),
-			zstd.WithWindowSize(128<<10),
-		)
-		if err != nil {
-			return nil, "", fmt.Errorf("creating zstd writer: %w", err)
-		}
-		return writer, zstdName, nil
-	}
-	return NewCompressionHandler(cfg, newZstdWriter, c.next)
+	return writer, zstdName, nil
 }

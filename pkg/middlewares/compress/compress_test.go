@@ -7,9 +7,12 @@ import (
 	"net/http/httptest"
 	"net/http/httptrace"
 	"net/textproto"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/klauspost/compress/gzhttp"
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,14 +42,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     "",
 		},
 		{
-			// In this test, the default encodings are defaulted to gzip, brotli, and zstd,
-			// which make gzip the default encoding, and will be selected.
-			// However, the klauspost/compress gzhttp handler does not compress when Accept-Encoding: * is set.
-			// Until klauspost/compress gzhttp package supports the asterisk,
-			// we will not support it when selecting the gzip encoding.
 			desc:            "accept any header",
 			acceptEncHeader: "*",
-			expEncoding:     "",
+			expEncoding:     gzipName,
 		},
 		{
 			desc:            "gzip accept header",
@@ -131,7 +129,7 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipName)
 
-	baseBody := generateBytes(gzhttp.DefaultMinSize)
+	baseBody := generateBytes(defaultMinSize)
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		_, err := rw.Write(baseBody)
@@ -158,7 +156,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipName)
 
-	fakeCompressedBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeCompressedBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add(contentEncodingHeader, gzipName)
 		rw.Header().Add(varyHeader, acceptEncodingHeader)
@@ -182,7 +180,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 
-	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		_, err := rw.Write(fakeBody)
 		if err != nil {
@@ -204,7 +202,7 @@ func TestEmptyAcceptEncoding(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, "")
 
-	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		_, err := rw.Write(fakeBody)
 		if err != nil {
@@ -226,7 +224,7 @@ func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Set(acceptEncodingHeader, "identity")
 
-	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Header.Get(acceptEncodingHeader) != "identity" {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -253,7 +251,7 @@ func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Set(acceptEncodingHeader, "")
 
-	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Header.Get(acceptEncodingHeader) != "" {
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -280,7 +278,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodHead, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipName)
 
-	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	fakeBody := generateBytes(defaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		_, err := rw.Write(fakeBody)
 		if err != nil {
@@ -299,7 +297,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 }
 
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
-	baseBody := generateBytes(gzhttp.DefaultMinSize)
+	baseBody := generateBytes(defaultMinSize)
 
 	testCases := []struct {
 		desc            string
@@ -391,7 +389,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 }
 
 func TestShouldCompressWhenSpecificContentType(t *testing.T) {
-	baseBody := generateBytes(gzhttp.DefaultMinSize)
+	baseBody := generateBytes(defaultMinSize)
 
 	testCases := []struct {
 		desc            string
@@ -524,6 +522,582 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 
 	assert.Equal(t, gzipName, resp.Header.Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+}
+
+func TestFlushBeforeWriteSendsHeaders(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		encoding         string
+		contentType      string
+		expectedEncoding string
+	}{
+		{
+			desc:             "gzip, compressible content type",
+			encoding:         gzipName,
+			contentType:      "application/json",
+			expectedEncoding: gzipName,
+		},
+		{
+			desc:        "gzip, excluded content type",
+			encoding:    gzipName,
+			contentType: "text/event-stream",
+		},
+		{
+			desc:             "brotli, compressible content type",
+			encoding:         brotliName,
+			contentType:      "application/json",
+			expectedEncoding: brotliName,
+		},
+		{
+			desc:        "brotli, excluded content type",
+			encoding:    brotliName,
+			contentType: "text/event-stream",
+		},
+		{
+			desc:             "zstd, compressible content type",
+			encoding:         zstdName,
+			contentType:      "application/json",
+			expectedEncoding: zstdName,
+		},
+		{
+			desc:        "zstd, excluded content type",
+			encoding:    zstdName,
+			contentType: "text/event-stream",
+		},
+	}
+
+	body := []byte(`{"type":"ADDED"}`)
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// The handler only writes once the client got the headers,
+			// like a Kubernetes watch that has no event to send yet.
+			headersReceived := make(chan struct{})
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set(contentTypeHeader, test.contentType)
+				rw.WriteHeader(http.StatusOK)
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+
+				select {
+				case <-headersReceived:
+				case <-req.Context().Done():
+					return
+				}
+
+				_, err := rw.Write(body)
+				assert.NoError(t, err)
+			})
+
+			cfg := dynamic.Compress{
+				Encodings:            defaultSupportedEncodings,
+				ExcludedContentTypes: []string{"text/event-stream"},
+			}
+			handler, err := New(t.Context(), next, cfg, "testing")
+			require.NoError(t, err)
+
+			server := httptest.NewServer(handler)
+			t.Cleanup(server.Close)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, server.URL, nil)
+			req.Header.Set(acceptEncodingHeader, test.encoding)
+
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+
+			defer resp.Body.Close()
+
+			close(headersReceived)
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			assert.Equal(t, test.expectedEncoding, resp.Header.Get(contentEncodingHeader))
+
+			got, err := io.ReadAll(newDecoder(t, test.expectedEncoding, resp.Body))
+			require.NoError(t, err)
+			assert.Equal(t, body, got)
+		})
+	}
+}
+
+func TestEmptyBody(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		handler     func(t *testing.T, rw http.ResponseWriter)
+		compressed  bool
+		statusCode  int
+		contentType string
+	}{
+		{
+			desc:       "nothing written",
+			handler:    func(*testing.T, http.ResponseWriter) {},
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "nil write",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				_, err := rw.Write(nil)
+				assert.NoError(t, err)
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "empty write",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				_, err := rw.Write([]byte{})
+				assert.NoError(t, err)
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			compressed: true,
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "flush twice",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			compressed: true,
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "nil write then flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				_, err := rw.Write(nil)
+				assert.NoError(t, err)
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			compressed: true,
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "flush then nil write",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+				_, err := rw.Write(nil)
+				assert.NoError(t, err)
+			},
+			compressed: true,
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "flush with excluded content type",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.Header().Set(contentTypeHeader, "text/event-stream")
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode:  http.StatusOK,
+			contentType: "text/event-stream",
+		},
+		{
+			desc: "flush with Content-Length below the minimum size",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.Header().Set("Content-Length", "0")
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			desc: "no content then flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.WriteHeader(http.StatusNoContent)
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode: http.StatusNoContent,
+		},
+		{
+			desc: "not modified then flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.WriteHeader(http.StatusNotModified)
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode: http.StatusNotModified,
+		},
+		{
+			desc: "no content with a body then flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.WriteHeader(http.StatusNoContent)
+				// The server rejects this body, what matters is that it is not announced as compressed.
+				_, _ = rw.Write([]byte("body"))
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode: http.StatusNoContent,
+		},
+		{
+			desc: "not modified with a body then flush",
+			handler: func(t *testing.T, rw http.ResponseWriter) {
+				t.Helper()
+
+				rw.WriteHeader(http.StatusNotModified)
+				_, _ = rw.Write([]byte("body"))
+				assert.NoError(t, http.NewResponseController(rw).Flush())
+			},
+			statusCode: http.StatusNotModified,
+		},
+	}
+
+	for _, encoding := range []string{gzipName, brotliName, zstdName} {
+		for _, test := range testCases {
+			t.Run(encoding+", "+test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+					test.handler(t, rw)
+				})
+
+				cfg := dynamic.Compress{
+					Encodings:            defaultSupportedEncodings,
+					ExcludedContentTypes: []string{"text/event-stream"},
+				}
+				handler, err := New(t.Context(), next, cfg, "testing")
+				require.NoError(t, err)
+
+				server := httptest.NewServer(handler)
+				t.Cleanup(server.Close)
+
+				req := testhelpers.MustNewRequest(http.MethodGet, server.URL, nil)
+				req.Header.Set(acceptEncodingHeader, encoding)
+
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+
+				defer resp.Body.Close()
+
+				assert.Equal(t, test.statusCode, resp.StatusCode)
+				assert.Equal(t, test.contentType, resp.Header.Get(contentTypeHeader))
+
+				expectedEncoding := ""
+				if test.compressed {
+					expectedEncoding = encoding
+				}
+				assert.Equal(t, expectedEncoding, resp.Header.Get(contentEncodingHeader))
+
+				// Reading the whole body checks that a compressed stream is complete and valid.
+				got, err := io.ReadAll(newDecoder(t, expectedEncoding, resp.Body))
+				require.NoError(t, err)
+				assert.Empty(t, got)
+			})
+		}
+	}
+}
+
+func TestCompressionWriterReuse(t *testing.T) {
+	bigBody := generateBytes(10 * defaultMinSize)
+	smallBody := generateBytes(10)
+
+	// Each response leaves its compression writer in a different state before it goes back to the pool.
+	responses := []struct {
+		body       []byte
+		flush      bool
+		compressed bool
+	}{
+		{body: bigBody, compressed: true},
+		{flush: true, compressed: true},
+		{body: smallBody},
+		{body: smallBody, flush: true, compressed: true},
+		{body: bigBody, flush: true, compressed: true},
+		{body: bigBody, compressed: true},
+	}
+
+	for _, encoding := range []string{gzipName, brotliName, zstdName} {
+		t.Run(encoding, func(t *testing.T) {
+			t.Parallel()
+
+			var current int
+			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				response := responses[current]
+
+				_, err := rw.Write(response.body)
+				assert.NoError(t, err)
+
+				if response.flush {
+					assert.NoError(t, http.NewResponseController(rw).Flush())
+				}
+			})
+
+			handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+			require.NoError(t, err)
+
+			for i, response := range responses {
+				current = i
+
+				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+				req.Header.Set(acceptEncodingHeader, encoding)
+
+				rw := httptest.NewRecorder()
+				handler.ServeHTTP(rw, req)
+
+				expectedEncoding := ""
+				if response.compressed {
+					expectedEncoding = encoding
+				}
+				assert.Equal(t, expectedEncoding, rw.Header().Get(contentEncodingHeader))
+
+				got, err := io.ReadAll(newDecoder(t, expectedEncoding, rw.Body))
+				require.NoError(t, err)
+				// Compared as strings, as a nil body and an empty read are both empty.
+				assert.Equal(t, string(response.body), string(got))
+			}
+		})
+	}
+}
+
+func TestDefaultEncoding(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		defaultEncoding  string
+		acceptEncoding   string
+		expectedEncoding string
+	}{
+		{
+			desc: "no accept header, no default encoding",
+		},
+		{
+			desc:             "no accept header, gzip default encoding",
+			defaultEncoding:  gzipName,
+			expectedEncoding: gzipName,
+		},
+		{
+			desc:             "no accept header, brotli default encoding",
+			defaultEncoding:  brotliName,
+			expectedEncoding: brotliName,
+		},
+		{
+			desc:             "no accept header, zstd default encoding",
+			defaultEncoding:  zstdName,
+			expectedEncoding: zstdName,
+		},
+		{
+			desc:             "accept any header, no default encoding",
+			acceptEncoding:   "*",
+			expectedEncoding: gzipName,
+		},
+		{
+			desc:             "accept any header, gzip default encoding",
+			defaultEncoding:  gzipName,
+			acceptEncoding:   "*",
+			expectedEncoding: gzipName,
+		},
+		{
+			desc:             "accept any header, brotli default encoding",
+			defaultEncoding:  brotliName,
+			acceptEncoding:   "*",
+			expectedEncoding: brotliName,
+		},
+		{
+			desc:             "accept any header, zstd default encoding",
+			defaultEncoding:  zstdName,
+			acceptEncoding:   "*",
+			expectedEncoding: zstdName,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				_, err := rw.Write(bigTestBody)
+				assert.NoError(t, err)
+			})
+
+			cfg := dynamic.Compress{
+				Encodings:       defaultSupportedEncodings,
+				DefaultEncoding: test.defaultEncoding,
+			}
+			handler, err := New(t.Context(), next, cfg, "testing")
+			require.NoError(t, err)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			if test.acceptEncoding != "" {
+				req.Header.Set(acceptEncodingHeader, test.acceptEncoding)
+			}
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectedEncoding, rw.Header().Get(contentEncodingHeader))
+
+			got, err := io.ReadAll(newDecoder(t, test.expectedEncoding, rw.Body))
+			require.NoError(t, err)
+			assert.Equal(t, bigTestBody, got)
+		})
+	}
+}
+
+func TestResponseHeaders(t *testing.T) {
+	htmlBody := []byte("<!DOCTYPE html><html><body>" + strings.Repeat("aaabbbccc", 200) + "</body></html>")
+
+	testCases := []struct {
+		desc            string
+		cfg             dynamic.Compress
+		headers         map[string]string
+		statusCode      int
+		body            []byte
+		flush           bool
+		compressed      bool
+		expectedHeaders map[string]string
+	}{
+		{
+			desc:            "partial content is not compressed",
+			headers:         map[string]string{contentRange: "bytes 0-6006/10000"},
+			statusCode:      http.StatusPartialContent,
+			body:            bigTestBody,
+			expectedHeaders: map[string]string{contentRange: "bytes 0-6006/10000"},
+		},
+		{
+			desc:            "Accept-Ranges is removed when compressing",
+			headers:         map[string]string{acceptRanges: "bytes"},
+			body:            bigTestBody,
+			compressed:      true,
+			expectedHeaders: map[string]string{acceptRanges: ""},
+		},
+		{
+			desc:            "Accept-Ranges is kept when not compressing",
+			headers:         map[string]string{acceptRanges: "bytes"},
+			body:            smallTestBody,
+			expectedHeaders: map[string]string{acceptRanges: "bytes"},
+		},
+		{
+			desc:            "Content-Length above the minimum size is compressed and removed",
+			headers:         map[string]string{contentLength: strconv.Itoa(len(bigTestBody))},
+			body:            bigTestBody,
+			compressed:      true,
+			expectedHeaders: map[string]string{contentLength: ""},
+		},
+		{
+			desc:            "Content-Length below the minimum size is not compressed when flushed",
+			headers:         map[string]string{contentLength: strconv.Itoa(len(smallTestBody))},
+			body:            smallTestBody,
+			flush:           true,
+			expectedHeaders: map[string]string{contentLength: strconv.Itoa(len(smallTestBody))},
+		},
+		{
+			desc:            "missing Content-Type is sniffed",
+			body:            htmlBody,
+			compressed:      true,
+			expectedHeaders: map[string]string{contentType: "text/html; charset=utf-8"},
+		},
+		{
+			desc:            "sniffed Content-Type is matched against excluded content types",
+			cfg:             dynamic.Compress{ExcludedContentTypes: []string{"text/html"}},
+			body:            htmlBody,
+			expectedHeaders: map[string]string{contentType: "text/html; charset=utf-8"},
+		},
+		{
+			desc:            "No-Gzip-Compression header does not disable compression",
+			headers:         map[string]string{"No-Gzip-Compression": "1"},
+			body:            bigTestBody,
+			compressed:      true,
+			expectedHeaders: map[string]string{"No-Gzip-Compression": "1"},
+		},
+	}
+
+	for _, encoding := range []string{gzipName, brotliName, zstdName} {
+		for _, test := range testCases {
+			t.Run(encoding+", "+test.desc, func(t *testing.T) {
+				t.Parallel()
+
+				next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+					for k, v := range test.headers {
+						rw.Header().Set(k, v)
+					}
+					if test.statusCode != 0 {
+						rw.WriteHeader(test.statusCode)
+					}
+
+					_, err := rw.Write(test.body)
+					assert.NoError(t, err)
+
+					if test.flush {
+						assert.NoError(t, http.NewResponseController(rw).Flush())
+					}
+				})
+
+				cfg := test.cfg
+				cfg.Encodings = defaultSupportedEncodings
+				handler, err := New(t.Context(), next, cfg, "testing")
+				require.NoError(t, err)
+
+				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+				req.Header.Set(acceptEncodingHeader, encoding)
+
+				rw := httptest.NewRecorder()
+				handler.ServeHTTP(rw, req)
+
+				for k, v := range test.expectedHeaders {
+					assert.Equal(t, v, rw.Header().Get(k))
+				}
+
+				expectedEncoding := ""
+				if test.compressed {
+					expectedEncoding = encoding
+				}
+				assert.Equal(t, expectedEncoding, rw.Header().Get(contentEncodingHeader))
+
+				got, err := io.ReadAll(newDecoder(t, expectedEncoding, rw.Body))
+				require.NoError(t, err)
+				assert.Equal(t, test.body, got)
+			})
+		}
+	}
+}
+
+func TestCloseNotifierNotOffered(t *testing.T) {
+	for _, encoding := range []string{gzipName, brotliName, zstdName} {
+		t.Run(encoding, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				// Handlers must watch the request context instead.
+				_, ok := rw.(http.CloseNotifier)
+				assert.False(t, ok)
+			})
+
+			handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+			require.NoError(t, err)
+
+			server := httptest.NewServer(handler)
+			t.Cleanup(server.Close)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, server.URL, nil)
+			req.Header.Set(acceptEncodingHeader, encoding)
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+		})
+	}
 }
 
 func TestIntegrationShouldCompress(t *testing.T) {
@@ -843,6 +1417,26 @@ func runBenchmark(b *testing.B, req *http.Request, handler http.Handler, algorit
 	}
 
 	assert.Equal(b, algorithm, res.Header().Get(contentEncodingHeader))
+}
+
+func newDecoder(t *testing.T, encoding string, body io.Reader) io.Reader {
+	t.Helper()
+
+	switch encoding {
+	case gzipName:
+		reader, err := gzip.NewReader(body)
+		require.NoError(t, err)
+		return reader
+	case brotliName:
+		return brotli.NewReader(body)
+	case zstdName:
+		reader, err := zstd.NewReader(body)
+		require.NoError(t, err)
+		t.Cleanup(reader.Close)
+		return reader
+	default:
+		return body
+	}
 }
 
 func generateBytes(length int) []byte {
