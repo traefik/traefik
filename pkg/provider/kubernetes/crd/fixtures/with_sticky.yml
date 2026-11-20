@@ -70,8 +70,8 @@ spec:
               sameSite: none
               maxAge: 42
               path: /foo
-        - name: whoami2
-          port: 8080
+        - name: whoami
+          port: 80
           sticky:
             cookie:
               httpOnly: true

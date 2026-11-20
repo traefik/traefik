@@ -3746,17 +3746,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-external-svc-443",
+										Name:   "default-external-svc-443-88c0dd5a37a8e741",
 										Weight: func(i int) *int { return &i }(1),
 									},
 									{
-										Name:   "default-external-svc-with-https-443",
+										Name:   "default-external-svc-with-https-443-f3ba70bb4ffb921f",
 										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
 						},
-						"default-external-svc-443": {
+						"default-external-svc-443-88c0dd5a37a8e741": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3786,7 +3786,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-external-svc-with-https-443": {
+						"default-external-svc-with-https-443-f3ba70bb4ffb921f": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -3840,7 +3840,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-external-svc-443": {
+						"default-external-svc-443-88c0dd5a37a8e741": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -4470,13 +4470,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-whoami-80-9a1fcb842b47b757",
 										Weight: new(1),
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-whoami-80-9a1fcb842b47b757": {
 							Middlewares: []string{"default-stripprefix"},
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
@@ -5235,7 +5235,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-whoami-80-bc32066c48ecc03",
 										Weight: new(1),
 									},
 									{
@@ -5267,13 +5267,66 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-whoami-80-ccd291f0dfc678c1",
 										Weight: new(1),
 									},
 								},
 							},
 						},
 						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-whoami-80-bc32066c48ecc03": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								ServersTransport: "default-mtls",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-whoami-80-ccd291f0dfc678c1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8752,7 +8805,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-external-svc-with-https-443": {
+						"default-external-svc-with-https-443-dba97b9bfee8290": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8776,7 +8829,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoamitls-443": {
+						"default-whoamitls-443-4359ecddd243ddc": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
@@ -8807,11 +8860,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-external-svc-with-https-443",
+										Name:   "default-external-svc-with-https-443-dba97b9bfee8290",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoamitls-443",
+										Name:   "default-whoamitls-443-4359ecddd243ddc",
 										Weight: new(1),
 									},
 								},
@@ -9487,11 +9540,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
-										Name:   "default-whoami-80",
+										Name:   "default-whoami-80-806d6f729f1fb52e",
 										Weight: new(1),
 									},
 									{
-										Name:   "default-whoami2-8080",
+										Name:   "default-whoami-80-2b163e2e6c5e02ca",
 										Weight: new(1),
 									},
 								},
@@ -9551,7 +9604,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami2-8080": {
+						"default-whoami-80-2b163e2e6c5e02ca": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Sticky: &dynamic.Sticky{
@@ -9566,10 +9619,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.3:8080",
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL: "http://10.10.0.4:8080",
+										URL: "http://10.10.0.2:80",
 									},
 								},
 								PassHostHeader: new(true),
@@ -9581,13 +9634,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Metadata: &dynamic.ServiceObservabilityMetadata{
 									Kubernetes: &dynamic.KubernetesServiceMetadata{
 										Namespace: "default",
-										Name:      "whoami2",
-										Port:      "8080",
+										Name:      "whoami",
+										Port:      "80",
 									},
 								},
 							},
 						},
-						"default-whoami-80": {
+						"default-whoami-80-806d6f729f1fb52e": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Sticky: &dynamic.Sticky{
