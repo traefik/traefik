@@ -1001,6 +1001,21 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 	})
 }
 
+// hasPathParamPrefix reports whether segment consists of prefix immediately
+// followed by a ';' path-parameter delimiter, recognizing that delimiter in
+// both its literal (";") and percent-encoded ("%3B"/"%3b") form. RFC 3986
+// section 2.3 treats a percent-encoded octet as strictly equivalent to the
+// character it represents for any character, reserved or not -- ';' is no
+// exception -- so a client percent-encoding the semicolon must not change
+// how the segment is classified.
+func hasPathParamPrefix(segment, prefix string) bool {
+	if !strings.HasPrefix(segment, prefix) {
+		return false
+	}
+	rest := segment[len(prefix):]
+	return strings.HasPrefix(rest, ";") || (len(rest) >= 3 && strings.EqualFold(rest[:3], "%3b"))
+}
+
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
 // The path parameters of the "..;", ".;" and ";" segments are removed first, as backends stripping path parameters (Servlet containers, Spring, ...) resolve them as dot-segments or duplicate slashes.
 // It cleans the request URL Path and RawPath, and updates the request URI.
@@ -1010,15 +1025,19 @@ func sanitizePath(h http.Handler) http.Handler {
 		*r2 = *req
 
 		// Removes the path parameters of the dot-segments and empty segments, so that JoinPath collapses them.
-		if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, ";") {
+		// The ';' path-parameter delimiter is detected in both its literal and percent-encoded ("%3B"/"%3b") forms,
+		// since a client can send either, and backends that strip path parameters (Servlet containers, Spring, ...)
+		// decode the request target before doing so.
+		escapedPath := req.URL.EscapedPath()
+		if strings.Contains(escapedPath, ";") || strings.Contains(strings.ToLower(escapedPath), "%3b") {
 			segments := strings.Split(escapedPath, "/")
 			for i, segment := range segments {
 				switch {
-				case strings.HasPrefix(segment, "..;"):
+				case hasPathParamPrefix(segment, ".."):
 					segments[i] = ".."
-				case strings.HasPrefix(segment, ".;"):
+				case hasPathParamPrefix(segment, "."):
 					segments[i] = "."
-				case strings.HasPrefix(segment, ";"):
+				case hasPathParamPrefix(segment, ""):
 					segments[i] = ""
 				}
 			}
