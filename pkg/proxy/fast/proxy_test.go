@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -548,6 +549,108 @@ func TestReadLoopExitBeforeHandoff(t *testing.T) {
 	}
 }
 
+// TestReplayOnReusedConnOnly checks that a request is replayed once on a connection that comes from the pool,
+// and not again on the fresh connection of the replay, so a backend that closes every connection does not get
+// the request in a loop.
+func TestReplayOnReusedConnOnly(t *testing.T) {
+	// The backend drops every request by closing its connection without an answer.
+	var requests atomic.Int32
+	backend := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		if conn, _, err := rw.(http.Hijacker).Hijack(); err == nil {
+			_ = conn.Close()
+		}
+	}))
+	t.Cleanup(backend.Close)
+
+	// Every connection signals its close, so the test can wait for its readLoop to exit.
+	closed := make(chan struct{}, 100)
+	pool := newConnPool(1, 0, 0, func() (net.Conn, error) {
+		conn, err := net.Dial("tcp", backend.Listener.Addr().String())
+		if err != nil {
+			return nil, err
+		}
+		return closeNotifyingConn{Conn: conn, closed: closed}, nil
+	})
+	t.Cleanup(pool.Close)
+
+	// The first connection comes from the pool, the replay dials a fresh one.
+	co, err := pool.AcquireConn()
+	require.NoError(t, err)
+	pool.ReleaseConn(co)
+
+	proxy, err := NewReverseProxy(testhelpers.MustParseURL(backend.URL), nil, false, true, false, pool)
+	require.NoError(t, err)
+
+	// The request goroutine is held after writing the request until the readLoop has exited,
+	// so the response writer is always passed to a connection whose readLoop is gone.
+	trace := &httptrace.ClientTrace{
+		WroteRequest: func(httptrace.WroteRequestInfo) { <-closed },
+	}
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody).WithContext(httptrace.WithClientTrace(t.Context(), trace))
+	res := httptest.NewRecorder()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		proxy.ServeHTTP(res, req)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("request replayed in a loop")
+	}
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, int32(2), requests.Load())
+}
+
+// TestReplayOnReusedConnOnlyOnWriteError checks that a request whose write fails is replayed once on a
+// connection that comes from the pool, and not again on the fresh connection of the replay.
+func TestReplayOnReusedConnOnlyOnWriteError(t *testing.T) {
+	// The backend is never reached, every connection fails its writes.
+	backend := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(backend.Close)
+
+	var dials atomic.Int32
+	pool := newConnPool(1, 0, 0, func() (net.Conn, error) {
+		dials.Add(1)
+		conn, err := net.Dial("tcp", backend.Listener.Addr().String())
+		if err != nil {
+			return nil, err
+		}
+		return failingWriteConn{Conn: conn}, nil
+	})
+	t.Cleanup(pool.Close)
+
+	// The first connection comes from the pool, the replay dials a fresh one.
+	co, err := pool.AcquireConn()
+	require.NoError(t, err)
+	pool.ReleaseConn(co)
+
+	proxy, err := NewReverseProxy(testhelpers.MustParseURL(backend.URL), nil, false, true, false, pool)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+	res := httptest.NewRecorder()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		proxy.ServeHTTP(res, req)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("request replayed in a loop")
+	}
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, int32(2), dials.Load())
+}
+
 // TestResponseHeaderTimeout checks that the response header timeout applies when the backend never answers,
 // not only once the first response byte has arrived.
 func TestResponseHeaderTimeout(t *testing.T) {
@@ -876,6 +979,19 @@ func TestReleaseConnPoolsOnContextWithoutConnPools(t *testing.T) {
 	})
 }
 
+// closeNotifyingConn signals on closed once the connection is closed.
+type closeNotifyingConn struct {
+	net.Conn
+
+	closed chan<- struct{}
+}
+
+func (c closeNotifyingConn) Close() error {
+	err := c.Conn.Close()
+	c.closed <- struct{}{}
+	return err
+}
+
 type transportManagerMock struct {
 	tlsConfig        *tls.Config
 	serversTransport *dynamic.ServersTransport
@@ -890,4 +1006,13 @@ func (r *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) 
 		return r.serversTransport, nil
 	}
 	return &dynamic.ServersTransport{}, nil
+}
+
+// failingWriteConn fails every write.
+type failingWriteConn struct {
+	net.Conn
+}
+
+func (c failingWriteConn) Write([]byte) (int, error) {
+	return 0, errors.New("write failed")
 }

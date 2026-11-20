@@ -315,7 +315,8 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 			co.Close()
 
-			if wd.written && !isReplayable(req) {
+			// A request is only replayed on a reused connection, like the standard transport does.
+			if !co.reused || (wd.written && !isReplayable(req)) {
 				return err
 			}
 
@@ -358,7 +359,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 			co.Close()
 
-			if !isReplayable(req) {
+			if !co.reused || !isReplayable(req) {
 				return errors.New("connection closed before handling the response")
 			}
 
