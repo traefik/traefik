@@ -25,6 +25,10 @@ type rwWithUpgrade struct {
 	ReqMethod string
 	RW        http.ResponseWriter
 	Upgrade   upgradeHandler
+
+	// ResponseHeaderTimer bounds the wait for the response headers to the responseHeaderTimeout, it is nil when none is configured.
+	// It is armed by roundTrip once the request is written, and stopped once the final response headers are read.
+	ResponseHeaderTimer *time.Timer
 }
 
 // conn is an enriched net.Conn.
@@ -34,10 +38,19 @@ type conn struct {
 	RWCh  chan rwWithUpgrade
 	ErrCh chan error
 
+	// DoneCh is closed when the readLoop returns.
+	// Nothing receives on RWCh anymore, so a roundTrip waiting to send on it must give up.
+	DoneCh chan struct{}
+
 	br *bufio.Reader
 
 	idleAt      time.Time // the last time it was marked as idle.
 	idleTimeout time.Duration
+
+	// reused reports whether the connection went back to the pool after a request.
+	// A request is only replayed on a reused connection, as the backend has no reason to close a fresh one.
+	// Replaying on fresh connections loops until the client gives up when the backend closes every connection.
+	reused bool
 
 	responseHeaderTimeout time.Duration
 
@@ -91,6 +104,7 @@ func (c *conn) isUpgraded() bool {
 // readLoop handles the successive HTTP response read operations on the connection,
 // and watches for unsolicited bytes or connection errors when idle.
 func (c *conn) readLoop() {
+	defer close(c.DoneCh)
 	defer c.Close()
 
 	for {
@@ -137,29 +151,9 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 	res.Header.SetNoDefaultContentType(true)
 
 	for {
-		var (
-			timer      *time.Timer
-			errTimeout atomic.Pointer[timeoutError]
-		)
-		if c.responseHeaderTimeout > 0 {
-			timer = time.AfterFunc(c.responseHeaderTimeout, func() {
-				errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
-				c.Close() // This close call is needed to interrupt the read operation below when the timeout is over.
-			})
-		}
-
 		res.Header.SetNoDefaultContentType(true)
 		if err := res.Header.Read(c.br); err != nil {
-			if c.responseHeaderTimeout > 0 {
-				if errT := errTimeout.Load(); errT != nil {
-					return errT
-				}
-			}
 			return err
-		}
-
-		if timer != nil {
-			timer.Stop()
 		}
 
 		fixPragmaCacheControl(&res.Header)
@@ -197,6 +191,12 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 			continue
 		}
 		break
+	}
+
+	// A timer that has already fired closes the connection, so the response is abandoned before anything is written
+	// to the client, rather than delivering the headers and failing on the body.
+	if r.ResponseHeaderTimer != nil && !r.ResponseHeaderTimer.Stop() {
+		return timeoutError{errors.New("timeout awaiting response headers")}
 	}
 
 	announcedTrailers := res.Header.Peek("Trailer")
@@ -408,6 +408,7 @@ func (c *connPool) ReleaseConn(co *conn) {
 	}
 
 	co.idleAt = time.Now()
+	co.reused = true
 	c.releaseConn(co)
 }
 
@@ -530,6 +531,7 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 		responseHeaderTimeout: c.responseHeaderTimeout,
 		RWCh:                  make(chan rwWithUpgrade),
 		ErrCh:                 make(chan error),
+		DoneCh:                make(chan struct{}),
 		bufferPool:            &c.bufferPool,
 		limitedReaderPool:     &c.limitedReaderPool,
 	}
