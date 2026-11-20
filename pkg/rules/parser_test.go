@@ -268,6 +268,42 @@ func TestRuleMatch(t *testing.T) {
 	}
 }
 
+func TestRequiresPositiveMatchers(t *testing.T) {
+	testCases := []struct {
+		rule     string
+		expected bool
+	}{
+		{rule: "Host(`a`)", expected: true},
+		{rule: "Path(`/x`)"},
+		{rule: "!Host(`a`)"},
+		{rule: "Host(`a`) && Path(`/x`)", expected: true},
+		{rule: "Path(`/x`) && Host(`a`)", expected: true},
+		{rule: "Host(`a`) || Host(`b`)", expected: true},
+		{rule: "Host(`a`) || Path(`/x`)"},
+		{rule: "!(Host(`a`) && Path(`/x`))"},
+		{rule: "!(Host(`a`) || Path(`/x`))"},
+		{rule: "!(!Host(`a`) || Path(`/x`))", expected: true},
+		{rule: "(Host(`a`) || Host(`b`)) && Path(`/x`)", expected: true},
+	}
+
+	parser, err := NewParser([]string{"Host", "Path"})
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		t.Run(test.rule, func(t *testing.T) {
+			t.Parallel()
+
+			parse, err := parser.Parse(test.rule)
+			require.NoError(t, err)
+
+			treeBuilder, ok := parse.(TreeBuilder)
+			require.True(t, ok)
+
+			assert.Equal(t, test.expected, treeBuilder().RequiresPositiveMatchers([]string{"Host"}))
+		})
+	}
+}
+
 func checkEquivalence(t *testing.T, expected *testTree, actual *Tree) {
 	t.Helper()
 
