@@ -1,17 +1,25 @@
 package file
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type ProvideTestCase struct {
@@ -84,6 +92,137 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].KeyFile.String())
 	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.RootCAs[0].String())
+}
+
+func TestTLSCertificateMissingFile(t *testing.T) {
+	t.Parallel()
+
+	const (
+		pemCert = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
+		pemKey  = "-----BEGIN PRIVATE KEY-----\nMIIE\n-----END PRIVATE KEY-----\n"
+	)
+
+	testCases := []struct {
+		desc          string
+		certFile      string
+		keyFile       string
+		expected      *tls.Certificate
+		expectedStore *tls.Certificate
+		expectedError string
+	}{
+		{
+			desc:     "existing non-PEM files",
+			certFile: "fixtures/toml/tls_file.cert",
+			keyFile:  "fixtures/toml/tls_file_key.cert",
+			expected: &tls.Certificate{CertFile: "CONTENT", KeyFile: "CONTENTKEY"},
+		},
+		{
+			desc:     "inline PEM content after a preamble",
+			certFile: "Bag Attributes\n" + pemCert,
+			keyFile:  pemKey,
+			expected: &tls.Certificate{CertFile: "Bag Attributes\n" + pemCert, KeyFile: pemKey},
+		},
+		{
+			desc:          "missing certFile",
+			certFile:      "fixtures/missing.crt",
+			keyFile:       "fixtures/toml/tls_file_key.cert",
+			expectedStore: &tls.Certificate{CertFile: "fixtures/missing.crt", KeyFile: "CONTENTKEY"},
+			expectedError: "reading certFile fixtu[...]g.crt: file does not exist and value is not PEM data",
+		},
+		{
+			desc:          "missing keyFile",
+			certFile:      "fixtures/toml/tls_file.cert",
+			keyFile:       "fixtures/missing.key",
+			expectedStore: &tls.Certificate{CertFile: "CONTENT", KeyFile: "fixtures/missing.key"},
+			expectedError: "reading keyFile of certificate fixtures/toml/tls_file.cert: file does not exist and value is not PEM data",
+		},
+		{
+			desc:     "empty keyFile",
+			certFile: "fixtures/toml/tls_file.cert",
+			expected: &tls.Certificate{CertFile: "CONTENT"},
+		},
+		{
+			desc:     "path through a regular file",
+			certFile: "fixtures/toml/tls_file.cert/missing.crt",
+			keyFile:  pemKey,
+			expected: &tls.Certificate{CertFile: "fixtures/toml/tls_file.cert/missing.crt", KeyFile: pemKey},
+		},
+		{
+			desc:     "name too long",
+			certFile: strings.Repeat("a", 300),
+			keyFile:  pemKey,
+			expected: &tls.Certificate{CertFile: types.FileOrContent(strings.Repeat("a", 300)), KeyFile: pemKey},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			content := fmt.Sprintf(`
+tls:
+  certificates:
+    - certFile: %[1]s
+      keyFile: %[2]s
+  stores:
+    default:
+      defaultCertificate:
+        certFile: %[1]s
+        keyFile: %[2]s
+http:
+  serversTransports:
+    default:
+      certificates:
+        - certFile: %[1]s
+          keyFile: %[2]s
+tcp:
+  serversTransports:
+    default:
+      tls:
+        certificates:
+          - certFile: %[1]s
+            keyFile: %[2]s
+`, strconv.Quote(test.certFile), strconv.Quote(test.keyFile))
+
+			configFile := filepath.Join(t.TempDir(), "config.yml")
+			require.NoError(t, os.WriteFile(configFile, []byte(content), 0o600))
+
+			var logs bytes.Buffer
+			ctx := zerolog.New(&logs).WithContext(t.Context())
+
+			configuration, err := (&Provider{}).loadFileConfig(ctx, configFile, false)
+			require.NoError(t, err)
+
+			var expectedErrors []string
+			var expectedCertAndStores []*tls.CertAndStores
+			var expectedCertificates tls.Certificates
+			expectedStore := test.expected
+			if test.expectedError != "" {
+				expectedErrors = slices.Repeat([]string{test.expectedError}, 4)
+				expectedStore = test.expectedStore
+			} else {
+				expectedCertAndStores = []*tls.CertAndStores{{Certificate: *test.expected}}
+				expectedCertificates = tls.Certificates{*test.expected}
+			}
+
+			var loggedErrors []string
+			for line := range strings.Lines(logs.String()) {
+				var entry struct {
+					Level string `json:"level"`
+					Error string `json:"error"`
+				}
+				require.NoError(t, json.Unmarshal([]byte(line), &entry))
+				assert.Equal(t, "error", entry.Level)
+				loggedErrors = append(loggedErrors, entry.Error)
+			}
+
+			assert.Equal(t, expectedErrors, loggedErrors)
+			assert.Equal(t, expectedCertAndStores, configuration.TLS.Certificates)
+			assert.Equal(t, expectedStore, configuration.TLS.Stores["default"].DefaultCertificate)
+			assert.Equal(t, expectedCertificates, configuration.HTTP.ServersTransports["default"].Certificates)
+			assert.Equal(t, expectedCertificates, configuration.TCP.ServersTransports["default"].TLS.Certificates)
+		})
+	}
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
