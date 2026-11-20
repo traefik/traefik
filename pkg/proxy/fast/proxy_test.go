@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -502,6 +503,115 @@ func TestNoContentLength(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, "foo", res.Body.String())
+}
+
+func TestConnectionCloseResponse(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		method        string
+		response      string
+		expectedBody  string
+		expectedConns int32
+	}{
+		{
+			desc:          "keep-alive response",
+			method:        http.MethodGet,
+			response:      "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok",
+			expectedBody:  "ok",
+			expectedConns: 1,
+		},
+		{
+			desc:          "Connection close response",
+			method:        http.MethodGet,
+			response:      "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+			expectedBody:  "ok",
+			expectedConns: 3,
+		},
+		{
+			desc:          "Connection close response with other tokens",
+			method:        http.MethodGet,
+			response:      "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: Foo, Close\r\n\r\nok",
+			expectedBody:  "ok",
+			expectedConns: 3,
+		},
+		{
+			desc:          "HTTP/1.0 response without keep-alive",
+			method:        http.MethodGet,
+			response:      "HTTP/1.0 200 OK\r\nContent-Length: 2\r\n\r\nok",
+			expectedBody:  "ok",
+			expectedConns: 3,
+		},
+		{
+			desc:          "Connection close response in a second Connection header",
+			method:        http.MethodGet,
+			response:      "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: keep-alive\r\nConnection: Foo, Close\r\n\r\nok",
+			expectedBody:  "ok",
+			expectedConns: 3,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			backendListener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				_ = backendListener.Close()
+			})
+
+			// The backend keeps the connection open after a response, even when it announces its closing,
+			// so a connection reused by the proxy is seen as a second request on the same connection.
+			var conns atomic.Int32
+			go func() {
+				for {
+					conn, err := backendListener.Accept()
+					if err != nil {
+						return
+					}
+					conns.Add(1)
+
+					go func() {
+						defer func() { _ = conn.Close() }()
+
+						br := bufio.NewReader(conn)
+						for {
+							req, err := http.ReadRequest(br)
+							if err != nil {
+								return
+							}
+							_ = req.Body.Close()
+
+							if _, err = conn.Write([]byte(test.response)); err != nil {
+								return
+							}
+						}
+					}()
+				}
+			}()
+
+			pool := newConnPool(1, 0, 0, func() (net.Conn, error) {
+				return net.Dial("tcp", backendListener.Addr().String())
+			})
+			t.Cleanup(pool.Close)
+
+			proxyHandler, err := NewReverseProxy(testhelpers.MustParseURL("http://"+backendListener.Addr().String()), nil, false, true, false, pool)
+			require.NoError(t, err)
+
+			for range 3 {
+				req := httptest.NewRequest(test.method, "/", http.NoBody)
+				res := httptest.NewRecorder()
+
+				proxyHandler.ServeHTTP(res, req)
+
+				assert.Equal(t, http.StatusOK, res.Code)
+				assert.Equal(t, test.expectedBody, res.Body.String())
+			}
+
+			assert.Equal(t, test.expectedConns, conns.Load())
+		})
+	}
 }
 
 func TestTransferEncodingChunked(t *testing.T) {
