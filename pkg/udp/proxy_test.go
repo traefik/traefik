@@ -12,28 +12,28 @@ import (
 )
 
 func TestProxy_ServeUDP(t *testing.T) {
-	backendAddr := ":8081"
-	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
+	backendAddr := newServer(t, HandlerFunc(func(conn *Conn) {
 		for {
 			b := make([]byte, 1024*1024)
 			n, err := conn.Read(b)
-			require.NoError(t, err)
+			if err != nil {
+				return
+			}
 
-			_, err = conn.Write(b[:n])
-			require.NoError(t, err)
+			if _, err := conn.Write(b[:n]); err != nil {
+				return
+			}
 		}
 	}))
 
 	proxy, err := NewProxy(backendAddr)
 	require.NoError(t, err)
 
-	proxyAddr := ":8080"
-	go newServer(t, proxyAddr, proxy)
-
-	time.Sleep(time.Second)
+	proxyAddr := newServer(t, proxy)
 
 	udpConn, err := net.Dial("udp", proxyAddr)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = udpConn.Close() })
 
 	_, err = udpConn.Write([]byte("DATAWRITE"))
 	require.NoError(t, err)
@@ -55,27 +55,25 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	// 65535 − 8 (UDP header) − 20 (IP header).
 	dataSize := 65507
 
-	backendAddr := ":8083"
-	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
+	backendAddr := newServer(t, HandlerFunc(func(conn *Conn) {
 		buffer := make([]byte, dataSize)
 
 		n, err := conn.Read(buffer)
-		require.NoError(t, err)
+		if err != nil {
+			return
+		}
 
-		_, err = conn.Write(buffer[:n])
-		require.NoError(t, err)
+		_, _ = conn.Write(buffer[:n])
 	}))
 
 	proxy, err := NewProxy(backendAddr)
 	require.NoError(t, err)
 
-	proxyAddr := ":8082"
-	go newServer(t, proxyAddr, proxy)
-
-	time.Sleep(time.Second)
+	proxyAddr := newServer(t, proxy)
 
 	udpConn, err := net.Dial("udp", proxyAddr)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = udpConn.Close() })
 
 	want := make([]byte, dataSize)
 
@@ -93,16 +91,26 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func newServer(t *testing.T, addr string, handler Handler) {
+// newServer serves handler on a free port until the test ends, and returns its address.
+// The handlers outlive the test until the listener closes their sessions,
+// so they return on errors rather than reporting them to a finished test.
+func newServer(t *testing.T, handler Handler) string {
 	t.Helper()
 
-	listener, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
+	listener, err := Listen(net.ListenConfig{}, "udp", "127.0.0.1:0", 3*time.Second)
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
 
-	for {
-		conn, err := listener.Accept()
-		require.NoError(t, err)
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
 
-		go handler.ServeUDP(conn)
-	}
+			go handler.ServeUDP(conn)
+		}
+	}()
+
+	return listener.Addr().String()
 }
