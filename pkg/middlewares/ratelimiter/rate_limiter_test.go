@@ -683,3 +683,66 @@ func computeMinCount(wantCount int) int {
 
 	return wantCount * 95 / 100
 }
+
+type fixedDelayLimiter struct {
+	delay time.Duration
+}
+
+func (l fixedDelayLimiter) Allow(_ context.Context, _ string) (*time.Duration, error) {
+	return &l.delay, nil
+}
+
+func TestRateLimit_CanceledRequest(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		delay          time.Duration
+		expectedStatus int
+		expectedNext   bool
+	}{
+		{
+			desc:           "no delay, request is forwarded",
+			delay:          0,
+			expectedStatus: http.StatusOK,
+			expectedNext:   true,
+		},
+		{
+			desc:           "client gone while waiting for the delay",
+			delay:          time.Minute,
+			expectedStatus: 499,
+			expectedNext:   false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var nextCalled bool
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				nextCalled = true
+				w.WriteHeader(http.StatusOK)
+			})
+
+			h, err := New(t.Context(), next, dynamic.RateLimit{Average: 100, Burst: 100}, "rate-limiter")
+			require.NoError(t, err)
+
+			rl, ok := h.(*rateLimiter)
+			require.True(t, ok)
+			rl.limiter = fixedDelayLimiter{delay: test.delay}
+			rl.maxDelay = 2 * time.Minute
+
+			// The client has already gone away when the middleware runs.
+			ctx, cancel := context.WithCancel(t.Context())
+			cancel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil).WithContext(ctx)
+			req.RemoteAddr = "127.0.0.1:1234"
+			rw := httptest.NewRecorder()
+
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectedStatus, rw.Code)
+			assert.Equal(t, test.expectedNext, nextCalled)
+		})
+	}
+}
