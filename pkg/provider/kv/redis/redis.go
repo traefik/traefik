@@ -20,11 +20,13 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	TLS      *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Username string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	DB       int              `description:"Database to be selected after connecting to the server." json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
-	Sentinel *Sentinel        `description:"Enable Sentinel support." json:"sentinel,omitempty" toml:"sentinel,omitempty" yaml:"sentinel,omitempty" export:"true"`
+	TLS            *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Username       string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password       string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	DB             int              `description:"Database to be selected after connecting to the server." json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	Sentinel       *Sentinel        `description:"Enable Sentinel support." json:"sentinel,omitempty" toml:"sentinel,omitempty" yaml:"sentinel,omitempty" export:"true"`
+	PoolSize       int              `description:"Defines the initial number of socket connections. If the pool runs out of available connections, additional ones will be created beyond PoolSize. This can be limited using MaxActiveConns. Default value is 0, meaning 10 connections per every available CPU as reported by runtime.GOMAXPROCS." json:"poolSize,omitempty" toml:"poolSize,omitempty" yaml:"poolSize,omitempty" export:"true"`
+	MaxActiveConns int              `description:"Defines the maximum number of connections allocated by the pool at a given time. Default value is 0, meaning there is no limit." json:"maxActiveConns,omitempty" toml:"maxActiveConns,omitempty" yaml:"maxActiveConns,omitempty" export:"true"`
 }
 
 // Sentinel holds the Redis Sentinel configuration.
@@ -49,9 +51,11 @@ func (p *Provider) SetDefaults() {
 // Init the provider.
 func (p *Provider) Init() error {
 	config := &redis.Config{
-		Username: p.Username,
-		Password: p.Password,
-		DB:       p.DB,
+		Username:       p.Username,
+		Password:       p.Password,
+		DB:             p.DB,
+		PoolSize:       p.PoolSize,
+		MaxActiveConns: p.MaxActiveConns,
 	}
 
 	if p.TLS != nil {
