@@ -93,6 +93,24 @@ func TestRewriteTarget(t *testing.T) {
 			expectedRawPath: "/foo%2Fbar",
 		},
 		{
+			desc: "regex replaces the whole path",
+			path: "/api/v1/users",
+			config: dynamic.RewriteTarget{
+				Regex:       `/api`,
+				Replacement: "/",
+			},
+			expectedPath: "/",
+		},
+		{
+			desc: "regex replaces the whole path once",
+			path: "/api/api",
+			config: dynamic.RewriteTarget{
+				Regex:       `/api`,
+				Replacement: "/new",
+			},
+			expectedPath: "/new",
+		},
+		{
 			desc: "regex - no match passthrough",
 			path: "/foo/bar",
 			config: dynamic.RewriteTarget{
@@ -123,6 +141,17 @@ func TestRewriteTarget(t *testing.T) {
 			},
 			expectedPath:             "/endpoint",
 			expectedXForwardedPrefix: "/prefix/sub",
+		},
+		{
+			desc: "regex with x-forwarded-prefix does not keep the unmatched suffix",
+			path: "/foo/bar",
+			config: dynamic.RewriteTarget{
+				Regex:            `/(foo)`,
+				Replacement:      "/",
+				XForwardedPrefix: "/$1",
+			},
+			expectedPath:             "/",
+			expectedXForwardedPrefix: "/foo",
 		},
 		{
 			desc: "x-forwarded-prefix not set when regex does not match",
