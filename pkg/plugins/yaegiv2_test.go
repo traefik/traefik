@@ -49,6 +49,37 @@ func TestResolveYaegiVersion(t *testing.T) {
 	}
 }
 
+func TestYaegiV2Mounts(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		mounts   []string
+		expected []vm.Mount
+		wantErr  bool
+	}{
+		{desc: "no mount"},
+		{desc: "directory", mounts: []string{"/data"}, expected: []vm.Mount{{Dir: "/data"}}},
+		{desc: "read-only directory", mounts: []string{"/data:ro"}, expected: []vm.Mount{{Dir: "/data", ReadOnly: true}}},
+		{desc: "same host and guest paths", mounts: []string{"/data:/data:ro"}, expected: []vm.Mount{{Dir: "/data", ReadOnly: true}}},
+		{desc: "other guest path", mounts: []string{"/data:/guest"}, wantErr: true},
+		{desc: "too many parts", mounts: []string{"/a:/a:/a"}, wantErr: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			mounts, err := yaegiV2Mounts(test.mounts)
+			if test.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, mounts)
+		})
+	}
+}
+
 func TestNewMiddlewareBuilder_YaegiV2(t *testing.T) {
 	testCases := []struct {
 		desc           string
