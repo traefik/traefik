@@ -1393,16 +1393,131 @@ more_clear_input_headers "X-Remove";
 		},
 		// --- rewrite last/break forwards to upstream ---
 		{
-			desc: "rewrite break in server snippet skips configuration snippet",
+			desc: "rewrite break in server snippet allows configuration snippet to run",
 			serverSnippet: `
 rewrite ^/old/(.*)$ /new/$1 break;
 `,
 			configurationSnippet: `
 add_header X-Config "config-value" always;
 `,
-			path:                      "/old/page",
-			expectedPath:              "/new/page",
-			unexpectedResponseHeaders: []string{"X-Config"},
+			path:         "/old/page",
+			expectedPath: "/new/page",
+			expectedResponseHeaders: map[string]string{
+				"X-Config": "config-value",
+			},
+		},
+		{
+			desc: "rewrite break in server snippet keeps configuration snippet access rules",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+`,
+			configurationSnippet: `
+deny all;
+`,
+			path:               "/old/page",
+			remoteAddr:         "192.168.1.1:12345",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   new(false),
+		},
+		{
+			desc: "rewrite break in server snippet keeps configuration snippet rewrite directives",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+`,
+			configurationSnippet: `
+rewrite ^/new/(.*)$ /other/$1 break;
+`,
+			path:         "/old/page",
+			expectedPath: "/other/page",
+		},
+		{
+			desc: "rewrite break stops the following rewrite directives",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+rewrite ^/new/(.*)$ /other/$1;
+if ($request_method = GET) {
+	return 403;
+}
+`,
+			path:         "/old/page",
+			expectedPath: "/new/page",
+		},
+		{
+			desc: "rewrite break keeps the following access rules",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+deny all;
+`,
+			path:               "/old/page",
+			remoteAddr:         "192.168.1.1:12345",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   new(false),
+		},
+		{
+			desc: "rewrite break keeps the following headers",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+add_header X-Server "server-value" always;
+proxy_set_header X-Upstream "upstream-value";
+`,
+			path:         "/old/page",
+			expectedPath: "/new/page",
+			expectedResponseHeaders: map[string]string{
+				"X-Server": "server-value",
+			},
+			expectedRequestHeaders: map[string]string{
+				"X-Upstream": "upstream-value",
+			},
+		},
+		{
+			desc: "rewrite last keeps the following access rules",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 last;
+deny all;
+`,
+			path:               "/old/page",
+			remoteAddr:         "192.168.1.1:12345",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   new(false),
+		},
+		{
+			desc: "rewrite break in server snippet keeps the following location block",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /admin/$1 break;
+location /admin {
+	return 403;
+}
+`,
+			path:               "/old/page",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   new(false),
+		},
+		{
+			desc: "rewrite break in a location block keeps the following server snippet directives",
+			serverSnippet: `
+location /old {
+	rewrite ^/old/(.*)$ /new/$1 break;
+}
+return 403;
+`,
+			path:               "/old/page",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   new(false),
+		},
+		{
+			desc: "rewrite break in configuration snippet keeps auth snippet rewrite directives",
+			configurationSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+`,
+			authSnippet: `
+set $user "admin";
+proxy_set_header X-Auth-User $user;
+`,
+			path:         "/old/page",
+			expectedPath: "/new/page",
+			expectedAuthRequestHeaders: map[string]string{
+				"X-Auth-User": "admin",
+			},
 		},
 		{
 			desc: "rewrite last in server snippet allows configuration snippet to run",
@@ -1913,6 +2028,10 @@ if ($http_x_block_auth = "yes") {
 
 			for header, expectedValue := range test.expectedRequestHeaders {
 				assert.Equal(t, expectedValue, capturedRequestHeaders[header], "request header %s", header)
+			}
+
+			for header, expectedValue := range test.expectedAuthRequestHeaders {
+				assert.Equal(t, expectedValue, capturedAuthRequestHeaders[header], "auth request header %s", header)
 			}
 
 			if test.expectedPath != "" && nextCalled {

@@ -175,9 +175,8 @@ func (s *Snippet) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Rewrite directives (set, rewrite, return, if) execute immediately.
 	// Other directives are collected for later phase execution.
 	// ========================================================================
-	skipLocationSnippet := false
 	if s.serverActions != nil {
-		terminated, skipToAccess, err := s.serverActions.Collect(rw, req, ctx, serverCollector)
+		terminated, err := s.serverActions.Collect(rw, req, ctx, serverCollector)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -188,20 +187,19 @@ func (s *Snippet) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			WriteResponse(wrappedRW, req, ctx)
 			return
 		}
-		// rewrite...break skips location snippet processing
-		skipLocationSnippet = skipToAccess
 	}
 
 	// ========================================================================
 	// PHASE: REWRITE_PHASE (location context)
 	// Collects phases from configuration-snippet.
 	// Rewrite directives execute immediately, others are collected.
+	// A last or break flag in the server-snippet only stops the server rewrite phase.
 	// ========================================================================
-	if !skipLocationSnippet && s.locationActions != nil {
+	if s.locationActions != nil {
 		ctx.stopCurrentBlock = false
 		ctx.stopAllDirectives = false
 
-		terminated, _, err := s.locationActions.Collect(rw, req, ctx, locationCollector)
+		terminated, err := s.locationActions.Collect(rw, req, ctx, locationCollector)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -371,7 +369,11 @@ func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, 
 
 		// Collect and execute rewrite-phase directives (set, if)
 		// Other directives are collected into authCollector
-		terminated, _, err := s.authActions.Collect(rw, forwardReq, ctx, authCollector)
+		// A last or break flag in the other snippets does not stop the auth-snippet directives.
+		ctx.stopCurrentBlock = false
+		ctx.stopAllDirectives = false
+
+		terminated, err := s.authActions.Collect(rw, forwardReq, ctx, authCollector)
 		if err != nil {
 			return false, err
 		}
