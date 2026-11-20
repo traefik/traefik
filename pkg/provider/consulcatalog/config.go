@@ -229,10 +229,6 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 		return errors.New("port is missing")
 	}
 
-	if item.Address == "" {
-		return errors.New("address is missing")
-	}
-
 	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)
 		loadBalancer.Servers[0].TLS = true
