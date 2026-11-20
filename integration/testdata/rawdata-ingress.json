@@ -53,13 +53,35 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
 						"namespace": "default",
-						"name": "test.ingress.https",
-						"kind": "Ingress"
-					}
+						"name": "test.ingress.https"
+					},
+					"sources": [
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress.https",
+							"path": "/metadata/annotations"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress.https",
+							"path": "/spec/rules/0/http/paths/0"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -78,13 +100,35 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
 						"namespace": "default",
-						"name": "test.ingress",
-						"kind": "Ingress"
-					}
+						"name": "test.ingress"
+					},
+					"sources": [
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress",
+							"path": "/metadata/annotations"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress",
+							"path": "/spec/rules/0/http/paths/0"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -103,13 +147,35 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
 						"namespace": "default",
-						"name": "whoami-drop-route",
-						"kind": "Ingress"
-					}
+						"name": "whoami-drop-route"
+					},
+					"sources": [
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-drop-route",
+							"path": "/metadata/annotations"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-drop-route",
+							"path": "/spec/rules/0/http/paths/0"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -128,13 +194,35 @@
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal",
-				"metadata": {
-					"ingress": {
+				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "networking.k8s.io",
+						"version": "v1",
+						"kind": "Ingress",
 						"namespace": "default",
-						"name": "whoami-keep-route",
-						"kind": "Ingress"
-					}
+						"name": "whoami-keep-route"
+					},
+					"sources": [
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-keep-route",
+							"path": "/metadata/annotations"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-keep-route",
+							"path": "/spec/rules/0/http/paths/0"
+						}
+					]
 				}
 			},
 			"status": "enabled",
@@ -185,10 +273,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.8:80"
 					}
 				],
 				"strategy": "wrr",
@@ -197,13 +285,47 @@
 					"flushInterval": "100ms"
 				}
 			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
 						"namespace": "default",
-						"name": "whoami",
-						"port": "80"
-					}
+						"name": "whoami"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-drop-route",
+							"path": "/spec/rules/0/http/paths/0/backend"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "whoami-keep-route",
+							"path": "/spec/rules/0/http/paths/0/backend"
+						}
+					],
+					"servicePort": "80"
 				}
 			},
 			"status": "enabled",
@@ -212,7 +334,7 @@
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.8:80": "UP"
 			}
 		},
@@ -220,10 +342,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.8:80"
 					}
 				],
 				"strategy": "wrr",
@@ -232,13 +354,47 @@
 					"flushInterval": "100ms"
 				}
 			},
-			"observability": {
-				"metadata": {
-					"kubernetes": {
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
 						"namespace": "default",
-						"name": "whoami",
-						"port": "http"
-					}
+						"name": "whoami"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress",
+							"path": "/spec/rules/0/http/paths/0/backend"
+						},
+						{
+							"group": "networking.k8s.io",
+							"version": "v1",
+							"kind": "Ingress",
+							"namespace": "default",
+							"name": "test.ingress.https",
+							"path": "/spec/rules/0/http/paths/0/backend"
+						}
+					],
+					"servicePort": "http"
 				}
 			},
 			"status": "enabled",
@@ -247,7 +403,7 @@
 				"default-test-ingress-whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.8:80": "UP"
 			}
 		},
