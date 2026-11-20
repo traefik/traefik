@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"strconv"
@@ -8,12 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type mockProvider struct {
@@ -1040,4 +1043,38 @@ func TestEntryPointTLSResolvedOptions(t *testing.T) {
 	t.Cleanup(watcher.Stop)
 
 	<-run
+}
+
+func TestLogConfigurationScrubsSecrets(t *testing.T) {
+	buf := &bytes.Buffer{}
+	logger := zerolog.New(buf).Level(zerolog.DebugLevel)
+
+	message := dynamic.Message{
+		ProviderName: "file",
+		Configuration: &dynamic.Configuration{
+			TLS: &dynamic.TLSConfiguration{
+				Options: map[string]tls.Options{
+					"default": {
+						ECHKeys:            []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nsecret-ech-key\n-----END PRIVATE KEY-----"},
+						ECHDecryptOnlyKeys: []types.FileOrContent{"-----BEGIN PRIVATE KEY-----\nsecret-retired-ech-key\n-----END PRIVATE KEY-----"},
+						ClientAuth: tls.ClientAuth{
+							CAFiles: []types.FileOrContent{"secret-ca-content"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	logConfiguration(logger, message)
+
+	assert.Contains(t, buf.String(), "Configuration received")
+	assert.NotContains(t, buf.String(), "secret-ech-key")
+	assert.NotContains(t, buf.String(), "secret-retired-ech-key")
+	assert.NotContains(t, buf.String(), "secret-ca-content")
+
+	// The scrub must only affect the logged copy, not the live configuration.
+	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ECHKeys)
+	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ECHDecryptOnlyKeys)
+	assert.NotEmpty(t, message.Configuration.TLS.Options["default"].ClientAuth.CAFiles)
 }
