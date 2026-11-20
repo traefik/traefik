@@ -118,6 +118,79 @@ func TestForwardAuthSuccess(t *testing.T) {
 	assert.Equal(t, "traefik\n", string(body))
 }
 
+func TestForwardAuthSuccessBackendCookiesUnchanged(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Set-Cookie", "authCookie=Auth")
+		fmt.Fprintln(w, "Success")
+	}))
+	t.Cleanup(server.Close)
+
+	backendCookies := []string{
+		`prefs={"theme":"dark"}; Path=/`,
+		`greeting=hello world; Path=/`,
+		`list=a,b,c; Path=/`,
+		`sid=abc123; Path=/; Secure; HttpOnly; Priority=High`,
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, cookie := range backendCookies {
+			w.Header().Add("Set-Cookie", cookie)
+		}
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{Address: server.URL}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, backendCookies, res.Header["Set-Cookie"])
+}
+
+func TestForwardAuthSuccessAddAuthCookiesKeepsRawBackendCookies(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Set-Cookie", "authCookie=Auth")
+		fmt.Fprintln(w, "Success")
+	}))
+	t.Cleanup(server.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Set-Cookie", "authCookie=Backend")
+		w.Header().Add("Set-Cookie", `greeting=hello world; Path=/`)
+		w.Header().Add("Set-Cookie", `sid=abc123; Path=/; Secure; HttpOnly; Priority=High`)
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:                  server.URL,
+		AddAuthCookiesToResponse: []string{"authCookie"},
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = res.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, []string{
+		`greeting=hello world; Path=/`,
+		`sid=abc123; Path=/; Secure; HttpOnly; Priority=High`,
+		"authCookie=Auth",
+	}, res.Header["Set-Cookie"])
+}
+
 func TestForwardAuthForwardBody(t *testing.T) {
 	data := []byte("forwardBodyTest")
 
