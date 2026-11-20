@@ -746,3 +746,38 @@ func TestRoutingPath(t *testing.T) {
 		})
 	}
 }
+
+func TestAddRoute_routesOrder(t *testing.T) {
+	parser, err := NewSyntaxParser()
+	require.NoError(t, err)
+
+	muxer := NewMuxer(parser, []string{"kubernetescrd", "kubernetes"})
+
+	routes := []struct {
+		name         string
+		priority     int
+		providerName string
+	}{
+		{name: "r1", priority: 10, providerName: "kubernetes"},
+		{name: "r2", priority: 30},
+		{name: "r3", priority: 20, providerName: "kubernetes"},
+		{name: "r4", priority: 20, providerName: "kubernetescrd"},
+		{name: "r5", priority: 10, providerName: "kubernetes"},
+		{name: "r6", priority: 30},
+	}
+	for _, r := range routes {
+		err := muxer.AddRoute("Host(`example.com`)", "", r.priority, r.providerName, namedHandler(r.name))
+		require.NoError(t, err)
+	}
+
+	var names []string
+	for _, r := range muxer.routes {
+		names = append(names, string(r.handler.(namedHandler)))
+	}
+
+	assert.Equal(t, []string{"r2", "r6", "r4", "r3", "r1", "r5"}, names)
+}
+
+type namedHandler string
+
+func (namedHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
