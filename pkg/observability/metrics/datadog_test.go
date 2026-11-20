@@ -19,7 +19,7 @@ func TestDatadog(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	datadogRegistry := RegisterDatadog(t.Context(), &otypes.Datadog{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
+	datadogRegistry := RegisterDatadog(t.Context(), &otypes.Datadog{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, EnableTCPRouterMetrics: true})
 
 	if !datadogRegistry.IsEpEnabled() || !datadogRegistry.IsRouterEnabled() || !datadogRegistry.IsSvcEnabled() {
 		t.Errorf("DatadogRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
@@ -34,7 +34,7 @@ func TestDatadogWithPrefix(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	datadogRegistry := RegisterDatadog(t.Context(), &otypes.Datadog{Prefix: "testPrefix", Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
+	datadogRegistry := RegisterDatadog(t.Context(), &otypes.Datadog{Prefix: "testPrefix", Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, EnableTCPRouterMetrics: true})
 
 	testDatadogRegistry(t, "testPrefix", datadogRegistry)
 }
@@ -120,6 +120,9 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		metricsPrefix + ".service.server.up:1.000000|g|#service:test,url:http://127.0.0.1,one:two\n",
 		metricsPrefix + ".service.requests.bytes.total:1.000000|c|#service:test,code:200,method:GET\n",
 		metricsPrefix + ".service.responses.bytes.total:1.000000|c|#service:test,code:200,method:GET\n",
+
+		metricsPrefix + ".router.tcp.open.connections:1.000000|g|#traefik.router.name:demo,traefik.service.name:test,traefik.tls.mode:terminated,network.type:ipv4,server.port:443\n",
+		metricsPrefix + ".router.tcp.open.tls.connections:1.000000|g|#traefik.router.name:demo,traefik.service.name:test,network.type:ipv4,server.port:443,tls.protocol.version:1.3,tls.cipher:TLS_AES_128_GCM_SHA256\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -151,5 +154,8 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		datadogRegistry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1", "one", "two").Set(1)
 		datadogRegistry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		datadogRegistry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+
+		datadogRegistry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").Add(1)
+		datadogRegistry.RouterTCPOpenTLSConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 	})
 }

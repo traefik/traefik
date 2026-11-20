@@ -27,14 +27,15 @@ func TestInfluxDB2(t *testing.T) {
 
 	influxDB2Registry := RegisterInfluxDB2(t.Context(),
 		&otypes.InfluxDB2{
-			Address:              ts.URL,
-			Token:                "test-token",
-			PushInterval:         ptypes.Duration(10 * time.Millisecond),
-			Org:                  "test-org",
-			Bucket:               "test-bucket",
-			AddEntryPointsLabels: true,
-			AddRoutersLabels:     true,
-			AddServicesLabels:    true,
+			Address:                ts.URL,
+			Token:                  "test-token",
+			PushInterval:           ptypes.Duration(10 * time.Millisecond),
+			Org:                    "test-org",
+			Bucket:                 "test-bucket",
+			AddEntryPointsLabels:   true,
+			AddRoutersLabels:       true,
+			AddServicesLabels:      true,
+			EnableTCPRouterMetrics: true,
 		})
 
 	t.Cleanup(func() {
@@ -137,4 +138,16 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceRetries := <-c
 
 	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
+
+	expectedTCPRouter := []string{
+		`(traefik\.router\.tcp\.open\.connections,network\.type=ipv4,server\.port=443,traefik\.router\.name=demo,traefik\.service\.name=test,traefik\.tls\.mode=terminated value=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.open\.tls\.connections,network\.type=ipv4,server\.port=443,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.router\.name=demo,traefik\.service\.name=test value=1) [\d]{19}`,
+	}
+
+	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").Set(1)
+	influxDB2Registry.RouterTCPOpenTLSConnectionsGauge().With("traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Set(1)
+
+	msgTCPRouter := <-c
+
+	assertMessage(t, *msgTCPRouter, expectedTCPRouter)
 }

@@ -91,10 +91,11 @@ func TestPrometheus(t *testing.T) {
 	t.Cleanup(promState.reset)
 
 	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{
-		AddEntryPointsLabels: true,
-		AddRoutersLabels:     true,
-		AddServicesLabels:    true,
-		HeaderLabels:         map[string]string{"useragent": "User-Agent"},
+		AddEntryPointsLabels:   true,
+		AddRoutersLabels:       true,
+		AddServicesLabels:      true,
+		EnableTCPRouterMetrics: true,
+		HeaderLabels:           map[string]string{"useragent": "User-Agent"},
 	})
 	defer promRegistry.Unregister(promState)
 
@@ -151,6 +152,14 @@ func TestPrometheus(t *testing.T) {
 		RouterReqsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
+	prometheusRegistry.
+		RouterTCPOpenConnectionsGauge().
+		With("traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").
+		Set(1)
+	prometheusRegistry.
+		RouterTCPOpenTLSConnectionsGauge().
+		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Set(1)
 
 	prometheusRegistry.
 		ServiceReqsCounter().
@@ -310,6 +319,29 @@ func TestPrometheus(t *testing.T) {
 				"router":   "demo",
 			},
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
+		},
+		{
+			name: routerTCPOpenConnectionsName,
+			labels: map[string]string{
+				"traefik_router_name":  "demo",
+				"traefik_service_name": "service1",
+				"traefik_tls_mode":     "terminated",
+				"network_type":         "ipv4",
+				"server_port":          "443",
+			},
+			assert: buildGaugeAssert(t, routerTCPOpenConnectionsName, 1),
+		},
+		{
+			name: routerTCPOpenTLSConnectionsName,
+			labels: map[string]string{
+				"traefik_router_name":  "demo",
+				"traefik_service_name": "service1",
+				"network_type":         "ipv4",
+				"server_port":          "443",
+				"tls_protocol_version": "1.3",
+				"tls_cipher":           "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildGaugeAssert(t, routerTCPOpenTLSConnectionsName, 1),
 		},
 		{
 			name: serviceReqsTotalName,
@@ -490,6 +522,60 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
 }
 
+func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
+	t.Cleanup(promState.reset)
+
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{EnableTCPRouterMetrics: true})
+	defer promRegistry.Unregister(promState)
+
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(
+				th.WithRouter("kept@providerName", th.WithServiceName("bar")),
+			),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
+				"kept@providerName":    {Service: "bar"},
+				"removed@providerName": {Service: "bar"},
+			},
+		},
+	}
+
+	// The HTTP router is removed, but the TCP router with the same name is kept.
+	conf2 := dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
+				"kept@providerName": {Service: "bar"},
+			},
+		},
+	}
+
+	OnConfigurationUpdate(conf1, nil)
+	OnConfigurationUpdate(conf2, nil)
+
+	prometheusRegistry.
+		RouterTCPOpenConnectionsGauge().
+		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPOpenConnectionsGauge().
+		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
+		Add(1)
+
+	// The metric of the removed router is exported on the first scrape,
+	// and removed after that scrape.
+	family := findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik_router_name", "kept@providerName", "traefik_service_name", "bar"))
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik_router_name", "removed@providerName", "traefik_service_name", "bar"))
+
+	family = findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik_router_name", "kept@providerName", "traefik_service_name", "bar"))
+	assert.Nil(t, findMetricByLabelNamesValues(family, "traefik_router_name", "removed@providerName", "traefik_service_name", "bar"))
+}
+
 func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
@@ -584,8 +670,10 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 func (ps *prometheusState) reset() {
 	ps.dynamicConfig = newDynamicConfig()
 	ps.vectors = nil
+	ps.tcpVectors = nil
 	ps.deletedEP = nil
 	ps.deletedRouters = nil
+	ps.deletedTCPRouters = nil
 	ps.deletedServices = nil
 	ps.deletedURLs = make(map[string][]string)
 }
