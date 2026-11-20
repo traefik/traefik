@@ -84,10 +84,10 @@ func GetKeyType(ctx context.Context, value string) certcrypto.KeyType {
 	case "RSA8192":
 		return certcrypto.RSA8192
 	case "":
-		logger.Info().Msgf("The key type is empty. Use default key type %v.", certcrypto.RSA4096)
-		return certcrypto.RSA4096
+		logger.Info().Msgf("The key type is empty. Use default key type %v.", certcrypto.EC256)
+		return certcrypto.EC256
 	default:
-		logger.Info().Msgf("Unable to determine the key type value %q: falling back on %v.", value, certcrypto.RSA4096)
-		return certcrypto.RSA4096
+		logger.Info().Msgf("Unable to determine the key type value %q: falling back on %v.", value, certcrypto.EC256)
+		return certcrypto.EC256
 	}
 }
