@@ -22,3 +22,53 @@ func TestNoLevel(t *testing.T) {
 
 	assert.Equal(t, "<nil> INF log_test.go:21 > foo\n", buf.String())
 }
+
+func TestNewConsoleWriter_NoTimestamp(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	cw := NewConsoleWriter(buf, true, true)
+
+	logger := zerolog.New(cw).With().Logger()
+	logger.Info().Str("field1", "val1").Msg("test message")
+
+	output := buf.String()
+	assert.Equal(t, "INF test message field1=val1\n", output)
+}
+
+func TestNewConsoleWriter_WithTimestamp(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	cw := NewConsoleWriter(buf, true, false)
+
+	logger := zerolog.New(cw).With().Timestamp().Logger()
+	logger.Info().Str("field1", "val1").Msg("test message")
+
+	output := buf.String()
+	assert.Contains(t, output, "INF test message field1=val1\n")
+	assert.NotEqual(t, "INF test message field1=val1\n", output)
+}
+
+func TestNewLogger_JSON_NoTimestamp(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	logger := NewLogger(buf, "json", false, true)
+
+	logger.Info().Str("key", "value").Msg("json message")
+
+	output := buf.String()
+	assert.NotContains(t, output, `"time"`)
+	assert.Contains(t, output, `"level":"info"`)
+	assert.Contains(t, output, `"message":"json message"`)
+	assert.Contains(t, output, `"key":"value"`)
+}
+
+func TestNewLogger_JSON_WithTimestamp(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	logger := NewLogger(buf, "json", false, false)
+
+	logger.Info().Str("key", "value").Msg("json message")
+
+	output := buf.String()
+	assert.Contains(t, output, `"time"`)
+	assert.Contains(t, output, `"level":"info"`)
+	assert.Contains(t, output, `"message":"json message"`)
+	assert.Contains(t, output, `"key":"value"`)
+}
+
