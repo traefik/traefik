@@ -48,9 +48,17 @@ type PhaseCollector struct {
 // Returns (terminated, error) where terminated=true means request processing should stop.
 type CollectableAction func(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (terminated bool, err error)
 
+// Parsed snippet directive.
+type directive struct {
+	action CollectableAction
+
+	// True for the directives of the NGINX rewrite module (set, rewrite, return, if).
+	rewrite bool
+}
+
 // SnippetActions holds the parsed collectable actions from a snippet.
 type SnippetActions struct {
-	actions []CollectableAction
+	actions []directive
 }
 
 // BuildSnippetActions parses directives from a block and builds collectable actions.
@@ -67,7 +75,7 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 			return nil, fmt.Errorf("building %s action: %w", d.GetName(), err)
 		}
 
-		sa.actions = append(sa.actions, action)
+		sa.actions = append(sa.actions, directive{action: action, rewrite: isRewriteDirective(d.GetName())})
 	}
 
 	return sa, nil
@@ -78,16 +86,22 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 // Other directives are collected into the appropriate phase bucket.
 // After a `return` directive terminates, we continue collecting header-phase
 // directives (they're in a different NGINX phase and should still apply).
-// Returns (terminated, skipToAccess, error).
-func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (terminated bool, skipToAccess bool, err error) {
+// Returns (terminated, error).
+func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (terminated bool, err error) {
 	if sa == nil {
-		return false, false, nil
+		return false, nil
 	}
 
 	for _, act := range sa.actions {
-		termResult, err := act(rw, req, ctx, pc)
+		// The last and break flags only stop the rewrite module directives:
+		// the access and header directives that follow must still apply.
+		if act.rewrite && (ctx.stopAllDirectives || ctx.stopCurrentBlock) {
+			continue
+		}
+
+		termResult, err := act.action(rw, req, ctx, pc)
 		if err != nil {
-			return false, false, err
+			return false, err
 		}
 		if termResult {
 			terminated = true
@@ -99,17 +113,19 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 		if terminated {
 			continue
 		}
-		if ctx.stopAllDirectives {
-			// rewrite...break: stop processing, skip to access phase
-			return terminated, true, nil
-		}
-		if ctx.stopCurrentBlock {
-			// rewrite...last: stop current block
-			return terminated, false, nil
-		}
 	}
 
-	return terminated, false, nil
+	return terminated, nil
+}
+
+// Reports whether the directive belongs to the NGINX rewrite module.
+func isRewriteDirective(name string) bool {
+	switch name {
+	case "set", "rewrite", "return", "if":
+		return true
+	default:
+		return false
+	}
 }
 
 // HasAccess returns true if there are any access control actions collected.
@@ -253,7 +269,7 @@ func createIfCollectable(d config.IDirective) (CollectableAction, error) {
 			// Increase block depth for override behavior
 			pc.blockDepth++
 			// Recursively collect nested actions
-			terminated, _, err := nestedActions.Collect(rw, req, ctx, pc)
+			terminated, err := nestedActions.Collect(rw, req, ctx, pc)
 			pc.blockDepth--
 			return terminated, err
 		}
@@ -294,7 +310,14 @@ func createLocationCollectable(d config.IDirective) (CollectableAction, error) {
 			// Increase block depth for override behavior
 			pc.blockDepth++
 			// Recursively collect nested actions
-			terminated, _, err := nestedActions.Collect(rw, req, ctx, pc)
+			// A location has its own rewrite phase: a server level last or break does not stop it,
+			// and a last or break inside the location does not stop the server level directives.
+			stopCurrentBlock, stopAllDirectives := ctx.stopCurrentBlock, ctx.stopAllDirectives
+			ctx.stopCurrentBlock, ctx.stopAllDirectives = false, false
+
+			terminated, err := nestedActions.Collect(rw, req, ctx, pc)
+
+			ctx.stopCurrentBlock, ctx.stopAllDirectives = stopCurrentBlock, stopAllDirectives
 			pc.blockDepth--
 			return terminated, err
 		}
