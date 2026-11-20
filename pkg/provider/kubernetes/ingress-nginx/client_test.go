@@ -92,6 +92,87 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 	}
 }
 
+func TestFilterIngressClass(t *testing.T) {
+	newIngressClass := func(name, controller string) *netv1.IngressClass {
+		ingressClass := &netv1.IngressClass{
+			Spec: netv1.IngressClassSpec{Controller: controller},
+		}
+		ingressClass.Name = name
+
+		return ingressClass
+	}
+
+	byName := newIngressClass("nginx", "nginx.org/ingress-controller")
+	byController := newIngressClass("traefik", "traefik.io/ingress-nginx")
+	byBoth := newIngressClass("nginx", "traefik.io/ingress-nginx")
+	unrelated := newIngressClass("other", "k8s.io/ingress-nginx")
+
+	testCases := []struct {
+		desc               string
+		ingressClasses     []*netv1.IngressClass
+		ingressClassByName bool
+		expectedNames      []string
+	}{
+		{
+			desc:               "controller match only",
+			ingressClasses:     []*netv1.IngressClass{byController},
+			ingressClassByName: true,
+			expectedNames:      []string{"traefik"},
+		},
+		{
+			desc:               "name match only",
+			ingressClasses:     []*netv1.IngressClass{byName},
+			ingressClassByName: true,
+			expectedNames:      []string{"nginx"},
+		},
+		{
+			desc:               "name match before a controller match keeps both",
+			ingressClasses:     []*netv1.IngressClass{byName, byController},
+			ingressClassByName: true,
+			expectedNames:      []string{"nginx", "traefik"},
+		},
+		{
+			desc:               "controller match before a name match keeps both",
+			ingressClasses:     []*netv1.IngressClass{byController, byName},
+			ingressClassByName: true,
+			expectedNames:      []string{"traefik", "nginx"},
+		},
+		{
+			desc:               "class matching both paths is returned once",
+			ingressClasses:     []*netv1.IngressClass{byBoth},
+			ingressClassByName: true,
+			expectedNames:      []string{"nginx"},
+		},
+		{
+			desc:               "name path disabled keeps the controller matches only",
+			ingressClasses:     []*netv1.IngressClass{byName, byController},
+			ingressClassByName: false,
+			expectedNames:      []string{"traefik"},
+		},
+		{
+			desc:               "no match",
+			ingressClasses:     []*netv1.IngressClass{unrelated},
+			ingressClassByName: true,
+			expectedNames:      []string{},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := filterIngressClass(test.ingressClasses, test.ingressClassByName, "nginx", "traefik.io/ingress-nginx")
+
+			names := make([]string, 0, len(got))
+			for _, ic := range got {
+				names = append(names, ic.Name)
+			}
+
+			assert.Equal(t, test.expectedNames, names)
+		})
+	}
+}
+
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
 		Namespace: "default",
