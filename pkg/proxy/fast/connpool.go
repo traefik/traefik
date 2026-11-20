@@ -47,6 +47,11 @@ type conn struct {
 	idleAt      time.Time // the last time it was marked as idle.
 	idleTimeout time.Duration
 
+	// reused reports whether the connection went back to the pool after a request.
+	// A request is only replayed on a reused connection, as the backend has no reason to close a fresh one.
+	// Replaying on fresh connections loops until the client gives up when the backend closes every connection.
+	reused bool
+
 	responseHeaderTimeout time.Duration
 
 	expectedResponse atomic.Bool
@@ -403,6 +408,7 @@ func (c *connPool) ReleaseConn(co *conn) {
 	}
 
 	co.idleAt = time.Now()
+	co.reused = true
 	c.releaseConn(co)
 }
 
