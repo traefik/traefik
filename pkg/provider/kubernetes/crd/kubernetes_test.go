@@ -9848,12 +9848,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     new("/foo"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										Partitioned: true,
+										MaxAge:      42,
+										Path:        new("/foo"),
 									},
 								},
 								Services: []dynamic.WRRService{
@@ -9925,12 +9926,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Strategy: dynamic.BalancerStrategyWRR,
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "cookie",
-										Secure:   true,
-										HTTPOnly: true,
-										SameSite: "none",
-										MaxAge:   42,
-										Path:     new("/foo"),
+										Name:        "cookie",
+										Secure:      true,
+										HTTPOnly:    true,
+										SameSite:    "none",
+										Partitioned: true,
+										MaxAge:      42,
+										Path:        new("/foo"),
 									},
 								},
 								Servers: []dynamic.Server{

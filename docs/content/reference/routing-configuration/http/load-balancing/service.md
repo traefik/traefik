@@ -338,6 +338,22 @@ One however can change that through configuration.
 
 `SameSite` can be `none`, `lax`, `strict` or empty. Values are case-insensitive.
 
+#### Partitioned
+
+By default, Traefik doesn't set the `Partitioned` attribute on the affinity cookie.
+
+When your service is embedded in another site (for example, in an iframe),
+the affinity cookie is a third-party cookie.
+If the browser blocks third-party cookies, the client loses its sticky session.
+Set `partitioned` to `true` to add the `Partitioned` attribute to the affinity cookie.
+A browser that supports [CHIPS (Cookies Having Independent Partitioned State)](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)
+then stores the cookie separately for each top-level site that embeds your service.
+
+A partitioned cookie must also be `Secure`.
+When `partitioned` is `true`, Traefik sets the `Secure` attribute on the affinity cookie, even if `secure` is `false`.
+To send the affinity cookie in a cross-site context, also set `sameSite` to `none`,
+as described in the [`SameSite` reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value).
+
 #### Domain
 
 The Domain attribute of a cookie specifies the domain for which the cookie is valid. 

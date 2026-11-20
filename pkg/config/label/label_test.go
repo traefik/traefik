@@ -186,6 +186,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.secure":             "true",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.partitioned":        "true",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.path":               "/foobar",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.domain":             "foo.com",
 		"traefik.http.services.Service0.loadbalancer.serversTransport":                 "foobar",
@@ -701,11 +702,12 @@ func TestDecodeConfiguration(t *testing.T) {
 						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
-								Name:     "foobar",
-								Secure:   true,
-								HTTPOnly: false,
-								Domain:   "foo.com",
-								Path:     func(v string) *string { return &v }("/foobar"),
+								Name:        "foobar",
+								Secure:      true,
+								HTTPOnly:    false,
+								Partitioned: true,
+								Domain:      "foo.com",
+								Path:        func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{
@@ -1255,10 +1257,11 @@ func TestEncodeConfiguration(t *testing.T) {
 						Strategy: "foobar",
 						Sticky: &dynamic.Sticky{
 							Cookie: &dynamic.Cookie{
-								Name:     "foobar",
-								HTTPOnly: true,
-								Domain:   "foo.com",
-								Path:     func(v string) *string { return &v }("/foobar"),
+								Name:        "foobar",
+								HTTPOnly:    true,
+								Partitioned: true,
+								Domain:      "foo.com",
+								Path:        func(v string) *string { return &v }("/foobar"),
 							},
 						},
 						Servers: []dynamic.Server{
@@ -1524,6 +1527,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Partitioned":        "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.MaxAge":             "0",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Path":               "/foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Domain":             "foo.com",

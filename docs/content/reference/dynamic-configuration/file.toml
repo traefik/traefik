@@ -82,6 +82,7 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+            partitioned = true
             maxAge = 42
             path = "foobar"
             domain = "foobar"
@@ -146,6 +147,7 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+            partitioned = true
             maxAge = 42
             path = "foobar"
             domain = "foobar"

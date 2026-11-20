@@ -380,12 +380,13 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 	if tService.Weighted.Sticky != nil && tService.Weighted.Sticky.Cookie != nil {
 		sticky = &dynamic.Sticky{
 			Cookie: &dynamic.Cookie{
-				Name:     tService.Weighted.Sticky.Cookie.Name,
-				Secure:   tService.Weighted.Sticky.Cookie.Secure,
-				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
-				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
-				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
-				Domain:   tService.Weighted.Sticky.Cookie.Domain,
+				Name:        tService.Weighted.Sticky.Cookie.Name,
+				Secure:      tService.Weighted.Sticky.Cookie.Secure,
+				HTTPOnly:    tService.Weighted.Sticky.Cookie.HTTPOnly,
+				SameSite:    tService.Weighted.Sticky.Cookie.SameSite,
+				Partitioned: tService.Weighted.Sticky.Cookie.Partitioned,
+				MaxAge:      tService.Weighted.Sticky.Cookie.MaxAge,
+				Domain:      tService.Weighted.Sticky.Cookie.Domain,
 			},
 		}
 		sticky.Cookie.SetDefaults()
@@ -555,12 +556,13 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
 		lb.Sticky = &dynamic.Sticky{
 			Cookie: &dynamic.Cookie{
-				Name:     svc.Sticky.Cookie.Name,
-				Secure:   svc.Sticky.Cookie.Secure,
-				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
-				SameSite: svc.Sticky.Cookie.SameSite,
-				MaxAge:   svc.Sticky.Cookie.MaxAge,
-				Domain:   svc.Sticky.Cookie.Domain,
+				Name:        svc.Sticky.Cookie.Name,
+				Secure:      svc.Sticky.Cookie.Secure,
+				HTTPOnly:    svc.Sticky.Cookie.HTTPOnly,
+				SameSite:    svc.Sticky.Cookie.SameSite,
+				Partitioned: svc.Sticky.Cookie.Partitioned,
+				MaxAge:      svc.Sticky.Cookie.MaxAge,
+				Domain:      svc.Sticky.Cookie.Domain,
 			},
 		}
 		lb.Sticky.Cookie.SetDefaults()

@@ -104,14 +104,15 @@ func TestSticky_StickyHandler(t *testing.T) {
 
 func TestSticky_WriteStickyCookie(t *testing.T) {
 	cookieConfig := dynamic.Cookie{
-		Name:     "test",
-		Secure:   true,
-		HTTPOnly: true,
-		SameSite: "none",
-		MaxAge:   42,
-		Expires:  10,
-		Path:     new("/foo"),
-		Domain:   "foo.com",
+		Name:        "test",
+		Secure:      true,
+		HTTPOnly:    true,
+		SameSite:    "none",
+		Partitioned: true,
+		MaxAge:      42,
+		Expires:     10,
+		Path:        new("/foo"),
+		Domain:      "foo.com",
 	}
 	sticky := NewSticky(cookieConfig)
 
@@ -134,10 +135,28 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 	assert.True(t, cookie.Secure)
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, http.SameSiteNoneMode, cookie.SameSite)
+	assert.True(t, cookie.Partitioned)
 	assert.Equal(t, 42, cookie.MaxAge)
 	assert.WithinRange(t, cookie.Expires, time.Now(), time.Now().Add(time.Duration(cookieConfig.Expires)*time.Second))
 	assert.Equal(t, "/foo", cookie.Path)
 	assert.Equal(t, "foo.com", cookie.Domain)
+}
+
+func TestSticky_WriteStickyCookie_PartitionedImpliesSecure(t *testing.T) {
+	sticky := NewSticky(dynamic.Cookie{
+		Name:        "test",
+		Partitioned: true,
+	})
+	sticky.AddHandler("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+
+	res := httptest.NewRecorder()
+	require.NoError(t, sticky.WriteStickyCookie(res, "first"))
+
+	require.Len(t, res.Result().Cookies(), 1)
+
+	cookie := res.Result().Cookies()[0]
+	assert.True(t, cookie.Partitioned)
+	assert.True(t, cookie.Secure)
 }
 
 func TestSticky_WriteStickyCookie_LeadingDotDomain(t *testing.T) {
