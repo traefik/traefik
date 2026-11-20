@@ -71,7 +71,11 @@ func OperationWithRecover(operation backoff.Operation) backoff.Operation {
 		defer func() {
 			if res := recover(); res != nil {
 				defaultRecoverGoroutine(res)
-				err = fmt.Errorf("panic in operation: %w", err)
+				if e, ok := res.(error); ok {
+					err = fmt.Errorf("panic in operation: %w", e)
+				} else {
+					err = fmt.Errorf("panic in operation: %v", res)
+				}
 			}
 		}()
 		return operation()
