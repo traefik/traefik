@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -295,6 +296,65 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 			}
 
 			assert.Equal(t, test.expectedSentData, string(sentData), "Should send the expected data")
+		})
+	}
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_response(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		response      io.Reader
+		expectedError string
+	}{
+		{
+			desc:     "complete response",
+			response: strings.NewReader("PONG"),
+		},
+		{
+			desc:     "response split across reads",
+			response: io.MultiReader(strings.NewReader("PO"), strings.NewReader("NG")),
+		},
+		{
+			desc:          "incorrect response",
+			response:      strings.NewReader("FAIL"),
+			expectedError: "unexpected heath check response",
+		},
+		{
+			desc:          "truncated response",
+			response:      strings.NewReader("PO"),
+			expectedError: "reading from 127.0.0.1:8080: unexpected EOF",
+		},
+		{
+			desc:          "empty response",
+			response:      strings.NewReader(""),
+			expectedError: "reading from 127.0.0.1:8080: EOF",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config := &dynamic.TCPServerHealthCheck{
+				Expect:  "PONG",
+				Timeout: ptypes.Duration(time.Second),
+			}
+			target := &TCPHealthCheckTarget{
+				Address: "127.0.0.1:8080",
+				Dialer: &dialerMock{
+					onDial: func(_, _ string) (net.Conn, error) {
+						return &connMock{readFunc: test.response.Read}, nil
+					},
+				},
+			}
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), config, nil, nil, nil, "test")
+
+			err := healthChecker.executeHealthCheck(t.Context(), config, target)
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
