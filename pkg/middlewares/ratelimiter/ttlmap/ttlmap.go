@@ -82,6 +82,45 @@ func (m *Map[V]) Set(key string, value V, ttlSeconds int) error {
 	return nil
 }
 
+// GetOrSet returns the value stored for the key, and resets its expiration to ttlSeconds from now.
+// When the key is absent or expired, the value returned by create is stored first.
+// As with Set, when the map is full, inserting a new key evicts the entry closest to expiration.
+// The lookup and the insertion are done under the same lock,
+// so that concurrent calls for a new key all get the same value.
+// As create is called with the lock held, it must not use the Map.
+func (m *Map[V]) GetOrSet(key string, create func() V, ttlSeconds int) (V, error) {
+	if ttlSeconds <= 0 {
+		var zero V
+		return zero, fmt.Errorf("ttlSeconds must be greater than 0, got %d", ttlSeconds)
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	expiry := m.clock().Add(time.Duration(ttlSeconds) * time.Second).Unix()
+
+	if it, ok := m.items[key]; ok {
+		if m.expired(it) {
+			it.value = create()
+		}
+
+		it.expiry = expiry
+		heap.Fix(&m.expiries, it.index)
+
+		return it.value, nil
+	}
+
+	if len(m.items) >= m.capacity {
+		m.freeSpace()
+	}
+
+	it := &item[V]{key: key, value: create(), expiry: expiry}
+	m.items[key] = it
+	heap.Push(&m.expiries, it)
+
+	return it.value, nil
+}
+
 // Len returns the number of entries currently held, including any that have
 // expired but not yet been removed.
 func (m *Map[V]) Len() int {

@@ -3,6 +3,7 @@ package ttlmap
 import (
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -106,6 +107,98 @@ func TestMap_capacityEvictsClosestToExpiry(t *testing.T) {
 
 	// now is unused beyond construction here but kept for symmetry.
 	_ = now
+}
+
+func TestMap_getOrSet(t *testing.T) {
+	m, now := withClock[string](t, 10)
+
+	var created int
+	create := func() string {
+		created++
+		return "value" + strconv.Itoa(created)
+	}
+
+	value, err := m.GetOrSet("key", create, 10)
+	require.NoError(t, err)
+	assert.Equal(t, "value1", value)
+
+	*now = now.Add(8 * time.Second)
+	value, err = m.GetOrSet("key", create, 10)
+	require.NoError(t, err)
+	assert.Equal(t, "value1", value)
+	assert.Equal(t, 1, created)
+
+	// Original expiry has passed, but GetOrSet pushed it back.
+	*now = now.Add(2 * time.Second)
+	value, ok := m.Get("key")
+	assert.True(t, ok)
+	assert.Equal(t, "value1", value)
+
+	// Once expired, the entry is replaced by a newly created value.
+	*now = now.Add(8 * time.Second)
+	value, err = m.GetOrSet("key", create, 10)
+	require.NoError(t, err)
+	assert.Equal(t, "value2", value)
+	assert.Equal(t, 2, created)
+	assert.Equal(t, 1, m.Len())
+}
+
+func TestMap_getOrSetInvalidTTL(t *testing.T) {
+	m, _ := withClock[string](t, 10)
+
+	create := func() string { return "value" }
+
+	_, err := m.GetOrSet("key", create, 0)
+	assert.Error(t, err)
+
+	_, err = m.GetOrSet("key", create, -1)
+	assert.Error(t, err)
+}
+
+func TestMap_getOrSetCapacityEvictsClosestToExpiry(t *testing.T) {
+	m, _ := withClock[string](t, 2)
+
+	require.NoError(t, m.Set("a", "a", 100))
+	require.NoError(t, m.Set("b", "b", 200))
+
+	// Refreshing "a" makes "b" the entry closest to expiration.
+	_, err := m.GetOrSet("a", func() string { return "other" }, 300)
+	require.NoError(t, err)
+
+	value, err := m.GetOrSet("c", func() string { return "c" }, 400)
+	require.NoError(t, err)
+	assert.Equal(t, "c", value)
+
+	value, ok := m.Get("a")
+	assert.True(t, ok)
+	assert.Equal(t, "a", value)
+
+	_, ok = m.Get("b")
+	assert.False(t, ok)
+
+	_, ok = m.Get("c")
+	assert.True(t, ok)
+
+	assert.Equal(t, 2, m.Len())
+}
+
+func TestMap_getOrSetConcurrentAccess(t *testing.T) {
+	m, err := New[int](100)
+	require.NoError(t, err)
+
+	var created atomic.Int64
+	create := func() int { return int(created.Add(1)) }
+
+	var wg sync.WaitGroup
+	for range 50 {
+		wg.Go(func() {
+			_, err := m.GetOrSet("key", create, 60)
+			require.NoError(t, err)
+		})
+	}
+	wg.Wait()
+
+	assert.Equal(t, int64(1), created.Load())
 }
 
 func TestMap_concurrentAccess(t *testing.T) {
