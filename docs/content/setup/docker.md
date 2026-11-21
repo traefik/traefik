@@ -38,10 +38,12 @@ The `certs` folder now holds `local.crt` and `local.key`, which will be mounted 
 In production, it is advisable to have some form of authentication/security for the Traefik dashboard. Traefik can be secured with the [basic‑auth middleware](../reference/routing-configuration/http/middlewares/basicauth.md). To do this, generate a hashed username / password pair that Traefik’s middleware will validate:
 
 ```bash
-htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
+htpasswd -nb admin | sed -e 's/\$/\$\$/g'
 ```
 
-Copy the full output (e.g., admin:$$apr1$$…) — we'll need this for the middleware configuration.
+Provide your password at the prompt and copy the full output (e.g., admin:$$apr1$$…) — we'll need this for the middleware configuration.
+The sed command escapes the result for YAML. Avoid providing your password directly in the htpasswd command: special characters may not escape properly inside
+the command, and it's a good idea to not have your passwords hanging around in your command history.
 
 ## Create a docker-compose.yaml
 
