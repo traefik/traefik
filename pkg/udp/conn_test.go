@@ -160,12 +160,144 @@ func TestListenWithZeroTimeout(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestTimeoutDoesNotCloseBeforeFirstRead(t *testing.T) {
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", time.Millisecond)
+	require.NoError(t, err)
+	defer func() {
+		err := ln.Close()
+		require.NoError(t, err)
+	}()
+
+	accepted := make(chan *Conn)
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+		accepted <- conn
+	}()
+
+	udpConn, err := net.Dial("udp", ln.Addr().String())
+	require.NoError(t, err)
+
+	_, err = udpConn.Write([]byte("TEST"))
+	require.NoError(t, err)
+
+	conn := <-accepted
+	time.Sleep(20 * time.Millisecond)
+
+	type readResult struct {
+		n   int
+		err error
+	}
+	resultCh := make(chan readResult)
+	go func() {
+		buf := make([]byte, 2048)
+		n, err := conn.Read(buf)
+		if err == nil {
+			assert.Equal(t, "TEST", string(buf[:n]))
+		}
+		resultCh <- readResult{n: n, err: err}
+	}()
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.Equal(t, 4, result.n)
+	case <-time.Tick(time.Second):
+		t.Fatal("Timeout during first read")
+	}
+}
+
 func TestTimeoutWithRead(t *testing.T) {
 	testTimeout(t, true)
 }
 
-func TestTimeoutWithoutRead(t *testing.T) {
-	testTimeout(t, false)
+func TestTimeoutAfterFirstRead(t *testing.T) {
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 50*time.Millisecond)
+	require.NoError(t, err)
+	defer func() {
+		err := ln.Close()
+		require.NoError(t, err)
+	}()
+
+	accepted := make(chan *Conn)
+	go func() {
+		conn, err := ln.Accept()
+		require.NoError(t, err)
+		accepted <- conn
+	}()
+
+	udpConn, err := net.Dial("udp", ln.Addr().String())
+	require.NoError(t, err)
+
+	_, err = udpConn.Write([]byte("TEST"))
+	require.NoError(t, err)
+
+	conn := <-accepted
+	time.Sleep(2 * ln.timeout)
+	ln.mu.RLock()
+	assert.Len(t, ln.conns, 1)
+	ln.mu.RUnlock()
+
+	buf := make([]byte, 2048)
+	n, err := conn.Read(buf)
+	require.NoError(t, err)
+	require.Equal(t, "TEST", string(buf[:n]))
+
+	require.Eventually(t, func() bool {
+		ln.mu.RLock()
+		defer ln.mu.RUnlock()
+		return len(ln.conns) == 0
+	}, time.Second, time.Millisecond)
+}
+
+func TestCloseBeforeFirstActivity(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		queued        bool
+		closeListener bool
+	}{
+		{desc: "connection close with empty queue"},
+		{desc: "connection close with queued packet", queued: true},
+		{desc: "listener close with empty queue", closeListener: true},
+		{desc: "listener close with queued packet", queued: true, closeListener: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			ln, err := Listen(net.ListenConfig{}, "udp", ":0", 10*time.Millisecond)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, ln.Close())
+			})
+
+			conn := ln.newConn(&net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 1234})
+			ln.mu.Lock()
+			ln.conns[conn.rAddr.String()] = conn
+			ln.mu.Unlock()
+
+			if test.queued {
+				conn.msgs = [][]byte{[]byte("TEST")}
+			}
+
+			done := make(chan struct{})
+			go func() {
+				conn.readLoop()
+				close(done)
+			}()
+
+			if test.closeListener {
+				require.NoError(t, ln.Close())
+			} else {
+				require.NoError(t, conn.Close())
+			}
+
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+				t.Fatal("readLoop did not stop after close")
+			}
+		})
+	}
 }
 
 func testTimeout(t *testing.T, withRead bool) {
