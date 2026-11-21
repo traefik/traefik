@@ -50,7 +50,16 @@ type CollectableAction func(rw http.ResponseWriter, req *http.Request, ctx *acti
 
 // SnippetActions holds the parsed collectable actions from a snippet.
 type SnippetActions struct {
-	actions []CollectableAction
+	actions []snippetAction
+}
+
+// snippetAction pairs a collectable action with the phase it belongs to.
+type snippetAction struct {
+	run CollectableAction
+
+	// deferred is true for directives that only collect actions for a later phase
+	// (access, content, header filter) instead of running in the rewrite phase.
+	deferred bool
 }
 
 // BuildSnippetActions parses directives from a block and builds collectable actions.
@@ -62,12 +71,12 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 			return nil, err
 		}
 
-		action, err := buildCollectableAction(d)
+		action, deferred, err := buildCollectableAction(d)
 		if err != nil {
 			return nil, fmt.Errorf("building %s action: %w", d.GetName(), err)
 		}
 
-		sa.actions = append(sa.actions, action)
+		sa.actions = append(sa.actions, snippetAction{run: action, deferred: deferred})
 	}
 
 	return sa, nil
@@ -78,6 +87,9 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 // Other directives are collected into the appropriate phase bucket.
 // After a `return` directive terminates, we continue collecting header-phase
 // directives (they're in a different NGINX phase and should still apply).
+// A `rewrite ... break` stops the rewrite-phase directives that follow it, but the
+// directives of the other phases still apply, as `break` only ends the processing of
+// the ngx_http_rewrite_module directives.
 // Returns (terminated, skipToAccess, error).
 func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (terminated bool, skipToAccess bool, err error) {
 	if sa == nil {
@@ -85,7 +97,11 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 	}
 
 	for _, act := range sa.actions {
-		termResult, err := act(rw, req, ctx, pc)
+		if skipToAccess && !act.deferred {
+			continue
+		}
+
+		termResult, err := act.run(rw, req, ctx, pc)
 		if err != nil {
 			return false, false, err
 		}
@@ -100,8 +116,9 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 			continue
 		}
 		if ctx.stopAllDirectives {
-			// rewrite...break: stop processing, skip to access phase
-			return terminated, true, nil
+			// rewrite...break: stop the rewrite-phase directives, the others still apply
+			skipToAccess = true
+			continue
 		}
 		if ctx.stopCurrentBlock {
 			// rewrite...last: stop current block
@@ -109,7 +126,7 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 		}
 	}
 
-	return terminated, false, nil
+	return terminated, skipToAccess, nil
 }
 
 // HasAccess returns true if there are any access control actions collected.
@@ -134,54 +151,75 @@ type addHeaderEntry struct {
 	always bool
 }
 
-// buildCollectableAction creates a CollectableAction for a directive.
-func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
+// buildCollectableAction creates a CollectableAction for a directive, and reports whether the
+// directive only collects actions for a later phase (deferred) instead of running in the
+// rewrite phase.
+func buildCollectableAction(d config.IDirective) (CollectableAction, bool, error) {
+	var (
+		action   CollectableAction
+		deferred bool
+		err      error
+	)
+
 	switch d.GetName() {
 	// Rewrite phase - execute immediately
 	case "set":
-		return createSetCollectable(d)
+		action, err = createSetCollectable(d)
 	case "return":
-		return createReturnCollectable(d)
+		action, err = createReturnCollectable(d)
 	case "rewrite":
-		return createRewriteCollectable(d)
+		action, err = createRewriteCollectable(d)
 	case "if":
-		return createIfCollectable(d)
+		action, err = createIfCollectable(d)
 	case "location":
-		return createLocationCollectable(d)
+		action, err = createLocationCollectable(d)
 
 	// Access phase - collect
 	case "allow", "deny":
-		return createAccessCollectable(d)
+		action, err = createAccessCollectable(d)
+		deferred = true
 
 	// Input filter phase - collect
 	case "more_set_input_headers":
-		return createMoreSetInputHeadersCollectable(d)
+		action, err = createMoreSetInputHeadersCollectable(d)
+		deferred = true
 	case "more_clear_input_headers":
-		return createMoreClearInputHeadersCollectable(d)
+		action, err = createMoreClearInputHeadersCollectable(d)
+		deferred = true
 
 	// Content phase - collect
 	case "auth_request_set":
-		return createAuthRequestSetCollectable(d)
+		action, err = createAuthRequestSetCollectable(d)
+		deferred = true
 	case "proxy_set_header":
-		return createProxySetHeaderCollectable(d)
+		action, err = createProxySetHeaderCollectable(d)
+		deferred = true
 	case "proxy_method":
-		return createProxyMethodCollectable(d)
+		action, err = createProxyMethodCollectable(d)
+		deferred = true
 
 	// Header filter phase - collect
 	case "add_header":
-		return createAddHeaderCollectable(d)
+		action, err = createAddHeaderCollectable(d)
+		deferred = true
 	case "more_set_headers":
-		return createMoreSetHeadersCollectable(d)
+		action, err = createMoreSetHeadersCollectable(d)
+		deferred = true
 	case "more_clear_headers":
-		return createMoreClearHeadersCollectable(d)
+		action, err = createMoreClearHeadersCollectable(d)
+		deferred = true
 	case "proxy_hide_header":
-		return createProxyHideHeaderCollectable(d)
+		action, err = createProxyHideHeaderCollectable(d)
+		deferred = true
 	case "expires":
-		return createExpiresCollectable(d)
+		action, err = createExpiresCollectable(d)
+		deferred = true
 
 	default:
-		return nil, fmt.Errorf("unsupported directive %q", d.GetName())
+		return nil, false, fmt.Errorf("unsupported directive %q", d.GetName())
 	}
+
+	return action, deferred, err
 }
 
 // === Rewrite phase directives (execute immediately) ===
