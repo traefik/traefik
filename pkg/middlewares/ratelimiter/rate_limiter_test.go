@@ -605,17 +605,6 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 					table.Append(value)
 				}
 				state.Push(table)
-			case "hgetall":
-				// Redis does not guarantee the field order of a hash: returning tokens first catches a script relying on it.
-				fields, _ := m.keys.Get(state.Get(2).String())
-				table := state.NewTable()
-				for _, name := range []string{"tokens", "last"} {
-					if v, ok := fields[name]; ok {
-						table.Append(lua.LString(name))
-						table.Append(lua.LString(v))
-					}
-				}
-				state.Push(table)
 			case "expire":
 			default:
 				return 0
