@@ -179,9 +179,8 @@ func (t *TCPConnection) Reject() {
 }
 
 func (t *TCPConnection) SetMetadata(key, value string) {
-	// For TCP: store in context metadata map
-	// Try to get existing metadata map from context using string key
-	// (Traefik uses both string and typed keys, so we try string first)
+	// Traefik stores the shared map under the string key "metadata".
+	// Mutating that map is what the access log reads after the connection closes.
 	metadata, ok := t.ctx.Value("metadata").(map[string]string)
 	if !ok {
 		// Try with typed key (contextKey("metadata"))

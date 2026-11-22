@@ -83,10 +83,8 @@ func (r *Router) servePostgres(ctx context.Context, conn *peekConn) error {
 		proxiedConn = &postgresConn{WriteCloser: conn}
 	}
 
-	// Create context for postgres connection.
-	type metadataKey string
-	metadata := make(map[string]string)
-	ctx = context.WithValue(ctx, metadataKey("metadata"), metadata)
+	// Reuse the connection metadata map. A new map would hide the one the access log reads.
+	ctx = tcp.WithMetadata(ctx)
 
 	handlerTCPTLS.ServeTCP(ctx, proxiedConn)
 	return nil

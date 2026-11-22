@@ -158,26 +158,17 @@ func TestCombinedPlugin(t *testing.T) {
 			capturedCtx = nil
 			testConn := &testTCPConn{remoteAddr: "127.0.0.1:1234"}
 
-			// Initialize context with metadata map (like Traefik does)
-			type metadataKey string
-			metadata := make(map[string]string)
-			execCtx := context.WithValue(t.Context(), metadataKey("metadata"), metadata)
+			execCtx := tcp.WithMetadata(t.Context())
+			metadata := tcp.Metadata(execCtx)
 			tcpHandler.ServeTCP(execCtx, testConn)
 
 			// Verify request was allowed
 			assert.True(t, nextCalled, "Should call next handler for allowed IP")
 			require.NotNil(t, capturedCtx, "Context should be passed to next handler")
 
-			// Verify metadata was set in the metadata map
-			metadataMap, ok := capturedCtx.Value("metadata").(map[string]string)
-			if !ok {
-				type contextKey string
-				metadataMap, ok = capturedCtx.Value(contextKey("metadata")).(map[string]string)
-			}
-			require.True(t, ok, "Context should contain metadata map")
-			assert.Equal(t, "test-combined", metadataMap["X-Combined-Plugin"],
+			assert.Equal(t, "test-combined", metadata["X-Combined-Plugin"],
 				"Should set X-Combined-Plugin in context metadata map")
-			assert.Equal(t, "127.0.0.1", metadataMap["X-Client-IP"],
+			assert.Equal(t, "127.0.0.1", metadata["X-Client-IP"],
 				"Should set X-Client-IP in context metadata map with extracted client IP")
 		})
 
@@ -210,23 +201,14 @@ func TestCombinedPlugin(t *testing.T) {
 			capturedCtx = nil
 			testConn := &testTCPConn{remoteAddr: "10.0.0.1:1234"}
 
-			// Initialize context with metadata map
-			type metadataKey string
-			metadata := make(map[string]string)
-			execCtx := context.WithValue(t.Context(), metadataKey("metadata"), metadata)
+			execCtx := tcp.WithMetadata(t.Context())
+			metadata := tcp.Metadata(execCtx)
 			tcpHandler2.ServeTCP(execCtx, testConn)
 
 			assert.True(t, nextCalled, "Should allow 10.x IP")
 			require.NotNil(t, capturedCtx, "Context should be passed")
 
-			// Verify metadata with different config
-			metadataMap, ok := capturedCtx.Value("metadata").(map[string]string)
-			if !ok {
-				type contextKey string
-				metadataMap, ok = capturedCtx.Value(contextKey("metadata")).(map[string]string)
-			}
-			require.True(t, ok, "Context should contain metadata map")
-			assert.Equal(t, "prefix-test", metadataMap["X-Combined-Plugin"],
+			assert.Equal(t, "prefix-test", metadata["X-Combined-Plugin"],
 				"Should set metadata with configured value")
 		})
 	})

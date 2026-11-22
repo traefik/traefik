@@ -71,6 +71,11 @@ const (
 	// RetryAttempts is the map key used for the amount of attempts the request was retried.
 	RetryAttempts = "RetryAttempts"
 
+	// ConnectionStatus is success when a TCP connection reached the service, or rejected when it was closed before that.
+	ConnectionStatus = "ConnectionStatus"
+	// Error is the rejection reason of a TCP connection that did not reach the service.
+	Error = "Error"
+
 	// TLSVersion is the version of TLS used in the request.
 	TLSVersion = "TLSVersion"
 	// TLSCipher is the cipher used in the request.
@@ -149,6 +154,8 @@ var defaultCoreKeys = [...]string{
 	DownstreamStatus,
 	DownstreamContentSize,
 	RequestCount,
+	ConnectionStatus,
+	Error,
 }
 
 // This contains the set of all keys, i.e. all the default keys plus all non-default keys.

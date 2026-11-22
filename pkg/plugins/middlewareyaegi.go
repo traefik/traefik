@@ -160,6 +160,20 @@ func (c *connWithCloseWrite) CloseWrite() error {
 	return nil
 }
 
+// MarkBackend forwards the access-log signal through the stdlib connection wrapper.
+func (c *connWithCloseWrite) MarkBackend() {
+	if marker, ok := c.Conn.(interface{ MarkBackend() }); ok {
+		marker.MarkBackend()
+	}
+}
+
+// SetRejection forwards a middleware rejection through the stdlib connection wrapper.
+func (c *connWithCloseWrite) SetRejection(err error) {
+	if setter, ok := c.Conn.(interface{ SetRejection(error) }); ok {
+		setter.SetRejection(err)
+	}
+}
+
 func (b yaegiMiddlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := b.fnCreateConfig.Call(nil)
 	if len(results) != 1 {

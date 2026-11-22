@@ -45,8 +45,6 @@ const (
 	debugConnectionEnv string = "DEBUG_CONNECTION"
 )
 
-type contextKey string
-
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
@@ -309,12 +307,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			// Create connection-scoped context with metadata map for middleware chain
-			// Use server context as parent so connection context is canceled on shutdown
+			// Create connection-scoped context with metadata map for middleware chain.
+			// The map is stored under a string key so TCP plugins and the access log share it.
+			// Use server context as parent so connection context is canceled on shutdown.
 			connCtx, cancel := context.WithCancel(ctx)
-
-			metadata := make(map[string]string)
-			connCtx = context.WithValue(connCtx, contextKey("metadata"), metadata)
+			connCtx = tcp.WithMetadata(connCtx)
 
 			// Wrap connection to cancel context when connection closes
 			trackedConn := newTrackedConnection(writeCloser, e.tracker)

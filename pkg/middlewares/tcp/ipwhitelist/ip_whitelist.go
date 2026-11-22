@@ -53,6 +53,7 @@ func (wl *ipWhiteLister) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	err := wl.whiteLister.IsAuthorized(addr)
 	if err != nil {
 		logger.Error().Err(err).Msgf("Connection from %s rejected", addr)
+		tcp.SetRejection(conn, err)
 		conn.Close()
 		return
 	}

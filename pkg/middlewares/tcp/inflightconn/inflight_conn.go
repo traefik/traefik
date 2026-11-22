@@ -43,12 +43,14 @@ func (i *inFlightConn) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
 		logger.Error().Err(err).Msg("Cannot parse IP from remote addr")
+		tcp.SetRejection(conn, err)
 		conn.Close()
 		return
 	}
 
 	if err = i.increment(ip); err != nil {
 		logger.Error().Err(err).Msg("Connection rejected")
+		tcp.SetRejection(conn, err)
 		conn.Close()
 		return
 	}

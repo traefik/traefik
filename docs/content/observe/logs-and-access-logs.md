@@ -177,6 +177,25 @@ When `OriginStatus` is empty (logged as `0`), the request was never proxied to a
     Both fields are only available with the `json` format. 
     The `common` and `genericCLF` formats, and the `statusCodes` filter, use the `DownstreamStatus` value.
 
+## TCP Connections
+
+The same access log records TCP connections. Traefik writes one line when the connection handling finishes, including when a middleware closes the connection and does not call the next handler.
+
+TCP lines set `RequestProtocol` to `TCP`. `RequestMethod` and `RequestPath` are `-`, because a TCP connection has no HTTP request. `ConnectionStatus` is `success` when the connection reached the backend service, and `rejected` when it was closed before that. `Error` carries the rejection reason. A middleware that only closes the connection, without recording a reason, is logged as `connection closed before reaching the service`.
+
+A TCP middleware can add fields by writing into the metadata map stored in the connection context under the key `"metadata"`:
+
+```go
+metadata, _ := ctx.Value("metadata").(map[string]string)
+if metadata != nil {
+    metadata["X-Client-IP"] = clientIP
+}
+```
+
+The map has to be updated in place. Replacing it with a new context value keeps the extra fields invisible to the access log. Each entry is copied as its own field, and the [field filter](#log-fields-customization) applies. `ConnectionStatus` and `Error` are part of the JSON format.
+
+The `statusCodes` and `retryAttempts` filters do not apply to TCP lines. `minDuration` does.
+
 ## Access Log Filters
 
 You can configure Traefik Proxy to only record access logs for requests that match certain criteria. This is useful for reducing the volume of logs and focusing on specific events.
