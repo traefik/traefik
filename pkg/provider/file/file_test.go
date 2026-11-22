@@ -255,24 +255,38 @@ func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
 	}
 }
 
-func TestBuildConfigurationWithConfigMapVolume(t *testing.T) {
+func TestCollectFileConfigsWithConfigMapVolume(t *testing.T) {
 	tempDir := t.TempDir()
 
 	dataDir := filepath.Join(tempDir, "..2026_11_21_00_00_00.1")
-	require.NoError(t, os.Mkdir(dataDir, 0o755))
-
-	err := copyFile("./fixtures/yaml/simple_file_01.yml", filepath.Join(dataDir, "simple_file_01.yml"))
+	err := os.MkdirAll(filepath.Join(dataDir, "sub"), 0o755)
 	require.NoError(t, err)
 
-	require.NoError(t, os.Symlink(filepath.Base(dataDir), filepath.Join(tempDir, "..data")))
-	require.NoError(t, os.Symlink(filepath.Join("..data", "simple_file_01.yml"), filepath.Join(tempDir, "simple_file_01.yml")))
+	err = copyFile("./fixtures/yaml/simple_file_01.yml", filepath.Join(dataDir, "simple_file_01.yml"))
+	require.NoError(t, err)
 
-	provider := &Provider{Directory: tempDir}
+	err = copyFile("./fixtures/yaml/dir01_file01.yml", filepath.Join(dataDir, "sub", "dir01_file01.yml"))
+	require.NoError(t, err)
+
+	err = os.Symlink(filepath.Base(dataDir), filepath.Join(tempDir, "..data"))
+	require.NoError(t, err)
+
+	err = os.Symlink(filepath.Join("..data", "simple_file_01.yml"), filepath.Join(tempDir, "simple_file_01.yml"))
+	require.NoError(t, err)
+
+	err = os.Symlink(filepath.Join("..data", "sub"), filepath.Join(tempDir, "sub"))
+	require.NoError(t, err)
+
+	provider := &Provider{}
 
 	configurations, err := provider.collectFileConfigs(t.Context(), tempDir, "")
 	require.NoError(t, err)
-	require.Len(t, configurations, 1)
-	assert.Equal(t, "simple_file_01.yml", configurations[0].Name)
+
+	var names []string
+	for _, configuration := range configurations {
+		names = append(names, configuration.Name)
+	}
+	assert.Equal(t, []string{"simple_file_01.yml", filepath.Join("sub", "dir01_file01.yml")}, names)
 }
 
 func getTestCases() []ProvideTestCase {
