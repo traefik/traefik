@@ -70,10 +70,11 @@ type tcpLogState struct {
 	written   atomic.Int64
 }
 
-// observingConn counts bytes and records whether the service was reached
-// and why a middleware rejected the connection.
+// observingConn counts bytes and records whether a backend server was reached,
+// or why the connection was closed before that.
 type observingConn struct {
 	tcp.WriteCloser
+
 	state *tcpLogState
 }
 
@@ -93,14 +94,14 @@ func (c *observingConn) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// MarkBackend records that the TCP service handler was invoked.
+// MarkBackend records that a backend server was reached.
 func (c *observingConn) MarkBackend() {
 	c.state.mu.Lock()
 	c.state.reached = true
 	c.state.mu.Unlock()
 }
 
-// SetRejection records the first reason a middleware closed the connection.
+// SetRejection records the first reason the connection was closed before reaching a backend server.
 func (c *observingConn) SetRejection(err error) {
 	if err == nil {
 		return
@@ -163,16 +164,14 @@ func (h *Handler) logTCP(ctx context.Context, entryPoint, routerName, serviceNam
 	}
 
 	fields := logrus.Fields{}
-	taken := map[string]struct{}{}
 	for k, v := range core {
-		taken[strings.ToLower(k)] = struct{}{}
 		if h.config.Fields.Keep(strings.ToLower(k)) {
 			fields[k] = v
 		}
 	}
 
 	for k, v := range tcp.Metadata(ctx) {
-		if _, reserved := taken[strings.ToLower(k)]; reserved || k == "" {
+		if k == "" || isReservedTCPField(k) {
 			continue
 		}
 		if h.config.Fields.Keep(strings.ToLower(k)) {
@@ -181,6 +180,26 @@ func (h *Handler) logTCP(ctx context.Context, entryPoint, routerName, serviceNam
 	}
 
 	h.writeEntry(ctx, core, fields)
+}
+
+var reservedTCPFields = func() map[string]struct{} {
+	reserved := map[string]struct{}{strings.ToLower(logs.EntryPointName): {}}
+	// defaultCoreKeys, not allCoreKeys: package variables are initialized before init fills allCoreKeys.
+	for _, k := range defaultCoreKeys {
+		reserved[strings.ToLower(k)] = struct{}{}
+	}
+	return reserved
+}()
+
+// isReservedTCPField reports whether a metadata key names a field Traefik writes itself.
+// Copying such a key would fake that field, and the formatters assert the type of some of them
+// (StartLocal must be a time.Time), so a string value would make them panic.
+func isReservedTCPField(key string) bool {
+	lower := strings.ToLower(key)
+	if _, ok := reservedTCPFields[lower]; ok {
+		return true
+	}
+	return strings.HasPrefix(lower, "request_") || strings.HasPrefix(lower, "origin_") || strings.HasPrefix(lower, "downstream_")
 }
 
 // keepTCPAccessLog applies only minDuration. HTTP status codes and retry attempts

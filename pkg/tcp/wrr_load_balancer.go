@@ -53,6 +53,7 @@ func (b *WRRLoadBalancer) ServeTCP(ctx context.Context, conn WriteCloser) {
 		if !errors.Is(err, errNoServersInPool) {
 			log.Error().Err(err).Msg("Error during load balancing")
 		}
+		SetRejection(conn, err)
 		_ = conn.Close()
 		return
 	}

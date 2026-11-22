@@ -15,8 +15,8 @@ import (
 type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
 // TCPConstructor creates a TCP plugin handler.
-// Note: Unlike HTTP Constructor, TCP doesn't use context in the constructor signature.
-type TCPConstructor func(tcp.Handler) (tcp.Handler, error)
+// It is an alias so the plugin middlewares, which return the unnamed func type, satisfy pluginTCPMiddleware.
+type TCPConstructor = func(tcp.Handler) (tcp.Handler, error)
 
 type pluginMiddleware interface {
 	NewHandler(ctx context.Context, next http.Handler) (http.Handler, error)
@@ -138,7 +138,7 @@ func (b Builder) Build(pName string, config map[string]any, middlewareName strin
 }
 
 // BuildTCP builds a TCP middleware plugin.
-func (b Builder) BuildTCP(pName string, config map[string]interface{}, middlewareName string) (tcp.Constructor, error) {
+func (b Builder) BuildTCP(pName string, config map[string]any, middlewareName string) (tcp.Constructor, error) {
 	if b.middlewareBuilders == nil {
 		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
 	}
@@ -153,7 +153,6 @@ func (b Builder) BuildTCP(pName string, config map[string]interface{}, middlewar
 		return nil, err
 	}
 
-	// Check if the plugin implements TCP support.
 	tcpMiddleware, ok := m.(pluginTCPMiddleware)
 	if !ok {
 		return nil, fmt.Errorf("plugin %q does not support TCP", pName)
@@ -164,8 +163,7 @@ func (b Builder) BuildTCP(pName string, config map[string]interface{}, middlewar
 		return nil, err
 	}
 
-	// Return the tcp.Constructor directly (it matches the TCPConstructor signature).
-	return tcp.Constructor(constructor), nil
+	return constructor, nil
 }
 
 // resolveYaegiVersion returns the version of the Yaegi interpreter that runs a plugin.

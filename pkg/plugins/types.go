@@ -60,7 +60,6 @@ type Manifest struct {
 	Summary        string         `yaml:"summary"`
 	UseUnsafe      bool           `yaml:"useUnsafe"`
 	TestData       map[string]any `yaml:"testData"`
-	SupportsTCP    bool           `yaml:"supportsTCP,omitempty"`
 }
 
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.

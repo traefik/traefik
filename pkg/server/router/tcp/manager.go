@@ -37,6 +37,7 @@ type Manager struct {
 	conf                *runtime.Configuration
 	providersPrecedence []string
 	accessLogger        *accesslog.Handler
+	accessLogDisabled   map[string]bool
 }
 
 // NewManager Creates a new Manager.
@@ -61,8 +62,11 @@ func NewManager(conf *runtime.Configuration,
 
 // SetAccessLogHandler records TCP connections with the same access log as HTTP.
 // A nil handler leaves TCP connections unlogged.
-func (m *Manager) SetAccessLogHandler(handler *accesslog.Handler) {
+// The entryPoints in disabledEntryPoints are skipped: the entryPoint observability option
+// only reaches HTTP routers through the models, so TCP routers need it here.
+func (m *Manager) SetAccessLogHandler(handler *accesslog.Handler, disabledEntryPoints map[string]bool) {
 	m.accessLogger = handler
+	m.accessLogDisabled = disabledEntryPoints
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
@@ -386,18 +390,20 @@ func (m *Manager) buildTCPHandler(ctx context.Context, entryPointName, routerNam
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	handler, err := tcp.NewChain().Extend(*mHandler).Then(tcp.MarkReached(sHandler))
+	handler, err := tcp.NewChain().Extend(*mHandler).Then(sHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	return m.wrapAccessLog(entryPointName, routerName, router.Service, handler), nil
+	return m.wrapAccessLog(entryPointName, routerName, provider.GetQualifiedName(ctx, router.Service), handler), nil
 }
 
-// wrapAccessLog places the access log outside the middleware chain.
-// TLS termination stays outside this wrapper, so the handshake happens first.
+// wrapAccessLog places the access log outside the middleware chain,
+// so a middleware that closes the connection without calling next is still recorded.
+// TLS termination wraps this handler, but the handshake is lazy: it runs on the first read,
+// after the backend dial, so a failed handshake is not reported as a rejection.
 func (m *Manager) wrapAccessLog(entryPointName, routerName, serviceName string, handler tcp.Handler) tcp.Handler {
-	if m.accessLogger == nil {
+	if m.accessLogger == nil || m.accessLogDisabled[entryPointName] {
 		return handler
 	}
 	if strings.HasSuffix(routerName, "@internal") && !m.accessLogger.IncludeInternalRouters() {

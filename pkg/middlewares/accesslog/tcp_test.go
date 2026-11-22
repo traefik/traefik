@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net"
 	"strings"
 	"testing"
@@ -22,18 +23,17 @@ import (
 func TestTCPMiddlewareMetadataIsLogged(t *testing.T) {
 	handler, buf := newTCPAccessLog(t, nil)
 
-	service := tcp.MarkReached(tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
+	service := backend(func(_ context.Context, conn tcp.WriteCloser) {
 		buf := make([]byte, 4)
 		_, err := conn.Read(buf)
 		require.NoError(t, err)
 		_, err = conn.Write([]byte("pong"))
 		require.NoError(t, err)
-	}))
+	})
 
-	// A plugin looks the map up by the string key and mutates it in place.
 	middleware := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
-		metadata, ok := ctx.Value("metadata").(map[string]string)
-		require.True(t, ok)
+		metadata := tcp.Metadata(ctx)
+		require.NotNil(t, metadata)
 		metadata["X-Client-IP"] = "10.0.0.8"
 		metadata["X-Combined-Plugin"] = "combined"
 		service.ServeTCP(ctx, conn)
@@ -54,8 +54,8 @@ func TestTCPMiddlewareMetadataIsLogged(t *testing.T) {
 	assert.Equal(t, "4242", got[ClientPort])
 	assert.Equal(t, "-", got[RequestMethod])
 	assert.Equal(t, "-", got[RequestPath])
-	assert.Equal(t, float64(4), got[RequestContentSize])
-	assert.Equal(t, float64(4), got[DownstreamContentSize])
+	assert.InDelta(t, 4, got[RequestContentSize], 0)
+	assert.InDelta(t, 4, got[DownstreamContentSize], 0)
 	_, hasError := got[Error]
 	assert.False(t, hasError)
 }
@@ -64,8 +64,8 @@ func TestTCPMiddlewareRejectionKeepsMetadata(t *testing.T) {
 	handler, buf := newTCPAccessLog(t, nil)
 
 	middleware := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
-		metadata, ok := ctx.Value("metadata").(map[string]string)
-		require.True(t, ok)
+		metadata := tcp.Metadata(ctx)
+		require.NotNil(t, metadata)
 		metadata["X-Client-IP"] = "192.168.0.9"
 		metadata["X-Combined-Plugin"] = "combined"
 		tcp.SetRejection(conn, assert.AnError)
@@ -122,7 +122,7 @@ func TestTCPIPAllowListRejectionIsLogged(t *testing.T) {
 func TestTCPAccessLogFilters(t *testing.T) {
 	t.Run("status codes do not drop tcp lines", func(t *testing.T) {
 		handler, buf := newTCPAccessLog(t, &otypes.AccessLogFilters{StatusCodes: []string{"500"}})
-		handler.WrapTCP("web", "db@file", "db", tcp.MarkReached(tcp.HandlerFunc(func(context.Context, tcp.WriteCloser) {}))).
+		handler.WrapTCP("web", "db@file", "db", backend(nil)).
 			ServeTCP(t.Context(), newStubConn("10.0.0.1:1", ""))
 
 		got := decodeAccessLog(t, buf)
@@ -131,7 +131,7 @@ func TestTCPAccessLogFilters(t *testing.T) {
 
 	t.Run("min duration drops short tcp lines", func(t *testing.T) {
 		handler, buf := newTCPAccessLog(t, &otypes.AccessLogFilters{MinDuration: ptypes.Duration(time.Hour)})
-		handler.WrapTCP("web", "db@file", "db", tcp.MarkReached(tcp.HandlerFunc(func(context.Context, tcp.WriteCloser) {}))).
+		handler.WrapTCP("web", "db@file", "db", backend(nil)).
 			ServeTCP(t.Context(), newStubConn("10.0.0.1:1", ""))
 
 		assert.Empty(t, strings.TrimSpace(buf.String()))
@@ -154,6 +154,92 @@ func TestTCPAccessLogFilters(t *testing.T) {
 		assert.Equal(t, "rejected", got[ConnectionStatus])
 	})
 }
+
+func TestTCPBackendFailureIsRejected(t *testing.T) {
+	t.Run("dial error", func(t *testing.T) {
+		handler, buf := newTCPAccessLog(t, nil)
+
+		proxy, err := tcp.NewProxy("10.0.0.1:5432", failingDialer{})
+		require.NoError(t, err)
+
+		handler.WrapTCP("web", "db@file", "db@file", proxy).ServeTCP(t.Context(), newStubConn("10.0.0.8:1", ""))
+
+		got := decodeAccessLog(t, buf)
+		assert.Equal(t, "rejected", got[ConnectionStatus])
+		assert.Equal(t, "dialing backend: connection refused", got[Error])
+	})
+
+	t.Run("empty pool", func(t *testing.T) {
+		handler, buf := newTCPAccessLog(t, nil)
+
+		handler.WrapTCP("web", "db@file", "db@file", tcp.NewWRRLoadBalancer(false)).ServeTCP(t.Context(), newStubConn("10.0.0.8:1", ""))
+
+		got := decodeAccessLog(t, buf)
+		assert.Equal(t, "rejected", got[ConnectionStatus])
+		assert.Equal(t, "no servers in the pool", got[Error])
+	})
+}
+
+func TestTCPMetadataCannotOverrideLogFields(t *testing.T) {
+	handler, buf := newTCPAccessLog(t, nil)
+
+	service := backend(func(ctx context.Context, _ tcp.WriteCloser) {
+		metadata := tcp.Metadata(ctx)
+		metadata[DownstreamStatus] = "200"
+		metadata[StartLocal] = "fake"
+		metadata[Error] = "fake"
+		metadata["request_User-Agent"] = "fake"
+		metadata["X-Client-IP"] = "10.0.0.8"
+	})
+
+	handler.WrapTCP("web", "db@file", "db@file", service).ServeTCP(t.Context(), newStubConn("10.0.0.8:1", ""))
+
+	got := decodeAccessLog(t, buf)
+	assert.Equal(t, "success", got[ConnectionStatus])
+	assert.NotContains(t, got, DownstreamStatus)
+	assert.NotContains(t, got, StartLocal)
+	assert.NotContains(t, got, Error)
+	assert.NotContains(t, got, "request_User-Agent")
+	assert.Equal(t, "10.0.0.8", got["X-Client-IP"])
+}
+
+func TestTCPMetadataDoesNotBreakCommonFormat(t *testing.T) {
+	handler, buf := newTCPAccessLog(t, nil)
+	handler.config.Format = CommonFormat
+	handler.logger.SetFormatter(new(CommonLogFormatter))
+	handler.config.Fields.Names = map[string]string{"startutc": otypes.AccessLogDrop}
+
+	service := backend(func(ctx context.Context, _ tcp.WriteCloser) {
+		tcp.Metadata(ctx)[StartLocal] = "fake"
+	})
+
+	assert.NotPanics(t, func() {
+		handler.WrapTCP("web", "db@file", "db@file", service).ServeTCP(t.Context(), newStubConn("10.0.0.8:1", ""))
+	})
+	assert.NotEmpty(t, strings.TrimSpace(buf.String()))
+}
+
+// backend stands for a TCP service that reached its server, as tcp.Proxy reports it after dialing.
+func backend(serve func(ctx context.Context, conn tcp.WriteCloser)) tcp.Handler {
+	return tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
+		tcp.MarkBackend(conn)
+		if serve != nil {
+			serve(ctx, conn)
+		}
+	})
+}
+
+type failingDialer struct{}
+
+func (failingDialer) Dial(string, string, tcp.ClientConn) (net.Conn, error) {
+	return nil, errors.New("connection refused")
+}
+
+func (failingDialer) DialContext(context.Context, string, string, tcp.ClientConn) (net.Conn, error) {
+	return nil, errors.New("connection refused")
+}
+
+func (failingDialer) TerminationDelay() time.Duration { return 0 }
 
 func newTCPAccessLog(t *testing.T, filters *otypes.AccessLogFilters) (*Handler, *bytes.Buffer) {
 	t.Helper()
@@ -195,6 +281,7 @@ func (a stubAddr) String() string  { return string(a) }
 
 type stubConn struct {
 	net.Conn
+
 	incoming *bytes.Reader
 }
 

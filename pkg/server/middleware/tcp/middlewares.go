@@ -25,7 +25,7 @@ const (
 
 // PluginsBuilder the plugin's builder interface.
 type PluginsBuilder interface {
-	BuildTCP(pName string, config map[string]interface{}, middlewareName string) (tcp.Constructor, error)
+	BuildTCP(pName string, config map[string]any, middlewareName string) (tcp.Constructor, error)
 }
 
 // Builder the middleware builder.
@@ -151,13 +151,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	return middleware, nil
 }
 
-func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]interface{}, error) {
+func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]any, error) {
 	if len(rawConfig) != 1 {
 		return "", nil, errors.New("invalid configuration: no configuration or too many plugin definition")
 	}
 
 	var pluginType string
-	var rawPluginConfig map[string]interface{}
+	var rawPluginConfig map[string]any
 
 	for pType, pConfig := range rawConfig {
 		pluginType = pType

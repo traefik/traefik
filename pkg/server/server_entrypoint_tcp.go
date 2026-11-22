@@ -307,23 +307,18 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			// Create connection-scoped context with metadata map for middleware chain.
-			// The map is stored under a string key so TCP plugins and the access log share it.
-			// Use server context as parent so connection context is canceled on shutdown.
+			// The connection context derives from the server context, so shutdown cancels it.
+			// Middlewares and the access log share the metadata map it carries.
 			connCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
 			connCtx = tcp.WithMetadata(connCtx)
 
-			// Wrap connection to cancel context when connection closes
-			trackedConn := newTrackedConnection(writeCloser, e.tracker)
-			contextAwareConn := &contextualWriteCloser{
-				WriteCloser: trackedConn,
+			conn := &contextualWriteCloser{
+				WriteCloser: newTrackedConnection(writeCloser, e.tracker),
 				cancel:      cancel,
 			}
 
-			// Cancel context when goroutine exits OR when connection closes
-			defer cancel()
-
-			e.switcher.ServeTCP(connCtx, contextAwareConn)
+			e.switcher.ServeTCP(connCtx, conn)
 		})
 	}
 }
@@ -909,14 +904,15 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
-// contextualWriteCloser wraps a WriteCloser and cancels context on Close().
+// contextualWriteCloser cancels the connection context on Close,
+// so work a middleware started for the connection stops as soon as it is closed.
 type contextualWriteCloser struct {
 	tcp.WriteCloser
+
 	cancel context.CancelFunc
 }
 
 func (c *contextualWriteCloser) Close() error {
-	// Cancel context when connection closes
 	if c.cancel != nil {
 		c.cancel()
 	}

@@ -173,6 +173,6 @@ func (m WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http
 
 // NewTCPHandler creates a TCP constructor.
 // WASM plugins do not support TCP yet, so this always returns an error.
-func (m WasmMiddleware) NewTCPHandler(ctx context.Context, next tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
+func (m WasmMiddleware) NewTCPHandler(_ context.Context, _ tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
 	return nil, errors.New("WASM plugins do not support TCP")
 }

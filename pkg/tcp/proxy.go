@@ -3,6 +3,7 @@ package tcp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"syscall"
@@ -38,8 +39,11 @@ func (p *Proxy) ServeTCP(ctx context.Context, conn WriteCloser) {
 	connBackend, err := p.dialBackend(conn)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while dialing backend")
+		SetRejection(conn, fmt.Errorf("dialing backend: %w", err))
 		return
 	}
+
+	MarkBackend(conn)
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()
