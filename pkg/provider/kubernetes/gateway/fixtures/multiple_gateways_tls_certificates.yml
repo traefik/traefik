@@ -1,0 +1,139 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bar-cert
+  namespace: bar
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJwVENDQVV1Z0F3SUJBZ0lVVEVrVUVNQ21acnh4aUVrQ20wUFMrRnF1dXNRd0NnWUlLb1pJemowRUF3SXcKR2pFWU1CWUdBMVVFQXd3UFltRnlMbVY0WVcxd2JHVXVZMjl0TUI0WERUSTJNRGt4TlRFeE5ETXlORm9YRFRNMgpNRGt4TWpFeE5ETXlORm93R2pFWU1CWUdBMVVFQXd3UFltRnlMbVY0WVcxd2JHVXVZMjl0TUZrd0V3WUhLb1pJCnpqMENBUVlJS29aSXpqMERBUWNEUWdBRWJNdytOdEtlSEVuUUxsR0dLV04wQVUySGJ6ckcraTBYVlRMMEFqaTUKaXc2dTlsR1RiNENZQ21xTENzVmF0Q3R6UE0vRVk1dmJadXJ3SlVGVGxmM3lSS052TUcwd0hRWURWUjBPQkJZRQpGTCsvb1lFMkJiRkl1OTBuNjg1bXFEK1E0cFRVTUI4R0ExVWRJd1FZTUJhQUZMKy9vWUUyQmJGSXU5MG42ODVtCnFEK1E0cFRVTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3R2dZRFZSMFJCQk13RVlJUFltRnlMbVY0WVcxd2JHVXUKWTI5dE1Bb0dDQ3FHU000OUJBTUNBMGdBTUVVQ0lRREN0UTRzRGtkU0hRZVRYSk44a3BwTmxtNDBWQ2pxOEx2ZAppWGszR0NYbzhBSWdiczUxeVgybHQxZXBwZEhHRnBuNGRyV3g5dDV0UGNEZGR3U1lVUzdPQkpBPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ09Uc2V0ZkxqTDNFbnVrK2gKbDNjV1dKSHZSUTE0UWx5QkI4Y0FycmNwVldHaFJBTkNBQVJzekQ0MjBwNGNTZEF1VVlZcFkzUUJUWWR2T3NiNgpMUmRWTXZRQ09MbUxEcTcyVVpOdmdKZ0thb3NLeFZxMEszTTh6OFJqbTl0bTZ2QWxRVk9WL2ZKRQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: gw
+  namespace: bar
+  creationTimestamp: "2024-01-01T00:00:01Z"
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: bar-cert
+            group: ""
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: default-a-cert
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ0ekNDQVYyZ0F3SUJBZ0lVT2lXWlpEZWJReFV5VExleDZXTlNBTDg3V0owd0NnWUlLb1pJemowRUF3SXcKSURFZU1Cd0dBMVVFQXd3VlpHVm1ZWFZzZEMxaExtVjRZVzF3YkdVdVkyOXRNQjRYRFRJMk1Ea3hOVEV4TkRNeQpORm9YRFRNMk1Ea3hNakV4TkRNeU5Gb3dJREVlTUJ3R0ExVUVBd3dWWkdWbVlYVnNkQzFoTG1WNFlXMXdiR1V1ClkyOXRNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVNM2VqSTdNTWhsM01mSTlFKzlvbm1BWm4KVVh4NklWVXRIbHBLUTlvaVQxWGpONEZjVC9xRG13VnRUemU5enluWDdoZUVKeHI4T0pDaG1OL3BlUk1Ta0tOMQpNSE13SFFZRFZSME9CQllFRko2bWNjTUFOUHQ5RzA1OXh4aDdYL0VRRDEzV01COEdBMVVkSXdRWU1CYUFGSjZtCmNjTUFOUHQ5RzA1OXh4aDdYL0VRRDEzV01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0lBWURWUjBSQkJrd0Y0SVYKWkdWbVlYVnNkQzFoTG1WNFlXMXdiR1V1WTI5dE1Bb0dDQ3FHU000OUJBTUNBMGdBTUVVQ0lRRHN4VmpLWERVeQpqTVIyMjd6Ujl4dU5udDJoVHU1N25Da3NrdVlKWnZxMUFBSWdBMkdpWXpEQmJPMXBibUNVaW90QU1vRzV2Y29sCnBoV1JSSW9YZVFYTzNjVT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ3ZTY0NRenBrR1g0SysvYmgKWFZrOGo2d0lTNFNOcytsUy9QaTdqUmFvTm1laFJBTkNBQVF6ZDZNanN3eUdYY3g4ajBUNzJpZVlCbWRSZkhvaApWUzBlV2twRDJpSlBWZU0zZ1Z4UCtvT2JCVzFQTjczUEtkZnVGNFFuR3Z3NGtLR1kzK2w1RXhLUQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: gw-a
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:04Z"
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: default-a-cert
+            group: ""
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: default-b-cert
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ0ekNDQVYyZ0F3SUJBZ0lVZWNzR0huWGVhQ1cyR2YyN245cFdXdG5wVktNd0NnWUlLb1pJemowRUF3SXcKSURFZU1Cd0dBMVVFQXd3VlpHVm1ZWFZzZEMxaUxtVjRZVzF3YkdVdVkyOXRNQjRYRFRJMk1Ea3hOVEV4TkRNeQpORm9YRFRNMk1Ea3hNakV4TkRNeU5Gb3dJREVlTUJ3R0ExVUVBd3dWWkdWbVlYVnNkQzFpTG1WNFlXMXdiR1V1ClkyOXRNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVMMjNBMVpiUWY1VjZhb3dPMU9qWmFLSU0KMUU1LzcwbTJ4QWE1RzZqa25nUmU5Tnp6UUFrQVNSMGs2enc1b2E4TFNDbWg0eWFhbFo3bVhZNHduVFp1VHFOMQpNSE13SFFZRFZSME9CQllFRkdQd2hLSEgwQmFwazdkL1cvZTFmL2prRzBTNk1COEdBMVVkSXdRWU1CYUFGR1B3CmhLSEgwQmFwazdkL1cvZTFmL2prRzBTNk1BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0lBWURWUjBSQkJrd0Y0SVYKWkdWbVlYVnNkQzFpTG1WNFlXMXdiR1V1WTI5dE1Bb0dDQ3FHU000OUJBTUNBMGdBTUVVQ0lRRHRHS1RFdW0xNwpCM2wwOEZ1NG03UWRXY2owMXRKbGVQUEpzUytrc2tNSEJRSWdhRVdkRjN5TGY0b0R4YlpVMnFMNnB1SU1QMHdZCmdCRzd5YWpxbHFpc3NXbz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ0MyQkJ0QzhYRHl4VTNnSkIKZ3lTK1ZNMkU5OVpab3NseEZFTmxOVGxVMldhaFJBTkNBQVF2YmNEVmx0Qi9sWHBxakE3VTZObG9vZ3pVVG4vdgpTYmJFQnJrYnFPU2VCRjcwM1BOQUNRQkpIU1RyUERtaHJ3dElLYUhqSnBxVm51WmRqakNkTm01TwotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: gw-b
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:03Z"
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: default-b-cert
+            group: ""
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: foo-cert
+  namespace: foo
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJwVENDQVV1Z0F3SUJBZ0lVWWMyUEFhNXQ2YzRLMEJGbFhkcE5aTWtPUFd3d0NnWUlLb1pJemowRUF3SXcKR2pFWU1CWUdBMVVFQXd3UFptOXZMbVY0WVcxd2JHVXVZMjl0TUI0WERUSTJNRGt4TlRFeE5ETXlORm9YRFRNMgpNRGt4TWpFeE5ETXlORm93R2pFWU1CWUdBMVVFQXd3UFptOXZMbVY0WVcxd2JHVXVZMjl0TUZrd0V3WUhLb1pJCnpqMENBUVlJS29aSXpqMERBUWNEUWdBRUV5S28zcXFWaXlvZ0twQ2xMc1RWZkJKSElna250TllkSG1xZlV5eUgKQjcvZUFZRWMrR05nSlZ6eTdvd0VEZ3VCN0tuRnRxSE4xYUFXLzZkT2Q2VHpucU52TUcwd0hRWURWUjBPQkJZRQpGSFJTQk9WMUdOV2dyampuTEpSWnlvODZ5ajRITUI4R0ExVWRJd1FZTUJhQUZIUlNCT1YxR05XZ3Jqam5MSlJaCnlvODZ5ajRITUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3R2dZRFZSMFJCQk13RVlJUFptOXZMbVY0WVcxd2JHVXUKWTI5dE1Bb0dDQ3FHU000OUJBTUNBMGdBTUVVQ0lRRC9wYWh5QXJlcHhvOUlrQnJLa05DOHZsYjNUSkZWbHpXeApSK0ZxUUtTWUVnSWdORUVFU2VvOEpJdFE0MXowdmFSUVRGUzQ2Y3B6eGxxMlp0K3QrMitFTzd3PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ1JwNHA2SmUyRVRXRU9ZYlEKWm03UE5UcWRzYkRvbndsS040ZVJTNGNMbk42aFJBTkNBQVFUSXFqZXFwV0xLaUFxa0tVdXhOVjhFa2NpQ1NlMAoxaDBlYXA5VExJY0h2OTRCZ1J6NFkyQWxYUEx1akFRT0M0SHNxY1cyb2MzVm9CYi9wMDUzcFBPZQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: gw
+  namespace: foo
+  creationTimestamp: "2024-01-01T00:00:02Z"
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: foo-cert
+            group: ""
+      allowedRoutes:
+        namespaces:
+          from: Same

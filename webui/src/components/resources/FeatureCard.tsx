@@ -1,4 +1,4 @@
-import { Box, Card, Flex, Grid, Skeleton as FaencySkeleton, Text } from '@traefiklabs/faency'
+import { Box, Card, Flex, Grid, Skeleton as FaencySkeleton, Text } from '@traefik-labs/faency'
 
 import ResourceCard from 'components/resources/ResourceCard'
 

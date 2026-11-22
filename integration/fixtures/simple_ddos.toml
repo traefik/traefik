@@ -1,0 +1,34 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[api]
+insecure = true
+[log]
+level = "DEBUG"
+
+[entryPoints]
+
+[entryPoints.web]
+address = ":8000"
+[entryPoints.web.transport.respondingTimeouts]
+readTimeout="200ms"
+
+
+[entryPoints.tcp]
+address = ":8001"
+[entryPoints.tcp.transport.respondingTimeouts]
+readTimeout="200ms"
+
+
+[providers.file]
+filename = "{{ .SelfFilename }}"
+
+
+[tcp.routers.withtls]
+rule="HostSNI(`*`)"
+service="noop"
+[tcp.routers.withtls.tls]
+
+[[tcp.services.noop.loadBalancer.servers]]
+address="127.0.0.1:8080"

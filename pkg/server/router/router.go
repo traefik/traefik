@@ -19,6 +19,8 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/respondingtimeout"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -39,13 +41,14 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers     map[string]http.Handler
-	serviceManager     serviceManager
-	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareChainBuilder
-	conf               *runtime.Configuration
-	tlsManager         *tls.Manager
-	parser             httpmuxer.SyntaxParser
+	routerHandlers      map[string]http.Handler
+	serviceManager      serviceManager
+	observabilityMgr    *middleware.ObservabilityMgr
+	middlewaresBuilder  middlewareChainBuilder
+	conf                *runtime.Configuration
+	tlsManager          *tls.Manager
+	parser              httpmuxer.SyntaxParser
+	providersPrecedence []string
 }
 
 // NewManager creates a new Manager.
@@ -55,15 +58,17 @@ func NewManager(conf *runtime.Configuration,
 	observabilityMgr *middleware.ObservabilityMgr,
 	tlsManager *tls.Manager,
 	parser httpmuxer.SyntaxParser,
+	providersPrecedence []string,
 ) *Manager {
 	return &Manager{
-		routerHandlers:     make(map[string]http.Handler),
-		serviceManager:     serviceManager,
-		observabilityMgr:   observabilityMgr,
-		middlewaresBuilder: middlewaresBuilder,
-		conf:               conf,
-		tlsManager:         tlsManager,
-		parser:             parser,
+		routerHandlers:      make(map[string]http.Handler),
+		serviceManager:      serviceManager,
+		observabilityMgr:    observabilityMgr,
+		middlewaresBuilder:  middlewaresBuilder,
+		conf:                conf,
+		tlsManager:          tlsManager,
+		parser:              parser,
+		providersPrecedence: providersPrecedence,
 	}
 }
 
@@ -114,7 +119,8 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Observability config.
-		if router.Observability != nil {
+		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
+		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
@@ -122,6 +128,12 @@ func (m *Manager) ParseRouterTree() {
 		// Check for non-root router with Entrypoint config.
 		if len(router.EntryPoints) > 0 {
 			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
+			continue
+		}
+
+		// Responding timeouts are set on one level only: the deadlines of a child router would silently replace its parent ones.
+		if router.RespondingTimeouts != nil && m.hasAncestorWithRespondingTimeouts(router, map[string]bool{routerName: true}) {
+			router.AddError(errors.New("router cannot have RespondingTimeouts configuration when a parent router has one"), true)
 			continue
 		}
 	}
@@ -225,7 +237,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
-	muxer := httpmuxer.NewMuxer(m.parser)
+	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
 	if err != nil {
@@ -274,7 +286,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, handler); err != nil {
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -295,6 +307,10 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 	}
 
 	if routerConfig.TLS != nil {
+		if routerConfig.TLS.ConflictingOptions {
+			return nil, errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host")
+		}
+
 		// Don't build the router if the TLSOptions configuration is invalid.
 		tlsOptionsName := tls.DefaultTLSConfigName
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
@@ -372,9 +388,43 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		})
 	}
 
+	if router.TLS != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
+		})
+	}
+
+	// Appended below observability so that the 504 is observed, and above the user middlewares so that the
+	// deadline bounds them all, retry attempts included.
+	if router.RespondingTimeouts != nil {
+		chain = chain.Append(respondingtimeout.WrapHandler(*router.RespondingTimeouts))
+	}
+
 	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
+}
+
+// hasAncestorWithRespondingTimeouts reports whether a router up the tree has responding timeouts.
+// The visited routers guard against cycles, which are reported by the traversal.
+func (m *Manager) hasAncestorWithRespondingTimeouts(router *runtime.RouterInfo, visited map[string]bool) bool {
+	for _, parentName := range router.ParentRefs {
+		if visited[parentName] {
+			continue
+		}
+		visited[parentName] = true
+
+		parent, ok := m.conf.Routers[parentName]
+		if !ok {
+			continue
+		}
+
+		if parent.RespondingTimeouts != nil || m.hasAncestorWithRespondingTimeouts(parent, visited) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // traverse performs a depth-first traversal starting from root routers,
@@ -456,7 +506,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 
 // buildChildRoutersMuxer creates a muxer for child routers.
 func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
-	childMuxer := httpmuxer.NewMuxer(m.parser)
+	childMuxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
 	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
@@ -490,7 +540,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 		}
 
 		// Add the child router to the muxer.
-		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, childHandler); err != nil {
+		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, providerName(childName), childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
@@ -505,4 +555,12 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName str
 	}
 
 	return childMuxer, nil
+}
+
+func providerName(routerName string) string {
+	parts := strings.Split(routerName, "@")
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return ""
 }

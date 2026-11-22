@@ -1,4 +1,4 @@
-import { CSS, Text } from '@traefiklabs/faency'
+import { CSS, Text } from '@traefik-labs/faency'
 import { useContext } from 'react'
 
 import CopyButton from 'components/buttons/CopyButton'

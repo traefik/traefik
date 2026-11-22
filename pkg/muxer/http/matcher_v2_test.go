@@ -76,9 +76,9 @@ func TestClientIPV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -154,9 +154,9 @@ func TestMethodV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -198,6 +198,11 @@ func TestHostV2Matcher(t *testing.T) {
 		{
 			desc:          "invalid Host matcher (non-ASCII)",
 			rule:          "Host(`🦭.com`)",
+			expectedError: true,
+		},
+		{
+			desc:          "invalid Host matcher (not a hostname)",
+			rule:          "Host(`/`)",
 			expectedError: true,
 		},
 		{
@@ -280,9 +285,9 @@ func TestHostV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -384,9 +389,9 @@ func TestHostRegexpV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -480,9 +485,9 @@ func TestPathV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -574,9 +579,9 @@ func TestPathPrefixV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -662,9 +667,9 @@ func TestHeadersMatcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -771,9 +776,9 @@ func TestHeaderRegexpV2Matcher(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -865,9 +870,9 @@ func TestHostRegexp(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.hostExp, "v2", 0, handler)
+			err = muxer.AddRoute(test.hostExp, "v2", 0, "", handler)
 			require.NoError(t, err)
 
 			results := make(map[string]int)
@@ -945,7 +950,7 @@ func Test_addRoute(t *testing.T) {
 			desc: "Host IPv6",
 			rule: "Host(`10::10`)",
 			expected: map[string]int{
-				"http://10::10/foo": http.StatusOK,
+				"http://[10::10]/foo": http.StatusOK,
 			},
 		},
 		{
@@ -1031,7 +1036,7 @@ func Test_addRoute(t *testing.T) {
 		},
 		{
 			desc: "Host and PathPrefix Host OR, first host and wrong PathPrefix",
-			rule: "Host(`nope,localhost`) && PathPrefix(`/bar`)",
+			rule: "Host(`nope`,`localhost`) && PathPrefix(`/bar`)",
 			expected: map[string]int{
 				"http://localhost/foo": http.StatusNotFound,
 			},
@@ -1534,9 +1539,9 @@ func Test_addRoute(t *testing.T) {
 			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := NewMuxer(parser)
+			muxer := NewMuxer(parser, nil)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, handler)
+			err = muxer.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.expectedError {
 				require.Error(t, err)
 			} else {

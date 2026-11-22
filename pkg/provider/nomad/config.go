@@ -23,6 +23,8 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 	for _, i := range items {
 		svcName := provider.Normalize(i.Node + "-" + i.Name + "-" + i.ID)
+		itemKey := makeItemKey(i.Node, i.Name, i.ID)
+
 		logger := log.Ctx(ctx).With().Str(logs.ServiceName, svcName).Logger()
 		ctxSvc := logger.WithContext(ctx)
 
@@ -62,7 +64,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		if tcpOrUDP && len(config.HTTP.Routers) == 0 &&
 			len(config.HTTP.Middlewares) == 0 &&
 			len(config.HTTP.Services) == 0 {
-			configurations[svcName] = config
+			configurations[itemKey] = config
 			continue
 		}
 
@@ -81,7 +83,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		}
 
 		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
-		configurations[svcName] = config
+		configurations[itemKey] = config
 	}
 
 	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
@@ -151,6 +153,11 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 	}
 
 	return nil
+}
+
+// makeItemKey returns an identifier that is unique for a given (node, name, id) triple.
+func makeItemKey(node, name, id string) string {
+	return fmt.Sprintf("%s-%s-%s-%d-%d-%d", node, name, id, len(node), len(name), len(id))
 }
 
 // TODO: check whether it is mandatory to filter again.

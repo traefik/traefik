@@ -5,14 +5,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	netv1 "k8s.io/api/networking/v1"
-	"k8s.io/utils/ptr"
 )
 
 func Test_parseIngressConfig(t *testing.T) {
 	tests := []struct {
 		desc        string
 		annotations map[string]string
-		expected    ingressConfig
+		expected    IngressConfig
 	}{
 		{
 			desc: "all fields set",
@@ -37,28 +36,34 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/proxy-buffer-size":        "16k",
 				"nginx.ingress.kubernetes.io/proxy-buffers-number":     "8",
 				"nginx.ingress.kubernetes.io/proxy-max-temp-file-size": "100m",
+				"nginx.ingress.kubernetes.io/limit-rpm":                "120",
+				"nginx.ingress.kubernetes.io/x-forwarded-prefix":       "/test",
+				"nginx.ingress.kubernetes.io/upstream-vhost":           "upstream-vhost",
 			},
-			expected: ingressConfig{
-				SSLPassthrough:        ptr.To(true),
-				Affinity:              ptr.To("cookie"),
-				SessionCookieName:     ptr.To("mycookie"),
-				SessionCookieSecure:   ptr.To(true),
-				SessionCookiePath:     ptr.To("/foo"),
-				SessionCookieDomain:   ptr.To("example.com"),
-				SessionCookieSameSite: ptr.To("Strict"),
-				SessionCookieMaxAge:   ptr.To(3600),
-				BackendProtocol:       ptr.To("HTTPS"),
-				CORSExposeHeaders:     ptr.To([]string{"foo", "bar"}),
-				AuthURL:               ptr.To("http://auth.example.com/verify"),
-				AuthSignin:            ptr.To("https://auth.example.com/oauth2/start?rd=foo"),
-				ProxyConnectTimeout:   ptr.To(30),
-				ProxyRequestBuffering: ptr.To("on"),
-				ClientBodyBufferSize:  ptr.To("16k"),
-				ProxyBodySize:         ptr.To("16k"),
-				ProxyBuffering:        ptr.To("on"),
-				ProxyBufferSize:       ptr.To("16k"),
-				ProxyBuffersNumber:    ptr.To(8),
-				ProxyMaxTempFileSize:  ptr.To("100m"),
+			expected: IngressConfig{
+				SSLPassthrough:        new(true),
+				Affinity:              new("cookie"),
+				SessionCookieName:     new("mycookie"),
+				SessionCookieSecure:   new(true),
+				SessionCookiePath:     new("/foo"),
+				SessionCookieDomain:   new("example.com"),
+				SessionCookieSameSite: new("Strict"),
+				SessionCookieMaxAge:   new(3600),
+				BackendProtocol:       new("HTTPS"),
+				CORSExposeHeaders:     new([]string{"foo", "bar"}),
+				AuthURL:               new("http://auth.example.com/verify"),
+				AuthSignin:            new("https://auth.example.com/oauth2/start?rd=foo"),
+				ProxyConnectTimeout:   new(30),
+				ProxyRequestBuffering: new("on"),
+				ClientBodyBufferSize:  new("16k"),
+				ProxyBodySize:         new("16k"),
+				ProxyBuffering:        new("on"),
+				ProxyBufferSize:       new("16k"),
+				ProxyBuffersNumber:    new(8),
+				ProxyMaxTempFileSize:  new("100m"),
+				LimitRPM:              new(120),
+				XForwardedPrefix:      new("/test"),
+				UpstreamVHost:         new("upstream-vhost"),
 			},
 		},
 		{
@@ -66,8 +71,8 @@ func Test_parseIngressConfig(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.ingress.kubernetes.io/ssl-passthrough": "false",
 			},
-			expected: ingressConfig{
-				SSLPassthrough: ptr.To(false),
+			expected: IngressConfig{
+				SSLPassthrough: new(false),
 			},
 		},
 		{
@@ -76,8 +81,8 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/ssl-passthrough":                     "notabool",
 				"nginx.ingress.kubernetes.io/session-cookie-max-age (in seconds)": "notanint",
 			},
-			expected: ingressConfig{
-				SSLPassthrough: ptr.To(false),
+			expected: IngressConfig{
+				SSLPassthrough: new(false),
 			},
 		},
 	}

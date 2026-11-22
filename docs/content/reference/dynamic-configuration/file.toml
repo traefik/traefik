@@ -25,6 +25,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router0.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -48,6 +51,9 @@
         metrics = true
         tracing = true
         traceVerbosity = "foobar"
+      [http.routers.Router1.respondingTimeouts]
+        readTimeout = "42s"
+        writeTimeout = "42s"
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -114,6 +120,7 @@
         service = "foobar"
         mirrorBody = true
         maxBodySize = 42
+        streamBody = true
 
         [[http.services.Service04.mirroring.mirrors]]
           name = "foobar"
@@ -161,6 +168,8 @@
         maxResponseBodyBytes = 42
         memResponseBodyBytes = 42
         retryExpression = "foobar"
+        disableRequestBuffer = true
+        disableResponseBuffer = true
     [http.middlewares.Middleware04]
       [http.middlewares.Middleware04.chain]
         middlewares = ["foobar", "foobar"]
@@ -193,6 +202,7 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+        errorRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.errors.statusRewrites]
           name0 = 42
           name1 = 42
@@ -207,6 +217,7 @@
         headerField = "foobar"
         forwardBody = true
         maxBodySize = 42
+        maxResponseBodySize = 42
         preserveLocationHeader = true
         preserveRequestMethod = true
         [http.middlewares.Middleware10.forwardAuth.tls]
@@ -398,6 +409,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport0.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
@@ -425,6 +438,8 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
       [http.serversTransports.ServersTransport1.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
@@ -504,6 +519,14 @@
     [tcp.middlewares.TCPMiddleware03]
       [tcp.middlewares.TCPMiddleware03.inFlightConn]
         amount = 42
+    [tcp.middlewares.TCPMiddleware04]
+      [tcp.middlewares.TCPMiddleware04.plugin]
+        [tcp.middlewares.TCPMiddleware04.plugin.PluginConf0]
+          name0 = "foobar"
+          name1 = "foobar"
+        [tcp.middlewares.TCPMiddleware04.plugin.PluginConf1]
+          name0 = "foobar"
+          name1 = "foobar"
   [tcp.serversTransports]
     [tcp.serversTransports.TCPServersTransport0]
       dialKeepAlive = "42s"

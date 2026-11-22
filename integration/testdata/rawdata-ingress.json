@@ -47,13 +47,20 @@
 				"web"
 			],
 			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"rule": "Host(\"whoami.test.https\") \u0026\u0026 PathPrefix(\"/whoami\")",
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "test.ingress.https",
+						"kind": "Ingress"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -65,13 +72,20 @@
 				"web"
 			],
 			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"rule": "Host(\"whoami.test\") \u0026\u0026 PathPrefix(\"/whoami\")",
 			"priority": 44,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "test.ingress",
+						"kind": "Ingress"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -83,13 +97,20 @@
 				"web"
 			],
 			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
+			"rule": "Host(\"whoami.test.drop\") \u0026\u0026 PathPrefix(\"/drop\")",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "whoami-drop-route",
+						"kind": "Ingress"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -101,13 +122,20 @@
 				"web"
 			],
 			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"rule": "Host(\"whoami.test.keep\") \u0026\u0026 PathPrefix(\"/keep\")",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
 				"metrics": true,
 				"tracing": true,
-				"traceVerbosity": "minimal"
+				"traceVerbosity": "minimal",
+				"metadata": {
+					"ingress": {
+						"namespace": "default",
+						"name": "whoami-keep-route",
+						"kind": "Ingress"
+					}
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -157,16 +185,25 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
+				}
+			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
 				}
 			},
 			"status": "enabled",
@@ -175,18 +212,18 @@
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -195,14 +232,23 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "http"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-test-ingress-https-whoami-test-https-whoami@kubernetes",
 				"default-test-ingress-whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"noop@internal": {

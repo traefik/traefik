@@ -11,6 +11,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
+// ProviderName is the Redis provider name.
+const ProviderName = "redis"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -90,5 +93,5 @@ func (p *Provider) Init() error {
 		}
 	}
 
-	return p.Provider.Init(redis.StoreName, "redis", config)
+	return p.Provider.Init(redis.StoreName, ProviderName, config)
 }

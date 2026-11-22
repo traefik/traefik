@@ -1,0 +1,101 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints.websecure]
+  address = ":4443"
+
+[entryPoints.websecure2]
+  address = ":4444"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+# --- Same host, same options, same entryPoint: no conflict, the options are applied. ---
+[http.routers.same-1]
+  rule = "Host(`same.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.same-1.tls]
+    options = "tls12"
+
+[http.routers.same-2]
+  rule = "Host(`same.www.snitest.com`) && PathPrefix(`/same`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.same-2.tls]
+    options = "tls12"
+
+# --- Same host, different options, same entryPoint: conflict, fallback to default options. ---
+[http.routers.conflict-1]
+  rule = "Host(`conflict.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.conflict-1.tls]
+    options = "tls12"
+
+[http.routers.conflict-2]
+  rule = "Host(`conflict.www.snitest.com`) && PathPrefix(`/conflict`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.conflict-2.tls]
+    options = "tls13"
+
+# --- Same host, different options, different entryPoints: no conflict, each entryPoint keeps its own options. ---
+[http.routers.cross-ep1]
+  rule = "Host(`cross.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.cross-ep1.tls]
+    options = "tls12"
+
+[http.routers.cross-ep2]
+  rule = "Host(`cross.www.snitest.com`)"
+  entryPoints = ["websecure2"]
+  service = "service1"
+  [http.routers.cross-ep2.tls]
+    options = "tls13"
+
+# --- Domain fronting (Host header != SNI): same options follow the header, different options are rejected. ---
+[http.routers.df-a]
+  rule = "Host(`df-a.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.df-a.tls]
+    options = "tls12"
+
+[http.routers.df-b]
+  rule = "Host(`df-b.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.df-b.tls]
+    options = "tls12"
+
+[http.routers.df-c]
+  rule = "Host(`df-c.www.snitest.com`)"
+  entryPoints = ["websecure"]
+  service = "service1"
+  [http.routers.df-c.tls]
+    options = "tls13"
+
+[http.services.service1]
+  [[http.services.service1.loadBalancer.servers]]
+    url = "http://127.0.0.1:9010"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.www.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.www.snitest.com.key"
+
+[tls.options]
+  [tls.options.tls12]
+    maxVersion = "VersionTLS12"
+  [tls.options.tls13]
+    minVersion = "VersionTLS13"

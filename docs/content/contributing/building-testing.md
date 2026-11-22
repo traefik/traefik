@@ -92,7 +92,7 @@ For development purposes, you can specify which tests to run by using (only work
 
     Create `tailscale.secret` file in `integration` directory.
     
-    This file needs to contain a [Tailscale auth key](https://tailscale.com/kb/1085/auth-keys) 
+    This file needs to contain a [Tailscale auth key](https://tailscale.com/docs/features/access-control/auth-keys) 
     (an ephemeral, but reusable, one is recommended).
 
     Add this section to your tailscale ACLs to auto-approve the routes for the
@@ -101,7 +101,7 @@ For development purposes, you can specify which tests to run by using (only work
     ```json 
         "autoApprovers": {
           // Allow myself to automatically
-          // advertize routes for docker networks
+          // advertise routes for docker networks
           "routes": {
             "172.31.42.0/24": ["your_tailscale_identity"],
           },
@@ -113,5 +113,5 @@ For development purposes, you can specify which tests to run by using (only work
 TESTFLAGS="-test.run TestAccessLogSuite" make test-integration
 
 # Run the test "MyTest" in the MyTest suite
-TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog$" make test-integration
+TESTFLAGS="-test.run TestAccessLogSuite -testify.m ^TestAccessLog\$\$" make test-integration
 ```

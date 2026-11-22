@@ -1,11 +1,9 @@
 package customerrors
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"maps"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,15 +14,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"k8s.io/utils/ptr"
 )
 
-// Compile time validation that the response recorder implements http interfaces correctly.
-var (
-	_ middlewares.Stateful = &codeModifier{}
-	_ middlewares.Stateful = &codeCatcher{}
+const (
+	typeName        = "CustomError"
+	schemeHTTP      = "http"
+	schemeHTTPS     = "https"
+	xForwardedProto = "X-Forwarded-Proto"
 )
-
-const typeName = "CustomError"
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -32,12 +30,14 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name           string
-	next           http.Handler
-	backendHandler http.Handler
-	httpCodeRanges types.HTTPCodeRanges
-	backendQuery   string
-	statusRewrites []statusRewrite
+	name                string
+	next                http.Handler
+	backendHandler      http.Handler
+	httpCodeRanges      types.HTTPCodeRanges
+	backendQuery        string
+	requestHeaders      []string
+	statusRewrites      []statusRewrite
+	forwardNginxHeaders http.Header
 }
 
 type statusRewrite struct {
@@ -74,12 +74,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:           name,
-		next:           next,
-		backendHandler: backend,
-		httpCodeRanges: httpCodeRanges,
-		backendQuery:   config.Query,
-		statusRewrites: statusRewrites,
+		name:                name,
+		next:                next,
+		backendHandler:      backend,
+		httpCodeRanges:      httpCodeRanges,
+		backendQuery:        config.Query,
+		requestHeaders:      config.ErrorRequestHeaders,
+		statusRewrites:      statusRewrites,
+		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
 	}, nil
 }
 
@@ -124,10 +126,24 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var query string
 
-	scheme := "http"
+	scheme := schemeHTTP
 	if req.TLS != nil {
-		scheme = "https"
+		scheme = schemeHTTPS
 	}
+
+	if proto := req.Header.Get(xForwardedProto); proto != "" {
+		// A previous hop may have set ws(s) for connection upgrade requests,
+		// but only http(s) is valid in an HTTP context.
+		switch {
+		case strings.EqualFold(proto, schemeHTTP), strings.EqualFold(proto, "ws"):
+			scheme = schemeHTTP
+		case strings.EqualFold(proto, schemeHTTPS), strings.EqualFold(proto, "wss"):
+			scheme = schemeHTTPS
+		default:
+			logger.Debug().Msgf("Invalid X-Forwarded-Proto: %s", proto)
+		}
+	}
+
 	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {
@@ -145,9 +161,30 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	utils.CopyHeaders(pageReq.Header, req.Header)
-	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
-		pageReq.WithContext(req.Context()))
+	if c.requestHeaders != nil {
+		for _, header := range c.requestHeaders {
+			if values := req.Header.Values(header); len(values) > 0 {
+				pageReq.Header[http.CanonicalHeaderKey(header)] = values
+			}
+		}
+	} else {
+		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
+	if len(c.forwardNginxHeaders) > 0 {
+		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
+		pageReq.Header.Set("X-Code", strconv.Itoa(code))
+		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
+		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())
+		if requestID := req.Header.Get("X-Request-ID"); requestID != "" {
+			pageReq.Header.Set("X-Request-ID", requestID)
+		}
+
+		c.backendHandler.ServeHTTP(rw, pageReq.WithContext(req.Context()))
+	} else {
+		c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
+			pageReq.WithContext(req.Context()))
+	}
 }
 
 func newRequest(baseURL string) (*http.Request, error) {
@@ -248,16 +285,8 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	cc.headersSent = true
 }
 
-// Hijack hijacks the connection.
-func (cc *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hj, ok := cc.responseWriter.(http.Hijacker); ok {
-		return hj.Hijack()
-	}
-	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", cc.responseWriter)
-}
-
-// Flush sends any buffered data to the client.
-func (cc *codeCatcher) Flush() {
+// FlushError sends any buffered data to the client.
+func (cc *codeCatcher) FlushError() error {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.
 	cc.WriteHeader(cc.code)
@@ -268,12 +297,15 @@ func (cc *codeCatcher) Flush() {
 	// (e.g., To prevent superfluous WriteHeader on request with a
 	// `Transfer-Encoding: chunked` header).
 	if cc.caughtFilteredCode {
-		return
+		return nil
 	}
 
-	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
+	return http.NewResponseController(cc.responseWriter).Flush()
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (cc *codeCatcher) Unwrap() http.ResponseWriter {
+	return cc.responseWriter
 }
 
 func (cc *codeCatcher) getCode() int {
@@ -353,20 +385,14 @@ func (r *codeModifier) WriteHeader(code int) {
 	r.headerSent = true
 }
 
-// Hijack hijacks the connection.
-func (r *codeModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := r.responseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
-	}
-	return hijacker.Hijack()
-}
-
-// Flush sends any buffered data to the client.
-func (r *codeModifier) Flush() {
+// FlushError sends any buffered data to the client.
+func (r *codeModifier) FlushError() error {
 	r.WriteHeader(r.code)
 
-	if flusher, ok := r.responseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
+	return http.NewResponseController(r.responseWriter).Flush()
+}
+
+// Unwrap exposes the underlying ResponseWriter for http.ResponseController.
+func (r *codeModifier) Unwrap() http.ResponseWriter {
+	return r.responseWriter
 }

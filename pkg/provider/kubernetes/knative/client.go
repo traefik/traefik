@@ -122,13 +122,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	for _, ns := range namespaces {
 		factory := knativenetworkinginformers.NewSharedInformerFactoryWithOptions(c.csKnativeNetworking, resyncPeriod, knativenetworkinginformers.WithNamespace(ns), knativenetworkinginformers.WithTweakListOptions(func(opts *metav1.ListOptions) {
 			opts.LabelSelector = c.labelSelector
-		}))
+		}), knativenetworkinginformers.WithTransform(k8s.StripManagedFields))
 		_, err := factory.Networking().V1alpha1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
 
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err

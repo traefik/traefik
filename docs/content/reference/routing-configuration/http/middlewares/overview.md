@@ -5,7 +5,14 @@ description: "There are several available middleware in Traefik Proxy used to mo
 
 # HTTP Middleware Overview
 
-Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your service (or before the answer from the services are sent to the clients).
+Attached to [routers](../routing/router.md) or [services](../load-balancing/service.md), pieces of middleware are a means of tweaking the requests before they are sent to your backend servers (or before the answer is sent to the clients).
+
+Middlewares can be attached at two levels:
+
+- **Router-level:** Applied to all requests matching the router's rule, before forwarding to the service.
+- **Service-level:** Applied to all requests handled by the service, regardless of which router forwards the request. See [service middlewares](../load-balancing/service.md#middlewares).
+
+When both are configured, router middlewares execute first, followed by service middlewares.
 
 There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
@@ -44,6 +51,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | <a id="opt-Retry" href="#opt-Retry" title="#opt-Retry">[Retry](retry.md)</a> | Automatically retries in case of error            | Request lifecycle           |
 | <a id="opt-StripPrefix" href="#opt-StripPrefix" title="#opt-StripPrefix">[StripPrefix](stripprefix.md)</a> | Changes the path of the request                   | Path Modifier               |
 | <a id="opt-StripPrefixRegex" href="#opt-StripPrefixRegex" title="#opt-StripPrefixRegex">[StripPrefixRegex](stripprefixregex.md)</a> | Changes the path of the request                   | Path Modifier               |
+| <a id="opt-Tap" href="#opt-Tap" title="#opt-Tap">[Tap](tap.md)</a> | Sends a copy of the requests and responses to Traefik services | Observability, Audit        |
 
 ## Community Middlewares
 

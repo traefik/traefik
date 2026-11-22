@@ -42,7 +42,7 @@ func TestRequestHost(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-				host := GetCanonizedHost(r.Context())
+				host := GetCanonicalHost(r.Context())
 				assert.Equal(t, test.expected, host)
 			})
 

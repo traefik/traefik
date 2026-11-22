@@ -1,0 +1,27 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-forwardauth-snippet
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
+    nginx.ingress.kubernetes.io/auth-method: "POST"
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      add_header X-Auth-Snippet "auth-value";
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Snippet"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.example.com/oauth2/start?rd=foo"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /forwardauth-snippet
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

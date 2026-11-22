@@ -21,7 +21,6 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -30,31 +29,8 @@ import (
 
 const resyncPeriod = 10 * time.Minute
 
-// Client is a client for the Provider master.
-// WatchAll starts the watch of the Provider resources and updates the stores.
-// The stores can then be accessed via the Get* functions.
-type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error)
-	GetIngressRoutes() []*traefikv1alpha1.IngressRoute
-	GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP
-	GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP
-	GetMiddlewares() []*traefikv1alpha1.Middleware
-	GetMiddlewareTCPs() []*traefikv1alpha1.MiddlewareTCP
-	GetTraefikService(namespace, name string) (*traefikv1alpha1.TraefikService, bool, error)
-	GetTraefikServices() []*traefikv1alpha1.TraefikService
-	GetTLSOptions() []*traefikv1alpha1.TLSOption
-	GetServersTransports() []*traefikv1alpha1.ServersTransport
-	GetServersTransportTCPs() []*traefikv1alpha1.ServersTransportTCP
-	GetTLSStores() []*traefikv1alpha1.TLSStore
-	GetService(namespace, name string) (*corev1.Service, bool, error)
-	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
-	GetNodes() ([]*corev1.Node, bool, error)
-	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
-}
-
-// TODO: add tests for the clientWrapper (and its methods) itself.
-type clientWrapper struct {
+// Client reads the Kubernetes resources that the provider builds the configuration from.
+type Client struct {
 	csCrd  traefikclientset.Interface
 	csKube kclientset.Interface
 
@@ -71,93 +47,21 @@ type clientWrapper struct {
 	watchedNamespaces []string
 }
 
-func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
-	c.UserAgent = fmt.Sprintf(
-		"%s/%s (%s/%s) kubernetes/crd",
-		filepath.Base(os.Args[0]),
-		version.Version,
-		runtime.GOOS,
-		runtime.GOARCH,
-	)
-
-	csCrd, err := traefikclientset.NewForConfig(c)
-	if err != nil {
-		return nil, err
+// NewClient creates a client that reads the resources from the given clientsets, with the options of the provider.
+func NewClient(provider *Provider, csKube kclientset.Interface, csCrd traefikclientset.Interface) *Client {
+	return &Client{
+		csCrd:                       csCrd,
+		csKube:                      csKube,
+		factoriesCrd:                make(map[string]traefikinformers.SharedInformerFactory),
+		factoriesKube:               make(map[string]kinformers.SharedInformerFactory),
+		factoriesSecret:             make(map[string]kinformers.SharedInformerFactory),
+		labelSelector:               provider.LabelSelector,
+		disableClusterScopeInformer: provider.DisableClusterScopeResources,
 	}
-
-	csKube, err := kclientset.NewForConfig(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return newClientImpl(csKube, csCrd), nil
-}
-
-func newClientImpl(csKube kclientset.Interface, csCrd traefikclientset.Interface) *clientWrapper {
-	return &clientWrapper{
-		csCrd:           csCrd,
-		csKube:          csKube,
-		factoriesCrd:    make(map[string]traefikinformers.SharedInformerFactory),
-		factoriesKube:   make(map[string]kinformers.SharedInformerFactory),
-		factoriesSecret: make(map[string]kinformers.SharedInformerFactory),
-	}
-}
-
-// newInClusterClient returns a new Provider client that is expected to run
-// inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
-	}
-
-	if endpoint != "" {
-		config.Host = endpoint
-	}
-
-	return createClientFromConfig(config)
-}
-
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
-	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
-	if err != nil {
-		return nil, err
-	}
-	return createClientFromConfig(configFromFlags)
-}
-
-// newExternalClusterClient returns a new Provider client that may run outside
-// of the cluster.
-// The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
-	if endpoint == "" {
-		return nil, errors.New("endpoint missing for external cluster client")
-	}
-
-	tokenData, err := token.Read()
-	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
-	}
-
-	config := &rest.Config{
-		Host:        endpoint,
-		BearerToken: string(tokenData),
-	}
-
-	if caFilePath != "" {
-		caData, err := os.ReadFile(caFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
-		}
-
-		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
-	}
-
-	return createClientFromConfig(config)
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+func (c *Client) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
 	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
@@ -177,7 +81,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
-		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector))
+		factoryCrd := traefikinformers.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, traefikinformers.WithNamespace(ns), traefikinformers.WithTweakListOptions(matchesLabelSelector), traefikinformers.WithTransform(k8s.StripManagedFields))
 		_, err := factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -219,12 +123,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		endpointSliceInformer := factoryKube.Discovery().V1().EndpointSlices().Informer()
+		if err = endpointSliceInformer.AddIndexers(k8s.EndpointSliceByServiceNameIndexers); err != nil {
+			return nil, err
+		}
+		_, err = endpointSliceInformer.AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +141,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			return nil, err
 		}
 
-		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm), kinformers.WithTransform(k8s.StripManagedFields))
 		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -271,7 +179,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if !c.disableClusterScopeInformer {
-		c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+		c.clusterScopeFactory = kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithTransform(k8s.StripManagedFields))
 		_, err := c.clusterScopeFactory.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -289,7 +197,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	return eventCh, nil
 }
 
-func (c *clientWrapper) GetIngressRoutes() []*traefikv1alpha1.IngressRoute {
+func (c *Client) GetIngressRoutes() []*traefikv1alpha1.IngressRoute {
 	var result []*traefikv1alpha1.IngressRoute
 
 	for ns, factory := range c.factoriesCrd {
@@ -303,7 +211,7 @@ func (c *clientWrapper) GetIngressRoutes() []*traefikv1alpha1.IngressRoute {
 	return result
 }
 
-func (c *clientWrapper) GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP {
+func (c *Client) GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP {
 	var result []*traefikv1alpha1.IngressRouteTCP
 
 	for ns, factory := range c.factoriesCrd {
@@ -317,7 +225,7 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP
 	return result
 }
 
-func (c *clientWrapper) GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP {
+func (c *Client) GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP {
 	var result []*traefikv1alpha1.IngressRouteUDP
 
 	for ns, factory := range c.factoriesCrd {
@@ -331,7 +239,7 @@ func (c *clientWrapper) GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP
 	return result
 }
 
-func (c *clientWrapper) GetMiddlewares() []*traefikv1alpha1.Middleware {
+func (c *Client) GetMiddlewares() []*traefikv1alpha1.Middleware {
 	var result []*traefikv1alpha1.Middleware
 
 	for ns, factory := range c.factoriesCrd {
@@ -345,7 +253,7 @@ func (c *clientWrapper) GetMiddlewares() []*traefikv1alpha1.Middleware {
 	return result
 }
 
-func (c *clientWrapper) GetMiddlewareTCPs() []*traefikv1alpha1.MiddlewareTCP {
+func (c *Client) GetMiddlewareTCPs() []*traefikv1alpha1.MiddlewareTCP {
 	var result []*traefikv1alpha1.MiddlewareTCP
 
 	for ns, factory := range c.factoriesCrd {
@@ -360,7 +268,7 @@ func (c *clientWrapper) GetMiddlewareTCPs() []*traefikv1alpha1.MiddlewareTCP {
 }
 
 // GetTraefikService returns the named service from the given namespace.
-func (c *clientWrapper) GetTraefikService(namespace, name string) (*traefikv1alpha1.TraefikService, bool, error) {
+func (c *Client) GetTraefikService(namespace, name string) (*traefikv1alpha1.TraefikService, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -371,7 +279,7 @@ func (c *clientWrapper) GetTraefikService(namespace, name string) (*traefikv1alp
 	return service, exist, err
 }
 
-func (c *clientWrapper) GetTraefikServices() []*traefikv1alpha1.TraefikService {
+func (c *Client) GetTraefikServices() []*traefikv1alpha1.TraefikService {
 	var result []*traefikv1alpha1.TraefikService
 
 	for ns, factory := range c.factoriesCrd {
@@ -386,7 +294,7 @@ func (c *clientWrapper) GetTraefikServices() []*traefikv1alpha1.TraefikService {
 }
 
 // GetServersTransports returns all ServersTransport.
-func (c *clientWrapper) GetServersTransports() []*traefikv1alpha1.ServersTransport {
+func (c *Client) GetServersTransports() []*traefikv1alpha1.ServersTransport {
 	var result []*traefikv1alpha1.ServersTransport
 
 	for ns, factory := range c.factoriesCrd {
@@ -401,7 +309,7 @@ func (c *clientWrapper) GetServersTransports() []*traefikv1alpha1.ServersTranspo
 }
 
 // GetServersTransportTCPs returns all ServersTransportTCP.
-func (c *clientWrapper) GetServersTransportTCPs() []*traefikv1alpha1.ServersTransportTCP {
+func (c *Client) GetServersTransportTCPs() []*traefikv1alpha1.ServersTransportTCP {
 	var result []*traefikv1alpha1.ServersTransportTCP
 
 	for ns, factory := range c.factoriesCrd {
@@ -416,7 +324,7 @@ func (c *clientWrapper) GetServersTransportTCPs() []*traefikv1alpha1.ServersTran
 }
 
 // GetTLSOptions returns all TLS options.
-func (c *clientWrapper) GetTLSOptions() []*traefikv1alpha1.TLSOption {
+func (c *Client) GetTLSOptions() []*traefikv1alpha1.TLSOption {
 	var result []*traefikv1alpha1.TLSOption
 
 	for ns, factory := range c.factoriesCrd {
@@ -431,7 +339,7 @@ func (c *clientWrapper) GetTLSOptions() []*traefikv1alpha1.TLSOption {
 }
 
 // GetTLSStores returns all TLS stores.
-func (c *clientWrapper) GetTLSStores() []*traefikv1alpha1.TLSStore {
+func (c *Client) GetTLSStores() []*traefikv1alpha1.TLSStore {
 	var result []*traefikv1alpha1.TLSStore
 
 	for ns, factory := range c.factoriesCrd {
@@ -446,7 +354,7 @@ func (c *clientWrapper) GetTLSStores() []*traefikv1alpha1.TLSStore {
 }
 
 // GetService returns the named service from the given namespace.
-func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, bool, error) {
+func (c *Client) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -457,23 +365,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 }
 
 // GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
-func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
+func (c *Client) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
-	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
-
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+	return k8s.EndpointSlicesByServiceName(
+		c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Informer().GetIndexer(),
+		namespace,
+		serviceName,
+	)
 }
 
 // GetSecret returns the named secret from the given namespace.
-func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
+func (c *Client) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -484,7 +389,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 }
 
 // GetConfigMap returns the named config map from the given namespace.
-func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error) {
+func (c *Client) GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get config map %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -494,7 +399,7 @@ func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap,
 	return configMap, exist, err
 }
 
-func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+func (c *Client) GetNodes() ([]*corev1.Node, bool, error) {
 	nodes, err := c.clusterScopeFactory.Core().V1().Nodes().Lister().List(labels.Everything())
 	exist, err := translateNotFoundError(err)
 	return nodes, exist, err
@@ -506,7 +411,7 @@ func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
 // The distinction is necessary because we index all informers on the special
 // identifier iff all-namespaces are requested but receive specific namespace
 // identifiers from the Kubernetes API, so we have to bridge this gap.
-func (c *clientWrapper) lookupNamespace(ns string) string {
+func (c *Client) lookupNamespace(ns string) string {
 	if c.isNamespaceAll {
 		return metav1.NamespaceAll
 	}
@@ -515,12 +420,87 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
 // it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientWrapper) isWatchedNamespace(ns string) bool {
+func (c *Client) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
 
 	return slices.Contains(c.watchedNamespaces, ns)
+}
+
+func createClientsetsFromConfig(c *rest.Config) (kclientset.Interface, traefikclientset.Interface, error) {
+	c.UserAgent = fmt.Sprintf(
+		"%s/%s (%s/%s) kubernetes/crd",
+		filepath.Base(os.Args[0]),
+		version.Version,
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
+
+	csCrd, err := traefikclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	csKube, err := kclientset.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return csKube, csCrd, nil
+}
+
+// newInClusterClientsets returns the clientsets of a Provider client that is expected to run
+// inside the cluster.
+func newInClusterClientsets(endpoint string) (kclientset.Interface, traefikclientset.Interface, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+	}
+
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientsetsFromConfig(config)
+}
+
+func newExternalClusterClientsetsFromFile(file string) (kclientset.Interface, traefikclientset.Interface, error) {
+	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
+	if err != nil {
+		return nil, nil, err
+	}
+	return createClientsetsFromConfig(configFromFlags)
+}
+
+// newExternalClusterClientsets returns the clientsets of a Provider client that may run outside
+// of the cluster.
+// The endpoint parameter must not be empty.
+func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileOrContent) (kclientset.Interface, traefikclientset.Interface, error) {
+	if endpoint == "" {
+		return nil, nil, errors.New("endpoint missing for external cluster client")
+	}
+
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, nil, fmt.Errorf("read token: %w", err)
+	}
+
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: string(tokenData),
+	}
+
+	if caFilePath != "" {
+		caData, err := os.ReadFile(caFilePath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+
+	return createClientsetsFromConfig(config)
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return

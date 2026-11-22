@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -471,10 +471,10 @@ func Test_addTCPRouteV2(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			router, err := NewMuxer()
+			router, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, "v2", 0, handler)
+			err = router.AddRoute(test.rule, "v2", 0, "", handler)
 			if test.routeErr {
 				require.Error(t, err)
 				return
@@ -492,7 +492,7 @@ func Test_addTCPRouteV2(t *testing.T) {
 				remoteAddr: fakeAddr{addr: addr},
 			}
 
-			connData, err := NewConnData(test.serverName, conn, test.protos)
+			connData, err := NewConnData(test.serverName, conn.RemoteAddr(), test.protos)
 			require.NoError(t, err)
 
 			matchingHandler, _ := router.Match(connData)
@@ -607,10 +607,10 @@ func Test_HostSNICatchAllV2(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "v2", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{

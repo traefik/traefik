@@ -190,11 +190,13 @@ func (c *compress) newGzipHandler() (http.Handler, error) {
 
 	if len(c.includes) > 0 {
 		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.EnableZstd(false),
 			gzhttp.ContentTypes(c.includes),
 			gzhttp.MinSize(c.minSize),
 		)
 	} else {
 		wrapper, err = gzhttp.NewWrapper(
+			gzhttp.EnableZstd(false),
 			gzhttp.ExceptContentTypes(c.excludes),
 			gzhttp.MinSize(c.minSize),
 		)
@@ -230,7 +232,15 @@ func (c *compress) newZstdHandler(middlewareName string) (http.Handler, error) {
 	}
 
 	newZstdWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
-		writer, err := zstd.NewWriter(rw)
+		// Each in-flight response holds one encoder until it is fully written.
+		// The default options (8 MiB window) use about 18 MiB per encoder, the gzhttp options below use less than 1 MiB.
+		// See https://github.com/klauspost/compress/blob/35c6f98a5cb955b838d313596dd86c882a9f6d3f/gzhttp/writer/zstdkp/zstdkp.go#L35-L40.
+		writer, err := zstd.NewWriter(rw,
+			zstd.WithEncoderLevel(zstd.SpeedFastest),
+			zstd.WithEncoderConcurrency(1),
+			zstd.WithLowerEncoderMem(true),
+			zstd.WithWindowSize(128<<10),
+		)
 		if err != nil {
 			return nil, "", fmt.Errorf("creating zstd writer: %w", err)
 		}

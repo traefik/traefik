@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react'
-import { RouteObject } from 'react-router-dom'
+import { RouteObject } from 'react-router'
 
 import { PUBLIC_KEY } from './constants'
 

@@ -64,8 +64,8 @@ func parseHost(addr string) string {
 	return host
 }
 
-// GetCanonizedHost retrieves the canonized host from the given context (previously stored in the request context by the middleware).
-func GetCanonizedHost(ctx context.Context) string {
+// GetCanonicalHost retrieves the canonical host from the given context (previously stored in the request context by the middleware).
+func GetCanonicalHost(ctx context.Context) string {
 	if val, ok := ctx.Value(canonicalKey).(string); ok {
 		return val
 	}

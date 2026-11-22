@@ -7,14 +7,10 @@ import (
 	"net/url"
 
 	"github.com/traefik/paerser/types"
-	ttypes "github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/traefik/traefik/v3/pkg/observability"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	otelsdk "go.opentelemetry.io/otel/sdk/log"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -93,9 +89,15 @@ type FieldHeaders struct {
 
 // AccessLogFields holds configuration for access log fields.
 type AccessLogFields struct {
-	DefaultMode string            `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
-	Names       map[string]string `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
-	Headers     *FieldHeaders     `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	DefaultMode     string                `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
+	Names           map[string]string     `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
+	Headers         *FieldHeaders         `description:"Headers to keep, drop or redact" json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	QueryParameters *FieldQueryParameters `description:"Keep or drop all query parameters" json:"queryParameters,omitempty" toml:"queryParameters,omitempty" yaml:"queryParameters,omitempty" export:"true"`
+}
+
+// FieldQueryParameters holds configuration for access log query parameters.
+type FieldQueryParameters struct {
+	DefaultMode string `description:"Default mode for query parameters: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -103,6 +105,9 @@ func (f *AccessLogFields) SetDefaults() {
 	f.DefaultMode = AccessLogKeep
 	f.Headers = &FieldHeaders{
 		DefaultMode: AccessLogDrop,
+	}
+	f.QueryParameters = &FieldQueryParameters{
+		DefaultMode: AccessLogKeep,
 	}
 }
 
@@ -130,6 +135,15 @@ func (f *AccessLogFields) KeepHeader(header string) string {
 		}
 	}
 	return defaultValue
+}
+
+// KeepQueryParameters checks if the query parameters need to be kept or dropped.
+func (f *AccessLogFields) KeepQueryParameters() bool {
+	defaultKeep := true
+	if f == nil || f.QueryParameters == nil {
+		return defaultKeep
+	}
+	return checkFieldValue(f.QueryParameters.DefaultMode, defaultKeep)
 }
 
 func checkFieldValue(value string, defaultKeep bool) bool {
@@ -180,30 +194,9 @@ func (o *OTelLog) NewLoggerProvider(ctx context.Context) (*otelsdk.LoggerProvide
 		return nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	var resAttrs []attribute.KeyValue
-	for k, v := range o.ResourceAttributes {
-		resAttrs = append(resAttrs, attribute.String(k, v))
-	}
-
-	res, err := resource.New(ctx,
-		resource.WithContainer(),
-		resource.WithHost(),
-		resource.WithOS(),
-		resource.WithProcess(),
-		resource.WithTelemetrySDK(),
-		resource.WithDetectors(ttypes.K8sAttributesDetector{}),
-		// The following order allows the user to override the service name and version,
-		// as well as any other attributes set by the above detectors.
-		resource.WithAttributes(
-			semconv.ServiceName(o.ServiceName),
-			semconv.ServiceVersion(version.Version),
-		),
-		resource.WithAttributes(resAttrs...),
-		// Use the environment variables to allow overriding above resource attributes.
-		resource.WithFromEnv(),
-	)
+	res, err := observability.NewOTelResource(ctx, o.ServiceName, o.ResourceAttributes)
 	if err != nil {
-		return nil, fmt.Errorf("building resource: %w", err)
+		return nil, err
 	}
 
 	// Register the trace provider to allow the global logger to access it.

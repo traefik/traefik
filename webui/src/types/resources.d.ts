@@ -1,5 +1,5 @@
 declare namespace Resource {
-  type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'loading'
+  type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'expired' | 'loading'
 
   type DetailsData = Router.DetailsData & Service.Details & Middleware.DetailsData
 }
@@ -19,10 +19,10 @@ declare namespace Router {
   }
 
   type TLS = {
-    options: string
+    options?: string
     certResolver: string
     domains: TlsDomain[]
-    passthrough: boolean
+    passthrough?: boolean
   }
 
   type Details = {
@@ -102,10 +102,6 @@ declare namespace Service {
 }
 
 declare namespace Middleware {
-  type Props = {
-    [prop: string]: ValuesMapType
-  }
-
   type Details = {
     name: string
     status: 'enabled' | 'disabled' | 'warning'
@@ -115,9 +111,38 @@ declare namespace Middleware {
     error?: string[]
     routers?: string[]
     usedBy?: string[]
-  } & Props
+  }
 
   type DetailsData = Details & {
     routers?: Router.Details[]
+  }
+}
+
+declare namespace Certificate {
+  /** Raw API response shape */
+  type Raw = {
+    name: string
+    commonName?: string
+    sans: string[]
+    issuerOrg?: string
+    issuerCN?: string
+    issuerCountry?: string
+    organization?: string
+    country?: string
+    serialNumber: string
+    notBefore: string
+    notAfter: string
+    version: string
+    keyType: string
+    keySize?: number
+    signatureAlgorithm: string
+    certFingerprint: string
+    publicKeyFingerprint: string
+    status: 'enabled' | 'warning' | 'expired'
+  }
+
+  /** Enriched certificate with computed fields */
+  type Info = Raw & {
+    daysLeft: number
   }
 }

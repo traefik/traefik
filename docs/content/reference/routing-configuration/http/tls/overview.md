@@ -13,6 +13,39 @@ meaning that it will send decrypted data to the services.
 The TLS configuration provides several options for fine-tuning the TLS behavior,
 including automatic certificate generation, custom TLS options, and explicit domain specification.
 
+!!! warning "Router TLS replaces entrypoint TLS"
+
+    Entrypoint `http.tls` settings apply only when a router does **not** define its own `tls` section.
+    Defining a router `tls` section — even empty, or with any field such as `certResolver`, `options`, or `domains` —
+    means Traefik does **not** merge that configuration with the entrypoint defaults for that router. The router TLS
+    configuration replaces the entrypoint TLS configuration entirely.
+
+    For example, with entrypoint TLS options configured:
+
+    ```yaml
+    entryPoints:
+      websecure:
+        address: :443
+        http:
+          tls:
+            options: modern-tls@file
+    ```
+
+    and a router that only sets a certificate resolver:
+
+    ```yaml
+    http:
+      routers:
+        sample:
+          rule: Host(`example.com`)
+          service: sample
+          tls:
+            certResolver: letsencrypt
+    ```
+
+    the entrypoint `options` (`modern-tls@file`) are **not** applied to `sample`.
+    To keep both, set them together on the entrypoint, or set both `options` and `certResolver` on the router.
+
 ## Configuration Example
 
 ```yaml tab="Structured (YAML)"
@@ -74,7 +107,7 @@ labels:
 
 | Field                                                                              | Description                                                                                                                                                                                                    | Default   | Required |
 |:-----------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------|:---------|
-| <a id="opt-options" href="#opt-options" title="#opt-options">`options`</a> | The name of the TLS options to use for configuring TLS parameters (cipher suites, min/max TLS version, client authentication, etc.). See [TLS Options](./tls-options.md) for detailed configuration.           | `default` | No       |
+| <a id="opt-options" href="#opt-options" title="#opt-options">`options`</a> | The name of the TLS options to use for configuring TLS parameters (cipher suites, min/max TLS version, client authentication, etc.). See [TLS Options](./tls-options.md) for detailed configuration.           | `""` (resolves to `default` at runtime) | No       |
 | <a id="opt-certResolver" href="#opt-certResolver" title="#opt-certResolver">`certResolver`</a> | The name of the certificate resolver to use for automatic certificate generation via ACME providers (such as Let's Encrypt). See the [Certificate Resolver](./#certificate-resolver) section for more details. | ""        | No       |
 | <a id="opt-domains" href="#opt-domains" title="#opt-domains">`domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. See the [Custom Domains](./#custom-domains) section for more details.                                      | []        | No       |
 

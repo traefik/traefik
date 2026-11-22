@@ -2,6 +2,7 @@ package ratelimiter
 
 import (
 	"context"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -32,7 +33,7 @@ local bucket = {
 
 local rl_source = redis.call('hgetall', key)
 
-if table.maxn(rl_source) == 4 then
+if #rl_source == 4 then
     -- Get bucket state from redis
     bucket.last = tonumber(rl_source[2])
     bucket.tokens = tonumber(rl_source[4])
@@ -61,6 +62,10 @@ end
 redis.call('hset', key, 'last', t, 'tokens', tokens)
 redis.call('expire', key, ttl)
 
-return {tostring(true), tostring(wait_duration),tostring(tokens)}`
+return {tostring(true), tostring(wait_duration), tostring(tokens)}`
 
-var AllowTokenBucketScript = redis.NewScript(AllowTokenBucketRaw)
+// LoadTokenBucketScript loads a token bucket script.
+// Exposed so it can be overridden by Traefik Hub.
+var LoadTokenBucketScript = sync.OnceValues(func() (*redis.Script, error) {
+	return redis.NewScript(AllowTokenBucketRaw), nil
+})

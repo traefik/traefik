@@ -1,6 +1,6 @@
 services:
   noOverrideWhitelist:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt1.rule: Host(`no.override.whitelist.docker.local`)
@@ -8,7 +8,7 @@ services:
       traefik.http.middlewares.wl1.ipwhitelist.sourceRange: 8.8.8.8
 
   overrideIPStrategyRemoteAddrWhitelist:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt2.rule: Host(`override.remoteaddr.whitelist.docker.local`)
@@ -17,7 +17,7 @@ services:
       traefik.http.middlewares.wl2.ipwhitelist.ipStrategy: true
 
   overrideIPStrategyDepthWhitelist:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt3.rule: Host(`override.depth.whitelist.docker.local`)
@@ -26,7 +26,7 @@ services:
       traefik.http.middlewares.wl3.ipwhitelist.ipStrategy.depth: 3
 
   overrideIPStrategyExcludedIPsWhitelist:
-    image: traefik/whoami
+    image: traefik/whoami:v1.12.0
     labels:
       traefik.enable: true
       traefik.http.routers.rt4.rule: Host(`override.excludedips.whitelist.docker.local`)

@@ -28,24 +28,46 @@ package v1alpha1
 
 import (
 	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
+	tls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // ServersTransportSpecApplyConfiguration represents a declarative configuration of the ServersTransportSpec type for use
 // with apply.
+//
+// ServersTransportSpec defines the desired state of a ServersTransport.
 type ServersTransportSpecApplyConfiguration struct {
-	ServerName          *string                               `json:"serverName,omitempty"`
-	InsecureSkipVerify  *bool                                 `json:"insecureSkipVerify,omitempty"`
-	RootCAs             []RootCAApplyConfiguration            `json:"rootCAs,omitempty"`
-	RootCAsSecrets      []string                              `json:"rootCAsSecrets,omitempty"`
-	CertificatesSecrets []string                              `json:"certificatesSecrets,omitempty"`
-	CipherSuites        []string                              `json:"cipherSuites,omitempty"`
-	MinVersion          *string                               `json:"minVersion,omitempty"`
-	MaxVersion          *string                               `json:"maxVersion,omitempty"`
-	MaxIdleConnsPerHost *int                                  `json:"maxIdleConnsPerHost,omitempty"`
-	ForwardingTimeouts  *ForwardingTimeoutsApplyConfiguration `json:"forwardingTimeouts,omitempty"`
-	DisableHTTP2        *bool                                 `json:"disableHTTP2,omitempty"`
-	PeerCertURI         *string                               `json:"peerCertURI,omitempty"`
-	Spiffe              *dynamic.Spiffe                       `json:"spiffe,omitempty"`
+	// ServerName defines the server name used to contact the server.
+	ServerName *string `json:"serverName,omitempty"`
+	// InsecureSkipVerify disables SSL certificate verification.
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
+	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
+	RootCAs []RootCAApplyConfiguration `json:"rootCAs,omitempty"`
+	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
+	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
+	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
+	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
+	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// CipherSuites defines the cipher suites to use when contacting backend servers.
+	CipherSuites []string `json:"cipherSuites,omitempty"`
+	// MinVersion defines the minimum TLS version to use when contacting backend servers.
+	MinVersion *string `json:"minVersion,omitempty"`
+	// MaxVersion defines the maximum TLS version to use when contacting backend servers.
+	MaxVersion *string `json:"maxVersion,omitempty"`
+	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+	MaxIdleConnsPerHost *int `json:"maxIdleConnsPerHost,omitempty"`
+	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
+	ForwardingTimeouts *ForwardingTimeoutsApplyConfiguration `json:"forwardingTimeouts,omitempty"`
+	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
+	DisableHTTP2 *bool `json:"disableHTTP2,omitempty"`
+	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+	//
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
+	PeerCertURI *string `json:"peerCertURI,omitempty"`
+	// PeerCertSANs defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
+	PeerCertSANs []tls.SAN `json:"peerCertSANs,omitempty"`
+	// Spiffe defines the SPIFFE configuration.
+	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
 
 // ServersTransportSpecApplyConfiguration constructs a declarative configuration of the ServersTransportSpec type for use with
@@ -158,6 +180,16 @@ func (b *ServersTransportSpecApplyConfiguration) WithDisableHTTP2(value bool) *S
 // If called multiple times, the PeerCertURI field is set to the value of the last call.
 func (b *ServersTransportSpecApplyConfiguration) WithPeerCertURI(value string) *ServersTransportSpecApplyConfiguration {
 	b.PeerCertURI = &value
+	return b
+}
+
+// WithPeerCertSANs adds the given value to the PeerCertSANs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the PeerCertSANs field.
+func (b *ServersTransportSpecApplyConfiguration) WithPeerCertSANs(values ...tls.SAN) *ServersTransportSpecApplyConfiguration {
+	for i := range values {
+		b.PeerCertSANs = append(b.PeerCertSANs, values[i])
+	}
 	return b
 }
 

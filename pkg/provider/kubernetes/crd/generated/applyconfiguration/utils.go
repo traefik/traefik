@@ -62,6 +62,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.DigestAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ErrorPage"):
 		return &traefikiov1alpha1.ErrorPageApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Failover"):
+		return &traefikiov1alpha1.FailoverApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("FailoverError"):
+		return &traefikiov1alpha1.FailoverErrorApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ForwardAuth"):
 		return &traefikiov1alpha1.ForwardAuthApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ForwardingTimeouts"):
@@ -114,6 +118,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.RootCAApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Route"):
 		return &traefikiov1alpha1.RouteApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RouterObservabilityConfig"):
+		return &traefikiov1alpha1.RouterObservabilityConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("RouterRespondingTimeouts"):
+		return &traefikiov1alpha1.RouterRespondingTimeoutsApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteTCP"):
 		return &traefikiov1alpha1.RouteTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RouteUDP"):
@@ -134,6 +142,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &traefikiov1alpha1.ServiceTCPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ServiceUDP"):
 		return &traefikiov1alpha1.ServiceUDPApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Tap"):
+		return &traefikiov1alpha1.TapApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TapRequest"):
+		return &traefikiov1alpha1.TapRequestApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("TapResponse"):
+		return &traefikiov1alpha1.TapResponseApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLS"):
 		return &traefikiov1alpha1.TLSApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("TLSClientConfig"):

@@ -114,7 +114,7 @@ The Service automatically gets a server per instance in this consul Catalog serv
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
+To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.http.routers.{name-of-your-choice}.` and followed by the option you want to change.
 
 For example, to change the rule, you could add the tag ```traefik.http.routers.my-service.rule=Host(`example.com`)```.
 
@@ -132,7 +132,7 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
 | <a id="opt-traefik-http-routers-router-name-tls-certresolver" href="#opt-traefik-http-routers-router-name-tls-certresolver" title="#opt-traefik-http-routers-router-name-tls-certresolver">`traefik.http.routers.<router_name>.tls.certresolver`</a> | See [certResolver](../../install-configuration/tls/certificate-resolvers/overview.md) for more information. | `myresolver` |
 | <a id="opt-traefik-http-routers-router-name-tls-domainsn-main" href="#opt-traefik-http-routers-router-name-tls-domainsn-main" title="#opt-traefik-http-routers-router-name-tls-domainsn-main">`traefik.http.routers.<router_name>.tls.domains[n].main`</a> | See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information. | `example.org` |
 | <a id="opt-traefik-http-routers-router-name-tls-domainsn-sans" href="#opt-traefik-http-routers-router-name-tls-domainsn-sans" title="#opt-traefik-http-routers-router-name-tls-domainsn-sans">`traefik.http.routers.<router_name>.tls.domains[n].sans`</a> | See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information. | `test.example.org,dev.example.org` |
-| <a id="opt-traefik-http-routers-router-name-tls-options" href="#opt-traefik-http-routers-router-name-tls-options" title="#opt-traefik-http-routers-router-name-tls-options">`traefik.http.routers.<router_name>.tls.options`</a> |  | `foobar` |
+| <a id="opt-traefik-http-routers-router-name-tls-options" href="#opt-traefik-http-routers-router-name-tls-options" title="#opt-traefik-http-routers-router-name-tls-options">`traefik.http.routers.<router_name>.tls.options`</a> | See [TLS Options](../http/tls/tls-options.md) for more information, and [Conflicting TLS Options](../http/tls/tls-options.md#conflicting-tls-options) when several routers serve the same host name. | `foobar` |
 | <a id="opt-traefik-http-routers-router-name-observability-accesslogs" href="#opt-traefik-http-routers-router-name-observability-accesslogs" title="#opt-traefik-http-routers-router-name-observability-accesslogs">`traefik.http.routers.<router_name>.observability.accesslogs`</a> | The accessLogs option controls whether the router will produce access-logs. | `true` |
 | <a id="opt-traefik-http-routers-router-name-observability-metrics" href="#opt-traefik-http-routers-router-name-observability-metrics" title="#opt-traefik-http-routers-router-name-observability-metrics">`traefik.http.routers.<router_name>.observability.metrics`</a> | The metrics option controls whether the router will produce metrics. | `true` |
 | <a id="opt-traefik-http-routers-router-name-observability-tracing" href="#opt-traefik-http-routers-router-name-observability-tracing" title="#opt-traefik-http-routers-router-name-observability-tracing">`traefik.http.routers.<router_name>.observability.tracing`</a> | The tracing option controls whether the router will produce traces. | `true` |
@@ -255,7 +255,7 @@ More information about available middlewares in the dedicated [middlewares secti
     ```yaml
     # ...
     # Declaring a middleware
-    traefik.tcp.middlewares.test-inflightconn.amount=10
+    traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10
     # Referencing a middleware
     traefik.tcp.routers.my-service.middlewares=test-inflightconn
     ```
@@ -303,7 +303,7 @@ You can declare UDP Routers and/or Services using tags.
 |------|-------------|-------|
 | <a id="opt-traefik-enable" href="#opt-traefik-enable" title="#opt-traefik-enable">`traefik.enable`</a> | You can tell Traefik to consider (or not) the service by setting `traefik.enable` to true or false.<br/>This option overrides the value of `exposedByDefault`. | `true` |
 | <a id="opt-traefik-consulcatalog-connect" href="#opt-traefik-consulcatalog-connect" title="#opt-traefik-consulcatalog-connect">`traefik.consulcatalog.connect`</a> | You can tell Traefik to consider (or not) the service as a Connect capable one by setting `traefik.consulcatalog.connect` to true or false.<br/>This option overrides the value of `connectByDefault`. | `true` |
-| <a id="opt-traefik-consulcatalog-canary" href="#opt-traefik-consulcatalog-canary" title="#opt-traefik-consulcatalog-canary">`traefik.consulcatalog.canary`</a> | When ConsulCatalog, in the context of a Nomad orchestrator, is a provider (of service registration) for Traefik, one might have the need to distinguish within Traefik between a [Canary](https://learn.hashicorp.com/tutorials/nomad/job-blue-green-and-canary-deployments#deploy-with-canaries) instance of a service, or a production one.<br/>For example if one does not want them to be part of the same load-balancer.<br/><br/>Therefore, this option, which is meant to be provided as one of the values of the `canary_tags` field in the Nomad [service stanza](https://www.nomadproject.io/docs/job-specification/service#canary_tags), allows Traefik to identify that the associated instance is a canary one. | `true` |
+| <a id="opt-traefik-consulcatalog-canary" href="#opt-traefik-consulcatalog-canary" title="#opt-traefik-consulcatalog-canary">`traefik.consulcatalog.canary`</a> | When ConsulCatalog, in the context of a Nomad orchestrator, is a provider (of service registration) for Traefik, one might have the need to distinguish within Traefik between a [Canary](https://developer.hashicorp.com/nomad/docs/job-declare/strategy/blue-green-canary#deploy-with-canaries) instance of a service, or a production one.<br/>For example if one does not want them to be part of the same load-balancer.<br/><br/>Therefore, this option, which is meant to be provided as one of the values of the `canary_tags` field in the Nomad [service stanza](https://developer.hashicorp.com/nomad/docs/job-specification/service#canary_tags), allows Traefik to identify that the associated instance is a canary one. | `true` |
 
 #### Port Lookup
 

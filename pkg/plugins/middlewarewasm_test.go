@@ -40,11 +40,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
 				require.NoError(t, err)
 
-				return Settings{Mounts: []string{
-						tempDir,
-					}}, map[string]any{
-						"file": filePath,
-					}
+				return Settings{Mounts: []string{tempDir}}, map[string]any{"file": filePath}
 			},
 			expected: "content_test",
 		},
@@ -58,11 +54,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 				err := os.WriteFile(filePath, []byte("content_test"), 0o644)
 				require.NoError(t, err)
 
-				return Settings{Mounts: []string{
-						tempDir + ":/tmp",
-					}}, map[string]any{
-						"file": "/tmp/hello.txt",
-					}
+				return Settings{Mounts: []string{tempDir + ":/tmp"}}, map[string]any{"file": "/tmp/hello.txt"}
 			},
 			expected: "content_test",
 		},

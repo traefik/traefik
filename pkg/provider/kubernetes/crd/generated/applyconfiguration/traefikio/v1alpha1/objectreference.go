@@ -28,8 +28,12 @@ package v1alpha1
 
 // ObjectReferenceApplyConfiguration represents a declarative configuration of the ObjectReference type for use
 // with apply.
+//
+// ObjectReference is a generic reference to a Traefik resource.
 type ObjectReferenceApplyConfiguration struct {
-	Name      *string `json:"name,omitempty"`
+	// Name defines the name of the referenced Traefik resource.
+	Name *string `json:"name,omitempty"`
+	// Namespace defines the namespace of the referenced Traefik resource.
 	Namespace *string `json:"namespace,omitempty"`
 }
 

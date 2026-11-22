@@ -50,7 +50,7 @@ Traefik provides two main mechanisms for path security that work together to pro
 ### Path Sanitization
 
 Path sanitization is enabled by default and helps prevent directory traversal attacks by normalizing request paths.
-Configure it in the [EntryPoints](../routing/entrypoints.md#sanitizepath) HTTP section:
+Configure it in the [EntryPoints](../reference/install-configuration/entrypoints.md#sanitizepath) HTTP section:
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -79,11 +79,14 @@ entryPoints:
 - `/foo/../bar` → `/bar` (resolves parent directory traversal)
 - `/foo/bar//` → `/foo/bar/` (removes duplicate slashes)
 - `/./foo/../bar//` → `/bar/` (combines all normalizations)
+- `/foo/.;bar/baz` → `/foo/baz` (resolves current dot-segments with path parameters)
+- `/foo/..;bar/baz` → `/baz` (resolves parent dot-segments with path parameters)
+- `/foo/;bar/baz` → `/foo/baz` (removes empty segments with path parameters)
 
 ### Encoded Character Filtering
 
 Encoded character filtering provides an additional security layer by rejecting potentially dangerous URL-encoded characters.
-Configure it in the [EntryPoints](../routing/entrypoints.md#encoded-characters) HTTP section.
+Configure it in the [EntryPoints](../reference/install-configuration/entrypoints.md#encoded-characters) HTTP section.
 
 This filtering occurs before path sanitization and catches attack attempts that use encoding to bypass other security controls.
 
@@ -91,7 +94,7 @@ All encoded character filtering is disabled by default (`true` means encoded cha
 
 !!! info "Security Considerations"
 
-    When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
+    When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requests path,
     it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
 
 ```yaml tab="File (YAML)"

@@ -10,11 +10,10 @@ import {
   Text,
   Tooltip,
   VisuallyHidden,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
-import { matchPath, useHref } from 'react-router'
-import { useLocation } from 'react-router-dom'
+import { matchPath, useHref, useLocation } from 'react-router'
 import { useWindowSize } from 'usehooks-ts'
 
 import Container from '../Container'
@@ -24,6 +23,7 @@ import { LAPTOP_BP } from '.'
 import IconButton from 'components/buttons/IconButton'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
+import InstanceBadge from 'components/InstanceBadge'
 import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
@@ -133,9 +133,9 @@ export const SideNav = ({
   isResponsive?: boolean
 }) => {
   const windowSize = useWindowSize()
-  const { version } = useContext(VersionContext)
+  const { version, dashboardName } = useContext(VersionContext)
 
-  const { http, tcp, udp } = useTotals()
+  const { http, tcp, udp, certificates } = useTotals()
 
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
@@ -155,8 +155,9 @@ export const SideNav = ({
       '/tcp/middlewares': tcp?.middlewares as number,
       '/udp/routers': udp?.routers,
       '/udp/services': udp?.services,
+      '/certificates': certificates,
     }),
-    [http, tcp, udp],
+    [http, tcp, udp, certificates],
   )
 
   return (
@@ -213,7 +214,7 @@ export const SideNav = ({
           css={{
             color: '$primary',
             mt: '$3',
-            mb: '$6',
+            mb: dashboardName && !isSmallAndResponsive ? '$2' : '$6',
             textDecoration: 'none',
             height: 'fit-content',
             pl: '$3',
@@ -229,6 +230,7 @@ export const SideNav = ({
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
+        {!isSmallAndResponsive && !!dashboardName && <InstanceBadge />}
         {ROUTES.map((section, index) => (
           <Flex
             key={`nav-section-${index}`}

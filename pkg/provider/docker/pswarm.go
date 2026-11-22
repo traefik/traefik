@@ -3,16 +3,14 @@ package docker
 import (
 	"context"
 	"fmt"
-	"net"
 	"strconv"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/docker/docker/api/types/filters"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	"github.com/docker/docker/api/types/versions"
-	"github.com/docker/docker/client"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -22,7 +20,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
-const swarmName = "swarm"
+// SwarmName is the swarm provider name.
+const SwarmName = "swarm"
 
 var _ provider.Provider = (*SwarmProvider)(nil)
 
@@ -57,7 +56,7 @@ func (p *SwarmProvider) Init() error {
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, swarmName).Logger()
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, SwarmName).Logger()
 		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
@@ -65,7 +64,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
 
-			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, swarmName).Logger().WithContext(ctx)
+			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, SwarmName).Logger().WithContext(ctx)
 
 			dockerClient, err := p.createClient(ctx)
 			if err != nil {
@@ -76,7 +75,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 
 			builder := NewDynConfBuilder(p.Shared, dockerClient, true)
 
-			serverVersion, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := dockerClient.ServerVersion(ctx, client.ServerVersionOptions{})
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to retrieve information of the docker client and server host")
 				return err
@@ -92,7 +91,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 
 			configuration := builder.build(ctxLog, dockerDataList)
 			configurationChan <- dynamic.Message{
-				ProviderName:  swarmName,
+				ProviderName:  SwarmName,
 				Configuration: configuration,
 			}
 			if p.Watch {
@@ -102,7 +101,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 				ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
 
 				pool.GoCtx(func(ctx context.Context) {
-					logger := log.Ctx(ctx).With().Str(logs.ProviderName, swarmName).Logger()
+					logger := log.Ctx(ctx).With().Str(logs.ProviderName, SwarmName).Logger()
 					ctx = logger.WithContext(ctx)
 
 					defer close(errChan)
@@ -119,7 +118,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 							configuration := builder.build(ctx, services)
 							if configuration != nil {
 								configurationChan <- dynamic.Message{
-									ProviderName:  swarmName,
+									ProviderName:  SwarmName,
 									Configuration: configuration,
 								}
 							}
@@ -157,17 +156,17 @@ func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error
 func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	logger := log.Ctx(ctx)
 
-	serviceList, err := dockerClient.ServiceList(ctx, swarmtypes.ServiceListOptions{})
+	serviceList, err := dockerClient.ServiceList(ctx, client.ServiceListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	serverVersion, err := dockerClient.ServerVersion(ctx)
+	serverVersion, err := dockerClient.ServerVersion(ctx, client.ServerVersionOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	networkListArgs := filters.NewArgs()
+	networkListArgs := client.Filters{}
 	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
 	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
 		networkListArgs.Add("scope", "swarm")
@@ -175,21 +174,23 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 		networkListArgs.Add("driver", "overlay")
 	}
 
-	networkList, err := dockerClient.NetworkList(ctx, networktypes.ListOptions{Filters: networkListArgs})
+	networkList, err := dockerClient.NetworkList(ctx, client.NetworkListOptions{
+		Filters: networkListArgs,
+	})
 	if err != nil {
 		logger.Debug().Err(err).Msg("Failed to network inspect on client for docker")
 		return nil, err
 	}
 
 	networkMap := make(map[string]*networktypes.Summary)
-	for _, network := range networkList {
+	for _, network := range networkList.Items {
 		networkMap[network.ID] = &network
 	}
 
 	var dockerDataList []dockerData
 	var dockerDataListTasks []dockerData
 
-	for _, service := range serviceList {
+	for _, service := range serviceList.Items {
 		dData, err := p.parseService(ctx, service, networkMap)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Skip container %s", getServiceName(dData))
@@ -246,15 +247,14 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 				logger.Debug().Msgf("Network not found, id: %s", virtualIP.NetworkID)
 				continue
 			}
-			if len(virtualIP.Addr) == 0 {
+			if !virtualIP.Addr.Addr().IsValid() {
 				logger.Debug().Msgf("No virtual IPs found in network %s", virtualIP.NetworkID)
 				continue
 			}
-			ip, _, _ := net.ParseCIDR(virtualIP.Addr)
 			network := &networkData{
 				Name: networkService.Name,
 				ID:   virtualIP.NetworkID,
-				Addr: ip.String(),
+				Addr: virtualIP.Addr.Addr().String(),
 			}
 			dData.NetworkSettings.Networks[network.Name] = network
 		}
@@ -265,17 +265,15 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
 	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
 ) ([]dockerData, error) {
-	serviceIDFilter := filters.NewArgs()
-	serviceIDFilter.Add("service", serviceID)
-	serviceIDFilter.Add("desired-state", "running")
-
-	taskList, err := dockerClient.TaskList(ctx, swarmtypes.TaskListOptions{Filters: serviceIDFilter})
+	taskList, err := dockerClient.TaskList(ctx, client.TaskListOptions{
+		Filters: make(client.Filters).Add("service", serviceID).Add("desired-state", "running"),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	var dockerDataList []dockerData
-	for _, task := range taskList {
+	for _, task := range taskList.Items {
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
@@ -308,11 +306,11 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 	}
 
 	if task.NodeID != "" {
-		node, _, err := dockerClient.NodeInspectWithRaw(ctx, task.NodeID)
+		res, err := dockerClient.NodeInspect(ctx, task.NodeID, client.NodeInspectOptions{})
 		if err != nil {
 			return dockerData{}, fmt.Errorf("inspecting node %s: %w", task.NodeID, err)
 		}
-		dData.NodeIP = node.Status.Addr
+		dData.NodeIP = res.Node.Status.Addr
 	}
 
 	if task.NetworksAttachments != nil {
@@ -322,11 +320,14 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 				if len(virtualIP.Addresses) > 0 {
 					// Not sure about this next loop - when would a task have multiple IP's for the same network?
 					for _, addr := range virtualIP.Addresses {
-						ip, _, _ := net.ParseCIDR(addr)
+						var ip string
+						if addr.IsValid() {
+							ip = addr.Addr().String()
+						}
 						network := &networkData{
 							ID:   virtualIP.Network.ID,
 							Name: networkService.Name,
-							Addr: ip.String(),
+							Addr: ip,
 						}
 						dData.NetworkSettings.Networks[network.Name] = network
 					}

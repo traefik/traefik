@@ -1,0 +1,38 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8888"
+    allowACMEByPass = true
+    [entryPoints.web.http.redirections.entryPoint]
+      to = ":8443"
+      scheme = "https"
+
+  [entryPoints.websecure]
+    address = ":8443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.acme-challenge]
+    entryPoints = ["web"]
+    rule = "PathPrefix(`/.well-known/acme-challenge/`)"
+    service = "acme-solver"
+
+[http.services]
+  [http.services.acme-solver]
+    [http.services.acme-solver.loadBalancer]
+      [[http.services.acme-solver.loadBalancer.servers]]
+        url = "{{ .AcmeSolverURL }}"

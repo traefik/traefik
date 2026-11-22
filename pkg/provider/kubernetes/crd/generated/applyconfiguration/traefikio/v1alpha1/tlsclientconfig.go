@@ -28,18 +28,34 @@ package v1alpha1
 
 import (
 	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
+	tls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // TLSClientConfigApplyConfiguration represents a declarative configuration of the TLSClientConfig type for use
 // with apply.
+//
+// TLSClientConfig defines the desired state of a TLSClientConfig.
 type TLSClientConfigApplyConfiguration struct {
-	ServerName          *string                    `json:"serverName,omitempty"`
-	InsecureSkipVerify  *bool                      `json:"insecureSkipVerify,omitempty"`
-	RootCAs             []RootCAApplyConfiguration `json:"rootCAs,omitempty"`
-	RootCAsSecrets      []string                   `json:"rootCAsSecrets,omitempty"`
-	CertificatesSecrets []string                   `json:"certificatesSecrets,omitempty"`
-	PeerCertURI         *string                    `json:"peerCertURI,omitempty"`
-	Spiffe              *dynamic.Spiffe            `json:"spiffe,omitempty"`
+	// ServerName defines the server name used to contact the server.
+	ServerName *string `json:"serverName,omitempty"`
+	// InsecureSkipVerify disables TLS certificate verification.
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
+	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
+	RootCAs []RootCAApplyConfiguration `json:"rootCAs,omitempty"`
+	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
+	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
+	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
+	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
+	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+	//
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
+	PeerCertURI *string `json:"peerCertURI,omitempty"`
+	// PeerCertSANs defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
+	PeerCertSANs []tls.SAN `json:"peerCertSANs,omitempty"`
+	// Spiffe defines the SPIFFE configuration.
+	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
 
 // TLSClientConfigApplyConfiguration constructs a declarative configuration of the TLSClientConfig type for use with
@@ -102,6 +118,16 @@ func (b *TLSClientConfigApplyConfiguration) WithCertificatesSecrets(values ...st
 // If called multiple times, the PeerCertURI field is set to the value of the last call.
 func (b *TLSClientConfigApplyConfiguration) WithPeerCertURI(value string) *TLSClientConfigApplyConfiguration {
 	b.PeerCertURI = &value
+	return b
+}
+
+// WithPeerCertSANs adds the given value to the PeerCertSANs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the PeerCertSANs field.
+func (b *TLSClientConfigApplyConfiguration) WithPeerCertSANs(values ...tls.SAN) *TLSClientConfigApplyConfiguration {
+	for i := range values {
+		b.PeerCertSANs = append(b.PeerCertSANs, values[i])
+	}
 	return b
 }
 

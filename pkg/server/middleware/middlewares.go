@@ -21,10 +21,16 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/encodedcharacters"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/headermodifier"
 	gapiredirect "github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/redirect"
+	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/requestmirror"
 	"github.com/traefik/traefik/v3/pkg/middlewares/gatewayapi/urlrewrite"
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/approot"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -36,6 +42,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tap"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
@@ -49,6 +57,7 @@ type Builder struct {
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
+	RoutinePool() *safe.Pool
 }
 
 // NewBuilder creates a new Builder.
@@ -94,9 +103,14 @@ func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string
 
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
-	config := b.configs[middlewareName]
-	if config == nil || config.Middleware == nil {
+	info := b.configs[middlewareName]
+	if info == nil || info.Middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
+	config, err := info.Middleware.ResolveURNRefs()
+	if err != nil {
+		return nil, fmt.Errorf("resolving middleware %q configuration: %w", middlewareName, err)
 	}
 
 	var middleware alice.Constructor
@@ -278,6 +292,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// AuthTLSPassCertificateToUpstream
+	if config.AuthTLSPassCertificateToUpstream != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return authtlspasscertificatetoupstream.NewAuthTLSPassCertificateToUpstream(ctx, next, *config.AuthTLSPassCertificateToUpstream, middlewareName)
+		}
+	}
+
 	// RateLimit
 	if config.RateLimit != nil {
 		if middleware != nil {
@@ -328,6 +352,36 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// RewriteTarget
+	if config.RewriteTarget != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return rewritetarget.New(ctx, next, *config.RewriteTarget, middlewareName)
+		}
+	}
+
+	// AppRoot
+	if config.AppRoot != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return approot.New(ctx, next, *config.AppRoot, middlewareName)
+		}
+	}
+
+	// UpstreamVHost
+	if config.UpstreamVHost != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return upstreamvhost.New(ctx, next, *config.UpstreamVHost, middlewareName)
+		}
+	}
+
 	// Retry
 	if config.Retry != nil {
 		if middleware != nil {
@@ -359,6 +413,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// Tap
+	if config.Tap != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return tap.New(ctx, next, *config.Tap, b.serviceBuilder, middlewareName)
+		}
+	}
+
 	// Plugin
 	if config.Plugin != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
 		if middleware != nil {
@@ -370,13 +434,19 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, fmt.Errorf("plugin: %w", err)
 		}
 
+		// Unlike the other middlewares, the decoding of a plugin configuration puts the invalid values in its errors.
 		plug, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
 		if err != nil {
-			return nil, fmt.Errorf("plugin: %w", err)
+			return nil, info.RedactURNRefs(fmt.Errorf("plugin: %w", err))
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return newTraceablePlugin(ctx, middlewareName, plug, next)
+			handler, err := newTraceablePlugin(ctx, middlewareName, plug, next)
+			if err != nil {
+				return nil, info.RedactURNRefs(err)
+			}
+
+			return handler, nil
 		}
 	}
 
@@ -414,6 +484,25 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
+		}
+	}
+
+	if config.RequestMirror != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return requestmirror.NewRequestMirror(ctx, next, *config.RequestMirror, b.serviceBuilder, b.serviceBuilder.RoutinePool(), middlewareName)
+		}
+	}
+
+	// ingress-nginx middlewares.
+	if config.Snippet != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return snippet.New(ctx, next, config.Snippet, middlewareName)
 		}
 	}
 

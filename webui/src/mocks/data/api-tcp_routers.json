@@ -14,5 +14,23 @@
     ],
     "priority": 10,
     "provider": "docker"
+  },
+  {
+    "entryPoints": [
+      "websecure-tcp"
+    ],
+    "service": "postgres",
+    "rule": "HostSNI(`db.example.com`)",
+    "tls": {
+      "options": "default",
+      "certResolver": "letsencrypt"
+    },
+    "status": "enabled",
+    "name": "postgres@docker",
+    "using": [
+      "websecure-tcp"
+    ],
+    "priority": 20,
+    "provider": "docker"
   }
 ]

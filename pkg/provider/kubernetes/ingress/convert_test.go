@@ -18,7 +18,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    pointer("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -35,7 +35,7 @@ func Test_convertSlice_corev1_to_networkingv1(t *testing.T) {
 				{
 					Port:     123,
 					Protocol: "https",
-					Error:    pointer("test"),
+					Error:    new("test"),
 				},
 			},
 		},
@@ -52,7 +52,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    pointer("test"),
+				Error:    new("test"),
 			},
 		},
 	}
@@ -67,7 +67,7 @@ func Test_convert(t *testing.T) {
 			{
 				Port:     123,
 				Protocol: "https",
-				Error:    pointer("test"),
+				Error:    new("test"),
 			},
 		},
 	}

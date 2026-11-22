@@ -1,0 +1,164 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-non-matching-canary
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-non-matching-host
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production2.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-non-matching-path
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /foo
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-non-matching-pathtype
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-non-matching-multiple-paths
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+          - path: /foo
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-matching-path-and-no-endpoints
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: empty
+                port:
+                  number: 80
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-with-matching-path-and-no-service
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              resource:
+                kind: Service
+                name: whoami

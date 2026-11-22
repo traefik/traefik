@@ -1,0 +1,45 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route.shared
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`foo.com`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+        - name: whoami2
+          port: 8080
+
+    - match: Host(`bar.com`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+          serversTransport: mtls
+        - name: whoami2
+          port: 8080
+
+    - match: Host(`baz.com`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+        - name: whoami
+          port: 80
+          namespace: cross-ns
+
+    - match: Host(`qux.com`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+        - name: whoami
+          port: 80
+          passHostHeader: false

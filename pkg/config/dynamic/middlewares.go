@@ -14,7 +14,11 @@ const (
 	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
 	ForwardAuthDefaultMaxBodySize int64 = -1
 	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
-	RetryDefaultMaxRequestBodyBytes int64 = -1
+	RetryDefaultMaxRequestBodyBytes int64 = 2 * 1024 * 1024 // 2 MB
+	// TapDefaultPath is the tap records Path option default value.
+	TapDefaultPath = "/"
+	// TapDefaultTimeout is the tap records Timeout option default value.
+	TapDefaultTimeout = 10 * time.Second
 )
 
 // +k8s:deepcopy-gen=true
@@ -47,6 +51,7 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
+	Tap               *Tap               `json:"tap,omitempty" toml:"tap,omitempty" yaml:"tap,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 
@@ -55,6 +60,19 @@ type Middleware struct {
 	ResponseHeaderModifier *HeaderModifier  `json:"responseHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RequestRedirect        *RequestRedirect `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	URLRewrite             *URLRewrite      `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RequestMirror          *RequestMirror   `json:"requestMirror,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// ingress-nginx middlewares.
+	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
+	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
+	// Only providers set it, and it must stay part of the configuration hash, so that a change of a referenced value reloads the middleware.
+	URNRefs map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false" loggable:"false"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -83,7 +101,7 @@ type ContentType struct {
 
 // AddPrefix holds the add prefix middleware configuration.
 // This middleware updates the path of a request before forwarding it.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/addprefix/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/addprefix/
 type AddPrefix struct {
 	// Prefix is the string to add before the current path in the requested URL.
 	// It should include a leading slash (/).
@@ -95,7 +113,7 @@ type AddPrefix struct {
 
 // BasicAuth holds the basic auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/basicauth/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/basicauth/
 type BasicAuth struct {
 	// Users is an array of authorized users.
 	// Each user must be declared using the name:hashed-password format.
@@ -110,7 +128,7 @@ type BasicAuth struct {
 	// Default: false.
 	RemoveHeader bool `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 }
 
@@ -118,7 +136,7 @@ type BasicAuth struct {
 
 // Buffering holds the buffering middleware configuration.
 // This middleware retries or limits the size of requests that can be forwarded to backends.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#maxrequestbodybytes
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#maxrequestbodybytes
 type Buffering struct {
 	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
 	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
@@ -136,12 +154,17 @@ type Buffering struct {
 	MemResponseBodyBytes int64 `json:"memResponseBodyBytes,omitempty" toml:"memResponseBodyBytes,omitempty" yaml:"memResponseBodyBytes,omitempty" export:"true"`
 	// RetryExpression defines the retry conditions.
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#retryexpression
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
-
-	// Only configurable via code, not via configuration files.
-	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
-	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	// DisableRequestBuffer disables request body buffering, so the request body is streamed directly to the backend.
+	// When true, MaxRequestBodyBytes is not enforced.
+	// Default: false.
+	DisableRequestBuffer bool `json:"disableRequestBuffer,omitempty" toml:"disableRequestBuffer,omitempty" yaml:"disableRequestBuffer,omitempty" export:"true"`
+	// DisableResponseBuffer disables response body buffering, so the response is streamed directly to the client.
+	// This is required to forward streaming responses such as Server-Sent Events, gRPC streaming, or long-poll watch endpoints.
+	// When true, MaxResponseBodyBytes is not enforced.
+	// Default: false.
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"disableResponseBuffer,omitempty" yaml:"disableResponseBuffer,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -157,7 +180,7 @@ type Chain struct {
 
 // CircuitBreaker holds the circuit breaker middleware configuration.
 // This middleware protects the system from stacking requests to unhealthy services, resulting in cascading failures.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/circuitbreaker/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/circuitbreaker/
 type CircuitBreaker struct {
 	// Expression defines the expression that, once matched, opens the circuit breaker and applies the fallback mechanism instead of calling the services.
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
@@ -207,7 +230,7 @@ func (c *Compress) SetDefaults() {
 
 // DigestAuth holds the digest auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/digestauth/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/digestauth/
 type DigestAuth struct {
 	// Users defines the authorized users.
 	// Each user should be declared using the name:realm:encoded-password format.
@@ -220,7 +243,7 @@ type DigestAuth struct {
 	// Default: traefik.
 	Realm string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 }
 
@@ -265,32 +288,44 @@ type ErrorPage struct {
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	// ErrorRequestHeaders defines the list of request headers forwarded to the error page service.
+	// When nil (not set), all original request headers are forwarded.
+	// Set to an empty list to forward no headers, or list specific headers to forward only those.
+	ErrorRequestHeaders []string `json:"errorRequestHeaders,omitempty" toml:"errorRequestHeaders,omitempty" yaml:"errorRequestHeaders,omitempty" export:"true"`
+
+	// NginxHeaders defines the headers to forward to the Error page service.
+	// NginxHeaders option is unexposed to other providers than the IngressNGINX one.
+	NginxHeaders *http.Header `json:"nginxHeaders,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ForwardAuth holds the forward auth middleware configuration.
 // This middleware delegates the request authentication to a Service.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/forwardauth/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
-	TrustForwardHeader bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
+	//
+	// Deprecated: Use forwardedHeaders.trustedIPs at the EntryPoint level instead, and set trustForwardHeader to true on this middleware.
+	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/forwardauth/#authresponseheadersregex
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty" toml:"authResponseHeadersRegex,omitempty" yaml:"authResponseHeadersRegex,omitempty" export:"true"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/forwardauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 	// ForwardBody defines whether to send the request body to the authentication server.
 	ForwardBody bool `json:"forwardBody,omitempty" toml:"forwardBody,omitempty" yaml:"forwardBody,omitempty" export:"true"`
@@ -302,9 +337,6 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
-	// Interpolate activates variable interpolation for Address and AuthSigninURL config options.
-	// Currently, this is only used by the NGINX provider to support variable substitution.
-	Interpolate bool `json:"interpolate,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {
@@ -330,7 +362,7 @@ type ClientTLS struct {
 
 // Headers holds the headers middleware configuration.
 // This middleware manages the requests and responses headers.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/headers/#customrequestheaders
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/headers/#customrequestheaders
 type Headers struct {
 	// CustomRequestHeaders defines the header names and values to apply to the request.
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
@@ -350,7 +382,7 @@ type Headers struct {
 	// AccessControlExposeHeaders defines the Access-Control-Expose-Headers values sent in preflight response.
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge defines the time that a preflight request may be cached.
-	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
+	AccessControlMaxAge *int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
 	// AddVaryHeader defines whether the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
@@ -363,7 +395,7 @@ type Headers struct {
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
 	// +kubebuilder:validation:Minimum=0
-	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
+	STSSeconds *int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
 	// STSPreload defines whether the preload flag is appended to the Strict-Transport-Security header.
@@ -426,7 +458,7 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 		len(h.AccessControlAllowOriginList) != 0 ||
 		len(h.AccessControlAllowOriginListRegex) != 0 ||
 		len(h.AccessControlExposeHeaders) != 0 ||
-		h.AccessControlMaxAge != 0 ||
+		h.AccessControlMaxAge != nil ||
 		h.AddVaryHeader)
 }
 
@@ -439,7 +471,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		(h.SSLForceHost != nil && *h.SSLForceHost) ||
 		(h.SSLHost != nil && *h.SSLHost != "") ||
 		len(h.SSLProxyHeaders) != 0 ||
-		h.STSSeconds != 0 ||
+		h.STSSeconds != nil ||
 		h.STSIncludeSubdomains ||
 		h.STSPreload ||
 		h.ForceSTSHeader ||
@@ -460,7 +492,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // +k8s:deepcopy-gen=true
 
 // IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipallowlist/#ipstrategy
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
 	// +kubebuilder:validation:Minimum=0
@@ -515,7 +547,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 // IPWhiteList holds the IP whitelist middleware configuration.
 // This middleware limits allowed requests based on the client IP.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipwhitelist/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/ipwhitelist/
 //
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
@@ -528,7 +560,7 @@ type IPWhiteList struct {
 
 // IPAllowList holds the IP allowlist middleware configuration.
 // This middleware limits allowed requests based on the client IP.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipallowlist/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/ipallowlist/
 type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
@@ -542,7 +574,7 @@ type IPAllowList struct {
 
 // InFlightReq holds the in-flight request middleware configuration.
 // This middleware limits the number of requests being processed and served concurrently.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/inflightreq/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/inflightreq/
 type InFlightReq struct {
 	// Amount defines the maximum amount of allowed simultaneous in-flight request.
 	// The middleware responds with HTTP 429 Too Many Requests if there are already amount requests in progress (based on the same sourceCriterion strategy).
@@ -551,7 +583,7 @@ type InFlightReq struct {
 	// SourceCriterion defines what criterion is used to group requests as originating from a common source.
 	// If several strategies are defined at the same time, an error will be raised.
 	// If none are set, the default is to use the requestHost.
-	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/inflightreq/#sourcecriterion
+	// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/inflightreq/#sourcecriterion
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
 }
 
@@ -559,12 +591,22 @@ type InFlightReq struct {
 
 // PassTLSClientCert holds the pass TLS client cert middleware configuration.
 // This middleware adds the selected data from the passed client TLS certificate to a header.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/passtlsclientcert/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/passtlsclientcert/
 type PassTLSClientCert struct {
 	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AuthTLSPassCertificateToUpstream holds the pass TLS client cert middleware for ingress-nginx provider.
+type AuthTLSPassCertificateToUpstream struct {
+	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
+	// PassCertificate sets the Ssl-Client-Cert header with the client certificate.
+	PassCertificate bool `json:"passCertificate,omitempty" toml:"passCertificate,omitempty" yaml:"passCertificate,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -671,7 +713,7 @@ func (r *Redis) SetDefaults() {
 
 // RedirectRegex holds the redirect regex middleware configuration.
 // This middleware redirects a request using regex matching and replacement.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/redirectregex/#regex
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/redirectregex/#regex
 type RedirectRegex struct {
 	// Regex defines the regex used to match and capture elements from the request URL.
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
@@ -688,7 +730,7 @@ type RedirectRegex struct {
 
 // RedirectScheme holds the redirect scheme middleware configuration.
 // This middleware redirects requests from a scheme/port to another.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/redirectscheme/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/redirectscheme/
 type RedirectScheme struct {
 	// Scheme defines the scheme of the new URL.
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
@@ -699,7 +741,7 @@ type RedirectScheme struct {
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 	// ForcePermanentRedirect is an internal field (not exposed in configuration).
 	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
-	// Used by the provider ingress-ngin.
+	// Used by the provider ingress-nginx.
 	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
@@ -707,7 +749,7 @@ type RedirectScheme struct {
 
 // ReplacePath holds the replace path middleware configuration.
 // This middleware replaces the path of the request URL and store the original path in an X-Replaced-Path header.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/replacepath/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/replacepath/
 type ReplacePath struct {
 	// Path defines the path to use as replacement in the request URL.
 	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
@@ -717,7 +759,7 @@ type ReplacePath struct {
 
 // ReplacePathRegex holds the replace path regex middleware configuration.
 // This middleware replaces the path of a URL using regex matching and replacement.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/replacepathregex/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/replacepathregex/
 type ReplacePathRegex struct {
 	// Regex defines the regular expression used to match and capture the path from the request URL.
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
@@ -730,7 +772,7 @@ type ReplacePathRegex struct {
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/retry/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
@@ -761,7 +803,7 @@ func (r *Retry) SetDefaults() {
 
 // StripPrefix holds the strip prefix middleware configuration.
 // This middleware removes the specified prefixes from the URL path.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/stripprefix/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/stripprefix/
 type StripPrefix struct {
 	// Prefixes defines the prefixes to strip from the request URL.
 	Prefixes []string `json:"prefixes,omitempty" toml:"prefixes,omitempty" yaml:"prefixes,omitempty" export:"true"`
@@ -776,10 +818,70 @@ type StripPrefix struct {
 
 // StripPrefixRegex holds the strip prefix regex middleware configuration.
 // This middleware removes the matching prefixes from the URL path.
-// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/stripprefixregex/
+// More info: https://doc.traefik.io/traefik/v3.8/middlewares/http/stripprefixregex/
 type StripPrefixRegex struct {
 	// Regex defines the regular expression to match the path prefix from the request URL.
 	Regex []string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Tap holds the tap middleware configuration.
+// This middleware sends a copy of the requests and responses going through it to Traefik services.
+// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/middlewares/tap/
+type Tap struct {
+	// Request defines where and how the request records are sent.
+	// When omitted, requests are not recorded.
+	Request *TapRequest `json:"request,omitempty" toml:"request,omitempty" yaml:"request,omitempty" export:"true"`
+	// Response defines where and how the response records are sent.
+	// When omitted, responses are not recorded.
+	Response *TapResponse `json:"response,omitempty" toml:"response,omitempty" yaml:"response,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapRequest holds the configuration of the request records sent by the tap middleware.
+type TapRequest struct {
+	// Service defines the name of the service the records are sent to.
+	Service string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	// Path defines the path of the requests sending the records to the service.
+	Path string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	// Timeout defines the maximum duration allowed to send a record.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	// RejectOnRecordError defines whether the record is sent before the data it describes is handed over:
+	// the request record before the request reaches the backend,
+	// and the response record before the response reaches the client.
+	// When the record cannot be sent, the request is rejected with an Internal Server Error.
+	// This guarantees that no request is served without being recorded, at the cost of
+	// coupling the client latency and availability to the tap service.
+	RejectOnRecordError bool `json:"rejectOnRecordError,omitempty" toml:"rejectOnRecordError,omitempty" yaml:"rejectOnRecordError,omitempty" export:"true"`
+
+	// RecordBody defines whether the body is part of the records.
+	RecordBody bool `json:"recordBody,omitempty" toml:"recordBody,omitempty" yaml:"recordBody,omitempty" export:"true"`
+	// MaxRecordBodySize defines the maximum number of body bytes in a record.
+	// A larger body is cut in the record, which is flagged as truncated.
+	// The recorded body is held in memory, so it bounds the memory used for the body.
+	// It has no default, and must be set when RecordBody is set.
+	// A negative value means no limit.
+	MaxRecordBodySize *int64 `json:"maxRecordBodySize,omitempty" toml:"maxRecordBodySize,omitempty" yaml:"maxRecordBodySize,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (t *TapRequest) SetDefaults() {
+	t.Path = TapDefaultPath
+	t.Timeout = ptypes.Duration(TapDefaultTimeout)
+}
+
+// +k8s:deepcopy-gen=true
+
+// TapResponse holds the configuration of the response records sent by the tap middleware.
+// A response record is configured like a request record, with the request headers on top.
+type TapResponse struct {
+	TapRequest `json:",inline" yaml:",inline" export:"true"`
+
+	// RequestHeaders defines the request headers described in the records, along with the request line.
+	// It allows a response record to be understood, and correlated, without the matching request record.
+	RequestHeaders []string `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -877,4 +979,73 @@ type URLRewrite struct {
 	Hostname   *string `json:"hostname,omitempty"`
 	Path       *string `json:"path,omitempty"`
 	PathPrefix *string `json:"pathPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RequestMirror holds the request mirror middleware configuration.
+// Numerator out of Denominator requests are mirrored to Service.
+type RequestMirror struct {
+	Service     string `json:"service,omitempty"`
+	Numerator   int64  `json:"numerator,omitempty"`
+	Denominator int64  `json:"denominator,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+type Auth struct {
+	// Address defines the authentication server address.
+	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	// Method defines the method used for the request to the external auth.
+	Method string `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
+	// Snippet defines the snippet content.
+	Snippet string `json:"snippet,omitempty" toml:"snippet,omitempty" yaml:"snippet,omitempty" export:"true"`
+	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
+	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
+	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
+	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Snippet holds the NGINX snippet configuration.
+type Snippet struct {
+	ServerSnippet        string `json:"serverSnippet,omitempty"`
+	ConfigurationSnippet string `json:"configurationSnippet,omitempty"`
+	Auth                 *Auth  `json:"auth,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RewriteTarget holds the rewrite target middleware configuration used by ingress-nginx provider.
+// This middleware replaces the path of a URL.
+type RewriteTarget struct {
+	// Regex defines the regular expression used to match and capture the path from the request URL.
+	Regex string `json:"regex,omitempty"`
+	// Replacement defines the replacement path format, which can include captured variables.
+	Replacement string `json:"replacement,omitempty"`
+	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
+	XForwardedPrefix string `json:"xForwardedPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// UpstreamVHost holds the upstream-vhost middleware configuration used by the ingress-nginx provider.
+// It rewrites the request Host header from a template that may embed NGINX variables
+// (e.g. $host, $service_name, $namespace) which are resolved at request time.
+type UpstreamVHost struct {
+	// VHost is the Host header template. It may contain NGINX variables such as
+	// $host, $http_*, or provider-supplied variables like $service_name and $namespace.
+	VHost string `json:"vHost,omitempty"`
+	// Vars holds provider-resolved custom variables, keyed with their leading "$".
+	// For example: {"$service_name": "my-app", "$namespace": "foo"}.
+	Vars map[string]string `json:"vars,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AppRoot holds the app-root middleware configuration used by the ingress-nginx provider.
+type AppRoot struct {
+	// Path defines the path that should be treated as the app root.
+	Path string `json:"path,omitempty"`
 }

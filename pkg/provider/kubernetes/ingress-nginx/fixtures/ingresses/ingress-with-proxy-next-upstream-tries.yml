@@ -1,0 +1,45 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-proxy-next-upstream-tries-unlimited
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "0"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-proxy-next-upstream-tries
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "5"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

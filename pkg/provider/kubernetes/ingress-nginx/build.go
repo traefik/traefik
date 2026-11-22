@@ -1,0 +1,1365 @@
+package ingressnginx
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"net"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
+	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
+)
+
+// errNoCACertificate is returned for an auth-tls-secret without CA certificate, which ingress-nginx does not treat as an error.
+var errNoCACertificate = errors.New("secret does not contain a CA certificate")
+
+type ingressEntry struct {
+	*netv1.Ingress
+
+	config IngressConfig
+}
+
+type pathEntry struct {
+	netv1.HTTPIngressPath
+
+	config IngressConfig
+}
+
+type namedServersTransport struct {
+	*dynamic.ServersTransport
+
+	name string
+}
+
+// certBlocks holds the raw TLS material extracted from a Kubernetes Secret.
+type certBlocks struct {
+	ca   []byte
+	cert []byte
+	key  []byte
+}
+
+// build reads all Ingress resources visible to the client and produces a model.
+//
+//nolint:funlen // multi-phase ingress processing kept inline for readability
+func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressClass) *model {
+	mc := &model{
+		Backends: make(map[string]*backend),
+		Servers:  make(map[string]*server),
+		Certs:    make(map[string]certPair),
+	}
+	processedIngresses := make(map[string]struct{})
+	markProcessedIngress := func(ing *netv1.Ingress) {
+		key := ing.Namespace + "/" + ing.Name
+		if _, exists := processedIngresses[key]; exists {
+			return
+		}
+
+		processedIngresses[key] = struct{}{}
+		mc.ProcessedIngresses = append(mc.ProcessedIngresses, ing)
+	}
+
+	// Builder-local cache of TLS options resolved per ingress. Each Location
+	// that needs an option carries a pointer to the cached entry; the translator
+	// registers each unique option once in conf.TLS.Options.
+	tlsOptionCache := make(map[string]*tls.Options)
+
+	allHosts := make(map[string]bool)
+	hostsWithUseRegex := make(map[string]bool)
+	hostsWithRootPath := make(map[string]bool)
+	claimedAliases := make(map[string]string)
+
+	// Provider-level default backend.
+	if p.defaultBackendServiceNamespace != "" && p.defaultBackendServiceName != "" {
+		backend, err := p.resolveBackend(
+			p.defaultBackendServiceNamespace,
+			netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: p.defaultBackendServiceName}},
+			IngressConfig{},
+		)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Cannot resolve default backend service")
+		} else {
+			mc.Backends[backend.Name] = backend
+			mc.DefaultBackend = backend
+		}
+	}
+
+	// First pass: collect all regular and canary ingresses.
+	var (
+		// orderedIngresses holds the regular and the canary ingresses, in the order ingress-nginx reads them.
+		orderedIngresses []ingressEntry
+		canaryIngresses  []ingressEntry
+	)
+
+	// ingressPaths tracks existing paths for canary matching.
+	// key: namespace/host+path+pathType → (backend service, IngressConfig)
+	ingressPaths := make(map[string]pathEntry)
+
+	serverSnippets := make(map[string]string) // host → first server-snippet seen
+	serverAppRoots := make(map[string]string)
+
+	// Sort ingresses by creation timestamp (ascending). Ties are broken by
+	// descending namespace/name lexicographic order, matching ingress-nginx
+	// behavior. This ordering is what makes server-alias conflict resolution
+	// deterministic: the first ingress in this order to claim an alias owns it.
+	ingresses := p.k8sClient.ListIngresses()
+	sort.SliceStable(ingresses, func(a, b int) bool {
+		ta, tb := ingresses[a].CreationTimestamp, ingresses[b].CreationTimestamp
+		if ta.Equal(&tb) {
+			ia := ingresses[a].Namespace + "/" + ingresses[a].Name
+			ib := ingresses[b].Namespace + "/" + ingresses[b].Name
+			return ia > ib
+		}
+		return ta.Before(&tb)
+	})
+
+	for _, ingress := range ingresses {
+		if !p.shouldProcess(ingress, ingressClasses) {
+			continue
+		}
+
+		logger := log.Ctx(ctx).With().
+			Str("ingress", ingress.Name).
+			Str("namespace", ingress.Namespace).
+			Logger()
+
+		cfg := parseIngressConfig(ingress)
+		// ingress-nginx only enables client certificate authentication from the Ingress rules.
+		if len(ingress.Spec.Rules) == 0 {
+			cfg.AuthTLSSecret = nil
+		}
+
+		entry := ingressEntry{Ingress: ingress, config: cfg}
+
+		if err := p.validateIngress(entry.Ingress, entry.config); err != nil {
+			logger.Error().Err(err).Msg("Invalid Ingress, skipping")
+			continue
+		}
+
+		if ptr.Deref(cfg.Canary, false) {
+			canaryIngresses = append(canaryIngresses, entry)
+			orderedIngresses = append(orderedIngresses, entry)
+			continue
+		}
+
+		for _, alias := range ptr.Deref(cfg.ServerAlias, nil) {
+			a := strings.ToLower(alias)
+			if _, exists := claimedAliases[a]; !exists {
+				claimedAliases[a] = ingress.Namespace + "/" + ingress.Name
+			}
+		}
+
+		for _, rule := range ingress.Spec.Rules {
+			allHosts[rule.Host] = true
+
+			// The ingress default backend becomes a host-only catch-all location, which matches "/" as well.
+			if ingress.Spec.DefaultBackend != nil && ingress.Spec.DefaultBackend.Service != nil {
+				hostsWithRootPath[rule.Host] = true
+			}
+
+			if ptr.Deref(cfg.UseRegex, false) || ptr.Deref(cfg.RewriteTarget, "") != "" {
+				hostsWithUseRegex[rule.Host] = true
+			}
+
+			if srvSnippet := ptr.Deref(cfg.ServerSnippet, ""); srvSnippet != "" {
+				if serverSnippets[rule.Host] == "" {
+					serverSnippets[rule.Host] = srvSnippet
+				}
+			}
+
+			if appRoot := ptr.Deref(cfg.AppRoot, ""); strings.HasPrefix(appRoot, "/") && serverAppRoots[rule.Host] == "" {
+				serverAppRoots[rule.Host] = appRoot
+			}
+
+			if rule.HTTP != nil {
+				for _, pa := range rule.HTTP.Paths {
+					if pa.Backend.Service == nil {
+						continue
+					}
+
+					// An empty path produces a host-only rule, which matches "/" as well.
+					if pa.Path == "/" || pa.Path == "" {
+						hostsWithRootPath[rule.Host] = true
+					}
+
+					key := ingressPathKey(ingress.Namespace, rule.Host, pa)
+					ingressPaths[key] = pathEntry{HTTPIngressPath: pa, config: cfg}
+				}
+			}
+		}
+
+		orderedIngresses = append(orderedIngresses, entry)
+	}
+
+	// Second pass: resolve canary backends.
+	// canaryMap: key = namespace/svcName/port → CanaryConfig
+	canaryConfigs := make(map[string]canaryConfig) // primary backend key → canary info
+	alreadyMatchedPaths := make(map[string]struct{})
+
+	for _, canaryIngress := range canaryIngresses {
+		logger := log.With().
+			Str("ingress", canaryIngress.Name).
+			Str("namespace", canaryIngress.Namespace).
+			Logger()
+
+		for _, rule := range canaryIngress.Spec.Rules {
+			if rule.HTTP == nil {
+				continue
+			}
+			for _, pa := range rule.HTTP.Paths {
+				pathKey := ingressPathKey(canaryIngress.Namespace, rule.Host, pa)
+				prodIngressPath, ok := ingressPaths[pathKey]
+				if !ok {
+					logger.Error().Msgf("Canary ingress does not match any Ingress rule for host=%s path=%s", rule.Host, pa.Path)
+					continue
+				}
+
+				if _, ok := alreadyMatchedPaths[pathKey]; ok {
+					logger.Error().Msgf("A canary ingress is already matching Ingress rule host=%s path=%s", rule.Host, pa.Path)
+					continue
+				}
+
+				if pa.Backend.Service == nil {
+					continue
+				}
+
+				// Skip if the canary path uses the same service as the production path — this
+				// is a "non-matching" canary ingress where the matching path doesn't actually
+				// route to a different backend.
+				prodSvc := prodIngressPath.Backend.Service
+				if pa.Backend.Service.Name == prodSvc.Name &&
+					portString(pa.Backend.Service.Port) == portString(prodSvc.Port) {
+					continue
+				}
+
+				// The canary backend's addresses are checked using the original ingress config.
+				endpoints, err := p.getBackendEndpoints(canaryIngress.Namespace, pa.Backend, prodIngressPath.config)
+				if err != nil || len(endpoints) == 0 {
+					continue
+				}
+
+				alreadyMatchedPaths[pathKey] = struct{}{}
+
+				weightTotal := max(ptr.Deref(canaryIngress.config.CanaryWeightTotal, 0), 100)
+				weight := min(max(ptr.Deref(canaryIngress.config.CanaryWeight, 0), 0), weightTotal)
+
+				// Resolve canary backend.
+				canaryBackendName := makeKey(canaryIngress.Namespace, pa.Backend.Service.Name, portString(pa.Backend.Service.Port))
+				if _, exists := mc.Backends[canaryBackendName]; !exists {
+					mc.Backends[canaryBackendName] = &backend{
+						Name:        canaryBackendName,
+						Namespace:   canaryIngress.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
+					}
+				}
+
+				// Primary backend key for the original ingress path.
+				primaryKey := canaryPrimaryKey(canaryIngress.Namespace, *prodIngressPath.Backend.Service)
+				canaryConfigs[primaryKey] = canaryConfig{
+					BackendName:   canaryBackendName,
+					Weight:        weight,
+					WeightTotal:   weightTotal,
+					Header:        ptr.Deref(canaryIngress.config.CanaryHeader, ""),
+					HeaderValue:   ptr.Deref(canaryIngress.config.CanaryHeaderValue, ""),
+					HeaderPattern: ptr.Deref(canaryIngress.config.CanaryHeaderPattern, ""),
+					Cookie:        ptr.Deref(canaryIngress.config.CanaryCookie, ""),
+				}
+				markProcessedIngress(canaryIngress.Ingress)
+			}
+		}
+	}
+
+	// Third pass: build Servers and Locations from regular ingresses.
+	loadedSecrets := make(map[string]bool) // cross-ingress secret-load dedup
+
+	// The app-root "/" router is synthesized at most once per host, on the first
+	// location that needs it, to avoid emitting several routers with the same rule.
+	hostsWithAppRootRouter := make(map[string]bool)
+
+	for _, ing := range orderedIngresses {
+		logger := log.Ctx(ctx).With().
+			Str("ingress", ing.Name).
+			Str("namespace", ing.Namespace).
+			Logger()
+		ctxIng := logger.WithContext(ctx)
+
+		// ingress-nginx reads the auth-tls annotations of a canary Ingress like the ones of any other Ingress, in the same order,
+		// and only then sets it aside: a canary Ingress can configure the client auth of its servers.
+		if ptr.Deref(ing.config.Canary, false) {
+			if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+				logger.Error().Err(err).Msg("Cannot build client auth TLS option")
+			}
+			continue
+		}
+
+		// ssl-passthrough only adds the TCP router forwarding the connection to the backend without decrypting it.
+		// The HTTP side of the ingress is built below like any other, ingress-nginx serving that host on the HTTP port from the regular location.
+		sslPassthrough := ptr.Deref(ing.config.SSLPassthrough, false)
+		if sslPassthrough {
+			for _, rule := range ing.Spec.Rules {
+				if rule.Host == "" {
+					logger.Error().Msg("Cannot process ssl-passthrough: rule has no host")
+					continue
+				}
+
+				var ingBackend *netv1.IngressBackend
+				if rule.HTTP != nil {
+					for _, pa := range rule.HTTP.Paths {
+						if pa.Path == "/" {
+							ingBackend = &pa.Backend
+							break
+						}
+					}
+				} else if ing.Spec.DefaultBackend != nil {
+					ingBackend = ing.Spec.DefaultBackend
+				}
+
+				if ingBackend == nil || ingBackend.Service == nil {
+					logger.Error().Msgf("No backend found for ssl-passthrough on host %q", rule.Host)
+					continue
+				}
+
+				endpoints, err := p.getBackendEndpoints(ing.Namespace, *ingBackend, ing.config)
+				if err != nil {
+					logger.Error().Err(err).Msgf("Cannot resolve passthrough backend for host %q", rule.Host)
+					continue
+				}
+
+				ptBackendName := makeKey(ing.Namespace, ingBackend.Service.Name, portString(ingBackend.Service.Port))
+				if _, exists := mc.Backends[ptBackendName]; !exists {
+					mc.Backends[ptBackendName] = &backend{
+						Name:        ptBackendName,
+						Namespace:   ing.Namespace,
+						ServiceName: ingBackend.Service.Name,
+						ServicePort: portString(ingBackend.Service.Port),
+						Endpoints:   endpoints,
+					}
+				}
+
+				mc.PassthroughBackends = append(mc.PassthroughBackends, &sslPassthroughBackend{
+					BackendName: ptBackendName,
+					Hostname:    rule.Host,
+					RouterKey:   makeKey(ing.Namespace, ing.Name, rule.Host),
+				})
+				markProcessedIngress(ing.Ingress)
+			}
+		}
+
+		// Load TLS certificates into the shared mc.Certs map first.
+		// They are kept even when the rest of the ingress is later skipped (e.g. when the serversTransport cannot be built, or when an auth-tls-secret fails to resolve), so the default certificate pool stays consistent.
+		// When loading fails, hasTLS still signals that the ingress has a TLS section so the translator can fall back to the default cert.
+		hasTLS := len(ing.Spec.TLS) > 0
+		if hasTLS {
+			if err := p.loadCertificates(ctxIng, ing.Ingress, mc.Certs, loadedSecrets); err != nil {
+				logger.Warn().Err(err).Msg("Error loading TLS certificates, defaulting to default certificate")
+			}
+		}
+
+		// Normal ingress: build serversTransport, TLS options, and Locations.
+		nst, err := p.buildServersTransport(ctxIng, ing.Namespace, ing.Name, ing.config)
+		if err != nil {
+			logger.Error().Err(err).Msg("Cannot build serversTransport, skipping ingress")
+			continue
+		}
+
+		if err := p.buildServersClientAuth(ctxIng, mc.Servers, allHosts, ing, tlsOptionCache); err != nil {
+			logger.Error().Err(err).Msg("Cannot build client auth TLS option, skipping ingress")
+			continue
+		}
+
+		for ri, rule := range ing.Spec.Rules {
+			srv := getOrCreateServer(mc.Servers, rule.Host)
+
+			if rule.HTTP == nil {
+				continue
+			}
+			for pi, pa := range rule.HTTP.Paths {
+				if pa.Backend.Service == nil {
+					continue
+				}
+
+				// Resolve primary backend. Missing/unavailable services are tolerated:
+				// the location is still emitted with an empty backend so the router
+				// (and its middlewares) exist, mirroring ingress-nginx's 503-on-no-servers
+				// behavior.
+				endpoints, err := p.getBackendEndpoints(ing.Namespace, pa.Backend, ing.config)
+				if err != nil {
+					logger.Warn().
+						Str("service", pa.Backend.Service.Name).
+						Err(err).
+						Msg("Cannot resolve backend addresses, emitting empty backend")
+					endpoints = nil
+				}
+
+				backendName := makeKey(ing.Namespace, ing.Name, pa.Backend.Service.Name, portString(pa.Backend.Service.Port))
+				if _, exists := mc.Backends[backendName]; !exists {
+					mc.Backends[backendName] = &backend{
+						Name:        backendName,
+						Namespace:   ing.Namespace,
+						ServiceName: pa.Backend.Service.Name,
+						ServicePort: portString(pa.Backend.Service.Port),
+						Endpoints:   endpoints,
+					}
+				}
+
+				loc := &location{
+					Path:                 pa.Path,
+					PathType:             pa.PathType,
+					BackendName:          backendName,
+					ServersTransportName: nst.name,
+					ServersTransport:     nst.ServersTransport,
+					LocationIndex:        pi,
+					RuleIndex:            ri,
+					Config:               ing.config,
+					HasTLS:               hasTLS,
+					ServerSnippet:        serverSnippets[rule.Host],
+					Namespace:            ing.Namespace,
+					IngressName:          ing.Name,
+					ServiceName:          pa.Backend.Service.Name,
+					ServicePort:          portString(pa.Backend.Service.Port),
+					SSLPassthrough:       sslPassthrough,
+				}
+
+				// Attach canary config if one exists for this primary backend.
+				primaryKey := canaryPrimaryKey(ing.Namespace, *pa.Backend.Service)
+				if cc, ok := canaryConfigs[primaryKey]; ok {
+					loc.Canary = &cc
+				}
+
+				// Pre-resolve basic auth.
+				if ing.config.AuthType != nil {
+					basic, digest, authURNRefs, err := p.resolveBasicAuth(ing.Namespace, ing.config)
+					if err != nil {
+						logger.Error().
+							Err(err).
+							Str("ingress", fmt.Sprintf("%s/%s rule-%d path-%d", ing.Namespace, ing.Name, ri, pi)).
+							Msg("Cannot resolve auth secret, skipping ingress")
+						// Skipping the ingress entirely when auth secret resolution fails,
+						// to match ingress-nginx behavior.
+						continue
+					}
+					loc.BasicAuth = basic
+					loc.DigestAuth = digest
+					loc.AuthURNRefs = authURNRefs
+				}
+
+				// Pre-resolve custom headers ConfigMap.
+				if ing.config.CustomHeaders != nil {
+					headers, err := p.resolveCustomHeaders(ing.Namespace, *ing.config.CustomHeaders)
+					if err != nil {
+						logger.Error().Err(err).Msg("Cannot resolve custom-headers ConfigMap")
+						loc.Error = true
+					} else {
+						loc.ResolvedCustomHeaders = headers
+					}
+				}
+
+				// Pre-resolve custom-http-errors default backend.
+				customErrors := ptr.Deref(ing.config.CustomHTTPErrors, nil)
+				if len(customErrors) > 0 {
+					if errBackendName := p.resolveHTTPErrorBackend(ing.Namespace, ing.config); errBackendName != "" {
+						loc.ResolvedHTTPErrorBackendName = errBackendName
+						if _, exists := mc.Backends[errBackendName]; !exists {
+							// Build the error backend using defaultBackend annotation or provider default.
+							defaultSvcName := ptr.Deref(ing.config.DefaultBackend, "")
+							if defaultSvcName != "" {
+								endpoints, err := p.getBackendEndpoints(ing.Namespace,
+									netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
+									ing.config)
+								if err == nil {
+									mc.Backends[errBackendName] = &backend{
+										Name:        errBackendName,
+										Namespace:   ing.Namespace,
+										ServiceName: defaultSvcName,
+										ServicePort: "0",
+										Endpoints:   endpoints,
+									}
+								}
+							}
+						}
+					}
+				}
+
+				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
+				loc.UseRegex = hostsWithUseRegex[rule.Host]
+
+				// Build all middleware configurations so the translator only registers them.
+				endpointCount := 0
+				if backend, ok := mc.Backends[backendName]; ok {
+					endpointCount = len(backend.Endpoints)
+				}
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				if loc.Path == "/" || loc.Path == "" {
+					inheritServerAppRoot(loc, serverAppRoots[rule.Host])
+				}
+
+				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
+				// even when the Ingress declares no "/" path. In Traefik a request has to match
+				// a router before any middleware runs, hence the extra router.
+				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
+					hostsWithAppRootRouter[rule.Host] = true
+				}
+
+				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
+			}
+		}
+
+		// Ingress-level spec.defaultBackend: emit one host-only catch-all location
+		// per distinct host in the ingress rules. Mirrors ingress-nginx which uses
+		// the ingress defaultBackend as the fallback location for each server block.
+		// When the ingress has no rules, register the backend as the global catch-all
+		// (default-backend / default-backend-tls routers) so it still serves traffic.
+		if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil {
+			db := ing.Spec.DefaultBackend
+			endpoints, err := p.getBackendEndpoints(ing.Namespace, *db, ing.config)
+			if err != nil {
+				logger.Warn().
+					Str("service", db.Service.Name).
+					Err(err).
+					Msg("Cannot resolve ingress default backend, emitting empty backend")
+				endpoints = nil
+			}
+
+			if len(ing.Spec.Rules) == 0 {
+				if mc.DefaultBackend == nil {
+					loc := &location{
+						BackendName:          defaultBackendName,
+						ServersTransportName: nst.name,
+						ServersTransport:     nst.ServersTransport,
+						Config:               ing.config,
+						HasTLS:               hasTLS,
+						Namespace:            ing.Namespace,
+						IngressName:          ing.Name,
+						ServiceName:          db.Service.Name,
+						ServicePort:          portString(db.Service.Port),
+					}
+
+					// Inherit basic/digest auth and custom headers like the rule
+					// paths do, so the catch-all is not an unauthenticated bypass.
+					if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
+						logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping ingress")
+						continue
+					}
+					p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
+
+					bk := &backend{
+						Name:        defaultBackendName,
+						Namespace:   ing.Namespace,
+						ServiceName: db.Service.Name,
+						ServicePort: portString(db.Service.Port),
+						Endpoints:   endpoints,
+					}
+					mc.Backends[defaultBackendName] = bk
+					mc.DefaultBackend = bk
+
+					p.buildMiddlewares(ctx, loc, "", allHosts, len(endpoints))
+					mc.DefaultBackendLocation = loc
+					markProcessedIngress(ing.Ingress)
+				}
+				continue
+			}
+
+			ingDefaultBackendName := makeKey(ing.Namespace, ing.Name) + "-default-backend"
+			if _, exists := mc.Backends[ingDefaultBackendName]; !exists {
+				mc.Backends[ingDefaultBackendName] = &backend{
+					Name:        ingDefaultBackendName,
+					Namespace:   ing.Namespace,
+					ServiceName: db.Service.Name,
+					ServicePort: portString(db.Service.Port),
+					Endpoints:   endpoints,
+				}
+			}
+
+			seenHosts := map[string]struct{}{}
+			for ri, rule := range ing.Spec.Rules {
+				if _, ok := seenHosts[rule.Host]; ok {
+					continue
+				}
+				seenHosts[rule.Host] = struct{}{}
+
+				srv := getOrCreateServer(mc.Servers, rule.Host)
+
+				loc := &location{
+					Path:                    "",
+					BackendName:             ingDefaultBackendName,
+					ServersTransportName:    nst.name,
+					ServersTransport:        nst.ServersTransport,
+					Config:                  ing.config,
+					HasTLS:                  hasTLS,
+					ServerSnippet:           serverSnippets[rule.Host],
+					Namespace:               ing.Namespace,
+					IngressName:             ing.Name,
+					ServiceName:             db.Service.Name,
+					ServicePort:             portString(db.Service.Port),
+					RuleIndex:               ri,
+					IsIngressDefaultBackend: true,
+					SSLPassthrough:          sslPassthrough,
+				}
+
+				loc.Aliases = resolveAliases(ctx, loc, allHosts, claimedAliases)
+				loc.UseRegex = hostsWithUseRegex[rule.Host]
+
+				// Inherit basic/digest auth and custom headers like the rule paths
+				// do, so the per-host fallback is not an unauthenticated bypass.
+				if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
+					logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping")
+					continue
+				}
+				p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
+
+				endpointCount := 0
+				if backend, ok := mc.Backends[ingDefaultBackendName]; ok {
+					endpointCount = len(backend.Endpoints)
+				}
+				p.buildMiddlewares(ctx, loc, rule.Host, allHosts, endpointCount)
+				inheritServerAppRoot(loc, serverAppRoots[rule.Host])
+
+				srv.Locations = append(srv.Locations, loc)
+				markProcessedIngress(ing.Ingress)
+			}
+		}
+	}
+
+	// The client auth of a server is only known once every Ingress is read, as any of them may be the first declaring it.
+	for _, srv := range mc.Servers {
+		for _, loc := range srv.Locations {
+			buildAuthTLSPassCert(srv, loc)
+		}
+	}
+	// The default backend serves the requests no other location matches, which ingress-nginx handles in its default server.
+	if srv, ok := mc.Servers[""]; ok && mc.DefaultBackendLocation != nil {
+		buildAuthTLSPassCert(srv, mc.DefaultBackendLocation)
+	}
+
+	return mc
+}
+
+// ingress-nginx evaluates app-root at the server scope, whichever Ingress owns "/".
+func inheritServerAppRoot(loc *location, appRoot string) {
+	if loc.AppRoot != nil || appRoot == "" {
+		return
+	}
+	loc.AppRoot = &dynamic.AppRoot{Path: appRoot}
+}
+
+func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg IngressConfig) (namedServersTransport, error) {
+	nst := namedServersTransport{
+		name: makeKey(namespace, name),
+		ServersTransport: &dynamic.ServersTransport{
+			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+				DialTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)) * time.Second),
+				ReadTimeout:     ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)) * time.Second),
+				WriteTimeout:    ptypes.Duration(time.Duration(ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)) * time.Second),
+				IdleConnTimeout: ptypes.Duration(time.Duration(p.UpstreamKeepaliveTimeout) * time.Second),
+			},
+		},
+	}
+
+	if proxyHTTPVersion := ptr.Deref(cfg.ProxyHTTPVersion, ""); proxyHTTPVersion != "" {
+		switch proxyHTTPVersion {
+		case "1.1":
+			nst.DisableHTTP2 = true
+		case "1.0":
+			log.Ctx(ctx).Warn().Msg("Value '1.0' is not supported with proxy-http-version, ignoring")
+		default:
+			log.Ctx(ctx).Warn().Msgf("Invalid proxy-http-version value: %q, ignoring", proxyHTTPVersion)
+		}
+	}
+
+	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
+		return nst, nil
+	}
+
+	nst.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
+	nst.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) != "on"
+
+	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
+		parts := strings.Split(sslSecret, "/")
+		if len(parts) != 2 {
+			return namedServersTransport{}, fmt.Errorf("malformed proxy SSL secret: %s", sslSecret)
+		}
+
+		secretNamespace, secretName := parts[0], parts[1]
+		if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
+			return namedServersTransport{}, fmt.Errorf("cross-namespace proxy SSL secret not allowed: %s/%s", secretNamespace, secretName)
+		}
+
+		blocks, err := p.certificateBlocks(secretNamespace, secretName)
+		if err != nil {
+			return namedServersTransport{}, fmt.Errorf("getting certificate blocks: %w", err)
+		}
+
+		if len(blocks.ca) > 0 {
+			nst.RootCAs = []types.FileOrContent{types.FileOrContent(blocks.ca)}
+		}
+		if len(blocks.cert) > 0 && len(blocks.key) > 0 {
+			nst.Certificates = []tls.Certificate{{
+				CertFile: types.FileOrContent(blocks.cert),
+				KeyFile:  types.FileOrContent(blocks.key),
+			}}
+		}
+	}
+
+	return nst, nil
+}
+
+func (p *Provider) getBackendEndpoints(namespace string, backend netv1.IngressBackend, cfg IngressConfig) ([]endpoint, error) {
+	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting service: %w", err)
+	}
+
+	if p.DisableSvcExternalName && service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, errors.New("externalName services not allowed")
+	}
+
+	servicePort, match := getServicePort(service, backend)
+	if !match {
+		return nil, errors.New("service port not found")
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(servicePort.TargetPort.IntValue()))}}, nil
+	}
+
+	if ptr.Deref(cfg.ServiceUpstream, false) {
+		return []endpoint{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(servicePort.Port)))}}, nil
+	}
+
+	endpoints, err := p.getEndpointsFromEndpointSlices(namespace, backend.Service.Name, servicePort.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting backend endpoints: %w", err)
+	}
+
+	// Fall back to default-backend annotation if no endpoints.
+	defaultBackend := ptr.Deref(cfg.DefaultBackend, "")
+	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(endpoints) > 0 {
+		return endpoints, nil
+	}
+
+	fallbackSvc, err := p.k8sClient.GetService(namespace, defaultBackend)
+	if err != nil {
+		return nil, fmt.Errorf("getting fallback service: %w", err)
+	}
+
+	if p.DisableSvcExternalName && fallbackSvc.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, errors.New("externalName services not allowed")
+	}
+
+	servicePort, match = getServicePort(fallbackSvc, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
+	if !match {
+		return nil, errors.New("fallback service port not found")
+	}
+
+	return p.getEndpointsFromEndpointSlices(namespace, defaultBackend, servicePort.Name)
+}
+
+func (p *Provider) getEndpointsFromEndpointSlices(namespace, name, portName string) ([]endpoint, error) {
+	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, name)
+	if err != nil {
+		return nil, fmt.Errorf("getting endpointslices: %w", err)
+	}
+
+	var endpoints []endpoint
+	seen := map[string]struct{}{}
+
+	for _, es := range endpointSlices {
+		var port int32
+		for _, p := range es.Ports {
+			if p.Name != nil && *p.Name == portName {
+				port = ptr.Deref(p.Port, 0)
+				break
+			}
+		}
+		if port == 0 {
+			continue
+		}
+
+		for _, ep := range es.Endpoints {
+			if !ptr.Deref(ep.Conditions.Serving, true) {
+				continue
+			}
+
+			for _, addr := range ep.Addresses {
+				if _, ok := seen[addr]; ok {
+					continue
+				}
+				seen[addr] = struct{}{}
+				endpoints = append(endpoints, endpoint{
+					Address: net.JoinHostPort(addr, strconv.Itoa(int(port))),
+					Fenced:  ptr.Deref(ep.Conditions.Terminating, false),
+				})
+			}
+		}
+	}
+
+	return endpoints, nil
+}
+
+func (p *Provider) resolveBackend(namespace string, ingBackend netv1.IngressBackend, cfg IngressConfig) (*backend, error) {
+	endpoints, err := p.getBackendEndpoints(namespace, ingBackend, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	name := makeKey(namespace, ingBackend.Service.Name, portString(ingBackend.Service.Port))
+	return &backend{
+		Name:        name,
+		Namespace:   namespace,
+		ServiceName: ingBackend.Service.Name,
+		ServicePort: portString(ingBackend.Service.Port),
+		Endpoints:   endpoints,
+	}, nil
+}
+
+func (p *Provider) certificateBlocks(namespace, name string) (*certBlocks, error) {
+	secret, err := p.k8sClient.GetSecret(namespace, name)
+	if err != nil {
+		return nil, fmt.Errorf("fetching secret %s/%s: %w", namespace, name, err)
+	}
+
+	certBytes, hasCert := secret.Data[corev1.TLSCertKey]
+	keyBytes, hasKey := secret.Data[corev1.TLSPrivateKeyKey]
+	caBytes, hasCA := secret.Data[corev1.ServiceAccountRootCAKey]
+
+	if !hasCert && !hasKey && !hasCA {
+		return nil, errors.New("secret does not contain a keypair or CA certificate")
+	}
+
+	var blocks certBlocks
+	if hasCA {
+		if len(caBytes) == 0 {
+			return nil, errors.New("secret contains an empty CA certificate")
+		}
+		blocks.ca = caBytes
+	}
+
+	if hasKey && hasCert {
+		if len(certBytes) == 0 {
+			return nil, errors.New("secret contains an empty certificate")
+		}
+		if len(keyBytes) == 0 {
+			return nil, errors.New("secret contains an empty key")
+		}
+		blocks.cert = certBytes
+		blocks.key = keyBytes
+	}
+
+	return &blocks, nil
+}
+
+// loadCertificates loads TLS certificates for an ingress into mcCerts.
+// The map is keyed by "<namespace>/<secretName>" so each Secret stays as a
+// distinct certificate entry even if multiple Secrets carry identical PEM
+// content, matching ingress-nginx behavior. The loaded set is shared across
+// ingresses to avoid re-reading the same secret multiple times.
+func (p *Provider) loadCertificates(ctx context.Context, ing *netv1.Ingress, mcCerts map[string]certPair, loaded map[string]bool) error {
+	for _, t := range ing.Spec.TLS {
+		if t.SecretName == "" {
+			log.Ctx(ctx).Debug().Msg("Skipping TLS section: no secret name")
+			continue
+		}
+
+		secretKey := ing.Namespace + "/" + t.SecretName
+		if loaded[secretKey] {
+			continue
+		}
+		loaded[secretKey] = true
+
+		blocks, err := p.certificateBlocks(ing.Namespace, t.SecretName)
+		if err != nil {
+			return fmt.Errorf("getting certificate blocks: %w", err)
+		}
+
+		if blocks.cert == nil || blocks.key == nil {
+			return fmt.Errorf("no keypair found in secret %s/%s", ing.Namespace, t.SecretName)
+		}
+
+		mcCerts[secretKey] = certPair{Cert: string(blocks.cert), Key: string(blocks.key)}
+	}
+
+	return nil
+}
+
+// buildServersClientAuth configures the client certificate authentication of the servers of an Ingress from its auth-tls annotations.
+// It returns an error when the auth-tls-secret cannot be used.
+func (p *Provider) buildServersClientAuth(ctx context.Context, servers map[string]*server, hosts map[string]bool, ing ingressEntry, tlsOptionsCache map[string]*tls.Options) error {
+	if ing.config.AuthTLSSecret == nil {
+		return nil
+	}
+
+	clientAuthTLSOption, err := p.buildClientAuthTLSOption(ing.Namespace, ing.config, tlsOptionsCache)
+	if errors.Is(err, errNoCACertificate) {
+		// ingress-nginx serves the Ingress without client auth, and leaves it to the next Ingress of the host.
+		log.Ctx(ctx).Warn().Msgf("Secret %q has no CA certificate, client certificate authentication is disabled", *ing.config.AuthTLSSecret)
+		return nil
+	}
+	passCertificate := ptr.Deref(ing.config.AuthTLSPassCertificateToUpstream, false)
+
+	for _, rule := range ing.Spec.Rules {
+		// A rule without paths only names the host of the Ingress default backend:
+		// like ingress-nginx, it does not configure the client auth of its host, except on the default server.
+		if rule.HTTP == nil && rule.Host != "" {
+			continue
+		}
+
+		// ingress-nginx creates no server for a host only canary Ingresses declare, and falls back to its default server.
+		host := rule.Host
+		if !hosts[host] {
+			host = ""
+		}
+		srv := getOrCreateServer(servers, host)
+
+		// ingress-nginx answers 403 to every request of the servers of the Ingress,
+		// so none of its locations is exposed, and neither are the ones of the other Ingresses of these servers.
+		if err != nil {
+			if srv.AuthTLSError == "" {
+				srv.AuthTLSError = err.Error()
+			}
+			continue
+		}
+
+		// The first Ingress declaring client auth wins the host, as ingress-nginx applies it to the whole server block.
+		switch {
+		case srv.clientAuthIngress == "":
+			srv.TLSOption = clientAuthTLSOption
+			srv.clientAuthIngress = ing.Namespace + "/" + ing.Name
+			srv.clientAuthPassCertificate = passCertificate
+		case srv.TLSOption != clientAuthTLSOption || srv.clientAuthPassCertificate != passCertificate:
+			log.Ctx(ctx).Warn().Msgf("Host %q is already configured for client certificate authentication by Ingress %s, ignoring auth-tls annotations", srv.Hostname, srv.clientAuthIngress)
+		}
+	}
+
+	return err
+}
+
+// buildClientAuthTLSOption resolves the client-auth TLS option for the auth-tls-secret annotation.
+// Ingresses sharing a secret and client auth type get the same option, which the election of the server client auth relies on to detect conflicts.
+// The cross-namespace check runs before the cache lookup, as the cache key leaves out the Ingress namespace.
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg IngressConfig, tlsOptionsCache map[string]*tls.Options) (*tls.Options, error) {
+	if cfg.AuthTLSSecret == nil {
+		return nil, errors.New("auth-tls-secret is nil")
+	}
+
+	secretNamespace, secretName, found := strings.Cut(*cfg.AuthTLSSecret, "/")
+	if !found || secretNamespace == "" || secretName == "" {
+		return nil, errors.New("auth-tls-secret must be in namespace/name format")
+	}
+
+	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret not allowed: %s/%s", secretNamespace, secretName)
+	}
+
+	clientAuthType := clientAuthTypeFromString(cfg.AuthTLSVerifyClient)
+	cacheKey := makeKey(secretNamespace, secretName, clientAuthType)
+
+	if opt, exists := tlsOptionsCache[cacheKey]; exists {
+		return opt, nil
+	}
+
+	blocks, err := p.certificateBlocks(secretNamespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("reading client certificate: %w", err)
+	}
+
+	if blocks.ca == nil {
+		return nil, errNoCACertificate
+	}
+
+	opt := &tls.Options{}
+	opt.SetDefaults()
+	opt.ClientAuth = tls.ClientAuth{
+		CAFiles:        []types.FileOrContent{types.FileOrContent(blocks.ca)},
+		ClientAuthType: clientAuthType,
+	}
+	tlsOptionsCache[cacheKey] = opt
+
+	return opt, nil
+}
+
+// applyDefaultBackendAuth pre-resolves the access-control annotations that are
+// otherwise attached inline in the rules loop (basic/digest auth and custom
+// response headers) onto a spec.defaultBackend location, so the catch-all
+// inherits them exactly like the rule paths, matching ingress-nginx. It returns
+// an error only when a configured auth secret cannot be resolved; the caller
+// then skips the ingress, as ingress-nginx does.
+func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, loc *location) error {
+	if cfg.AuthType != nil {
+		basic, digest, authURNRefs, err := p.resolveBasicAuth(namespace, cfg)
+		if err != nil {
+			return err
+		}
+		loc.BasicAuth = basic
+		loc.DigestAuth = digest
+		loc.AuthURNRefs = authURNRefs
+	}
+
+	if cfg.CustomHeaders != nil {
+		headers, err := p.resolveCustomHeaders(namespace, *cfg.CustomHeaders)
+		if err != nil {
+			loc.Error = true
+		} else {
+			loc.ResolvedCustomHeaders = headers
+		}
+	}
+
+	return nil
+}
+
+// resolveDefaultBackendCustomErrors pre-resolves the custom-http-errors error
+// backend onto a spec.defaultBackend location and registers it in the model,
+// mirroring the inline resolution done for rule paths, so custom error pages
+// behave the same on the catch-all. Best-effort: when no per-ingress error
+// backend applies, buildCustomHTTPErrors falls back to the provider-level one.
+func (p *Provider) resolveDefaultBackendCustomErrors(mc *model, namespace string, cfg IngressConfig, loc *location) {
+	if len(ptr.Deref(cfg.CustomHTTPErrors, nil)) == 0 {
+		return
+	}
+
+	errBackendName := p.resolveHTTPErrorBackend(namespace, cfg)
+	if errBackendName == "" {
+		return
+	}
+	loc.ResolvedHTTPErrorBackendName = errBackendName
+
+	if _, exists := mc.Backends[errBackendName]; exists {
+		return
+	}
+
+	defaultSvcName := ptr.Deref(cfg.DefaultBackend, "")
+	if defaultSvcName == "" {
+		return
+	}
+
+	endpoints, err := p.getBackendEndpoints(namespace,
+		netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultSvcName}},
+		cfg)
+	if err != nil {
+		return
+	}
+
+	mc.Backends[errBackendName] = &backend{
+		Name:      errBackendName,
+		Namespace: namespace,
+		Endpoints: endpoints,
+	}
+}
+
+// resolveBasicAuth returns the basic or digest auth configuration, and the URN references of its users.
+// The users hold the URNs of their Secret keys, and the returned URN references hold their values.
+func (p *Provider) resolveBasicAuth(namespace string, cfg IngressConfig) (*dynamic.BasicAuth, *dynamic.DigestAuth, map[string]string, error) {
+	if cfg.AuthType == nil {
+		return nil, nil, nil, nil
+	}
+
+	authType := *cfg.AuthType
+	if authType != "basic" && authType != "digest" {
+		return nil, nil, nil, fmt.Errorf("invalid auth-type %q", authType)
+	}
+
+	authSecret := ptr.Deref(cfg.AuthSecret, "")
+	if authSecret == "" {
+		return nil, nil, nil, errors.New("auth-secret must not be empty")
+	}
+
+	parts := strings.Split(authSecret, "/")
+	if len(parts) > 2 {
+		return nil, nil, nil, fmt.Errorf("invalid auth secret format %q", authSecret)
+	}
+
+	secretName := parts[0]
+	secretNamespace := namespace
+	if len(parts) == 2 {
+		secretNamespace = parts[0]
+		secretName = parts[1]
+	}
+
+	if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
+		return nil, nil, nil, fmt.Errorf("cross-namespace auth secret not allowed: %s/%s", secretNamespace, secretName)
+	}
+
+	secret, err := p.k8sClient.GetSecret(secretNamespace, secretName)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getting secret %s: %w", authSecret, err)
+	}
+
+	authSecretType := ptr.Deref(cfg.AuthSecretType, "auth-file")
+	if authSecretType != "auth-file" && authSecretType != "auth-map" {
+		return nil, nil, nil, fmt.Errorf("invalid auth-secret-type %q", authSecretType)
+	}
+
+	users, err := basicAuthUsers(secret, authSecretType)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getting users from secret: %w", err)
+	}
+
+	middlewareType := "basicAuth"
+	if authType == "digest" {
+		middlewareType = "digestAuth"
+	}
+
+	// With an auth-map Secret, each user comes from its own key, so each user has its own URN and URNRefs.AddUsers, which takes one key, does not fit.
+	refs := k8s.URNRefs{}
+	userURNs := make(dynamic.Users, len(users))
+	for i, user := range users {
+		userURNs[i] = refs.Add(dynamic.JSONPointer(middlewareType, "users", strconv.Itoa(i)), authSecret, user.key, user.value)
+	}
+
+	realm := ptr.Deref(cfg.AuthRealm, "")
+	if authType == "digest" {
+		return nil, &dynamic.DigestAuth{Users: userURNs, Realm: realm}, refs.OrNil(), nil
+	}
+	return &dynamic.BasicAuth{Users: userURNs, Realm: realm}, nil, refs.OrNil(), nil
+}
+
+func (p *Provider) resolveCustomHeaders(namespace, customHeadersRef string) (map[string]string, error) {
+	parts := strings.Split(customHeadersRef, "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid custom-headers configmap reference %q", customHeadersRef)
+	}
+
+	configMapNamespace := parts[0]
+	configMapName := parts[1]
+
+	if !p.AllowCrossNamespaceResources && configMapNamespace != namespace {
+		return nil, fmt.Errorf("cross-namespace custom-headers is not allowed: configMap %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, namespace)
+	}
+
+	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
+	if err != nil {
+		return nil, fmt.Errorf("getting configmap %s: %w", customHeadersRef, err)
+	}
+
+	headers := make(map[string]string)
+	for key, value := range configMap.Data {
+		if !slices.Contains(p.allowedHeaders, key) {
+			return nil, fmt.Errorf("header %q is not in GlobalAllowedResponseHeaders", key)
+		}
+		headers[key] = value
+	}
+
+	return headers, nil
+}
+
+// resolveHTTPErrorBackend returns the metamodel backend key for a per-ingress
+// default-backend annotation. It returns "" for the provider-level default backend
+// case (handled separately in buildCustomHTTPErrors) and when no backend is available.
+func (p *Provider) resolveHTTPErrorBackend(namespace string, cfg IngressConfig) string {
+	// Per-ingress annotation only — produces a real backend key stored in mc.Backends.
+	if defaultBackend := ptr.Deref(cfg.DefaultBackend, ""); defaultBackend != "" {
+		return "default-backend-" + makeKey(namespace, defaultBackend)
+	}
+
+	// Provider-level default backend is handled by buildCustomHTTPErrors directly
+	// (via p.defaultBackendServiceName / defaultBackendName).
+	return ""
+}
+
+func (p *Provider) shouldProcess(ing *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
+	if len(ingressClasses) > 0 && ing.Spec.IngressClassName != nil {
+		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
+			return *ing.Spec.IngressClassName == ic.ObjectMeta.Name
+		})
+	}
+
+	if class, ok := ing.Annotations[annotationIngressClass]; ok {
+		return class == p.IngressClass
+	}
+
+	return p.WatchIngressWithoutClass
+}
+
+func (p *Provider) validateIngress(ing *netv1.Ingress, cfg IngressConfig) error {
+	if !p.AllowSnippetAnnotations &&
+		(ptr.Deref(cfg.ServerSnippet, "") != "" ||
+			ptr.Deref(cfg.ConfigurationSnippet, "") != "" ||
+			ptr.Deref(cfg.AuthSnippet, "") != "") {
+		return errors.New("snippet annotations are not allowed when allowSnippetAnnotations is disabled")
+	}
+
+	if p.StrictValidatePathType {
+		for _, rule := range ing.Spec.Rules {
+			if rule.HTTP == nil {
+				continue
+			}
+			for _, pa := range rule.HTTP.Paths {
+				if len(pa.Path) > 0 {
+					pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+					if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
+						return fmt.Errorf("regex characters not allowed for pathType %s when strictValidatePathType is enabled", pathType)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func getOrCreateServer(m map[string]*server, hostname string) *server {
+	if srv, ok := m[hostname]; ok {
+		return srv
+	}
+	tlsOptionName := tls.DefaultTLSConfigName
+	var tlsOption *tls.Options
+	if hostname != "" {
+		tlsOptionName = hostname
+		tlsOption = &tls.Options{}
+		tlsOption.SetDefaults()
+	}
+
+	srv := &server{
+		Hostname:      hostname,
+		TLSOptionName: tlsOptionName,
+		TLSOption:     tlsOption,
+	}
+	m[hostname] = srv
+	return srv
+}
+
+func getServicePort(service *corev1.Service, backend netv1.IngressBackend) (corev1.ServicePort, bool) {
+	for _, p := range service.Spec.Ports {
+		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
+			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
+			return p, true
+		}
+	}
+
+	// For ExternalName services, the backend port may not be declared in the
+	// service spec. Synthesize a ServicePort whose TargetPort echoes the backend
+	// port value (named ports parse to 0, matching ingress-nginx behavior).
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return corev1.ServicePort{TargetPort: intstr.Parse(portString(backend.Service.Port))}, true
+	}
+
+	return corev1.ServicePort{}, false
+}
+
+// makeKey builds a generated name from its components, each followed by its length.
+// Kubernetes namespaces and names may contain dashes, so joining them with dashes alone is ambiguous:
+// team/dev-web and team-dev/web would both give team-dev-web.
+func makeKey(components ...string) string {
+	parts := make([]string, 0, 2*len(components))
+	for _, c := range components {
+		parts = append(parts, c, strconv.Itoa(len(c)))
+	}
+
+	return strings.Join(parts, "-")
+}
+
+func portString(port netv1.ServiceBackendPort) string {
+	if port.Name == "" {
+		return strconv.Itoa(int(port.Number))
+	}
+	return port.Name
+}
+
+func ingressPathKey(namespace, host string, pa netv1.HTTPIngressPath) string {
+	pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+	return namespace + "/" + host + pa.Path + "/" + string(pathType)
+}
+
+func canaryPrimaryKey(namespace string, backend netv1.IngressServiceBackend) string {
+	return namespace + "/" + backend.Name + "/" + portString(backend.Port)
+}
+
+// clientAuthTypeFromString maps an ingress-nginx auth-tls-verify-client value to the corresponding ClientAuthType.
+// Default is "on" (RequireAndVerifyClientCert) when verifyClient is nil.
+func clientAuthTypeFromString(verifyClient *string) string {
+	if verifyClient == nil {
+		return tls.RequireAndVerifyClientCert
+	}
+	switch *verifyClient {
+	// off means that client certificate is not requested and no verification will be passed.
+	case "off":
+		return tls.NoClientCert
+	// optional means that the client certificate is requested, but not required.
+	// If the certificate is present, it needs to be verified.
+	case "optional":
+		return tls.VerifyClientCertIfGiven
+	// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
+	case "optional_no_ca":
+		return tls.RequestClientCert
+	default:
+		return tls.RequireAndVerifyClientCert
+	}
+}
+
+// secretUser is a user read from a Secret, with the key of the Secret holding it.
+type secretUser struct {
+	key   string
+	value string
+}
+
+func basicAuthUsers(secret *corev1.Secret, authSecretType string) ([]secretUser, error) {
+	var users []secretUser
+	if authSecretType == "auth-map" {
+		if len(secret.Data) == 0 {
+			return nil, fmt.Errorf("secret %s/%s contains no user credentials", secret.Namespace, secret.Name)
+		}
+		// Sorted, so that an unchanged Secret gives the same configuration and does not trigger a reload.
+		for _, user := range slices.Sorted(maps.Keys(secret.Data)) {
+			users = append(users, secretUser{key: user, value: user + ":" + string(secret.Data[user])})
+		}
+		return users, nil
+	}
+
+	authFileContent, ok := secret.Data["auth"]
+	if !ok {
+		return nil, fmt.Errorf("secret %s/%s missing key 'auth'", secret.Namespace, secret.Name)
+	}
+
+	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
+		line := strings.TrimSpace(rawLine)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			users = append(users, secretUser{key: "auth", value: line})
+		}
+	}
+
+	return users, nil
+}
+
+// resolveAliases returns the server-alias hostnames that are valid additions
+// to the location's host rule. Aliases that collide with another host or were
+// claimed by a different ingress are dropped (with a debug log).
+func resolveAliases(ctx context.Context, loc *location, allHosts map[string]bool, claimedAliases map[string]string) []string {
+	if loc.Config.ServerAlias == nil {
+		return nil
+	}
+
+	ingressKey := loc.Namespace + "/" + loc.IngressName
+	var aliases []string
+	for _, alias := range *loc.Config.ServerAlias {
+		a := strings.ToLower(alias)
+		if _, ok := allHosts[a]; ok {
+			log.Ctx(ctx).Debug().Str("alias", alias).Msg("Skipping server-alias already defined as a host")
+			continue
+		}
+		if owner, ok := claimedAliases[a]; ok && owner != ingressKey {
+			log.Ctx(ctx).Debug().
+				Str("alias", alias).
+				Str("ingress", ingressKey).
+				Msgf("Skipping server-alias because it is already claimed by %s", owner)
+			continue
+		}
+		aliases = append(aliases, alias)
+	}
+	return aliases
+}

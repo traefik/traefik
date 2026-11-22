@@ -7,27 +7,71 @@ import (
 	"sigs.k8s.io/gateway-api/pkg/features"
 )
 
-var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
-	featureSet := sets.New[features.Feature]().
+// SupportedFeatures returns the supported features,
+// including the ones requiring the experimentalChannel option when it is enabled.
+func SupportedFeatures(experimentalChannel bool) []features.FeatureName {
+	standard, experimental := supportedFeatures()
+	if experimentalChannel {
+		return experimental
+	}
+
+	return standard
+}
+
+var supportedFeatures = sync.OnceValues(func() (standard, experimental []features.FeatureName) {
+	standardSet := sets.New[features.Feature]().
 		Insert(features.GatewayCoreFeatures.UnsortedList()...).
 		Insert(features.GatewayExtendedFeatures.Intersection(extendedGatewayFeatures()).UnsortedList()...).
 		Insert(features.HTTPRouteCoreFeatures.UnsortedList()...).
 		Insert(features.HTTPRouteExtendedFeatures.Intersection(extendedHTTPRouteFeatures()).UnsortedList()...).
 		Insert(features.ReferenceGrantCoreFeatures.UnsortedList()...).
 		Insert(features.BackendTLSPolicyCoreFeatures.UnsortedList()...).
+		Insert(features.BackendTLSPolicyExtendedFeatures.Intersection(extendedBackendTLSPolicyFeatures()).UnsortedList()...).
 		Insert(features.GRPCRouteCoreFeatures.UnsortedList()...).
-		Insert(features.TLSRouteCoreFeatures.UnsortedList()...)
+		Insert(features.GRPCRouteExtendedFeatures.Intersection(extendedGRPCRouteFeatures()).UnsortedList()...).
+		Insert(features.TLSRouteCoreFeatures.UnsortedList()...).
+		Insert(features.TLSRouteExtendedFeatures.Intersection(extendedTLSRouteFeatures()).UnsortedList()...).
+		Insert(features.TCPRouteFeature)
 
-	featureNames := make([]features.FeatureName, 0, featureSet.Len())
-	for f := range featureSet {
-		featureNames = append(featureNames, f.Name)
-	}
-	return featureNames
+	return featureNames(standardSet), featureNames(standardSet.Union(experimentalChannelFeatures()))
 })
+
+func featureNames(featureSet sets.Set[features.Feature]) []features.FeatureName {
+	names := make([]features.FeatureName, 0, featureSet.Len())
+	for f := range featureSet {
+		names = append(names, f.Name)
+	}
+	return names
+}
+
+// experimentalChannelFeatures returns the supported features requiring the experimentalChannel option.
+func experimentalChannelFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GatewayListenerFiltersFeature,
+	)
+}
 
 // extendedGatewayFeatures returns the supported extended Gateway features.
 func extendedGatewayFeatures() sets.Set[features.Feature] {
-	return sets.New(features.GatewayPort8080Feature)
+	return sets.New(
+		features.GatewayPort8080Feature,
+		features.GatewayHTTPListenerIsolationFeature,
+		features.GatewayHTTPSListenerDetectMisdirectedRequestsFeature,
+		features.ListenerSetFeature,
+		features.GatewayBackendClientCertificateFeature,
+		features.GatewayFrontendClientCertificateValidationFeature,
+		features.GatewayFrontendClientCertificateValidationInsecureFallbackFeature,
+		// TODO: GEP-5075 requires this feature to be advertised only when the cluster serves the ClusterTrustBundle API.
+		features.ClusterTrustBundleFeature,
+	)
+}
+
+// extendedTLSRouteFeatures returns the supported extended TLS Route features.
+func extendedTLSRouteFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.TLSRouteModeTerminateFeature,
+		features.TLSRouteModeMixedFeature,
+	)
 }
 
 // extendedHTTPRouteFeatures returns the supported extended HTTP Route features.
@@ -35,15 +79,44 @@ func extendedHTTPRouteFeatures() sets.Set[features.Feature] {
 	return sets.New(
 		features.HTTPRouteQueryParamMatchingFeature,
 		features.HTTPRouteMethodMatchingFeature,
+		features.HTTPRoutePathRedirectFeature,
 		features.HTTPRoutePortRedirectFeature,
 		features.HTTPRouteSchemeRedirectFeature,
+		features.HTTPRoute303RedirectStatusCodeFeature,
+		features.HTTPRoute307RedirectStatusCodeFeature,
+		features.HTTPRoute308RedirectStatusCodeFeature,
 		features.HTTPRouteHostRewriteFeature,
 		features.HTTPRoutePathRewriteFeature,
-		features.HTTPRoutePathRedirectFeature,
 		features.HTTPRouteResponseHeaderModificationFeature,
 		features.HTTPRouteBackendProtocolH2CFeature,
 		features.HTTPRouteBackendProtocolWebSocketFeature,
+		features.HTTPRouteRequestMirrorFeature,
+		features.HTTPRouteRequestMultipleMirrorsFeature,
+		features.HTTPRouteRequestPercentageMirrorFeature,
 		features.HTTPRouteDestinationPortMatchingFeature,
 		features.HTTPRouteBackendRequestHeaderModificationFeature,
+		features.HTTPRouteNamedRouteRule,
+		features.HTTPRouteParentRefPortFeature,
+		features.HTTPRouteCORS,
+		features.HTTPRouteRequestTimeoutFeature,
+		features.HTTPRouteBackendTimeoutFeature,
+		features.HTTPRouteBackendURLRewriteFeature,
+		features.HTTPRouteRetryCodesFeature,
+		features.HTTPRouteRetryConnectionErrorFeature,
+	)
+}
+
+// extendedGRPCRouteFeatures returns the supported extended GRPC Route features.
+func extendedGRPCRouteFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.GRPCRouteNamedRouteRule,
+		features.GRPCRouteRequestHeaderModifier,
+	)
+}
+
+// extendedBackendTLSPolicyFeatures returns the supported extended BackendTLSPolicy features.
+func extendedBackendTLSPolicyFeatures() sets.Set[features.Feature] {
+	return sets.New(
+		features.BackendTLSPolicySanValidationFeature,
 	)
 }

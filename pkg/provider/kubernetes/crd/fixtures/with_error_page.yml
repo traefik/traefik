@@ -12,6 +12,9 @@ spec:
     statusRewrites:
       404: 200
     query: query
+    errorRequestHeaders:
+    - "X-Foo-Bar"
+    - "X-Bar-Foo"
     service:
       name: whoami
       port: 80

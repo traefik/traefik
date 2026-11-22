@@ -13,8 +13,6 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Nicolas Mengin [@nmengin](https://github.com/nmengin)
 * Michaël Matur [@mmatur](https://github.com/mmatur)
 * Gérald Croës [@geraldcroes](https://github.com/geraldcroes)
-* Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
-* Mathieu Lonjaret [@mpl](https://github.com/mpl)
 * Romain Tribotté [@rtribotte](https://github.com/rtribotte)
 * Kevin Pollet [@kevinpollet](https://github.com/kevinpollet)
 * Harold Ozouf [@jspdown](https://github.com/jspdown)
@@ -24,6 +22,9 @@ description: "Traefik Proxy is an open source software with a thriving community
 * Baptiste Mayelle [@youkoulayley](https://github.com/youkoulayley)
 * Jesper Noordsij [@jnoordsij](https://github.com/jnoordsij)
 * Gina Adzani [@gndz07](https://github.com/gndz07)
+* Mathis Urien [@LBF38](https://github.com/LBF38)
+* Kangmin Kim [@amazon7737](https://github.com/amazon7737)
+* Nándor Kollár [@nandorKollar](https://github.com/nandorKollar)
 
 ## Past Maintainers
 
@@ -35,7 +36,9 @@ People who have had an incredibly positive impact on the project, and are now fo
 * Timo Reimann [@timoreimann](https://github.com/timoreimann)
 * Marco Jantke [@mjantke](https://github.com/mjeri)
 * Ludovic Fernandez [@ldez](https://github.com/ldez)
+* Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
+* Mathieu Lonjaret [@mpl](https://github.com/mpl)
 
 ## Maintainer's Guidelines
 
-Please read the [maintainer's guidelines](maintainers-guidelines.md).
+Please read the [maintainer's guidelines](./maintainers-guidelines.md).

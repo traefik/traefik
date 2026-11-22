@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -19,44 +18,44 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 	}{
 		{
 			desc:             "Empty rule and matches",
-			expectedRule:     "PathPrefix(`/`)",
+			expectedRule:     `PathPrefix("/")`,
 			expectedPriority: 15,
 		},
 		{
 			desc:             "One Host rule without match",
 			hostnames:        []gatev1.Hostname{"foo.com"},
-			expectedRule:     "Host(`foo.com`) && PathPrefix(`/`)",
+			expectedRule:     `Host("foo.com") && PathPrefix("/")`,
 			expectedPriority: 22,
 		},
 		{
 			desc: "One GRPCRouteMatch with no GRPCHeaderMatch",
 			match: gatev1.GRPCRouteMatch{
 				Method: &gatev1.GRPCMethodMatch{
-					Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-					Service: ptr.To("foo"),
-					Method:  ptr.To("bar"),
+					Type:    new(gatev1.GRPCMethodMatchExact),
+					Service: new("foo"),
+					Method:  new("bar"),
 				},
 			},
-			expectedRule:     "PathRegexp(`/foo/bar`)",
+			expectedRule:     `PathRegexp("/foo/bar")`,
 			expectedPriority: 22,
 		},
 		{
 			desc: "One GRPCRouteMatch with one GRPCHeaderMatch",
 			match: gatev1.GRPCRouteMatch{
 				Method: &gatev1.GRPCMethodMatch{
-					Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-					Service: ptr.To("foo"),
-					Method:  ptr.To("bar"),
+					Type:    new(gatev1.GRPCMethodMatchExact),
+					Service: new("foo"),
+					Method:  new("bar"),
 				},
 				Headers: []gatev1.GRPCHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
+						Type:  new(gatev1.GRPCHeaderMatchExact),
 						Name:  "foo",
 						Value: "bar",
 					},
 				},
 			},
-			expectedRule:     "PathRegexp(`/foo/bar`) && Header(`foo`,`bar`)",
+			expectedRule:     `PathRegexp("/foo/bar") && Header("foo","bar")`,
 			expectedPriority: 45,
 		},
 		{
@@ -64,19 +63,19 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{"foo.com"},
 			match: gatev1.GRPCRouteMatch{
 				Method: &gatev1.GRPCMethodMatch{
-					Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-					Service: ptr.To("foo"),
-					Method:  ptr.To("bar"),
+					Type:    new(gatev1.GRPCMethodMatchExact),
+					Service: new("foo"),
+					Method:  new("bar"),
 				},
 				Headers: []gatev1.GRPCHeaderMatch{
 					{
-						Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
+						Type:  new(gatev1.GRPCHeaderMatchExact),
 						Name:  "foo",
 						Value: "bar",
 					},
 				},
 			},
-			expectedRule:     "Host(`foo.com`) && PathRegexp(`/foo/bar`) && Header(`foo`,`bar`)",
+			expectedRule:     `Host("foo.com") && PathRegexp("/foo/bar") && Header("foo","bar")`,
 			expectedPriority: 52,
 		},
 	}
@@ -100,57 +99,82 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 	}{
 		{
 			desc:         "Empty",
-			expectedRule: "PathPrefix(`/`)",
+			expectedRule: `PathPrefix("/")`,
 		},
 		{
 			desc: "Exact service matching",
 			method: &gatev1.GRPCMethodMatch{
-				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-				Service: ptr.To("foo"),
+				Type:    new(gatev1.GRPCMethodMatchExact),
+				Service: new("foo"),
 			},
-			expectedRule: "PathRegexp(`/foo/[^/]+`)",
+			expectedRule: `PathRegexp("/foo/[^/]+")`,
 		},
 		{
 			desc: "Exact method matching",
 			method: &gatev1.GRPCMethodMatch{
-				Type:   ptr.To(gatev1.GRPCMethodMatchExact),
-				Method: ptr.To("bar"),
+				Type:   new(gatev1.GRPCMethodMatchExact),
+				Method: new("bar"),
 			},
-			expectedRule: "PathRegexp(`/[^/]+/bar`)",
-		},
-		{
-			desc: "Exact service and method matching",
-			method: &gatev1.GRPCMethodMatch{
-				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
-				Service: ptr.To("foo"),
-				Method:  ptr.To("bar"),
-			},
-			expectedRule: "PathRegexp(`/foo/bar`)",
+			expectedRule: `PathRegexp("/[^/]+/bar")`,
 		},
 		{
 			desc: "Regexp service matching",
 			method: &gatev1.GRPCMethodMatch{
-				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
-				Service: ptr.To("[^1-9/]"),
+				Type:    new(gatev1.GRPCMethodMatchRegularExpression),
+				Service: new("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^1-9/]/[^/]+`)",
+			expectedRule: `PathRegexp("/[^1-9/]/[^/]+")`,
 		},
 		{
 			desc: "Regexp method matching",
 			method: &gatev1.GRPCMethodMatch{
-				Type:   ptr.To(gatev1.GRPCMethodMatchRegularExpression),
-				Method: ptr.To("[^1-9/]"),
+				Type:   new(gatev1.GRPCMethodMatchRegularExpression),
+				Method: new("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^/]+/[^1-9/]`)",
+			expectedRule: `PathRegexp("/[^/]+/[^1-9/]")`,
 		},
 		{
 			desc: "Regexp service and method matching",
 			method: &gatev1.GRPCMethodMatch{
-				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
-				Service: ptr.To("[^1-9/]"),
-				Method:  ptr.To("[^1-9/]"),
+				Type:    new(gatev1.GRPCMethodMatchRegularExpression),
+				Service: new("[^1-9/]"),
+				Method:  new("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^1-9/]/[^1-9/]`)",
+			expectedRule: `PathRegexp("/[^1-9/]/[^1-9/]")`,
+		},
+		{
+			desc: "Exact type with dot in service name escapes dot",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    new(gatev1.GRPCMethodMatchExact),
+				Service: new("foo.bar"),
+				Method:  new("Method"),
+			},
+			expectedRule: `PathRegexp("/foo\\.bar/Method")`,
+		},
+		{
+			desc: "Nil type defaults to exact and escapes dot",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    nil,
+				Service: new("auth.api"),
+				Method:  new("Login"),
+			},
+			expectedRule: `PathRegexp("/auth\\.api/Login")`,
+		},
+		{
+			desc: "RegularExpression type preserves dot as regex wildcard",
+			method: &gatev1.GRPCMethodMatch{
+				Type:    new(gatev1.GRPCMethodMatchRegularExpression),
+				Service: new("foo.bar"),
+				Method:  new(".*"),
+			},
+			expectedRule: `PathRegexp("/foo.bar/.*")`,
+		},
+		{
+			desc: "Exact type with neither service nor method uses full wildcard",
+			method: &gatev1.GRPCMethodMatch{
+				Type: new(gatev1.GRPCMethodMatchExact),
+			},
+			expectedRule: `PathRegexp("/[^/]+/[^/]+")`,
 		},
 	}
 
@@ -177,41 +201,41 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 			desc: "One exact match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
+					Type:  new(gatev1.GRPCHeaderMatchExact),
 					Name:  "foo",
 					Value: "bar",
 				},
 			},
-			expectedRules: []string{"Header(`foo`,`bar`)"},
+			expectedRules: []string{`Header("foo","bar")`},
 		},
 		{
 			desc: "One regexp match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.GRPCHeaderMatchRegularExpression),
+					Type:  new(gatev1.GRPCHeaderMatchRegularExpression),
 					Name:  "foo",
 					Value: ".*",
 				},
 			},
-			expectedRules: []string{"HeaderRegexp(`foo`,`.*`)"},
+			expectedRules: []string{`HeaderRegexp("foo",".*")`},
 		},
 		{
 			desc: "One exact and regexp match type",
 			headers: []gatev1.GRPCHeaderMatch{
 				{
-					Type:  ptr.To(gatev1.GRPCHeaderMatchExact),
+					Type:  new(gatev1.GRPCHeaderMatchExact),
 					Name:  "foo",
 					Value: "bar",
 				},
 				{
-					Type:  ptr.To(gatev1.GRPCHeaderMatchRegularExpression),
+					Type:  new(gatev1.GRPCHeaderMatchRegularExpression),
 					Name:  "foo",
 					Value: ".*",
 				},
 			},
 			expectedRules: []string{
-				"Header(`foo`,`bar`)",
-				"HeaderRegexp(`foo`,`.*`)",
+				`Header("foo","bar")`,
+				`HeaderRegexp("foo",".*")`,
 			},
 		},
 	}

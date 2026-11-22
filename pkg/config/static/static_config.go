@@ -3,15 +3,16 @@ package static
 import (
 	"errors"
 	"fmt"
-	"path"
+	"log/slog"
+	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/rs/zerolog"
+	legolog "github.com/go-acme/lego/v5/log"
 	"github.com/rs/zerolog/log"
+	slogzerolog "github.com/samber/slog-zerolog/v2"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -57,6 +58,30 @@ const (
 	DefaultUDPTimeout = 3 * time.Second
 )
 
+// providerNames is the ordered list of the Traefik provider names.
+var providerNames = []string{
+	gateway.ProviderName,
+	crd.ProviderName,
+	ingress.ProviderName,
+	ingressnginx.ProviderName,
+	docker.SwarmName,
+	docker.DockerName,
+	file.ProviderName,
+	redis.ProviderName,
+	knative.ProviderName,
+	consul.ProviderName,
+	consulcatalog.ProviderName,
+	nomad.ProviderName,
+	etcd.ProviderName,
+	ecs.ProviderName,
+	http.ProviderName,
+	zk.ProviderName,
+	rest.ProviderName,
+}
+
+// Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
+var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.:~-]*$`)
+
 // Configuration is the static configuration.
 type Configuration struct {
 	Global *Global `description:"Global configuration options" json:"global,omitempty" toml:"global,omitempty" yaml:"global,omitempty" export:"true"`
@@ -80,7 +105,6 @@ type Configuration struct {
 
 	Experimental *Experimental `description:"Experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 
-	// Deprecated: Please do not use this field.
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
@@ -92,6 +116,8 @@ type Configuration struct {
 type Core struct {
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	DefaultRuleSyntax string `description:"Defines the rule parser default syntax (v2 or v3)" json:"defaultRuleSyntax,omitempty" toml:"defaultRuleSyntax,omitempty" yaml:"defaultRuleSyntax,omitempty"`
+
+	StrictTLSOptions bool `description:"Disables the unsafe fallback to the default TLS options for the routers with conflicting TLS options." json:"strictTLSOptions,omitempty" toml:"strictTLSOptions,omitempty" yaml:"strictTLSOptions,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -112,9 +138,10 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion        bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage     bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	NotAppendXForwardedFor bool `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CheckNewVersion        bool   `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage     bool   `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	NotAppendXForwardedFor bool   `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	AliasHeadersStrategy   string `description:"Defines the default strategy to handle the requests carrying a header whose name aliases another header name (keep, delete, and reject). It applies to every entry point that does not set http.aliasHeadersStrategy explicitly and does not use the deprecated http.underscoreHeadersStrategy." json:"aliasHeadersStrategy,omitempty" toml:"aliasHeadersStrategy,omitempty" yaml:"aliasHeadersStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -189,6 +216,8 @@ type ForwardingTimeouts struct {
 	DialTimeout           ptypes.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
 	ResponseHeaderTimeout ptypes.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
+	ReadTimeout           ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. If zero, no timeout exists." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout          ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. If zero, no timeout exists." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -235,6 +264,7 @@ func (t *Tracing) SetDefaults() {
 // Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
+	Precedence                []string        `description:"Defines the routing precedence between providers." json:"precedence,omitempty" toml:"precedence,omitempty" yaml:"precedence,omitempty" export:"true"`
 
 	Docker                 *docker.Provider               `description:"Enables Docker provider." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Swarm                  *docker.SwarmProvider          `description:"Enables Docker Swarm provider." json:"swarm,omitempty" toml:"swarm,omitempty" yaml:"swarm,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -255,6 +285,11 @@ type Providers struct {
 	HTTP                   *http.Provider                 `description:"Enables HTTP provider." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Plugin map[string]PluginConf `description:"Plugins configuration." json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (p *Providers) SetDefaults() {
+	p.Precedence = providerNames
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -283,8 +318,33 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	// If the entry point exists without an address, which happens when only its options are configured,
+	// this ensures the address defaults to :8080.
+	if ep, ok := c.EntryPoints[DefaultInternalEntryPointName]; ok && ep.Address == "" {
+		ep.Address = ":8080"
+	}
+
+	// Propagate the global aliasHeadersStrategy default to the entry points
+	// left without an explicit value, so internal entry points are covered too.
+	// An explicit per-entry-point value always wins, and leaving both unset
+	// keeps the historical behavior unchanged.
+	// Entry points that still set the deprecated underscoreHeadersStrategy are
+	// skipped: aliasing covers more than underscores, so inheriting the global
+	// default would silently widen or reject their configuration.
+	if c.Global != nil && c.Global.AliasHeadersStrategy != "" {
+		for _, ep := range c.EntryPoints {
+			if ep.HTTP.AliasHeadersStrategy == "" && ep.HTTP.UnderscoreHeadersStrategy == "" {
+				ep.HTTP.AliasHeadersStrategy = c.Global.AliasHeadersStrategy
+			}
+		}
+	}
+
 	if c.Tracing != nil && c.Tracing.GlobalAttributes != nil && c.Tracing.ResourceAttributes == nil {
 		c.Tracing.ResourceAttributes = c.Tracing.GlobalAttributes
+	}
+
+	for i, providerName := range c.Providers.Precedence {
+		c.Providers.Precedence[i] = strings.ToLower(providerName)
 	}
 
 	if c.Providers.Docker != nil {
@@ -318,9 +378,24 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Configure Ingress NGINX provider.
-	if c.Providers.KubernetesIngressNGINX != nil {
+	if c.Providers.KubernetesIngressNGINX != nil && !c.Providers.KubernetesIngressNGINX.DisableNonTLSRouters {
+		var hasDefinedDefaults bool
+		for _, entryPoint := range c.EntryPoints {
+			if entryPoint.AsDefault {
+				hasDefinedDefaults = true
+				break
+			}
+		}
+
 		var nonTLSEntryPoints []string
 		for epName, entryPoint := range c.EntryPoints {
+			if hasDefinedDefaults && !entryPoint.AsDefault {
+				continue
+			}
+			// Skip internal entrypoint.
+			if epName == DefaultInternalEntryPointName {
+				continue
+			}
 			if entryPoint.HTTP.TLS == nil {
 				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
 			}
@@ -356,19 +431,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		if resolver.ACME.DNSChallenge.DisablePropagationCheck {
 			log.Warn().Msgf("disablePropagationCheck is now deprecated, please use propagation.disableChecks instead.")
 
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
-
 			resolver.ACME.DNSChallenge.Propagation.DisableChecks = true
 		}
 
 		if resolver.ACME.DNSChallenge.DelayBeforeCheck > 0 {
 			log.Warn().Msgf("delayBeforeCheck is now deprecated, please use propagation.delayBeforeChecks instead.")
-
-			if resolver.ACME.DNSChallenge.Propagation == nil {
-				resolver.ACME.DNSChallenge.Propagation = &acmeprovider.Propagation{}
-			}
 
 			resolver.ACME.DNSChallenge.Propagation.DelayBeforeChecks = resolver.ACME.DNSChallenge.DelayBeforeCheck
 		}
@@ -423,6 +490,35 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.Global != nil {
+		switch c.Global.AliasHeadersStrategy {
+		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
+		default:
+			return fmt.Errorf("invalid global aliasHeadersStrategy value %q", c.Global.AliasHeadersStrategy)
+		}
+	}
+
+	for epName, ep := range c.EntryPoints {
+		if ep.HTTP.UnderscoreHeadersStrategy != "" && ep.HTTP.AliasHeadersStrategy != "" &&
+			ep.HTTP.AliasHeadersStrategy != ep.HTTP.UnderscoreHeadersStrategy {
+			return fmt.Errorf("entry point %q cannot have both underscoreHeadersStrategy and aliasHeadersStrategy options configured with different values", epName)
+		}
+
+		switch ep.HTTP.AliasHeadersStrategy {
+		case "", AliasHeadersStrategyKeep, AliasHeadersStrategyDelete, AliasHeadersStrategyReject:
+		default:
+			return fmt.Errorf("entry point %q has an invalid aliasHeadersStrategy value %q", epName, ep.HTTP.AliasHeadersStrategy)
+		}
+	}
+
+	if c.Providers != nil {
+		for _, providerName := range c.Providers.Precedence {
+			if !slices.Contains(providerNames, providerName) {
+				return fmt.Errorf("provider %q is not a valid provider name", providerName)
+			}
+		}
+	}
+
 	if c.Providers != nil && c.Providers.KubernetesIngressNGINX != nil {
 		if c.Providers.KubernetesIngressNGINX.WatchNamespace != "" && c.Providers.KubernetesIngressNGINX.WatchNamespaceSelector != "" {
 			return errors.New("watchNamespace and watchNamespaceSelector options are mutually exclusive")
@@ -467,8 +563,8 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
-	if c.API != nil && !path.IsAbs(c.API.BasePath) {
-		return errors.New("API basePath must be a valid absolute path")
+	if c.API != nil && !validBasePath.MatchString(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute URL path")
 	}
 
 	if c.OCSP != nil {
@@ -482,6 +578,50 @@ func (c *Configuration) ValidateConfiguration() error {
 	return nil
 }
 
+const protocolTCP = "tcp"
+
+// HasTCPEntryPoint reports whether at least one entryPoint carries TCP traffic,
+// and therefore can serve HTTP requests.
+func (c *Configuration) HasTCPEntryPoint() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err == nil && protocol == protocolTCP {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDeniedEncodedCharacters reports whether an entryPoint serving HTTP requests
+// disallows at least one encoded character in the request path.
+// UDP entryPoints are left out because they never parse a request path.
+func (c *Configuration) HasDeniedEncodedCharacters() bool {
+	for _, ep := range c.EntryPoints {
+		protocol, err := ep.GetProtocol()
+		if err != nil || protocol != protocolTCP {
+			continue
+		}
+
+		encodedCharacters := ep.HTTP.EncodedCharacters
+		if encodedCharacters == nil {
+			continue
+		}
+
+		if !encodedCharacters.AllowEncodedSlash ||
+			!encodedCharacters.AllowEncodedBackSlash ||
+			!encodedCharacters.AllowEncodedNullCharacter ||
+			!encodedCharacters.AllowEncodedSemicolon ||
+			!encodedCharacters.AllowEncodedPercent ||
+			!encodedCharacters.AllowEncodedQuestionMark ||
+			!encodedCharacters.AllowEncodedHash {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (c *Configuration) hasUserDefinedEntrypoint() bool {
 	return len(c.EntryPoints) != 0
 }
@@ -493,8 +633,13 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
+	legolog.SetDefault(
+		slog.New(
+			slogzerolog.Option{Logger: &log.Logger}.
+				NewZerologHandler().
+				WithAttrs([]slog.Attr{slog.String("lib", "lego")}),
+		),
+	)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/ip"
 )
@@ -20,6 +20,8 @@ var tcpFuncsV2 = map[string]func(*matchersTree, ...string) error{
 	"HostSNI":       hostSNIV2,
 	"HostSNIRegexp": hostSNIRegexpV2,
 }
+
+var hostOrIPv2 = regexp.MustCompile(`^[[:word:]\.\-\:]+$`)
 
 func clientIPV2(tree *matchersTree, clientIPs ...string) error {
 	checker, err := ip.NewChecker(clientIPs)
@@ -80,7 +82,7 @@ func hostSNIV2(tree *matchersTree, hosts ...string) error {
 			continue
 		}
 
-		if !hostOrIP.MatchString(host) {
+		if !hostOrIPv2.MatchString(host) {
 			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not a valid hostname or IP", host)
 		}
 

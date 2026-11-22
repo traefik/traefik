@@ -9,7 +9,7 @@ Provision TLS certificates for your internal Tailscale services.
 {: .subtitle }
 
 To protect a service with TLS, a certificate from a public Certificate Authority is needed.
-In addition to its vpn role, Tailscale can also [provide certificates](https://tailscale.com/kb/1153/enabling-https/) for the machines in your Tailscale network.
+In addition to its vpn role, Tailscale can also [provide certificates](https://tailscale.com/docs/how-to/set-up-https-certificates) for the machines in your Tailscale network.
 
 ## Configuration Example
 
@@ -163,7 +163,7 @@ a Tailscale certificate resolver needs to be configured as below.
 !!! info "Referencing a certificate resolver"
 
     Defining a certificate resolver does not imply that routers are going to use it automatically.
-    Each router or entrypoint that is meant to use the resolver must explicitly [reference](../../../../routing/routers/index.md#certresolver) it.
+    Each router or entrypoint that is meant to use the resolver must explicitly [reference](../../../routing-configuration/http/routing/router.md#opt-tls-certResolver) it.
 
 ## Domain Definition
 

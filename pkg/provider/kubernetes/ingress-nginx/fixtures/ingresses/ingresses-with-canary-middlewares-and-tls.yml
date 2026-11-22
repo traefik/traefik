@@ -1,0 +1,50 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-canary-middlewares-and-tls
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/app-root: /foo
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - production.localhost
+      secretName: whoami-tls
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "Foo"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: production.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: canary
+                port:
+                  number: 80

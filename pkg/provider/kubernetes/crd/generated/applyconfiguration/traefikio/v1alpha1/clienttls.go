@@ -28,10 +28,17 @@ package v1alpha1
 
 // ClientTLSApplyConfiguration represents a declarative configuration of the ClientTLS type for use
 // with apply.
+//
+// ClientTLS holds the client TLS configuration.
 type ClientTLSApplyConfiguration struct {
-	CASecret           *string `json:"caSecret,omitempty"`
-	CertSecret         *string `json:"certSecret,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecureSkipVerify,omitempty"`
+	// CASecret is the name of the referenced Kubernetes Secret containing the CA to validate the server certificate.
+	// The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+	CASecret *string `json:"caSecret,omitempty"`
+	// CertSecret is the name of the referenced Kubernetes Secret containing the client certificate.
+	// The client certificate is extracted from the keys `tls.crt` and `tls.key`.
+	CertSecret *string `json:"certSecret,omitempty"`
+	// InsecureSkipVerify defines whether the server certificates should be validated.
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // ClientTLSApplyConfiguration constructs a declarative configuration of the ClientTLS type for use with
