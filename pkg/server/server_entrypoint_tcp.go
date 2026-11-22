@@ -31,11 +31,13 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/net/http/httpguts"
 )
 
 type key string
@@ -728,6 +730,13 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	// hence the wrapping has to be done last so that it is the first handler executed.
 	handler = denyOpaque(handler)
 
+	// The connection write deadline armed for the entry point only fails the response write after the fact:
+	// without canceling the request itself, a backend slower than the writeTimeout would keep the client
+	// waiting until it answers, with the outcome logged as a 200 (HTTP/1.1) or a stream reset (HTTP/2).
+	if writeTimeout := time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout); writeTimeout > 0 {
+		handler = withWriteTimeout(handler, writeTimeout)
+	}
+
 	handler = populateRequestTLS(handler)
 
 	// The round trippers and connection pools dedicated to a connection (Kerberos or NTLM) are only reachable from its
@@ -1118,4 +1127,110 @@ func normalizePath(h http.Handler) http.Handler {
 
 		h.ServeHTTP(rw, r2)
 	})
+}
+
+// writeTimeoutResponseGrace bounds writing a response once the write timeout has passed, which is the 504 in practice.
+const writeTimeoutResponseGrace = 5 * time.Second
+
+// withWriteTimeout bounds the whole request handling, waiting for the backend included, to the
+// respondingTimeouts.writeTimeout of the entry point. Until the deadline, the request context is the only bound:
+// the connection write deadline is lifted, as firing it would close or reset the connection without the request
+// handling being canceled. Upgrade requests are left to the connection deadline, as their tunnel outlives a single
+// request.
+func withWriteTimeout(next http.Handler, writeTimeout time.Duration) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if isUpgradeRequest(req) {
+			next.ServeHTTP(rw, req)
+			return
+		}
+
+		deadline := time.Now().Add(writeTimeout)
+
+		rc := http.NewResponseController(rw)
+		_ = rc.SetWriteDeadline(time.Time{})
+
+		defer func() {
+			// net/http only writes a buffered response after the handler has returned: past the deadline,
+			// the grace period bounds that write, as an already expired deadline would fail it.
+			if time.Now().After(deadline) {
+				_ = rc.SetWriteDeadline(time.Now().Add(writeTimeoutResponseGrace))
+
+				if err := rc.Flush(); err != nil {
+					log.Ctx(req.Context()).Error().Err(err).Msg("Unable to flush response after the write timeout was exceeded")
+				}
+			}
+
+			// net/http re-arms the connection deadlines for the next keep-alive request.
+			_ = rc.SetWriteDeadline(time.Time{})
+		}()
+
+		rewriter := &writeTimeoutRewriter{ResponseWriter: rw, responseController: rc, deadline: deadline}
+
+		// Cancels the request handling at the deadline, which the proxy reports as a 504.
+		ctx, cancel := context.WithDeadline(req.Context(), deadline)
+		defer cancel()
+
+		next.ServeHTTP(rewriter, req.WithContext(ctx))
+	})
+}
+
+// writeTimeoutRewriter arms the connection write deadline on the first write, and reports an error status
+// emitted past the deadline as a 504.
+type writeTimeoutRewriter struct {
+	http.ResponseWriter
+
+	responseController *http.ResponseController
+	deadline           time.Time
+
+	// armOnce guards against the reverse proxy flushing from another goroutine.
+	armOnce sync.Once
+}
+
+func (s *writeTimeoutRewriter) WriteHeader(code int) {
+	s.armWriteDeadline()
+
+	// Past the deadline, a 5xx means the request ran out of time. 499 as well: when the client is gone along
+	// with the deadline, net/http cancels the request context, which the proxy reports as a client
+	// disconnection.
+	if time.Now().After(s.deadline) && (code >= http.StatusInternalServerError || code == httputil.StatusClientClosedRequest) {
+		code = http.StatusGatewayTimeout
+	}
+
+	s.ResponseWriter.WriteHeader(code)
+}
+
+func (s *writeTimeoutRewriter) Write(b []byte) (int, error) {
+	s.armWriteDeadline()
+
+	return s.ResponseWriter.Write(b)
+}
+
+// FlushError arms the write deadline before flushing, and is preferred over Flush by http.ResponseController.
+func (s *writeTimeoutRewriter) FlushError() error {
+	s.armWriteDeadline()
+
+	return s.responseController.Flush()
+}
+
+func (s *writeTimeoutRewriter) Unwrap() http.ResponseWriter {
+	return s.ResponseWriter
+}
+
+// armWriteDeadline sets the write deadline once, on the first write: the response must be sent by the deadline.
+// Past it (the 504 case), the deadline lifted before serving is kept, and the grace period is applied on return:
+// a deadline in the past would fail the write, and reset the stream at once over HTTP/2.
+func (s *writeTimeoutRewriter) armWriteDeadline() {
+	s.armOnce.Do(func() {
+		if time.Now().After(s.deadline) {
+			return
+		}
+
+		_ = s.responseController.SetWriteDeadline(s.deadline)
+	})
+}
+
+// isUpgradeRequest reports whether the request asks for a protocol switch (WebSocket, SPDY, ...).
+func isUpgradeRequest(req *http.Request) bool {
+	return httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") &&
+		req.Header.Get("Upgrade") != ""
 }

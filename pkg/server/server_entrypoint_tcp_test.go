@@ -1860,3 +1860,80 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 		})
 	}
 }
+
+func TestEntryPointWriteTimeout(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		writeTimeout ptypes.Duration
+		handlerSleep time.Duration
+		wantStatus   int
+	}{
+		{
+			desc:         "cancels the request handling and reports 504 when the write timeout expires",
+			writeTimeout: ptypes.Duration(200 * time.Millisecond),
+			handlerSleep: 1500 * time.Millisecond,
+			wantStatus:   http.StatusGatewayTimeout,
+		},
+		{
+			desc:         "does not enforce a deadline when the write timeout is disabled",
+			writeTimeout: 0,
+			handlerSleep: 200 * time.Millisecond,
+			wantStatus:   http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = ln.Close() })
+
+			configuration := &static.EntryPoint{}
+			configuration.SetDefaults()
+			configuration.Transport.RespondingTimeouts.WriteTimeout = test.writeTimeout
+
+			server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+			require.NoError(t, err)
+
+			// Serves the raw listener, as the TCP entry point accept loop is not running in this test.
+			go func() { _ = server.Server.Serve(ln) }()
+
+			var handlerCanceled atomic.Bool
+			server.Switcher.UpdateHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// Stands in for a backend call taking handlerSleep to answer: it returns as soon
+				// as the request context is done, and reports the outcome the way the proxy does.
+				select {
+				case <-req.Context().Done():
+					handlerCanceled.Store(true)
+					rw.WriteHeader(http.StatusGatewayTimeout)
+
+				case <-time.After(test.handlerSleep):
+					rw.WriteHeader(http.StatusOK)
+				}
+			}))
+
+			conn, err := net.Dial("tcp", ln.Addr().String())
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			start := time.Now()
+			require.NoError(t, conn.SetDeadline(start.Add(3*time.Second)))
+
+			_, err = conn.Write([]byte("GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"))
+			require.NoError(t, err)
+
+			resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = resp.Body.Close() })
+
+			assert.Equal(t, test.wantStatus, resp.StatusCode)
+
+			if test.writeTimeout > 0 {
+				// The response must not wait for the backend to answer, and the request
+				// handling must have been canceled at the deadline.
+				assert.Less(t, time.Since(start), test.handlerSleep)
+				assert.True(t, handlerCanceled.Load())
+			}
+		})
+	}
+}
