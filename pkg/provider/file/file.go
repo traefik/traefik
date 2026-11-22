@@ -413,6 +413,12 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 		}
 
 		if item.IsDir() {
+			// Kubernetes ConfigMap and Secret volumes store their files in "..<timestamp>" directories, already linked at the top level.
+			if strings.HasPrefix(item.Name(), "..") {
+				logger.Debug().Msg("Skipping directory, Kubernetes volume data")
+				continue
+			}
+
 			sub, err := p.collectFileConfigs(ctx, itemPath, filename)
 			if err != nil {
 				return nil, fmt.Errorf("loading content configuration from subdirectory %s: %w", item, err)

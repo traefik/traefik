@@ -255,6 +255,26 @@ func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
 	}
 }
 
+func TestBuildConfigurationWithConfigMapVolume(t *testing.T) {
+	tempDir := t.TempDir()
+
+	dataDir := filepath.Join(tempDir, "..2026_11_21_00_00_00.1")
+	require.NoError(t, os.Mkdir(dataDir, 0o755))
+
+	err := copyFile("./fixtures/yaml/simple_file_01.yml", filepath.Join(dataDir, "simple_file_01.yml"))
+	require.NoError(t, err)
+
+	require.NoError(t, os.Symlink(filepath.Base(dataDir), filepath.Join(tempDir, "..data")))
+	require.NoError(t, os.Symlink(filepath.Join("..data", "simple_file_01.yml"), filepath.Join(tempDir, "simple_file_01.yml")))
+
+	provider := &Provider{Directory: tempDir}
+
+	configurations, err := provider.collectFileConfigs(t.Context(), tempDir, "")
+	require.NoError(t, err)
+	require.Len(t, configurations, 1)
+	assert.Equal(t, "simple_file_01.yml", configurations[0].Name)
+}
+
 func getTestCases() []ProvideTestCase {
 	return []ProvideTestCase{
 		{
