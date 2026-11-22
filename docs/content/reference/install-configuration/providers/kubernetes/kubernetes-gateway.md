@@ -12,7 +12,7 @@ This provider supports Standard version [v1.6.3](https://github.com/kubernetes-s
 
 It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6.3/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.6/traefik-traefik).
 
 !!! info "Using The Helm Chart"
 

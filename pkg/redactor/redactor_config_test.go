@@ -1,6 +1,8 @@
 package redactor
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"os"
 	"strings"
@@ -24,6 +26,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/knative"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
@@ -35,9 +38,7 @@ import (
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
-var fullDynConf *dynamic.Configuration
-
-func init() {
+func fullDynamicConfiguration() *dynamic.Configuration {
 	config := &dynamic.Configuration{}
 	config.HTTP = &dynamic.HTTPConfiguration{
 		Routers: map[string]*dynamic.Router{
@@ -470,44 +471,48 @@ func init() {
 		},
 	}
 
-	fullDynConf = config
+	return config
 }
 
 func TestAnonymize_dynamicConfiguration(t *testing.T) {
-	config := fullDynConf
+	config := fullDynamicConfiguration()
 
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-dynamic-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := anonymize(config, true)
+	cleanJSON, err := Anonymize(config)
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0o666))
+		var indented bytes.Buffer
+		require.NoError(t, json.Indent(&indented, []byte(cleanJSON), "", "  "))
+		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", indented.Bytes(), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func TestSecure_dynamicConfiguration(t *testing.T) {
-	config := fullDynConf
+func TestRemoveCredentials_dynamicConfiguration(t *testing.T) {
+	config := fullDynamicConfiguration()
 
 	expectedConfiguration, err := os.ReadFile("./testdata/secured-dynamic-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := removeCredentials(config, true)
+	cleanJSON, err := RemoveCredentials(config)
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, os.WriteFile("testdata/secured-dynamic-config.json", []byte(cleanJSON), 0o666))
+		var indented bytes.Buffer
+		require.NoError(t, json.Indent(&indented, []byte(cleanJSON), "", "  "))
+		require.NoError(t, os.WriteFile("testdata/secured-dynamic-config.json", indented.Bytes(), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func TestDo_staticConfiguration(t *testing.T) {
+func fullStaticConfiguration() *static.Configuration {
 	config := &static.Configuration{}
 
 	config.Global = &static.Global{
@@ -614,6 +619,8 @@ func TestDo_staticConfiguration(t *testing.T) {
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
 		},
+		Username:          "MyUsername",
+		Password:          "MyPassword",
 		HTTPClientTimeout: 42,
 	}
 
@@ -631,6 +638,8 @@ func TestDo_staticConfiguration(t *testing.T) {
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
 		},
+		Username:          "MyUsername",
+		Password:          "MyPassword",
 		HTTPClientTimeout: 42,
 		RefreshSeconds:    42,
 	}
@@ -661,6 +670,15 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.KubernetesGateway = &gateway.Provider{
+		Endpoint:         "MyEndpoint",
+		Token:            "MyToken",
+		CertAuthFilePath: "MyCertAuthPath",
+		Namespaces:       []string{"a", "b"},
+		LabelSelector:    "myLabelSelector",
+		ThrottleDuration: ptypes.Duration(111 * time.Second),
+	}
+
+	config.Providers.Knative = &knative.Provider{
 		Endpoint:         "MyEndpoint",
 		Token:            "MyToken",
 		CertAuthFilePath: "MyCertAuthPath",
@@ -765,11 +783,20 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Endpoint:     "Myendpoint",
 		PollInterval: 42,
 		PollTimeout:  42,
+		Headers: map[string]string{
+			"foo": "bar",
+		},
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
+		},
+	}
+
+	config.Providers.Plugin = map[string]static.PluginConf{
+		"foo": {
+			"foo": "bar",
 		},
 	}
 
@@ -977,14 +1004,41 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 	}
 
+	return config
+}
+
+func TestAnonymize_staticConfiguration(t *testing.T) {
+	config := fullStaticConfiguration()
+
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-static-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := anonymize(config, true)
+	cleanJSON, err := Anonymize(config)
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, os.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0o666))
+		var indented bytes.Buffer
+		require.NoError(t, json.Indent(&indented, []byte(cleanJSON), "", "  "))
+		require.NoError(t, os.WriteFile("testdata/anonymized-static-config.json", indented.Bytes(), 0o666))
+	}
+
+	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
+	assert.JSONEq(t, expected, cleanJSON)
+}
+
+func TestRemoveCredentials_staticConfiguration(t *testing.T) {
+	config := fullStaticConfiguration()
+
+	expectedConfiguration, err := os.ReadFile("./testdata/secured-static-config.json")
+	require.NoError(t, err)
+
+	cleanJSON, err := RemoveCredentials(config)
+	require.NoError(t, err)
+
+	if *updateExpected {
+		var indented bytes.Buffer
+		require.NoError(t, json.Indent(&indented, []byte(cleanJSON), "", "  "))
+		require.NoError(t, os.WriteFile("testdata/secured-static-config.json", indented.Bytes(), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")

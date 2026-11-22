@@ -218,7 +218,12 @@ func (c *compress) newBrotliHandler(middlewareName string) (http.Handler, error)
 	}
 
 	newBrotliWriter := func(rw http.ResponseWriter) (CompressionWriter, string, error) {
-		return brotli.NewWriter(rw), brotliName, nil
+		// Each in-flight response holds one writer until it is fully written.
+		// The default options (quality 6, 4 MiB window) use more than 12 MiB per writer,
+		// and this grows with the response size (about 40 MiB for an 8 MiB response).
+		// The options below use less than 4 MiB per writer, whatever the response size,
+		// for a compressed output less than 10% larger.
+		return brotli.NewWriterOptions(rw, brotli.WriterOptions{Quality: 5, LGWin: 18}), brotliName, nil
 	}
 	return NewCompressionHandler(cfg, newBrotliWriter, c.next)
 }

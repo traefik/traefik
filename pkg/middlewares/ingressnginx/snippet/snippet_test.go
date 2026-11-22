@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
 	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
@@ -1931,6 +1932,48 @@ if ($http_x_block_auth = "yes") {
 	}
 }
 
+func Test_LocationPrefixModifier(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		path       string
+		wantStatus int
+	}{
+		{desc: "matching path", path: "/internal", wantStatus: http.StatusTeapot},
+		{desc: "matching subpath", path: "/internal/status", wantStatus: http.StatusTeapot},
+		{desc: "matching path with query", path: "/internal?check=true", wantStatus: http.StatusTeapot},
+		{desc: "prefix within path segment", path: "/internality", wantStatus: http.StatusTeapot},
+		{desc: "unrelated path", path: "/public", wantStatus: http.StatusOK},
+		{desc: "partial prefix", path: "/intern", wantStatus: http.StatusOK},
+		{desc: "case mismatch", path: "/Internal", wantStatus: http.StatusOK},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			nextCalled := false
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			handler, err := New(t.Context(), next, &dynamic.Snippet{
+				ServerSnippet: `
+location ^~ /internal {
+	return 418;
+}
+`,
+			}, "test-snippet")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://example.com"+test.path, nil)
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.wantStatus, rw.Code)
+			assert.Equal(t, test.wantStatus == http.StatusOK, nextCalled)
+		})
+	}
+}
+
 func Test_ForwardAuth_New_Validation(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -2160,4 +2203,65 @@ func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
 	status, user = send(alice, "")
 	assert.Equal(t, http.StatusOK, status)
 	assert.Equal(t, "alice", user)
+}
+
+func TestSnippetUpstreamVhost(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		authStatus          int
+		expectedStatus      int
+		expectedLocation    string
+		expectedBackendHost string
+	}{
+		{
+			desc:             "unauthorized request redirects to the original host",
+			authStatus:       http.StatusUnauthorized,
+			expectedStatus:   http.StatusFound,
+			expectedLocation: "https://dashboard.example.internal/oauth2/start?rd=%2Fprivate",
+		},
+		{
+			desc:                "authorized request uses the upstream host",
+			authStatus:          http.StatusOK,
+			expectedStatus:      http.StatusNoContent,
+			expectedBackendHost: "svc.ns.svc.cluster.local:8084",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "dashboard.example.internal", req.Header.Get("X-Forwarded-Host"))
+				rw.WriteHeader(test.authStatus)
+			}))
+			t.Cleanup(authServer.Close)
+
+			var backendHost string
+			backendCalled := false
+			var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				backendCalled = true
+				backendHost = req.Host
+				rw.WriteHeader(http.StatusNoContent)
+			})
+			handler, err := upstreamvhost.New(t.Context(), handler, dynamic.UpstreamVHost{VHost: "svc.ns.svc.cluster.local:8084"}, "vhost")
+			require.NoError(t, err)
+			handler, err = New(t.Context(), handler, &dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address:       authServer.URL,
+					AuthSigninURL: "https://$host/oauth2/start?rd=$escaped_request_uri",
+				},
+			}, "auth")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "https://dashboard.example.internal/private", nil)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expectedStatus, recorder.Code)
+			assert.Equal(t, test.expectedLocation, recorder.Header().Get("Location"))
+			assert.Equal(t, test.authStatus == http.StatusOK, backendCalled)
+			assert.Equal(t, test.expectedBackendHost, backendHost)
+		})
+	}
 }
