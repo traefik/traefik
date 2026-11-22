@@ -27,6 +27,8 @@ var httpFuncs = matcherBuilderFuncs{
 	"QueryRegexp":  expectNParameters(queryRegexp, 1, 2),
 }
 
+var hostOrIP = regexp.MustCompile(`^(\*\*?\.)?[[:word:]\.\-\:]+$`)
+
 func expectNParameters(fn func(*matchersTree, ...string) error, n ...int) func(*matchersTree, ...string) error {
 	return func(tree *matchersTree, s ...string) error {
 		if !slices.Contains(n, len(s)) {
@@ -68,11 +70,25 @@ func method(tree *matchersTree, methods ...string) error {
 	return nil
 }
 
+// wildcardHost is the shape of a wildcard host expression, the bare catch-all aside.
+var wildcardHost = regexp.MustCompile(`^\*\*?\.[^*]+$`)
+
 func host(tree *matchersTree, hosts ...string) error {
 	hostExpr := hosts[0]
 
-	if !muxer.IsASCII(hostExpr) {
-		return fmt.Errorf("invalid value %q for Host matcher, non-ASCII characters are not allowed", hostExpr)
+	if hostExpr == "*" {
+		// On the TCP side, * matches every serverName (empty or not),
+		// so we keep the same behavior in Host for consistency.
+		tree.matcher = func(req *http.Request) bool { return true }
+		return nil
+	}
+
+	if !hostOrIP.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value for Host matcher, %q is not a valid hostname", hostExpr)
+	}
+
+	if strings.Contains(hostExpr, "*") && !wildcardHost.MatchString(hostExpr) {
+		return fmt.Errorf("invalid value %q for Host matcher, a wildcard is either the catch-all \"*\" or a \"*.\" or \"**.\" prefix", hostExpr)
 	}
 
 	hostExpr = strings.ToLower(hostExpr)

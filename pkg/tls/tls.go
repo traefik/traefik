@@ -2,8 +2,6 @@ package tls
 
 import "github.com/traefik/traefik/v3/pkg/types"
 
-const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
-
 const (
 	// NoClientCert indicates that no client certificate should be requested
 	// during the handshake, and if any certificates are sent they will not

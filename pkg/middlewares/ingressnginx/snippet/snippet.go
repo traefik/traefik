@@ -1,7 +1,6 @@
 package snippet
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -144,6 +144,12 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 				return http.ErrUseLastResponse
 			},
 			Timeout: 30 * time.Second,
+			// The auth server may use a connection-bound authentication scheme (NTLM or Kerberos, as IIS Windows
+			// Authentication does), which requires the authentication requests of a client connection to be sent
+			// on a connection to the auth server dedicated to it.
+			Transport: kerberos.NewRoundTripper(http.DefaultTransport, func() http.RoundTripper {
+				return http.DefaultTransport.(*http.Transport).Clone()
+			}),
 		}
 	}
 	return m, nil
@@ -476,7 +482,13 @@ func (s *Snippet) executeForwardAuth(rw http.ResponseWriter, req *http.Request, 
 		return true, nil
 	}
 
-	// Copy auth response headers to the original request for downstream processing
+	// Only the headers listed in the auth-response-headers annotation are stripped
+	// and replaced with the auth server's verified values. Any other header the
+	// client sends is forwarded to the backend unchanged, strictly reproducing
+	// ingress-nginx, where the annotation is the only switch and is unset in the
+	// upstream auth-url example. By design this provider asserts no identity the
+	// operator did not opt into: trusting unlisted client headers downstream is a
+	// backend misconfiguration, not a spoofing flaw here.
 	for _, headerName := range s.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
@@ -542,21 +554,6 @@ func (w *snippetResponseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-// Flush implements http.Flusher.
-func (w *snippetResponseWriter) Flush() {
-	if f, ok := w.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-// Hijack implements http.Hijacker.
-func (w *snippetResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
-	}
-	return nil, nil, fmt.Errorf("not a hijacker: %T", w.ResponseWriter)
-}
-
 // WriteResponse writes the final response based on the action context.
 // For redirect status codes (301, 302, 303, 307, 308) with a URL, it performs an HTTP redirect.
 // For other status codes, it writes the status code and optional body text.
@@ -574,6 +571,14 @@ func WriteResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext
 	_, _ = rw.Write([]byte(ctx.body))
 }
 
+// writeHeader builds the auth subrequest headers. It deliberately does not
+// strip incoming X-Forwarded-* headers (nor their underscore aliases) and
+// exposes no trustForwardHeader knob. Trusting or sanitizing forwarded headers
+// is an entrypoint-level concern, handled once by forwardedheaders.XForwarded
+// (forwardedHeaders.insecure / trustedIPs) before any middleware runs: untrusted
+// sources already have these headers removed upstream. Re-deciding that trust
+// per middleware was a mistake in the legacy ForwardAuth path and is not
+// replicated here.
 func writeHeader(req, forwardReq *http.Request) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -12,6 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -35,20 +39,27 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildUpstreamVhost(loc)
 	p.buildRateLimit(loc)
 	p.buildLimitConnections(loc)
-	p.buildAuthTLSPassCert(loc)
+	p.buildLimitAllowlist(loc)
 	p.buildCustomHeaders(loc)
 	p.buildSnippetAuth(loc)
-	p.buildRetry(loc, endpointCount)
+	p.buildRetry(ctx, loc, endpointCount)
 }
 
 func (p *Provider) buildSSLRedirect(loc *location) {
+	loc.SSLRedirectOnly = sslRedirectEnabled(loc.Config, loc.HasTLS)
+}
+
+// sslRedirectEnabled reports whether HTTP requests must be redirected to HTTPS.
+// It is shared by the location and the ssl-passthrough paths, so that both honor
+// the same semantics.
+func sslRedirectEnabled(cfg IngressConfig, hasTLS bool) bool {
 	// force-ssl-redirect redirects to HTTPS regardless of whether the Ingress has a TLS block.
-	forceSSLRedirect := ptr.Deref(loc.Config.ForceSSLRedirect, false)
+	forceSSLRedirect := ptr.Deref(cfg.ForceSSLRedirect, false)
 	// When an Ingress has a TLS block, by default SSL redirect should be applied.
 	// When an Ingress does not have a TLS block, SSL redirect should not be applied.
-	sslRedirect := loc.HasTLS && ptr.Deref(loc.Config.SSLRedirect, true)
+	sslRedirect := hasTLS && ptr.Deref(cfg.SSLRedirect, true)
 
-	loc.SSLRedirectOnly = forceSSLRedirect || sslRedirect
+	return forceSSLRedirect || sslRedirect
 }
 
 func (p *Provider) buildAccessLog(loc *location) {
@@ -88,11 +99,18 @@ func (p *Provider) buildAppRoot(loc *location) {
 	if loc.Config.AppRoot == nil || !strings.HasPrefix(*loc.Config.AppRoot, "/") {
 		return
 	}
-	loc.AppRoot = loc.Config.AppRoot
+	loc.AppRoot = &dynamic.AppRoot{
+		Path: *loc.Config.AppRoot,
+	}
 }
 
 func (p *Provider) buildFromToWwwRedirect(loc *location, hostname string, allHosts map[string]bool) {
 	if !ptr.Deref(loc.Config.FromToWwwRedirect, false) {
+		return
+	}
+
+	// ingress-nginx only flags a server for redirection from an Ingress rule, never for a default backend.
+	if hostname == "" {
 		return
 	}
 
@@ -144,8 +162,13 @@ func (p *Provider) buildRedirect(loc *location) {
 		}
 	}
 
+	regex := ".*"
+	if loc.UseRegex {
+		regex = `^https?://[^/]+` + loc.Path
+	}
+
 	loc.Redirect = &dynamic.RedirectRegex{
-		Regex:       ".*",
+		Regex:       regex,
 		Replacement: url,
 		StatusCode:  &code,
 	}
@@ -229,7 +252,23 @@ func (p *Provider) buildIPAllowList(loc *location) {
 		ranges = append(ranges, strings.TrimSpace(r))
 	}
 
-	loc.IPAllowList = &dynamic.IPAllowList{SourceRange: ranges}
+	loc.IPAllowList = &dynamic.IPAllowList{
+		SourceRange: ranges,
+		IPStrategy:  p.IPAllowListStrategy,
+	}
+}
+
+// corsWildcardOriginRegexp is the same cors-allow-origin regexp used in ingress-nginx, with the
+// wildcard group made mandatory, so that it only matches the protocol://*.domain[:port] form:
+// https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/annotations/cors/main.go#L48
+var corsWildcardOriginRegexp = regexp.MustCompile(`^[a-z]+://\*\.[A-Za-z0-9\-.]*(:\d+)?$`)
+
+// wildcardOriginRegex converts a single-level wildcard origin (e.g. https://*.example.com)
+// into a regular expression, mirroring ingress-nginx semantics where '*' matches exactly
+// one DNS label.
+func wildcardOriginRegex(origin string) string {
+	quoted := regexp.QuoteMeta(origin)
+	return "^(?i)" + strings.Replace(quoted, `\*`, `[A-Za-z0-9-]+`, 1) + "$"
 }
 
 func (p *Provider) buildCORS(loc *location) {
@@ -237,13 +276,28 @@ func (p *Provider) buildCORS(loc *location) {
 		return
 	}
 
+	// ingress-nginx supports single-level wildcard origins, which the exact-match origin
+	// list cannot express; route them to the regex matcher to preserve behavior on migration.
+	// Values with a wildcard anywhere else are skipped, as ingress-nginx does.
+	var originList, originRegexList []string
+	for _, origin := range ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}) {
+		if origin != "*" && strings.Contains(origin, "*") {
+			if corsWildcardOriginRegexp.MatchString(origin) {
+				originRegexList = append(originRegexList, wildcardOriginRegex(origin))
+			}
+			continue
+		}
+		originList = append(originList, origin)
+	}
+
 	loc.CORS = &dynamic.Headers{
-		AccessControlAllowCredentials: ptr.Deref(loc.Config.EnableCORSAllowCredentials, true),
-		AccessControlExposeHeaders:    ptr.Deref(loc.Config.CORSExposeHeaders, []string{}),
-		AccessControlAllowHeaders:     ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range,Authorization"}),
-		AccessControlAllowMethods:     ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
-		AccessControlAllowOriginList:  ptr.Deref(loc.Config.CORSAllowOrigin, []string{"*"}),
-		AccessControlMaxAge:           int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000)),
+		AccessControlAllowCredentials:     ptr.Deref(loc.Config.EnableCORSAllowCredentials, true),
+		AccessControlExposeHeaders:        ptr.Deref(loc.Config.CORSExposeHeaders, []string{}),
+		AccessControlAllowHeaders:         ptr.Deref(loc.Config.CORSAllowHeaders, []string{"DNT", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range", "Authorization"}),
+		AccessControlAllowMethods:         ptr.Deref(loc.Config.CORSAllowMethods, []string{"GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"}),
+		AccessControlAllowOriginList:      originList,
+		AccessControlAllowOriginListRegex: originRegexList,
+		AccessControlMaxAge:               new(int64(ptr.Deref(loc.Config.CORSMaxAge, 1728000))),
 	}
 }
 
@@ -254,6 +308,9 @@ func (p *Provider) buildRewriteTarget(loc *location) {
 	}
 
 	regex := loc.Path
+	if ptr.Deref(loc.PathType, netv1.PathTypePrefix) == netv1.PathTypeImplementationSpecific && hasAbsoluteRewriteTarget(loc) {
+		regex = makeTrailingGroupOptional(loc.Path)
+	}
 
 	xfp := ""
 	if loc.Config.XForwardedPrefix != nil && regexPathWithCapture.MatchString(*loc.Config.XForwardedPrefix) {
@@ -311,6 +368,19 @@ func (p *Provider) buildRateLimit(loc *location) {
 	}
 }
 
+// buildLimitAllowlist collects the client IP ranges exempted from the rate and
+// connection limits. limit-allowlist is the canonical annotation, limit-whitelist
+// its legacy alias.
+func (p *Provider) buildLimitAllowlist(loc *location) {
+	allowlist := ptr.Deref(loc.Config.LimitAllowlist, ptr.Deref(loc.Config.LimitWhitelist, nil))
+
+	for _, cidr := range allowlist {
+		if cidr != "" {
+			loc.LimitAllowlist = append(loc.LimitAllowlist, cidr)
+		}
+	}
+}
+
 func (p *Provider) buildLimitConnections(loc *location) {
 	limit := ptr.Deref(loc.Config.LimitConnections, 0)
 	if limit <= 0 {
@@ -325,13 +395,24 @@ func (p *Provider) buildLimitConnections(loc *location) {
 	}
 }
 
-func (p *Provider) buildAuthTLSPassCert(loc *location) {
-	if !ptr.Deref(loc.Config.AuthTLSPassCertificateToUpstream, false) || loc.Config.AuthTLSSecret == nil {
+// buildAuthTLSPassCert builds the middleware setting the Ssl-Client-* headers from the client-auth TLS option of the server,
+// which ingress-nginx sets on every location of a server block configured for client certificate authentication.
+// Like the TLS option, Ssl-Client-Cert follows the auth-tls-pass-certificate-to-upstream annotation of the Ingress configuring it for the host.
+func buildAuthTLSPassCert(srv *server, loc *location) {
+	if srv.clientAuthIngress == "" {
 		return
 	}
 
+	var caFiles []types.FileOrContent
+	// RequestClientCert does not verify the client certificate during the handshake, so the middleware verifies it against the CA.
+	if srv.TLSOption.ClientAuth.ClientAuthType == tls.RequestClientCert {
+		caFiles = srv.TLSOption.ClientAuth.CAFiles
+	}
+
 	loc.AuthTLSPassCert = &dynamic.AuthTLSPassCertificateToUpstream{
-		ClientAuthType: clientAuthTypeFromString(loc.Config.AuthTLSVerifyClient),
+		ClientAuthType:  srv.TLSOption.ClientAuth.ClientAuthType,
+		CAFiles:         caFiles,
+		PassCertificate: srv.clientAuthPassCertificate,
 	}
 }
 
@@ -389,7 +470,7 @@ func (p *Provider) buildSnippetAuth(loc *location) {
 	loc.SnippetAuth = sa
 }
 
-func (p *Provider) buildRetry(loc *location, endpointCount int) {
+func (p *Provider) buildRetry(ctx context.Context, loc *location, endpointCount int) {
 	attempts := ptr.Deref(loc.Config.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
 	// Safeguard to deactivate retry when the value is less than 0.
 	if attempts < 0 {
@@ -418,6 +499,23 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 
 	retry := &dynamic.Retry{Attempts: attempts}
 
+	maxRequestBodyBytes := p.ProxyBodySize
+	if proxyBodySize := ptr.Deref(loc.Config.ProxyBodySize, ""); proxyBodySize != "" {
+		if v, err := nginxSizeToBytes(proxyBodySize); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("proxy-body-size invalid, using provider default")
+		} else {
+			maxRequestBodyBytes = v
+		}
+	}
+
+	if maxRequestBodyBytes == 0 {
+		// Zero value means no limit with ingress-nginx.
+		// With the retry middleware, the equivalent configuration is a negative value.
+		maxRequestBodyBytes = -1
+	}
+
+	retry.MaxRequestBodyBytes = &maxRequestBodyBytes
+
 	hasError := slices.Contains(conditions, "error")
 	hasTimeout := slices.Contains(conditions, "timeout")
 	if !hasError && !hasTimeout {
@@ -427,6 +525,21 @@ func (p *Provider) buildRetry(loc *location, endpointCount int) {
 	for _, sc := range conditions {
 		if code, ok := strings.CutPrefix(sc, "http_"); ok {
 			retry.Status = append(retry.Status, code)
+		}
+	}
+
+	if len(retry.Status) > 0 {
+		disableRequestBuffering := !p.ProxyRequestBuffering
+		if loc.Config.ProxyRequestBuffering != nil {
+			// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+			disableRequestBuffering = *loc.Config.ProxyRequestBuffering != "on"
+		}
+
+		// When request buffering is explicitly disabled,
+		// we still want to allow the retry for empty body requests
+		// but disable it for request with bodies.
+		if disableRequestBuffering {
+			retry.MaxRequestBodyBytes = new(int64(0))
 		}
 	}
 

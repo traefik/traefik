@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.5.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.5.1) of the specification.
+The Kubernetes Gateway API provider supports version [v1.7.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.7.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute` from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, `GRPCRoute`, `ListenerSet`, `TCPRoute`, and `TLSRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/docs/concepts/versioning/#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.5.1/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.7/traefik-traefik).
 
 
 ## Deploying a Gateway
@@ -140,6 +140,200 @@ spec:
           from: Same
 ```
 
+### Backend Client Certificate
+
+The `tls.backend.clientCertificateRef` field on a `Gateway` (`spec.tls.backend`, a sibling of `spec.listeners`) sets the client certificate that Traefik presents to backends that require mutual TLS (mTLS), as defined by [GEP-3155](https://gateway-api.sigs.k8s.io/geps/gep-3155/).
+
+Traefik presents the certificate to the backends selected by a [BackendTLSPolicy](https://gateway-api.sigs.k8s.io/reference/api-types/policy/backendtlspolicy/), for `HTTPRoute` and `GRPCRoute` routes.
+Backends without a `BackendTLSPolicy` are not affected, because the field does not enable TLS by itself.
+The listeners of a `ListenerSet` use the certificate of their parent `Gateway`.
+
+The reference must point to a core `Secret` that contains the `tls.crt` and `tls.key` entries.
+A `Secret` in another namespace requires a [ReferenceGrant](https://gateway-api.sigs.k8s.io/reference/api-types/referencegrant/) in that namespace.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    backend:
+      # Presented to every backend selected by a BackendTLSPolicy.
+      clientCertificateRef:
+        name: backend-client-tls
+        # Set namespace only for a Secret in another namespace, which requires a ReferenceGrant.
+        # namespace: certs
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+### ListenerSets
+
+Traefik supports [ListenerSet](https://gateway-api.sigs.k8s.io/geps/gep-1713/) resources, which attach additional listeners to an existing `Gateway`.
+
+!!! info "Listener ports"
+
+    Please note that `ListenerSet` listener ports must match the configured [EntryPoint ports](../../install-configuration/entrypoints.md) of the Traefik deployment, just like `Gateway` listeners.
+
+!!! warning "Shared TLS certificate store"
+
+    Traefik keeps all TLS certificates, from `Gateway` listeners and from every `ListenerSet` listener, in a single global certificate store.
+    During the TLS handshake, the certificate is selected by matching the SNI against the SANs of **all** certificates in that store; the selection is **not** scoped to the listener, port, or EntryPoint that received the connection.
+    A certificate attached to a `ListenerSet` listener can therefore be served for a connection destined to another listener, including the parent `Gateway`'s own listeners, when its SANs match the requested SNI.
+
+    Because a `ListenerSet` may reference a `Secret` in its own namespace without a `ReferenceGrant`, any namespace admitted through `allowedListeners` can introduce certificates that compete in SNI selection on all TLS EntryPoints.
+    Treat `allowedListeners` as a trust boundary, and only allow ListenerSets from namespaces you trust with TLS termination for the hostnames served by this Gateway.
+
+### Frontend Client Certificate Validation
+
+The `tls.frontend` field on a `Gateway` (`spec.tls.frontend`, a sibling of `spec.listeners`) allows requiring a client certificate (mTLS) for incoming connections, as defined by [GEP-91](https://gateway-api.sigs.k8s.io/geps/gep-91/).
+
+Validation can be set for all HTTPS listeners on the `Gateway` via `default`, and optionally overridden per port via `perPort`. The CA certificate used to validate client certificates is provided through `caCertificateRefs`, with a single reference to a `ConfigMap` containing a `ca.crt` key, as defined by the core support of the specification. Other kinds of resources and multiple references are not supported, and leave the listener not accepted.
+
+The `mode` field controls how a missing or invalid client certificate is handled:
+
+- `AllowValidOnly` (default): the connection is rejected unless the client presents a certificate signed by one of the referenced CAs.
+- `AllowInsecureFallback`: the client certificate is requested but connections without one, or with an invalid one, are still accepted.
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mtls-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  tls:
+    frontend:
+      # Applies to every HTTPS listener, unless overridden by a perPort entry below.
+      default:
+        validation:
+          caCertificateRefs:
+            - name: client-ca
+              kind: ConfigMap
+      # Overrides the default validation for listeners bound to port 8443.
+      perPort:
+        - port: 8443
+          tls:
+            validation:
+              mode: AllowInsecureFallback
+              caCertificateRefs:
+                - name: other-client-ca
+                  kind: ConfigMap
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+    - name: https-relaxed
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secret-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! info "Insecure fallback"
+
+    When any listener uses `AllowInsecureFallback`, Traefik sets the `InsecureFrontendValidationMode` condition to `True` on the `Gateway` status to make the reduced security guarantee visible.
+
+!!! warning "Gateways sharing an entry point"
+
+    `Gateway` resources with HTTPS listeners on the same port must declare the same validation, or none.
+    Otherwise, the oldest `Gateway` keeps the port, and the HTTPS listeners of the newer ones on that port are reported as `Conflicted` with the `FrontendValidationConflict` reason.
+
+### Listener Filters
+
+The `filters` field on an HTTP or HTTPS listener (`spec.listeners[].filters`) defines pre-routing filters, as defined by [GEP-5224](https://gateway-api.sigs.k8s.io/geps/gep-5224/).
+They run on every request accepted on the listener, before the route matching,
+so they can change the request inputs the routes match on, such as the path or a header.
+The filters run in the order they are declared in `filters.requests`.
+
+Traefik supports the `ExtensionRef` filter type,
+which references a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource in the namespace of the `Gateway`, or of the `ListenerSet` declaring the listener.
+As for the `HTTPRoute` filters, the Kubernetes CRD provider must be enabled to use them.
+
+```yaml tab="Gateway"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      filters:
+        requests:
+          - type: ExtensionRef
+            extensionRef:
+              group: traefik.io
+              kind: Middleware
+              name: add-tenant-header
+```
+
+```yaml tab="Headers middleware"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: add-tenant-header
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Tenant: acme
+```
+
+!!! info "Experimental Channel"
+
+    The `filters` field is part of the Gateway API Experimental Channel, and requires the Experimental Channel CRDs.
+    Its support also requires the [`experimentalChannel`](../../install-configuration/providers/kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-experimentalChannel) option,
+    otherwise a listener declaring filters is not accepted, with the `UnsupportedValue` reason.
+
+!!! info "Unsupported filters"
+
+    The `ExternalAuth` filter type is not supported.
+    A listener declaring it is not accepted, with the `UnsupportedValue` reason,
+    and a listener referencing an unknown `ExtensionRef` group or kind has unresolved references, with the `InvalidListenerFilterRef` reason.
+    Filters only apply to `HTTP` and `HTTPS` listeners:
+    a ListenerSet listener with another protocol declaring filters is not accepted, with the `InvalidListenerFilter` reason.
+
+!!! warning "Host header"
+
+    GEP-5224 forbids the listener filters to modify the `Host` header, as it selects the listener.
+    Traefik does not enforce it: a middleware changing the `Host` header changes it for the route matching too.
+
+!!! warning "Gateways sharing an entry point"
+
+    Listeners of different `Gateway` resources on the same port can declare different filters only when their hostnames are disjoint,
+    such as `foo.example.com` and `bar.example.com`.
+    Otherwise, the oldest `Gateway` keeps its listeners, and the listeners of the newer ones are reported as `Conflicted` with the `ListenerFiltersConflict` reason.
+
 ## Exposing a Route
 
 Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
@@ -154,7 +348,7 @@ and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernet
 The `HTTPRoute` is a core resource in the Gateway API specification, designed to define how HTTP traffic should be routed within a Kubernetes cluster. 
 It allows the specification of routing rules that direct HTTP requests to the appropriate Kubernetes backend services. 
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/httproute/).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/).
 
 For example, the following manifests configure a whoami backend and its corresponding `HTTPRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address.
@@ -312,7 +506,7 @@ Once everything is deployed, sending a `GET` request to the HTTP and HTTPS endpo
 
 #### Using Traefik middleware as HTTPRoute filter
 
-An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
+An HTTP [filter](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
 
 There are three types of filters:
 
@@ -320,9 +514,21 @@ There are three types of filters:
 - **Extended:** Optional filters for Gateway controllers, such as `ResponseHeaderModifier` and `RequestMirror`.
 - **ExtensionRef:** Additional filters provided by the Gateway controller. In Traefik, these are the [HTTP middlewares](../http/middlewares/overview.md) supported through the [Middleware CRD](../kubernetes/crd/http/middleware.md).
 
+!!! info "Supported Filter Types"
+
+    Traefik supports the following route-level filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-ingress.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes CRD provider must be enabled in the static configuration, as detailed in the [documentation](../../install-configuration/providers/kubernetes/kubernetes-crd.md). 
 
 For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
@@ -442,6 +648,8 @@ This allows request modifications to be applied to specific backends, enabling t
     - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
     - `RequestRedirect`: Redirect the request to a different URL.
     - `URLRewrite`: Rewrite the request URL path and/or hostname.
+    - `CORS`: Configure Cross-Origin Resource Sharing (CORS) response headers.
+    - `RequestMirror`: Send a copy of the requests to another backend, ignoring its responses.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
@@ -534,7 +742,7 @@ For more information on service-level middlewares, see [service middlewares](../
 The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
 It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services. 
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/grpcroute/).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/api-types/grpcroute/).
 
 For example, the following manifests configure an echo backend and its corresponding `GRPCRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `echo.localhost:80` address.
@@ -685,21 +893,16 @@ Once everything is deployed, sending a GRPC request to the HTTP endpoint should 
 
 ### TCP
 
-!!! info "Experimental Channel"
-
-    The `TCPRoute` resource described below is currently available only in the Experimental channel of the Gateway API specification. 
-    To use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) configuration option must be enabled in the Traefik deployment.
-
 The `TCPRoute` is a resource in the Gateway API specification designed to define how TCP traffic should be routed within a Kubernetes cluster. 
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TCPRoute).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/api-types/tcproute/).
 
 For example, the following manifests configure a whoami backend and its corresponding `TCPRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3000` address.
 
 ```yaml tab="TCPRoute"
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: whoami-tcp
@@ -770,22 +973,17 @@ Once everything is deployed, sending the WHO command should return the following
 
 ### TLS
 
-!!! info "Experimental Channel"
-
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
-    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
-
 The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.
 
-For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute).
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/api-types/tlsroute/).
 
 For example, the following manifests configure a whoami backend and its corresponding `TLSRoute`, 
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3443` address via a secure connection with the `whoami.localhost` SNI.
 
 ```yaml tab="TLSRoute"
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TLSRoute
 metadata:
   name: whoami-tls

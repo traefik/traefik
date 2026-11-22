@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { RouteObject } from 'react-router-dom'
+import { RouteObject } from 'react-router'
 
 import { useHubDemo } from './use-hub-demo'
 

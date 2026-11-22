@@ -57,10 +57,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, n
 			return nil, fmt.Errorf("compiling regular expression %s: %w", config.Regex, err)
 		}
 
-		// When rewrite-target is a full URL and there's no capture group,
-		// append .* to match the entire path and avoid leaking unmatched suffix.
+		// When rewrite-target is a full URL, append .* to consume the entire path
+		// and avoid leaking an unmatched suffix into the redirect URL.
+		// Capture groups are greedy, so they still capture their content before the trailing .*.
 		// See https://github.com/traefik/traefik/issues/12931
-		if re.NumSubexp() == 0 && absoluteURLRedirect {
+		if absoluteURLRedirect {
 			re, err = regexp.Compile("(?i)" + strings.TrimSpace(config.Regex) + ".*")
 			if err != nil {
 				return nil, fmt.Errorf("compiling regular expression for absolute URL %s: %w", config.Regex, err)
@@ -149,6 +150,20 @@ func (rt *rewriteTarget) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Error().Msgf("Unable to unescape URL RawPath %q: %v", req.URL.RawPath, err)
 		observability.SetStatusErrorf(req.Context(), "Unable to unescape URL RawPath %q: %v", req.URL.RawPath, err)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Here we are sanitizing the URL when the path is not empty,
+	// as the JoinPath method is adding a leading slash if the path is empty.
+	path := req.URL.Path
+	if path != "" {
+		req.URL = req.URL.JoinPath()
+	}
+
+	// Stop here if the normalization of the path produces a different path.
+	if path != req.URL.Path {
+		logger.Debug().Msgf("Rejecting request, sanitized path: %q is not equivalent to stripped path: %q", path, req.URL.Path)
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 

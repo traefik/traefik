@@ -7,21 +7,21 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"k8s.io/utils/ptr"
 )
 
 func TestURLRewriteHandler(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		config   dynamic.URLRewrite
-		url      string
-		wantURL  string
-		wantHost string
+		desc           string
+		config         dynamic.URLRewrite
+		url            string
+		wantURL        string
+		wantHost       string
+		wantStatusCode int
 	}{
 		{
 			desc: "replace path",
 			config: dynamic.URLRewrite{
-				Path: ptr.To("/baz"),
+				Path: new("/baz"),
 			},
 			url:      "http://foo.com/foo/bar",
 			wantURL:  "http://foo.com/baz",
@@ -30,7 +30,7 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace path without trailing slash",
 			config: dynamic.URLRewrite{
-				Path: ptr.To("/baz"),
+				Path: new("/baz"),
 			},
 			url:      "http://foo.com/foo/bar/",
 			wantURL:  "http://foo.com/baz",
@@ -39,7 +39,7 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace path with trailing slash",
 			config: dynamic.URLRewrite{
-				Path: ptr.To("/baz/"),
+				Path: new("/baz/"),
 			},
 			url:      "http://foo.com/foo/bar",
 			wantURL:  "http://foo.com/baz/",
@@ -48,7 +48,7 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "only host",
 			config: dynamic.URLRewrite{
-				Hostname: ptr.To("bar.com"),
+				Hostname: new("bar.com"),
 			},
 			url:      "http://foo.com/foo/",
 			wantURL:  "http://foo.com/foo/",
@@ -57,8 +57,8 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "host and path",
 			config: dynamic.URLRewrite{
-				Hostname: ptr.To("bar.com"),
-				Path:     ptr.To("/baz/"),
+				Hostname: new("bar.com"),
+				Path:     new("/baz/"),
 			},
 			url:      "http://foo.com/foo/",
 			wantURL:  "http://foo.com/baz/",
@@ -67,8 +67,8 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace prefix path",
 			config: dynamic.URLRewrite{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:      "http://foo.com/foo/bar",
 			wantURL:  "http://foo.com/baz/bar",
@@ -77,8 +77,8 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace prefix path with trailing slash",
 			config: dynamic.URLRewrite{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:      "http://foo.com/foo/bar/",
 			wantURL:  "http://foo.com/baz/bar/",
@@ -87,8 +87,8 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace prefix path without slash prefix",
 			config: dynamic.URLRewrite{
-				Path:       ptr.To("baz"),
-				PathPrefix: ptr.To("/foo"),
+				Path:       new("baz"),
+				PathPrefix: new("/foo"),
 			},
 			url:      "http://foo.com/foo/bar",
 			wantURL:  "http://foo.com/baz/bar",
@@ -97,11 +97,51 @@ func TestURLRewriteHandler(t *testing.T) {
 		{
 			desc: "replace prefix path without slash prefix",
 			config: dynamic.URLRewrite{
-				Path:       ptr.To("/baz"),
-				PathPrefix: ptr.To("/foo/"),
+				Path:       new("/baz"),
+				PathPrefix: new("/foo/"),
 			},
 			url:      "http://foo.com/foo/bar",
 			wantURL:  "http://foo.com/baz/bar",
+			wantHost: "foo.com",
+		},
+		{
+			desc: "replace prefix path with trailing slash prefix",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo/"),
+			},
+			url:      "http://foo.com/foo",
+			wantURL:  "http://foo.com/baz",
+			wantHost: "foo.com",
+		},
+		{
+			desc: "replace prefix path with empty replacement with slash",
+			config: dynamic.URLRewrite{
+				Path:       new(""),
+				PathPrefix: new("/foo"),
+			},
+			url:      "http://foo.com/foo",
+			wantURL:  "http://foo.com/",
+			wantHost: "foo.com",
+		},
+		{
+			desc: "dot-segment traversal fused with an encoded slash",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:      "http://foo.com/foo/..%2Fadmin",
+			wantURL:  "http://foo.com/baz/..%2Fadmin",
+			wantHost: "foo.com",
+		},
+		{
+			desc: "encoded slash in the trimmed tail",
+			config: dynamic.URLRewrite{
+				Path:       new("/baz"),
+				PathPrefix: new("/foo"),
+			},
+			url:      "http://foo.com/foo/a%2Fb",
+			wantURL:  "http://foo.com/baz/a%2Fb",
 			wantHost: "foo.com",
 		},
 	}
@@ -117,6 +157,16 @@ func TestURLRewriteHandler(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, test.url, nil)
 			handler.ServeHTTP(recorder, req)
+
+			wantStatusCode := test.wantStatusCode
+			if wantStatusCode == 0 {
+				wantStatusCode = http.StatusOK
+			}
+			assert.Equal(t, wantStatusCode, recorder.Code)
+
+			if wantStatusCode != http.StatusOK {
+				return
+			}
 
 			assert.Equal(t, test.wantURL, req.URL.String())
 			assert.Equal(t, test.wantHost, req.Host)

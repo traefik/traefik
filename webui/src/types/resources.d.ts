@@ -102,10 +102,6 @@ declare namespace Service {
 }
 
 declare namespace Middleware {
-  type Props = {
-    [prop: string]: ValuesMapType
-  }
-
   type Details = {
     name: string
     status: 'enabled' | 'disabled' | 'warning'
@@ -115,7 +111,7 @@ declare namespace Middleware {
     error?: string[]
     routers?: string[]
     usedBy?: string[]
-  } & Props
+  }
 
   type DetailsData = Details & {
     routers?: Router.Details[]

@@ -4,6 +4,8 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: ingress-with-default-backend-no-rules
   namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
 
 spec:
   ingressClassName: nginx

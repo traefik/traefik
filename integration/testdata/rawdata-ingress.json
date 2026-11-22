@@ -57,9 +57,8 @@
 				"metadata": {
 					"ingress": {
 						"namespace": "default",
-						"ingressName": "test.ingress.https",
-						"serviceName": "whoami",
-						"servicePort": "http"
+						"name": "test.ingress.https",
+						"kind": "Ingress"
 					}
 				}
 			},
@@ -83,9 +82,8 @@
 				"metadata": {
 					"ingress": {
 						"namespace": "default",
-						"ingressName": "test.ingress",
-						"serviceName": "whoami",
-						"servicePort": "http"
+						"name": "test.ingress",
+						"kind": "Ingress"
 					}
 				}
 			},
@@ -109,9 +107,8 @@
 				"metadata": {
 					"ingress": {
 						"namespace": "default",
-						"ingressName": "whoami-drop-route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "whoami-drop-route",
+						"kind": "Ingress"
 					}
 				}
 			},
@@ -135,9 +132,8 @@
 				"metadata": {
 					"ingress": {
 						"namespace": "default",
-						"ingressName": "whoami-keep-route",
-						"serviceName": "whoami",
-						"servicePort": "80"
+						"name": "whoami-keep-route",
+						"kind": "Ingress"
 					}
 				}
 			},
@@ -189,16 +185,25 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
 				"passHostHeader": true,
 				"responseForwarding": {
 					"flushInterval": "100ms"
+				}
+			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "80"
+					}
 				}
 			},
 			"status": "enabled",
@@ -207,18 +212,18 @@
 				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"strategy": "wrr",
@@ -227,14 +232,23 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"observability": {
+				"metadata": {
+					"kubernetes": {
+						"namespace": "default",
+						"name": "whoami",
+						"port": "http"
+					}
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"default-test-ingress-https-whoami-test-https-whoami@kubernetes",
 				"default-test-ingress-whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"noop@internal": {

@@ -126,7 +126,7 @@ curl -H "Host: whoami.docker.localhost" http://localhost/
 ```
 
 !!! info
-    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
+    Make sure to remove the `ports.web.http.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
 
     ```yaml
     redirections:
@@ -322,6 +322,11 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
 
     Example configuration in `values.yaml`:
     ```yaml
+    ports:
+      web:
+        port: 80
+      websecure:
+        port: 443
     gateway:
       listeners:
         web:
@@ -337,7 +342,7 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
           mode: Terminate
           certificateRefs:
             - kind: Secret
-              name: local-selfsigned-tls
+              name: whoami-tls
               group: ""
     ```
 

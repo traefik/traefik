@@ -1,19 +1,22 @@
 package snippet
 
 import (
+	"context"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
-
-func boolPtr(b bool) *bool {
-	return &b
-}
 
 func Test_New(t *testing.T) {
 	testCases := []struct {
@@ -397,6 +400,15 @@ proxy_set_header Accept-Encoding "";
 			},
 			unexpectedResponseHeaders: []string{
 				"Accept-Encoding",
+			},
+		},
+		{
+			desc: "proxy_set_header with quoted header name",
+			configurationSnippet: `
+proxy_set_header "X-Custom-Header" "my-value";
+`,
+			expectedRequestHeaders: map[string]string{
+				"X-Custom-Header": "my-value",
 			},
 		},
 		{
@@ -1136,6 +1148,30 @@ rewrite ^/(.*)$ "${uri}?" break;
 			expectedPath:  "/some/path",
 			expectedQuery: "",
 		},
+		{
+			desc: "rewrite with dot-segment traversal in capture group is rejected",
+			configurationSnippet: `
+rewrite ^/foo(.*)$ /$1 break;
+`,
+			path:               "/foo../bar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "rewrite with capture group lacking path separator introducing dot-segment traversal is rejected",
+			configurationSnippet: `
+rewrite ^/api(.*)$ /$1 break;
+`,
+			path:               "/api../admin",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "rewrite with percent-encoded character in capture group succeeds",
+			configurationSnippet: `
+rewrite ^/api/(.*)$ /v2/$1 break;
+`,
+			path:         "/api/foo%2Fbar",
+			expectedPath: "/v2/foo/bar",
+		},
 		// --- add_header always tests ---
 		{
 			desc: "add_header with always applies to 200 status",
@@ -1460,7 +1496,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "forward auth fails with 401 response",
@@ -1474,7 +1510,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Unauthorized",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth fails with 403 response",
@@ -1488,7 +1524,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Forbidden",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc:          "forward auth with signin URL redirects on 401",
@@ -1502,7 +1538,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://login.example.com/signin",
-			expectNextCalled:    boolPtr(false),
+			expectNextCalled:    new(false),
 		},
 		{
 			desc:                "forward auth copies response headers to original request",
@@ -1521,7 +1557,7 @@ proxy_method $request_method;
 				"X-Auth-Role": "admin",
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header modifies auth request",
@@ -1535,7 +1571,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header with variable",
@@ -1549,7 +1585,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "auth-snippet set directive creates variable for proxy_set_header",
@@ -1566,7 +1602,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet more_set_input_headers modifies auth request",
@@ -1580,7 +1616,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet more_clear_input_headers removes header from auth request",
@@ -1597,7 +1633,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "auth-snippet with multiple proxy_set_header directives",
@@ -1617,7 +1653,7 @@ proxy_set_header X-Header-Three $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet with return directive terminates",
@@ -1632,7 +1668,7 @@ proxy_set_header X-Header-Three $request_method;
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Auth blocked",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "auth-snippet with conditional return",
@@ -1654,7 +1690,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Blocked by auth-snippet",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth error response includes body",
@@ -1669,7 +1705,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"error":"invalid request"}`,
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth preserves error response headers",
@@ -1687,7 +1723,7 @@ if ($http_x_block_auth = "yes") {
 				"X-Error-Code":  "ERR001",
 				"X-Retry-After": "60",
 			},
-			expectNextCalled: boolPtr(false),
+			expectNextCalled: new(false),
 		},
 		{
 			desc:                 "forward auth with configuration snippet applies headers on success",
@@ -1703,7 +1739,7 @@ if ($http_x_block_auth = "yes") {
 			expectedResponseHeaders: map[string]string{
 				"X-Authenticated": "true",
 			},
-			expectNextCalled: boolPtr(true),
+			expectNextCalled: new(true),
 		},
 		{
 			desc:        "auth-snippet with more_set_input_headers variable interpolation",
@@ -1718,7 +1754,7 @@ if ($http_x_block_auth = "yes") {
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header removes header with empty value",
@@ -1735,7 +1771,7 @@ if ($http_x_block_auth = "yes") {
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "forward auth with redirect from auth server",
@@ -1749,7 +1785,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode:  http.StatusTemporaryRedirect,
 			expectedRedirectURL: "https://redirect.example.com/path",
-			expectNextCalled:    boolPtr(false),
+			expectNextCalled:    new(false),
 		},
 		{
 			desc:                "auth-snippet combined with auth response headers",
@@ -1768,7 +1804,7 @@ if ($http_x_block_auth = "yes") {
 				"X-User-Id": "user-123",
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 	}
 
@@ -1892,6 +1928,48 @@ if ($http_x_block_auth = "yes") {
 			if test.expectedRedirectURL != "" {
 				assert.Contains(t, rw.Header().Get("Location"), test.expectedRedirectURL, "redirect URL")
 			}
+		})
+	}
+}
+
+func Test_LocationPrefixModifier(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		path       string
+		wantStatus int
+	}{
+		{desc: "matching path", path: "/internal", wantStatus: http.StatusTeapot},
+		{desc: "matching subpath", path: "/internal/status", wantStatus: http.StatusTeapot},
+		{desc: "matching path with query", path: "/internal?check=true", wantStatus: http.StatusTeapot},
+		{desc: "prefix within path segment", path: "/internality", wantStatus: http.StatusTeapot},
+		{desc: "unrelated path", path: "/public", wantStatus: http.StatusOK},
+		{desc: "partial prefix", path: "/intern", wantStatus: http.StatusOK},
+		{desc: "case mismatch", path: "/Internal", wantStatus: http.StatusOK},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			nextCalled := false
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			handler, err := New(t.Context(), next, &dynamic.Snippet{
+				ServerSnippet: `
+location ^~ /internal {
+	return 418;
+}
+`,
+			}, "test-snippet")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://example.com"+test.path, nil)
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.wantStatus, rw.Code)
+			assert.Equal(t, test.wantStatus == http.StatusOK, nextCalled)
 		})
 	}
 }
@@ -2044,4 +2122,146 @@ func TestForwardAuthAddress_interpolation(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, authSrvCalled)
+}
+
+func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
+	type authConnKey struct{}
+	type authConn struct{ user string }
+
+	// The auth server mimics IIS Windows Authentication: an NTLM credential authenticates the connection it
+	// is sent on, and later requests without credential on that connection are authenticated as the same user.
+	authSrv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		conn := req.Context().Value(authConnKey{}).(*authConn)
+		if scheme, user, ok := strings.Cut(req.Header.Get("Authorization"), " "); ok && scheme == "NTLM" {
+			conn.user = user
+		}
+
+		if conn.user == "" {
+			rw.Header().Set("WWW-Authenticate", "NTLM")
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		rw.Header().Set("X-Auth-User", conn.user)
+	}))
+	authSrv.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+		return context.WithValue(ctx, authConnKey{}, &authConn{})
+	}
+	authSrv.Start()
+	t.Cleanup(authSrv.Close)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		_, _ = fmt.Fprint(rw, req.Header.Get("X-Auth-User"))
+	})
+
+	auth := &dynamic.Auth{
+		Address:             authSrv.URL,
+		AuthResponseHeaders: []string{"X-Auth-User"},
+	}
+	middleware, err := New(t.Context(), next, &dynamic.Snippet{Auth: auth}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewUnstartedServer(middleware)
+	ts.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+		return kerberos.AddTransportOnContext(ctx)
+	}
+	ts.Start()
+	t.Cleanup(ts.Close)
+
+	// Each client has its own transport, hence its own connection to Traefik.
+	send := func(client *http.Client, authorization string) (int, string) {
+		t.Helper()
+
+		req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
+
+		res, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = res.Body.Close() })
+
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		return res.StatusCode, string(body)
+	}
+
+	alice := &http.Client{Transport: &http.Transport{}}
+	t.Cleanup(alice.CloseIdleConnections)
+	bob := &http.Client{Transport: &http.Transport{}}
+	t.Cleanup(bob.CloseIdleConnections)
+
+	status, user := send(alice, "NTLM alice")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "alice", user)
+
+	status, user = send(bob, "")
+	assert.Equal(t, http.StatusUnauthorized, status)
+	assert.Empty(t, user)
+
+	status, user = send(alice, "")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "alice", user)
+}
+
+func TestSnippetUpstreamVhost(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		authStatus          int
+		expectedStatus      int
+		expectedLocation    string
+		expectedBackendHost string
+	}{
+		{
+			desc:             "unauthorized request redirects to the original host",
+			authStatus:       http.StatusUnauthorized,
+			expectedStatus:   http.StatusFound,
+			expectedLocation: "https://dashboard.example.internal/oauth2/start?rd=%2Fprivate",
+		},
+		{
+			desc:                "authorized request uses the upstream host",
+			authStatus:          http.StatusOK,
+			expectedStatus:      http.StatusNoContent,
+			expectedBackendHost: "svc.ns.svc.cluster.local:8084",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				assert.Equal(t, "dashboard.example.internal", req.Header.Get("X-Forwarded-Host"))
+				rw.WriteHeader(test.authStatus)
+			}))
+			t.Cleanup(authServer.Close)
+
+			var backendHost string
+			backendCalled := false
+			var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				backendCalled = true
+				backendHost = req.Host
+				rw.WriteHeader(http.StatusNoContent)
+			})
+			handler, err := upstreamvhost.New(t.Context(), handler, dynamic.UpstreamVHost{VHost: "svc.ns.svc.cluster.local:8084"}, "vhost")
+			require.NoError(t, err)
+			handler, err = New(t.Context(), handler, &dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address:       authServer.URL,
+					AuthSigninURL: "https://$host/oauth2/start?rd=$escaped_request_uri",
+				},
+			}, "auth")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "https://dashboard.example.internal/private", nil)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expectedStatus, recorder.Code)
+			assert.Equal(t, test.expectedLocation, recorder.Header().Get("Location"))
+			assert.Equal(t, test.authStatus == http.StatusOK, backendCalled)
+			assert.Equal(t, test.expectedBackendHost, backendHost)
+		})
+	}
 }

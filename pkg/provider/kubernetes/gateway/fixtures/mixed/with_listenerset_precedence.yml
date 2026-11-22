@@ -1,0 +1,114 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  allowedListeners:
+    namespaces:
+      from: All
+  listeners:
+    - name: web
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+# The newer ListenerSet sorts first by name: only the creation timestamp
+# makes the older one win the conflict.
+---
+kind: ListenerSet
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: ls-a-newer
+  namespace: default
+  creationTimestamp: "2024-01-01T00:00:00Z"
+spec:
+  parentRef:
+    name: my-gateway
+    namespace: default
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8080
+
+---
+kind: ListenerSet
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: ls-z-older
+  namespace: default
+  creationTimestamp: "2023-01-01T00:00:00Z"
+spec:
+  parentRef:
+    name: my-gateway
+    namespace: default
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8080
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-newer
+  namespace: default
+spec:
+  parentRefs:
+    - name: ls-a-newer
+      kind: ListenerSet
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "newer.example.com"
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /bar
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: http-app-older
+  namespace: default
+spec:
+  parentRefs:
+    - name: ls-z-older
+      kind: ListenerSet
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "older.example.com"
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /bar
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""

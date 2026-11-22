@@ -11,10 +11,6 @@ import (
 	"github.com/traefik/traefik/v3/cmd"
 )
 
-func ptr[T any](t T) *T {
-	return &t
-}
-
 func TestDeprecationNotice(t *testing.T) {
 	tests := []struct {
 		desc           string
@@ -26,7 +22,7 @@ func TestDeprecationNotice(t *testing.T) {
 			config: configuration{
 				Providers: &providers{
 					Docker: &docker{
-						SwarmMode: ptr(true),
+						SwarmMode: new(true),
 					},
 				},
 			},
@@ -37,7 +33,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					Docker: &docker{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -49,7 +45,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					Swarm: &swarm{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -60,7 +56,7 @@ func TestDeprecationNotice(t *testing.T) {
 			config: configuration{
 				Providers: &providers{
 					Consul: &consul{
-						Namespace: ptr("foobar"),
+						Namespace: new("foobar"),
 					},
 				},
 			},
@@ -71,7 +67,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					Consul: &consul{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -82,7 +78,7 @@ func TestDeprecationNotice(t *testing.T) {
 			config: configuration{
 				Providers: &providers{
 					ConsulCatalog: &consulCatalog{
-						Namespace: ptr("foobar"),
+						Namespace: new("foobar"),
 					},
 				},
 			},
@@ -94,7 +90,7 @@ func TestDeprecationNotice(t *testing.T) {
 					ConsulCatalog: &consulCatalog{
 						Endpoint: &endpointConfig{
 							TLS: &tls{
-								CAOptional: ptr(true),
+								CAOptional: new(true),
 							},
 						},
 					},
@@ -106,7 +102,7 @@ func TestDeprecationNotice(t *testing.T) {
 			config: configuration{
 				Providers: &providers{
 					Nomad: &nomad{
-						Namespace: ptr("foobar"),
+						Namespace: new("foobar"),
 					},
 				},
 			},
@@ -118,7 +114,7 @@ func TestDeprecationNotice(t *testing.T) {
 					Nomad: &nomad{
 						Endpoint: &endpointConfig{
 							TLS: &tls{
-								CAOptional: ptr(true),
+								CAOptional: new(true),
 							},
 						},
 					},
@@ -151,7 +147,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					ETCD: &etcd{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -163,7 +159,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					Redis: &redis{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -175,7 +171,7 @@ func TestDeprecationNotice(t *testing.T) {
 				Providers: &providers{
 					HTTP: &http{
 						TLS: &tls{
-							CAOptional: ptr(true),
+							CAOptional: new(true),
 						},
 					},
 				},
@@ -193,7 +189,7 @@ func TestDeprecationNotice(t *testing.T) {
 			desc: "Experimental HTTP3 enablement configuration is incompatible",
 			config: configuration{
 				Experimental: &experimental{
-					HTTP3: ptr(true),
+					HTTP3: new(true),
 				},
 			},
 		},
@@ -201,7 +197,7 @@ func TestDeprecationNotice(t *testing.T) {
 			desc: "Experimental KubernetesGateway enablement configuration is compatible",
 			config: configuration{
 				Experimental: &experimental{
-					KubernetesGateway: ptr(true),
+					KubernetesGateway: new(true),
 				},
 			},
 			wantCompatible: true,
@@ -210,7 +206,7 @@ func TestDeprecationNotice(t *testing.T) {
 			desc: "Tracing SpanNameLimit option is incompatible",
 			config: configuration{
 				Tracing: &tracing{
-					SpanNameLimit: ptr(42),
+					SpanNameLimit: new(42),
 				},
 			},
 		},

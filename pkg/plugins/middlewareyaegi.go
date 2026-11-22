@@ -60,19 +60,25 @@ func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareN
 }
 
 func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
+	return wrapExternal(next, func(next http.Handler) (http.Handler, error) {
+		return b.newPluginHandler(ctx, next, cfg, middlewareName)
+	})
+}
+
+func (b yaegiMiddlewareBuilder) newPluginHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
 	results := b.fnNew.Call(args)
 
 	if len(results) > 1 && results[1].Interface() != nil {
-		err, ok := results[1].Interface().(error)
+		err, ok := reflect.TypeAssert[error](results[1])
 		if !ok {
-			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
 		}
 
 		return nil, err
 	}
 
-	handler, ok := results[0].Interface().(http.Handler)
+	handler, ok := reflect.TypeAssert[http.Handler](results[0])
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}

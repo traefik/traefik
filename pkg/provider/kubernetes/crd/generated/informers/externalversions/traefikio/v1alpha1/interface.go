@@ -33,25 +33,25 @@ import (
 // Interface provides access to all the informers in this group version.
 type Interface interface {
 	// IngressRoutes returns a IngressRouteInformer.
-	IngressRoutes() IngressRouteInformer
+	IngressRoutes() TypedIngressRouteInformer
 	// IngressRouteTCPs returns a IngressRouteTCPInformer.
-	IngressRouteTCPs() IngressRouteTCPInformer
+	IngressRouteTCPs() TypedIngressRouteTCPInformer
 	// IngressRouteUDPs returns a IngressRouteUDPInformer.
-	IngressRouteUDPs() IngressRouteUDPInformer
+	IngressRouteUDPs() TypedIngressRouteUDPInformer
 	// Middlewares returns a MiddlewareInformer.
-	Middlewares() MiddlewareInformer
+	Middlewares() TypedMiddlewareInformer
 	// MiddlewareTCPs returns a MiddlewareTCPInformer.
-	MiddlewareTCPs() MiddlewareTCPInformer
+	MiddlewareTCPs() TypedMiddlewareTCPInformer
 	// ServersTransports returns a ServersTransportInformer.
-	ServersTransports() ServersTransportInformer
+	ServersTransports() TypedServersTransportInformer
 	// ServersTransportTCPs returns a ServersTransportTCPInformer.
-	ServersTransportTCPs() ServersTransportTCPInformer
+	ServersTransportTCPs() TypedServersTransportTCPInformer
 	// TLSOptions returns a TLSOptionInformer.
-	TLSOptions() TLSOptionInformer
+	TLSOptions() TypedTLSOptionInformer
 	// TLSStores returns a TLSStoreInformer.
-	TLSStores() TLSStoreInformer
+	TLSStores() TypedTLSStoreInformer
 	// TraefikServices returns a TraefikServiceInformer.
-	TraefikServices() TraefikServiceInformer
+	TraefikServices() TypedTraefikServiceInformer
 }
 
 type version struct {
@@ -65,52 +65,52 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// IngressRoutes returns a IngressRouteInformer.
-func (v *version) IngressRoutes() IngressRouteInformer {
+// IngressRoutes returns a TypedIngressRouteInformer.
+func (v *version) IngressRoutes() TypedIngressRouteInformer {
 	return &ingressRouteInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// IngressRouteTCPs returns a IngressRouteTCPInformer.
-func (v *version) IngressRouteTCPs() IngressRouteTCPInformer {
+// IngressRouteTCPs returns a TypedIngressRouteTCPInformer.
+func (v *version) IngressRouteTCPs() TypedIngressRouteTCPInformer {
 	return &ingressRouteTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// IngressRouteUDPs returns a IngressRouteUDPInformer.
-func (v *version) IngressRouteUDPs() IngressRouteUDPInformer {
+// IngressRouteUDPs returns a TypedIngressRouteUDPInformer.
+func (v *version) IngressRouteUDPs() TypedIngressRouteUDPInformer {
 	return &ingressRouteUDPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// Middlewares returns a MiddlewareInformer.
-func (v *version) Middlewares() MiddlewareInformer {
+// Middlewares returns a TypedMiddlewareInformer.
+func (v *version) Middlewares() TypedMiddlewareInformer {
 	return &middlewareInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// MiddlewareTCPs returns a MiddlewareTCPInformer.
-func (v *version) MiddlewareTCPs() MiddlewareTCPInformer {
+// MiddlewareTCPs returns a TypedMiddlewareTCPInformer.
+func (v *version) MiddlewareTCPs() TypedMiddlewareTCPInformer {
 	return &middlewareTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// ServersTransports returns a ServersTransportInformer.
-func (v *version) ServersTransports() ServersTransportInformer {
+// ServersTransports returns a TypedServersTransportInformer.
+func (v *version) ServersTransports() TypedServersTransportInformer {
 	return &serversTransportInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// ServersTransportTCPs returns a ServersTransportTCPInformer.
-func (v *version) ServersTransportTCPs() ServersTransportTCPInformer {
+// ServersTransportTCPs returns a TypedServersTransportTCPInformer.
+func (v *version) ServersTransportTCPs() TypedServersTransportTCPInformer {
 	return &serversTransportTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// TLSOptions returns a TLSOptionInformer.
-func (v *version) TLSOptions() TLSOptionInformer {
+// TLSOptions returns a TypedTLSOptionInformer.
+func (v *version) TLSOptions() TypedTLSOptionInformer {
 	return &tLSOptionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// TLSStores returns a TLSStoreInformer.
-func (v *version) TLSStores() TLSStoreInformer {
+// TLSStores returns a TypedTLSStoreInformer.
+func (v *version) TLSStores() TypedTLSStoreInformer {
 	return &tLSStoreInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// TraefikServices returns a TraefikServiceInformer.
-func (v *version) TraefikServices() TraefikServiceInformer {
+// TraefikServices returns a TypedTraefikServiceInformer.
+func (v *version) TraefikServices() TypedTraefikServiceInformer {
 	return &traefikServiceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

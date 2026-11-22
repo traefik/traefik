@@ -21,7 +21,12 @@ func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Bu
 		return nil, err
 	}
 
-	return plugins.NewBuilder(manager, plgs, localPlgs)
+	var defaultRuntimeVersion string
+	if staticConfiguration.Experimental != nil {
+		defaultRuntimeVersion = staticConfiguration.Experimental.DefaultRuntimeVersion
+	}
+
+	return plugins.NewBuilder(manager, plgs, localPlgs, defaultRuntimeVersion)
 }
 
 func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]plugins.Descriptor, map[string]plugins.LocalDescriptor, error) {

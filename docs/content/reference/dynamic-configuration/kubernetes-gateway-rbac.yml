@@ -25,13 +25,19 @@ rules:
       - secrets
       - configmaps
     verbs:
-      - get
       - list
       - watch
   - apiGroups:
       - discovery.k8s.io
     resources:
       - endpointslices
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - certificates.k8s.io
+    resources:
+      - clustertrustbundles
     verbs:
       - list
       - watch
@@ -46,8 +52,8 @@ rules:
       - tlsroutes
       - referencegrants
       - backendtlspolicies
+      - listenersets
     verbs:
-      - get
       - list
       - watch
   - apiGroups:
@@ -59,8 +65,8 @@ rules:
       - grpcroutes/status
       - tcproutes/status
       - tlsroutes/status
-      - referencegrants/status
       - backendtlspolicies/status
+      - listenersets/status
     verbs:
       - update
 

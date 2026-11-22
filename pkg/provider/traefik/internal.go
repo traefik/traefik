@@ -420,6 +420,8 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
 			ResponseHeaderTimeout: i.staticCfg.ServersTransport.ForwardingTimeouts.ResponseHeaderTimeout,
 			IdleConnTimeout:       i.staticCfg.ServersTransport.ForwardingTimeouts.IdleConnTimeout,
+			ReadTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.ReadTimeout,
+			WriteTimeout:          i.staticCfg.ServersTransport.ForwardingTimeouts.WriteTimeout,
 		}
 	}
 
@@ -444,8 +446,8 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 
 		if i.staticCfg.TCPServersTransport.TLS.Spiffe != nil {
 			st.TLS.Spiffe = &dynamic.Spiffe{
-				IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
-				TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+				IDs:         i.staticCfg.TCPServersTransport.TLS.Spiffe.IDs,
+				TrustDomain: i.staticCfg.TCPServersTransport.TLS.Spiffe.TrustDomain,
 			}
 		}
 	}

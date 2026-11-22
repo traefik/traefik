@@ -1,0 +1,47 @@
+name: Test K8s Gateway API conformance merged
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - '.github/workflows/test-gateway-api-conformance-merged.yaml'
+      - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/fixtures/gateway-api-conformance/**'
+      - 'integration/gateway_api_conformance_merged_test.go'
+      - 'integration/integration_test.go'
+
+env:
+  CGO_ENABLED: 0
+
+permissions:
+  contents: read
+
+jobs:
+
+  test-gateway-api-conformance-merged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+
+      - name: Avoid generating webui
+        run: |
+          touch webui/static/index.html
+
+      - name: Gateway API conformance merged test and report
+        run: |
+          make test-gateway-api-conformance-merged
+          # The date at which the report has been generated is expected to differ.
+          git diff --exit-code --ignore-matching-lines='^date:'

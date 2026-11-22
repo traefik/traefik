@@ -18,12 +18,14 @@ const (
 	XForwardedFor               = "X-Forwarded-For"
 	XForwardedHost              = "X-Forwarded-Host"
 	XForwardedPort              = "X-Forwarded-Port"
+	xForwardedScheme            = "X-Forwarded-Scheme"
 	xForwardedServer            = "X-Forwarded-Server"
 	XForwardedURI               = "X-Forwarded-Uri"
 	XForwardedMethod            = "X-Forwarded-Method"
 	XForwardedPrefix            = "X-Forwarded-Prefix"
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
 	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
+	xScheme                     = "X-Scheme"
 	xRealIP                     = "X-Real-Ip"
 	connection                  = "Connection"
 	upgrade                     = "Upgrade"
@@ -32,8 +34,11 @@ const (
 // XHeadersSet contains the canonical X-headers managed by Traefik. Used by
 // isManagedXHeader to detect both the canonical form and underscore variants
 // that Go's HTTP server preserves (e.g. X_Forwarded_Proto).
+// Note: the other aliasing forms (e.g. X.Forwarded.Proto) are not handled here,
+// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 var XHeadersSet = map[string]struct{}{
 	XForwardedProto:             {},
+	xForwardedScheme:            {},
 	XForwardedFor:               {},
 	XForwardedHost:              {},
 	XForwardedPort:              {},
@@ -43,6 +48,7 @@ var XHeadersSet = map[string]struct{}{
 	XForwardedPrefix:            {},
 	xForwardedTLSClientCert:     {},
 	xForwardedTLSClientCertInfo: {},
+	xScheme:                     {},
 	xRealIP:                     {},
 }
 
@@ -70,17 +76,18 @@ func isManagedXHeader(key string) bool {
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure               bool
-	trustedIPs             []string
-	connectionHeaders      []string
-	notAppendXForwardedFor bool
-	ipChecker              *ip.Checker
-	next                   http.Handler
-	hostname               string
+	insecure                   bool
+	trustedIPs                 []string
+	connectionHeaders          []string
+	notAppendXForwardedFor     bool
+	addXForwardedSchemeHeaders bool
+	ipChecker                  *ip.Checker
+	next                       http.Handler
+	hostname                   string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, addXForwardedSchemeHeaders bool, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIPs) > 0 {
 		var err error
@@ -101,13 +108,14 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}
 
 	return &XForwarded{
-		insecure:               insecure,
-		trustedIPs:             trustedIPs,
-		connectionHeaders:      canonicalConnectionHeaders,
-		notAppendXForwardedFor: notAppendXForwardedFor,
-		ipChecker:              ipChecker,
-		next:                   next,
-		hostname:               hostname,
+		insecure:                   insecure,
+		trustedIPs:                 trustedIPs,
+		connectionHeaders:          canonicalConnectionHeaders,
+		notAppendXForwardedFor:     notAppendXForwardedFor,
+		addXForwardedSchemeHeaders: addXForwardedSchemeHeaders,
+		ipChecker:                  ipChecker,
+		next:                       next,
+		hostname:                   hostname,
 	}, nil
 }
 
@@ -166,6 +174,12 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	if xfPort := unsafeHeader(outreq.Header).Get(XForwardedPort); xfPort == "" {
 		unsafeHeader(outreq.Header).Set(XForwardedPort, forwardedPort(outreq))
+	}
+
+	if x.addXForwardedSchemeHeaders {
+		scheme := unsafeHeader(outreq.Header).Get(XForwardedProto)
+		unsafeHeader(outreq.Header).Set(xForwardedScheme, scheme)
+		unsafeHeader(outreq.Header).Set(xScheme, scheme)
 	}
 
 	if xfHost := unsafeHeader(outreq.Header).Get(XForwardedHost); xfHost == "" && outreq.Host != "" {

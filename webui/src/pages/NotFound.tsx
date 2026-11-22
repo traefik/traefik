@@ -1,5 +1,5 @@
 import { Box, Button, Flex, H1, Text } from '@traefik-labs/faency'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 import PageTitle from 'layout/PageTitle'
 

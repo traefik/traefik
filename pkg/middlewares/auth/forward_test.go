@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/forward"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
@@ -154,6 +156,83 @@ func TestForwardAuthForwardBody(t *testing.T) {
 	assert.Equal(t, 1, nextCallCount)
 }
 
+func TestForwardAuthDoesNotForwardCONNECTBody(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		contentLength int64
+		enableHTTP2   bool
+		expectedBody  string
+	}{
+		{
+			desc:          "HTTP/1.1 CONNECT with a chunked body",
+			contentLength: -1,
+		},
+		{
+			desc:          "HTTP/2 CONNECT with a chunked body",
+			enableHTTP2:   true,
+			contentLength: -1,
+		},
+		{
+			desc:          "HTTP/1.1 CONNECT with a fixed content-length body",
+			contentLength: 3,
+			expectedBody:  "foo",
+		},
+		{
+			desc:          "HTTP/2 CONNECT with a fixed content-length body",
+			enableHTTP2:   true,
+			contentLength: 3,
+			expectedBody:  "foo",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var serverCallCount int
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				serverCallCount++
+
+				forwardedData, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedBody, string(forwardedData))
+			}))
+			t.Cleanup(server.Close)
+
+			var nextCallCount int
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) { nextCallCount++ })
+
+			auth := dynamic.ForwardAuth{
+				ForwardBody:           true,
+				PreserveRequestMethod: true,
+				Address:               server.URL,
+			}
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewUnstartedServer(middleware)
+			if test.enableHTTP2 {
+				ts.EnableHTTP2 = true
+				ts.StartTLS()
+			} else {
+				ts.Start()
+			}
+			t.Cleanup(ts.Close)
+
+			// Explicitly set ContentLength so we can cover both fixed-length and unknown-length bodies.
+			// For unknown length (ContentLength = -1), the HTTP/1.1 client will use chunked encoding.
+			req := testhelpers.MustNewRequest(http.MethodConnect, ts.URL, bytes.NewReader([]byte("foo")))
+			req.ContentLength = test.contentLength
+
+			res, err := ts.Client().Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, 1, serverCallCount)
+			assert.Equal(t, 1, nextCallCount)
+		})
+	}
+}
+
 func TestForwardAuthForwardBodyEmptyBody(t *testing.T) {
 	var serverCallCount int
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -262,6 +341,119 @@ func TestForwardAuthNotForwardBody(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, 1, serverCallCount)
 	assert.Equal(t, 1, nextCallCount)
+}
+
+func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		tls    bool
+		header string
+	}{
+		{
+			desc:   "HTTP auth server",
+			header: "Authorization",
+		},
+		{
+			desc:   "HTTPS auth server",
+			tls:    true,
+			header: "Authorization",
+		},
+		{
+			desc:   "credential in Proxy-Authorization",
+			header: "Proxy-Authorization",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			type authConnKey struct{}
+			type authConn struct{ user string }
+
+			// The auth server mimics IIS Windows Authentication: an NTLM credential authenticates the connection it
+			// is sent on, and later requests without credential on that connection are authenticated as the same user.
+			authServer := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				conn := req.Context().Value(authConnKey{}).(*authConn)
+				if scheme, user, ok := strings.Cut(req.Header.Get(test.header), " "); ok && scheme == "NTLM" {
+					conn.user = user
+				}
+
+				if conn.user == "" {
+					rw.Header().Set("WWW-Authenticate", "NTLM")
+					rw.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
+				rw.Header().Set("X-Auth-User", conn.user)
+			}))
+			authServer.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+				return context.WithValue(ctx, authConnKey{}, &authConn{})
+			}
+
+			auth := dynamic.ForwardAuth{
+				AuthResponseHeaders: []string{"X-Auth-User"},
+			}
+			if test.tls {
+				authServer.StartTLS()
+				auth.TLS = &dynamic.ClientTLS{InsecureSkipVerify: true}
+			} else {
+				authServer.Start()
+			}
+			t.Cleanup(authServer.Close)
+			auth.Address = authServer.URL
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				_, _ = fmt.Fprint(rw, req.Header.Get("X-Auth-User"))
+			})
+
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewUnstartedServer(middleware)
+			ts.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+				return kerberos.AddTransportOnContext(ctx)
+			}
+			ts.Start()
+			t.Cleanup(ts.Close)
+
+			// Each client has its own transport, hence its own connection to Traefik.
+			send := func(client *http.Client, credential string) (int, string) {
+				t.Helper()
+
+				req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+				if credential != "" {
+					req.Header.Set(test.header, credential)
+				}
+
+				res, err := client.Do(req)
+				require.NoError(t, err)
+				t.Cleanup(func() { _ = res.Body.Close() })
+
+				body, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+
+				return res.StatusCode, string(body)
+			}
+
+			alice := &http.Client{Transport: &http.Transport{}}
+			t.Cleanup(alice.CloseIdleConnections)
+			bob := &http.Client{Transport: &http.Transport{}}
+			t.Cleanup(bob.CloseIdleConnections)
+
+			status, user := send(alice, "NTLM alice")
+			assert.Equal(t, http.StatusOK, status)
+			assert.Equal(t, "alice", user)
+
+			status, user = send(bob, "")
+			assert.Equal(t, http.StatusUnauthorized, status)
+			assert.Empty(t, user)
+
+			status, user = send(alice, "")
+			assert.Equal(t, http.StatusOK, status)
+			assert.Equal(t, "alice", user)
+		})
+	}
 }
 
 func TestForwardAuthRedirect(t *testing.T) {
@@ -413,12 +605,12 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 
 func TestForwardAuthClientClosedRequest(t *testing.T) {
 	requestStarted := make(chan struct{})
-	requestCancelled := make(chan struct{})
 	responseComplete := make(chan struct{})
 
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		close(requestStarted)
-		<-requestCancelled
+		// Wait for the client to give up on the request, so the auth server never answers before the cancellation is observed.
+		<-r.Context().Done()
 	}))
 	t.Cleanup(authTs.Close)
 
@@ -445,7 +637,6 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 	<-requestStarted
 
 	cancel()
-	close(requestCancelled)
 
 	<-responseComplete
 
@@ -747,6 +938,21 @@ func TestForwardAuth_writeHeader(t *testing.T) {
 			trustForwardHeader: false,
 			expectedHeaders: map[string]string{
 				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"X-Forwarded-Port":   "80",
+			},
+		},
+		{
+			desc: "X-Forwarded-Proto is not used to calculate X-Forwarded-Port if trustForwardHeader=false",
+			headers: map[string]string{
+				"X-CustomHeader":    "CustomHeader",
+				"X-Forwarded-Proto": "https",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
 				"X-Forwarded-Proto":  "http",
 				"X-Forwarded-Host":   "foo.bar",
 				"X-Forwarded-Uri":    "/path?q=1",

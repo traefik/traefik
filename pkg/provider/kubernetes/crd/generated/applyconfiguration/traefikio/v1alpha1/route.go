@@ -32,17 +32,17 @@ package v1alpha1
 // Route holds the HTTP route configuration.
 type RouteApplyConfiguration struct {
 	// Match defines the router's rule.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/rules-and-priority/
 	Match *string `json:"match,omitempty"`
 	// Kind defines the kind of the route.
 	// Rule is the only supported kind.
 	// If not defined, defaults to Rule.
 	Kind *string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#priority
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/rules-and-priority/#priority
 	Priority *int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
 	//
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax *string `json:"syntax,omitempty"`
@@ -50,11 +50,13 @@ type RouteApplyConfiguration struct {
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
 	Services []ServiceApplyConfiguration `json:"services,omitempty"`
 	// Middlewares defines the list of references to Middleware resources.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/crd/http/middleware/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/kubernetes/crd/http/middleware/
 	Middlewares []MiddlewareRefApplyConfiguration `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
-	// More info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/routing/observability/
+	// More info: https://doc.traefik.io/traefik/v3.8/reference/routing-configuration/http/routing/observability/
 	Observability *RouterObservabilityConfigApplyConfiguration `json:"observability,omitempty"`
+	// RespondingTimeouts defines the timeouts for responding to client requests.
+	RespondingTimeouts *RouterRespondingTimeoutsApplyConfiguration `json:"respondingTimeouts,omitempty"`
 }
 
 // RouteApplyConfiguration constructs a declarative configuration of the Route type for use with
@@ -126,5 +128,13 @@ func (b *RouteApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyC
 // If called multiple times, the Observability field is set to the value of the last call.
 func (b *RouteApplyConfiguration) WithObservability(value *RouterObservabilityConfigApplyConfiguration) *RouteApplyConfiguration {
 	b.Observability = value
+	return b
+}
+
+// WithRespondingTimeouts sets the RespondingTimeouts field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RespondingTimeouts field is set to the value of the last call.
+func (b *RouteApplyConfiguration) WithRespondingTimeouts(value *RouterRespondingTimeoutsApplyConfiguration) *RouteApplyConfiguration {
+	b.RespondingTimeouts = value
 	return b
 }

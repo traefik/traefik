@@ -31,8 +31,6 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-func pointer[T any](v T) *T { return &v }
-
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
 		desc                         string
@@ -75,10 +73,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -88,7 +85,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -98,6 +95,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -134,15 +140,14 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Options: "foobar",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs:     pointer(true),
-								Tracing:        pointer(true),
-								Metrics:        pointer(true),
+								AccessLogs:     new(true),
+								Tracing:        new(true),
+								Metrics:        new(true),
 								TraceVerbosity: otypes.MinimalVerbosity,
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -152,7 +157,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -161,7 +166,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										Name:     "foobar",
 										Secure:   true,
 										HTTPOnly: true,
-										Path:     pointer("/"),
+										Path:     new("/"),
 									},
 								},
 								Servers: []dynamic.Server{
@@ -173,6 +178,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 								ServersTransport: "foobar@file",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
 							},
 						},
 					},
@@ -190,10 +204,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -203,10 +216,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -216,7 +228,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -226,6 +238,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -245,10 +266,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -258,10 +278,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -271,7 +290,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -281,6 +300,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -300,10 +328,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -313,10 +340,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -326,7 +352,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -336,6 +362,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -355,10 +390,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -368,10 +402,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -381,7 +414,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -391,6 +424,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -410,10 +452,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -423,7 +464,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -433,6 +474,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -452,10 +502,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-example-com-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "example-com",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -465,13 +514,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.11.0.1:80",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "example-com",
+										Port:      "80",
 									},
 								},
 							},
@@ -491,10 +549,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -504,10 +561,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -517,7 +573,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -527,6 +583,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -546,10 +611,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -559,10 +623,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -572,7 +635,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -582,6 +645,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -601,10 +673,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -614,10 +685,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service2-8082",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service2",
-										ServicePort: "8082",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -627,7 +697,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -640,11 +710,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
+							},
 						},
 						"testing-service2-8082": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -654,6 +733,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.2:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service2",
+										Port:      "8082",
 									},
 								},
 							},
@@ -674,10 +762,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -687,9 +774,18 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
 								},
 							},
 						},
@@ -762,10 +858,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Priority:   math.MinInt32,
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -775,7 +870,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -785,6 +880,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -804,10 +908,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -817,7 +920,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -827,6 +930,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8089",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -846,10 +958,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -859,7 +970,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -869,6 +980,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8089",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "tchouk",
 									},
 								},
 							},
@@ -888,10 +1008,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -901,7 +1020,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -911,6 +1030,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8089",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "tchouk",
 									},
 								},
 							},
@@ -930,10 +1058,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -943,10 +1070,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-carotte",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "carotte",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -956,7 +1082,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -969,11 +1095,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "tchouk",
+									},
+								},
+							},
 						},
 						"testing-service1-carotte": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -983,6 +1118,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8090",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "carotte",
 									},
 								},
 							},
@@ -1002,10 +1146,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1015,7 +1158,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1025,6 +1168,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.10.0.2:8089",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "tchouk",
 									},
 								},
 							},
@@ -1044,10 +1196,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1057,10 +1208,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "toto-service1-tchouk",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "toto",
-										ServiceName: "service1",
-										ServicePort: "tchouk",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "toto",
 									},
 								},
 							},
@@ -1070,7 +1220,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1083,11 +1233,20 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "tchouk",
+									},
+								},
+							},
 						},
 						"toto-service1-tchouk": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1097,6 +1256,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.11.0.2:8089",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "toto",
+										Name:      "service1",
+										Port:      "tchouk",
 									},
 								},
 							},
@@ -1136,10 +1304,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1149,13 +1316,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -1175,10 +1351,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-example-com-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "example-com",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1189,7 +1364,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1199,16 +1374,23 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "example-com",
+										Port:      "80",
+									},
+								},
+							},
 						},
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
-							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
-							},
+							CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
 						},
 					},
 				},
@@ -1225,10 +1407,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-443",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "443",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1238,7 +1419,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1248,6 +1429,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "https://10.21.0.1:8443",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "443",
 									},
 								},
 							},
@@ -1267,10 +1457,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-8443",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8443",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1280,7 +1469,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1290,6 +1479,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "https://10.21.0.1:8443",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8443",
 									},
 								},
 							},
@@ -1310,10 +1508,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-8443",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8443",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1323,7 +1520,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-8443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1333,6 +1530,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "https://10.21.0.1:8443",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8443",
 									},
 								},
 							},
@@ -1354,10 +1560,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Priority:   math.MinInt32,
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1367,7 +1572,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1377,6 +1582,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.41.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1396,10 +1610,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1409,13 +1622,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1478,10 +1700,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1491,7 +1712,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1500,6 +1721,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										URL:    "http://10.10.0.1:8080",
 										Scheme: "",
 										Port:   "",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1520,10 +1750,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1533,7 +1762,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -1542,6 +1771,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										URL:    "http://10.10.0.1:8080",
 										Scheme: "",
 										Port:   "",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1561,10 +1799,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1574,10 +1811,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1587,13 +1823,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1614,10 +1859,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1627,13 +1871,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1653,10 +1906,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1666,13 +1918,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1692,10 +1953,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1705,13 +1965,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1731,10 +2000,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1744,13 +2012,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1770,10 +2047,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1783,13 +2059,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1809,10 +2094,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1822,13 +2106,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1851,10 +2144,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1864,13 +2156,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1893,10 +2194,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1906,13 +2206,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1932,10 +2241,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -1945,13 +2253,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
 									},
 								},
 							},
@@ -1997,10 +2314,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-foobar",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "foobar",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2010,13 +2326,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-foobar": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:4711",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "foobar",
 									},
 								},
 							},
@@ -2048,11 +2373,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service:    "default-backend",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										IngressName: "defaultbackend",
-										ServiceName: "defaultservice",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
+										Name:      "defaultbackend",
 									},
 								},
 							},
@@ -2062,13 +2386,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-backend": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "defaultservice",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2088,10 +2421,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2101,7 +2433,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2122,6 +2454,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -2138,10 +2479,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Service: "testing-service1-80",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "80",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2151,7 +2491,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-service1-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
@@ -2164,11 +2504,142 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 			strictPrefixMatching: true,
+		},
+		{
+			desc: "Ingress with invalid pathmatcher annotation",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:               "Ingress with nil endpointslice port name",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-name-whoami-localhost": {
+							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
+							Service: "default-whoami-nil-port-name-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-nil-endpointslice-port-name",
+									},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-nil-port-name-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-nil-port-name",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:               "Ingress with nil endpointslice port value",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-nil-endpointslice-port-value-whoami-localhost": {
+							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
+							Service: "default-whoami-nil-port-value-80",
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-nil-endpointslice-port-value",
+									},
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-nil-port-value-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-nil-port-value",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -2185,7 +2656,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				DefaultRuleSyntax:            test.defaultRuleSyntax,
 				StrictPrefixMatching:         test.strictPrefixMatching,
 			}
-			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
+			conf := p.BuildConfiguration(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2221,10 +2692,9 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Service: "testing-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2234,13 +2704,22 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       dynamic.BalancerStrategyWRR,
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://traefik.wtf:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2260,11 +2739,10 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Service: "testing-service-bar-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										IngressName: "example.com",
-										ServiceName: "service-bar",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
+										Name:      "example.com",
 									},
 								},
 							},
@@ -2279,9 +2757,18 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service-bar",
+										Port:      "8080",
+									},
 								},
 							},
 						},
@@ -2301,11 +2788,10 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 							Service: "testing-service-foo-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										IngressName: "example.com",
-										ServiceName: "service-foo",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
+										Name:      "example.com",
 									},
 								},
 							},
@@ -2320,9 +2806,18 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b]:8080",
 									},
 								},
-								PassHostHeader: pointer(true),
+								PassHostHeader: new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service-foo",
+										Port:      "8080",
+									},
 								},
 							},
 						},
@@ -2340,7 +2835,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
-			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
+			conf := p.BuildConfiguration(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2364,10 +2859,9 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 							Service: "testing-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2378,10 +2872,19 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2399,7 +2902,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
+			conf := p.BuildConfiguration(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2423,10 +2926,9 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 							Service: "testing-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2437,10 +2939,19 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://172.16.4.4:32456",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2469,7 +2980,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled}
-			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
+			conf := p.BuildConfiguration(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2478,6 +2989,185 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 
 func generateTestFilename(desc string) string {
 	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+".yml")
+}
+
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.middlewares` annotation, or a Service,
+// declaring a `traefik.ingress.kubernetes.io/service.middlewares` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		path                    string
+		wantRouter              string
+		wantService             string
+	}{
+		{
+			desc:                    "Ingress with router middleware annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			path:                    "fixtures/Ingress-with-annotations.yml",
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with router middleware annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+		},
+		{
+			desc:                    "Ingress with router middleware annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with router middleware annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+			path:                    "fixtures/Ingress-with-annotations.yml",
+		},
+		{
+			desc:                    "Service with middlewares annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with middlewares annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+		},
+		{
+			desc:                    "Service with middlewares annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with middlewares annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+			path:                    "fixtures/Ingress-with-service-middlewares-annotation.yml",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.BuildConfiguration(t.Context(), newClientMock(test.path))
+
+			if test.wantRouter == "" && test.wantService == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				assert.Empty(t, conf.HTTP.Services)
+				return
+			}
+
+			if test.wantRouter != "" {
+				assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			}
+
+			if test.wantService != "" {
+				assert.Contains(t, conf.HTTP.Services, test.wantService)
+				assert.Equal(t, []string{"foobar@file"}, conf.HTTP.Services[test.wantService].Middlewares)
+			}
+		})
+	}
+}
+
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions verifies that an Ingress,
+// declaring a `traefik.ingress.kubernetes.io/router.tls.options` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantRouter              string
+	}{
+		{
+			desc:                    "Ingress with TLS options annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantRouter:              "testing-bar",
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.BuildConfiguration(t.Context(), newClientMock("fixtures/Ingress-with-tls-options-annotation.yml"))
+
+			if test.wantRouter == "" {
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Routers, test.wantRouter)
+			assert.NotNil(t, conf.HTTP.Routers[test.wantRouter].TLS)
+			assert.Equal(t, "foobar@file", conf.HTTP.Routers[test.wantRouter].TLS.Options)
+		})
+	}
+}
+
+// TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport verifies that a Service referencing a cross-provider ServersTransport,
+// via the `traefik.ingress.kubernetes.io/service.serverstransport` annotation,
+// is dropped from the dynamic configuration when its namespace is not in `crossProviderNamespaces`.
+func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransport(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		crossProviderNamespaces []string
+		wantService             string
+	}{
+		{
+			desc:                    "Service with serversTransport annotation is kept when option is unset (backward compatible)",
+			crossProviderNamespaces: nil,
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when option is empty",
+			crossProviderNamespaces: []string{},
+		},
+		{
+			desc:                    "Service with serversTransport annotation is kept when its namespace is allow-listed",
+			crossProviderNamespaces: []string{"testing"},
+			wantService:             "testing-service1-80",
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when its namespace is not allow-listed",
+			crossProviderNamespaces: []string{"other"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{CrossProviderNamespaces: test.crossProviderNamespaces}
+			conf := p.BuildConfiguration(t.Context(), newClientMock("fixtures/Ingress-with-servers-transport-annotation.yml"))
+
+			if test.wantService == "" {
+				assert.Empty(t, conf.HTTP.Services)
+				assert.Empty(t, conf.HTTP.Routers)
+				return
+			}
+
+			assert.Contains(t, conf.HTTP.Services, test.wantService)
+			assert.Equal(t, "foobar@file", conf.HTTP.Services[test.wantService].LoadBalancer.ServersTransport)
+		})
+	}
 }
 
 func TestGetCertificates(t *testing.T) {
@@ -2529,10 +3219,8 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.key": []byte("tls-key"),
 						},
@@ -2547,10 +3235,8 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 						},
@@ -2565,11 +3251,9 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
-						Data: map[string][]byte{},
+						Name:      "test-secret",
+						Namespace: "testing",
+						Data:      map[string][]byte{},
 					},
 				},
 			},
@@ -2592,20 +3276,16 @@ func TestGetCertificates(t *testing.T) {
 			client: clientMock{
 				secrets: []*corev1.Secret{
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret2",
-							Namespace: "testing",
-						},
+						Name:      "test-secret2",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 							"tls.key": []byte("tls-key"),
 						},
 					},
 					{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "test-secret",
-							Namespace: "testing",
-						},
+						Name:      "test-secret",
+						Namespace: "testing",
 						Data: map[string][]byte{
 							"tls.crt": []byte("tls-crt"),
 							"tls.key": []byte("tls-key"),
@@ -2670,10 +3350,9 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Service: "testing-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "testing",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "testing",
 									},
 								},
 							},
@@ -2684,10 +3363,19 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "testing",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2707,11 +3395,10 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Service: "default-service1-8080",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "global-native-lb",
-										ServiceName: "service1",
-										ServicePort: "8080",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "global-native-lb",
 									},
 								},
 							},
@@ -2722,10 +3409,19 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "service1",
+										Port:      "8080",
 									},
 								},
 							},
@@ -2745,11 +3441,10 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							Service: "default-native-disabled-svc-web",
 							Observability: &dynamic.RouterObservabilityConfig{
 								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesIngressMetadata{
-										Namespace:   "default",
-										IngressName: "global-native-lb",
-										ServiceName: "native-disabled-svc",
-										ServicePort: "web",
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "global-native-lb",
 									},
 								},
 							},
@@ -2760,13 +3455,22 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:           dynamic.BalancerStrategyWRR,
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     pointer(true),
+								PassHostHeader:     new(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.20:8080",
 									},
 									{
 										URL: "http://10.10.0.21:8080",
+									},
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "native-disabled-svc",
+										Port:      "web",
 									},
 								},
 							},
@@ -2787,7 +3491,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				IngressClass:      test.ingressClass,
 				NativeLBByDefault: true,
 			}
-			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
+			conf := p.BuildConfiguration(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2878,7 +3582,7 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 			k8sObjects := readResources(t, []string{generateTestFilename(test.desc)})
 			kubeClient := kubefake.NewClientset(k8sObjects...)
 
-			client := newClientImpl(kubeClient)
+			client := NewClient(&Provider{}, kubeClient)
 
 			stopCh := make(chan struct{})
 			eventCh, err := client.WatchAll(nil, stopCh)
@@ -2895,7 +3599,7 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 					PublishedService: "default/published-service",
 				},
 			}
-			p.loadConfigurationFromIngresses(t.Context(), client)
+			p.BuildConfiguration(t.Context(), client)
 
 			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
 			require.NoError(t, err)
@@ -2920,6 +3624,77 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
+}
+
+func TestProviderInit(t *testing.T) {
+	p := Provider{
+		ReportNodeInternalIPs: true,
+		IngressEndpoint:       &EndpointIngress{IP: "1.2.3.4"},
+	}
+	assert.EqualError(t, p.Init(), "reportNodeInternalIPs and ingressEndpoint are mutually exclusive")
+
+	p2 := Provider{
+		ReportNodeInternalIPs:        true,
+		DisableClusterScopeResources: true,
+	}
+	assert.EqualError(t, p2.Init(), "reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
+
+	p3 := Provider{ReportNodeInternalIPs: true}
+	assert.NoError(t, p3.Init())
+}
+
+func TestReportNodeInternalIPs(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        clientMock
+		expectedEmpty bool
+	}{
+		{
+			desc:   "nodes present",
+			client: newClientMock(generateTestFilename("Node Internal IP")),
+		},
+		{
+			desc:          "GetNodes API error",
+			client:        clientMock{apiNodesError: errors.New("api nodes error")},
+			expectedEmpty: true,
+		},
+		{
+			desc:          "no nodes found",
+			client:        clientMock{nodes: []*corev1.Node{}},
+			expectedEmpty: true,
+		},
+		{
+			desc: "nodes exist but none have an internal IP",
+			client: clientMock{
+				nodes: []*corev1.Node{
+					{
+						Status: corev1.NodeStatus{
+							Addresses: []corev1.NodeAddress{
+								{Type: corev1.NodeExternalIP, Address: "1.2.3.4"},
+							},
+						},
+					},
+				},
+			},
+			expectedEmpty: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := Provider{ReportNodeInternalIPs: true}
+			conf := p.BuildConfiguration(t.Context(), test.client)
+			if test.expectedEmpty {
+				assert.Empty(t, conf.HTTP.Routers)
+				assert.Empty(t, conf.HTTP.Services)
+			} else {
+				assert.NotEmpty(t, conf.HTTP.Routers)
+				assert.NotEmpty(t, conf.HTTP.Services)
+			}
+		})
+	}
 }
 
 func TestStrictPrefixMatchingRule(t *testing.T) {

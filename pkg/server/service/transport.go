@@ -9,8 +9,6 @@ import (
 	"net"
 	"net/http"
 	"reflect"
-	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +18,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -171,7 +170,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.PeerCertSANs) > 0 || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
@@ -223,9 +222,20 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			MaxVersion:         maxVersion,
 		}
 
+		peerCertSANs := make([]traefiktls.SAN, len(cfg.PeerCertSANs))
+		copy(peerCertSANs, cfg.PeerCertSANs)
+
 		if cfg.PeerCertURI != "" {
+			log.Warn().Msg("PeerCertURI option is deprecated, please use PeerCertSANs instead")
+			peerCertSANs = append(peerCertSANs, traefiktls.SAN{
+				Type:  traefiktls.SANURIType,
+				Value: cfg.PeerCertURI,
+			})
+		}
+
+		if len(peerCertSANs) > 0 {
 			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, config, rawCerts)
+				return traefiktls.VerifyPeerCertificate(peerCertSANs, config.RootCAs, rawCerts)
 			}
 		}
 	}
@@ -321,72 +331,29 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
 		transport.DialContext = customDialContext(dialer, cfg.ForwardingTimeouts)
+		// The forwarding timeout names come from the x/net/http2.Transport fields (ReadIdleTimeout/PingTimeout),
+		// which were used to configure the HTTP/2 health checks before the net/http native support (Go 1.24).
+		// HTTP2Config.SendPingTimeout carries the same semantics as ReadIdleTimeout:
+		// the delay without any frame received on a connection after which a ping health check is sent.
+		// The field was renamed when the HTTP/2 configuration moved to net/http, see https://go.dev/issue/67813.
+		// The HTTP2 config does not enable HTTP2 protocol.
+		transport.HTTP2 = &http.HTTP2Config{
+			SendPingTimeout: time.Duration(cfg.ForwardingTimeouts.ReadIdleTimeout),
+			PingTimeout:     time.Duration(cfg.ForwardingTimeouts.PingTimeout),
+		}
 	}
 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
 	if cfg.DisableHTTP2 {
-		return &kerberosRoundTripper{
-			OriginalRoundTripper: transport,
-			new: func() http.RoundTripper {
-				return transport.Clone()
-			},
-		}, nil
+		return kerberos.NewRoundTripper(transport, func() http.RoundTripper {
+			return transport.Clone()
+		}), nil
 	}
 
-	rt, err := newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
-	if err != nil {
-		return nil, err
-	}
-	return &kerberosRoundTripper{
-		OriginalRoundTripper: rt,
-		new: func() http.RoundTripper {
-			return rt.Clone()
-		},
-	}, nil
-}
-
-type stickyRoundTripper struct {
-	RoundTripper http.RoundTripper
-}
-
-type transportKeyType string
-
-var transportKey transportKeyType = "transport"
-
-func AddTransportOnContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, transportKey, &stickyRoundTripper{})
-}
-
-type kerberosRoundTripper struct {
-	new                  func() http.RoundTripper
-	OriginalRoundTripper http.RoundTripper
-}
-
-func (k *kerberosRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	value, ok := request.Context().Value(transportKey).(*stickyRoundTripper)
-	if !ok {
-		return k.OriginalRoundTripper.RoundTrip(request)
-	}
-
-	if value.RoundTripper != nil {
-		return value.RoundTripper.RoundTrip(request)
-	}
-
-	resp, err := k.OriginalRoundTripper.RoundTrip(request)
-
-	// If we found that we are authenticating with Kerberos (Negotiate) or NTLM.
-	// We put a dedicated roundTripper in the ConnContext.
-	// This will stick the next calls to the same connection with the backend.
-	if err == nil && containsNTLMorNegotiate(resp.Header.Values("WWW-Authenticate")) {
-		value.RoundTripper = k.new()
-	}
-	return resp, err
-}
-
-func containsNTLMorNegotiate(h []string) bool {
-	return slices.ContainsFunc(h, func(s string) bool {
-		return strings.HasPrefix(s, "NTLM") || strings.HasPrefix(s, "Negotiate")
-	})
+	rt := newSmartRoundTripper(transport)
+	return kerberos.NewRoundTripper(rt, func() http.RoundTripper {
+		return rt.Clone()
+	}), nil
 }
 
 func createRootCACertPool(rootCAs []types.FileOrContent) *x509.CertPool {

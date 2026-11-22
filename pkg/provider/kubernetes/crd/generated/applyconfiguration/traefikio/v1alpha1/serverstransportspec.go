@@ -28,6 +28,7 @@ package v1alpha1
 
 import (
 	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
+	tls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // ServersTransportSpecApplyConfiguration represents a declarative configuration of the ServersTransportSpec type for use
@@ -60,7 +61,11 @@ type ServersTransportSpecApplyConfiguration struct {
 	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
 	DisableHTTP2 *bool `json:"disableHTTP2,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+	//
+	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
 	PeerCertURI *string `json:"peerCertURI,omitempty"`
+	// PeerCertSANs defines the peer cert Subject Alternative Names used to match against SAN during the peer certificate verification.
+	PeerCertSANs []tls.SAN `json:"peerCertSANs,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
@@ -175,6 +180,16 @@ func (b *ServersTransportSpecApplyConfiguration) WithDisableHTTP2(value bool) *S
 // If called multiple times, the PeerCertURI field is set to the value of the last call.
 func (b *ServersTransportSpecApplyConfiguration) WithPeerCertURI(value string) *ServersTransportSpecApplyConfiguration {
 	b.PeerCertURI = &value
+	return b
+}
+
+// WithPeerCertSANs adds the given value to the PeerCertSANs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the PeerCertSANs field.
+func (b *ServersTransportSpecApplyConfiguration) WithPeerCertSANs(values ...tls.SAN) *ServersTransportSpecApplyConfiguration {
+	for i := range values {
+		b.PeerCertSANs = append(b.PeerCertSANs, values[i])
+	}
 	return b
 }
 

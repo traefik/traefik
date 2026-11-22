@@ -18,7 +18,7 @@ How to migrate from Ingress NGINX Controller to Traefik with zero downtime.
     - No security patches
     - No bug fixes
 
-    For more information, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
+    For more information, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/).
 
 ## What You Will Achieve
 
@@ -92,6 +92,12 @@ For a complete list of supported annotations and behavioral differences, see the
 !!! info "Traefik Version Requirement"
 
     The Kubernetes Ingress NGINX provider requires **Traefik v3.6.2 or later**.
+
+!!! info "Legacy Scheme Headers"
+
+    If your applications still depend on ingress-nginx's legacy `X-Forwarded-Scheme` or `X-Scheme` headers,
+    enable `entryPoints.<name>.forwardedHeaders.addXForwardedSchemeHeaders=true` on the entrypoints that receive this traffic.
+    This keeps `X-Forwarded-Proto` unchanged and restores the compatibility headers at the entrypoint level for every provider.
 
 ---
 
@@ -187,7 +193,7 @@ This label selector locates the controller ConfigMap regardless of the namespace
 | `global-allowed-response-headers` | `globalAllowedResponseHeaders` | Required for `nginx.ingress.kubernetes.io/custom-headers` annotations to take effect. |
 | `allow-cross-namespace-resources` | `allowCrossNamespaceResources` | Use when migrated ingresses must reference supported resources in other namespaces. |
 | `strict-validate-path-type` | `strictValidatePathType` | Traefik v3.7 defaults this option to `true`. |
-| `ssl-redirect` / `force-ssl-redirect` | `nginx.ingress.kubernetes.io/ssl-redirect` and `nginx.ingress.kubernetes.io/force-ssl-redirect` annotations, or cluster-wide [entryPoint redirection](../reference/install-configuration/entrypoints.md#configuration-example) | Traefik translates the annotations when they are present. For a global default, configure HTTP-to-HTTPS redirection on the `web` entryPoint and set `providers.kubernetesIngressNGINX.httpEntryPoint` / `httpsEntryPoint` if you need explicit entryPoint selection. |
+| `ssl-redirect` / `force-ssl-redirect` | `nginx.ingress.kubernetes.io/ssl-redirect` and `nginx.ingress.kubernetes.io/force-ssl-redirect` annotations, or cluster-wide [entryPoint redirection](../reference/install-configuration/entrypoints.md#configuration-example) | Traefik translates the annotations when they are present. For a global default, configure HTTP-to-HTTPS redirection on the `web` entryPoint and set `providers.kubernetesIngressNGINX.httpEntryPoint` / `httpsEntryPoint` if you need explicit entryPoint selection. To serve Ingresses on HTTPS only (no non-TLS routers), set `providers.kubernetesIngressNGINX.disableNonTLSRouters: true`. This stops this provider from creating non-TLS routers for its Ingresses — the HTTP entryPoint itself is unaffected. Remove the entryPoint from your install configuration if you want the port closed entirely. |
 | `ssl-protocols` / `ssl-ciphers` | [TLS options](../reference/routing-configuration/http/tls/tls-options.md) | Apply them globally through an entryPoint TLS option, or per Ingress via `traefik.ingress.kubernetes.io/router.tls.options`. |
 | `hsts`, `hsts-max-age`, `hsts-include-subdomains`, `hsts-preload` | [Headers middleware](../reference/routing-configuration/http/middlewares/headers.md) | Use `stsSeconds`, `stsIncludeSubdomains`, `stsPreload`, and `forceSTSHeader`. Attach the middleware on an entryPoint for a cluster-wide default. |
 | `use-proxy-protocol` | [EntryPoint `proxyProtocol` configuration](../reference/install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) | Configure it on every entryPoint that sits behind a load balancer speaking PROXY protocol. |
@@ -230,6 +236,10 @@ When you find one of these keys, translate the underlying intent rather than try
     ```
 Install Traefik with the Kubernetes Ingress NGINX provider enabled. Both controllers will serve the same Ingress resources simultaneously.
 
+!!! warning "Read the status race condition note first"
+
+    Running both controllers against the same Ingresses creates contention on the `status.loadBalancer.ingress[]` field. Before installing, review the [Ingress Status Race Condition](#status-race) section in Step 3 and decide which mitigation to apply (disable `publishService` on Traefik, or use a transitional IngressClass).
+
 ### Add Traefik Helm Repository
 
 ```bash
@@ -242,7 +252,7 @@ helm repo update
 ```bash
 helm upgrade --install traefik traefik/traefik \
   --namespace traefik --create-namespace \
-  --set providers.kubernetesIngressNginx.enabled=true
+  --set providers.kubernetesIngressNGINX.enabled=true
 ```
 
 Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
@@ -250,7 +260,7 @@ Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/mast
 ```yaml tab="traefik-values.yaml"
 ...
 providers:
-  kubernetesIngressNginx:
+  kubernetesIngressNGINX:
     enabled: true
  ...
 ```
@@ -355,11 +365,20 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 
     Some ISPs ignore DNS TTL values to reduce traffic costs, caching records longer than specified. After removing NGINX from DNS, keep NGINX running for at least 24-48 hours before uninstalling to avoid dropping traffic from users whose ISPs have stale DNS caches.
 
-??? info "ExternalDNS Users"
+<a id="status-race"></a>
 
-    If you use [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automatically manage DNS records based on Ingress status, both NGINX and Traefik will compete to update the Ingress status with their LoadBalancer IPs when `publishService` is enabled. Traefik typically wins because it updates faster, which can cause unexpected traffic shifts.
+!!! warning "Ingress Status Race Condition During Coexistence"
 
-    **Recommended approach for ExternalDNS:**
+    While both controllers manage the same Ingress resources (same `ingressClassName: nginx`), they will both attempt to write the LoadBalancer address into `status.loadBalancer.ingress[]` on every Ingress they own. Each controller overwrites the other in a tight reconciliation loop, with no error reported in the logs (just repeated `Updated ingress status` info lines on both sides).
+
+    Routing itself is not affected: both controllers correctly serve traffic during the coexistence window. The flapping status field affects anything that watches it:
+
+    - [ExternalDNS](https://github.com/kubernetes-sigs/external-dns), which may shift DNS records back and forth between the two LoadBalancer IPs.
+    - kube-state-metrics, monitoring dashboards, and alerting rules that observe Ingress status.
+    - GitOps tools such as ArgoCD or Flux, which will report a permanent drift on every affected Ingress.
+    - Custom operators reconciling on the Ingress status field.
+
+    **Recommended mitigation (option 1): disable status publishing on Traefik during coexistence**
 
     1. **[Install Traefik](#step-1-install-traefik-alongside-nginx) with `publishService` disabled**:
 
@@ -372,9 +391,11 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
               enabled: false  # Disable to prevent status updates
         ```
 
-    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
+        Traefik keeps serving the Ingresses normally. It only stops writing the status field, leaving NGINX as the sole writer.
 
-    3. **Switch DNS via NGINX** - Configure NGINX to publish Traefik's service address:
+    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname.
+
+    3. **Switch DNS via NGINX** (ExternalDNS users only). Configure NGINX to publish Traefik's service address so ExternalDNS points traffic to Traefik:
 
         ```yaml
         # nginx-values.yaml
@@ -383,11 +404,13 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
             pathOverride: "traefik/traefik"  # Points to Traefik's service
         ```
 
-        This makes NGINX update the Ingress status with Traefik's LoadBalancer IP, causing ExternalDNS to point traffic to Traefik.
+    4. **Verify traffic flows through Traefik**. At this point, you can still roll back by removing the `pathOverride`.
 
-    4. **Verify traffic flows through Traefik** - At this point, you can still rollback by removing the `pathOverride`
+    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller).
 
-    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-4-uninstall-ingress-nginx-controller)
+    **Alternative mitigation (option 2): use a transitional IngressClass**
+
+    Give the migrating NGINX a distinct IngressClass (for example `nginx-migration`) so the two controllers never own the same Ingress at the same time. This is the approach SUSE documents for RKE2 migrations: see [SUSE: Migrate from Ingress NGINX to Traefik](https://documentation.suse.com/cloudnative/rke2/latest/en/reference/ingress_migration.html). This avoids any contention on `status.loadBalancer.ingress[]` entirely, at the cost of a short traffic-cutover step instead of a progressive DNS shift.
 
 ### Option B: External Load Balancer with Weighted Traffic
 
@@ -517,7 +540,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
         loadBalancerIP: "<your-static-ip>"
     ```
 
-    For more details, see the [GKE LoadBalancer Service parameters documentation](https://cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
+    For more details, see the [GKE LoadBalancer Service parameters documentation](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/service-load-balancer-parameters).
 
 ??? note "OVHcloud"
 

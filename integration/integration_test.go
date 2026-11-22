@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	stdlog "log"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,10 +23,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	dockernetwork "github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -74,6 +76,7 @@ type BaseSuite struct {
 	suite.Suite
 
 	containers map[string]testcontainers.Container
+	vpn        testcontainers.Container
 	network    *testcontainers.DockerNetwork
 	hostIP     string
 }
@@ -81,7 +84,7 @@ type BaseSuite struct {
 func (s *BaseSuite) SetupSuite() {
 	if isDockerDesktop(s.T()) {
 		_, err := os.Stat(tailscaleSecretFilePath)
-		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/v2.11/contributing/building-testing/#testing)")
+		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/contributing/building-testing/#testing)")
 	}
 
 	// configure default standard log.
@@ -97,7 +100,7 @@ func (s *BaseSuite) SetupSuite() {
 		Driver: "default",
 		Config: []dockernetwork.IPAMConfig{
 			{
-				Subnet: "172.31.42.0/24",
+				Subnet: netip.MustParsePrefix("172.31.42.0/24"),
 			},
 		},
 	}))
@@ -150,16 +153,21 @@ func isDockerDesktop(t *testing.T) bool {
 		t.Fatalf("failed to create docker client: %s", err)
 	}
 
-	info, err := cli.Info(t.Context())
+	res, err := cli.Info(t.Context(), client.InfoOptions{})
 	if err != nil {
 		t.Fatalf("failed to get docker info: %s", err)
 	}
 
-	return info.OperatingSystem == "Docker Desktop"
+	return res.Info.OperatingSystem == "Docker Desktop"
 }
 
 func (s *BaseSuite) TearDownSuite() {
 	s.composeDown()
+
+	if s.vpn != nil {
+		err := s.vpn.Terminate(s.T().Context())
+		require.NoError(s.T(), err)
+	}
 
 	err := try.Do(5*time.Second, func() error {
 		if s.network != nil {
@@ -195,24 +203,28 @@ func (s *BaseSuite) createComposeProject(name string) {
 	for id, containerConfig := range composeConfigData.Services {
 		var mounts []mount.Mount
 		for _, volume := range containerConfig.Volumes {
-			split := strings.Split(volume, ":")
-			if len(split) != 2 {
+			src, dst, ok := strings.Cut(volume, ":")
+			if !ok {
 				continue
 			}
 
-			if strings.HasPrefix(split[0], "./") {
-				path, err := os.Getwd()
+			if strings.HasPrefix(src, "./") {
+				wd, err := os.Getwd()
 				if err != nil {
 					log.Err(err).Msg("can't determine current directory")
 					continue
 				}
-				split[0] = strings.Replace(split[0], "./", path+"/", 1)
+				src = wd + "/" + strings.TrimPrefix(src, "./")
 			}
 
-			abs, err := filepath.Abs(split[0])
+			abs, err := filepath.Abs(src)
 			require.NoError(s.T(), err)
 
-			mounts = append(mounts, mount.Mount{Source: abs, Target: split[1], Type: mount.TypeBind})
+			mounts = append(mounts, mount.Mount{
+				Source: abs,
+				Target: dst,
+				Type:   mount.TypeBind,
+			})
 		}
 
 		if containerConfig.Deploy.Replicas > 0 {
@@ -469,6 +481,10 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 	// If we ever change the docker subnet in the Makefile,
 	// we need to change this one below correspondingly.
 	s.composeExec("tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
+
+	// Keep the suite VPN alive when individual tests tear down their compose services.
+	s.vpn = s.containers["tailscaled"]
+	delete(s.containers, "tailscaled")
 }
 
 // composeExec runs the command in the given args in the given compose service container.

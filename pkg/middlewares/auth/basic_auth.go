@@ -2,11 +2,13 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
@@ -18,7 +20,8 @@ import (
 )
 
 const (
-	typeNameBasic = "BasicAuth"
+	typeNameBasic     = "BasicAuth"
+	maxPasswordLength = 1024
 )
 
 type basicAuth struct {
@@ -41,6 +44,10 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(users) == 0 {
+		return nil, fmt.Errorf("no users found in %s", authConfig.UsersFile)
 	}
 
 	// To prevent timing attacks, we need to compute a hash even if the user is not found.
@@ -78,7 +85,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	user, password, ok := req.BasicAuth()
 	var authenticated bool
-	if ok {
+	if ok && len(password) <= maxPasswordLength {
 		authenticated = b.checkPassword(user, password)
 	}
 
@@ -99,6 +106,8 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
+		// Note: the header names aliasing the header field (e.g. X_Auth_User) are not handled here,
+		// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
 		// TODO Deprecated we should add the header with canonical key.
 		req.Header.Del(b.headerField)
 		req.Header[b.headerField] = []string{user}
@@ -114,8 +123,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (b *basicAuth) checkPassword(user, password string) bool {
 	secret := b.auth.Secrets(user, b.auth.Realm)
 
-	key := password + secret
-	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
+	match, _, _ := b.singleflightGroup.Do(singleflightKey(user, password), func() (any, error) {
 		if secret == "" {
 			_ = b.checkSecret(password, b.notFoundSecret)
 			return false, nil
@@ -125,6 +133,14 @@ func (b *basicAuth) checkPassword(user, password string) bool {
 	})
 
 	return match.(bool)
+}
+
+// singleflightKey returns the deduplication key for a credential pair.
+// Keying on the stored secret leaks user existence; dropping the user hands one user's verdict
+// to another (GHSA-6765-c87h-8mrf). The length prefix keeps the key unambiguous without relying
+// on the caller to reject a user containing a colon.
+func singleflightKey(user, password string) string {
+	return strconv.Itoa(len(user)) + ":" + user + ":" + password
 }
 
 func (b *basicAuth) secretBasic(user, _ string) string {
@@ -138,7 +154,8 @@ func (b *basicAuth) secretBasic(user, _ string) string {
 func basicUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 2 {
-		return "", "", fmt.Errorf("error parsing BasicUser: %v", user)
+		// The user is not part of the error, as it may come from a secret.
+		return "", "", errors.New("expected user:hash format")
 	}
 	return split[0], split[1], nil
 }

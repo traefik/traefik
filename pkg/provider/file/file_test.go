@@ -106,6 +106,32 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	}
 }
 
+func TestBuildConfigurationErrorIncludesFilename(t *testing.T) {
+	tempDir := t.TempDir()
+
+	file, err := os.CreateTemp(tempDir, "temp*.yml")
+	require.NoError(t, err)
+
+	// passHostHeader is intentionally misindented to produce a YAML syntax error.
+	content := `
+http:
+  services:
+    Service01:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8000"
+       passHostHeader: true
+`
+	_, err = file.WriteString(content)
+	require.NoError(t, err)
+
+	provider := &Provider{Filename: file.Name()}
+
+	_, err = provider.buildConfiguration()
+	require.Error(t, err)
+	assert.ErrorContains(t, err, file.Name())
+}
+
 func TestProvideWithoutWatch(t *testing.T) {
 	for _, test := range getTestCases() {
 		t.Run(test.desc+" without watch", func(t *testing.T) {
@@ -194,6 +220,38 @@ func TestProvideWithWatch(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
+	tempDir := t.TempDir()
+
+	err := copyFile("./fixtures/yaml/simple_file_01.yml", filepath.Join(tempDir, "simple_file_01.yml"))
+	require.NoError(t, err)
+
+	err = os.Symlink(filepath.Join(tempDir, "non_existent_file.txt"), filepath.Join(tempDir, "dangling_symlink.txt"))
+	require.NoError(t, err)
+
+	provider := &Provider{
+		Directory: tempDir,
+		Watch:     true,
+	}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		err := provider.Provide(configChan, safe.NewPool(t.Context()))
+		assert.NoError(t, err)
+	}()
+
+	timeout := time.After(time.Second)
+	select {
+	case conf := <-configChan:
+		require.NotNil(t, conf.Configuration.HTTP)
+		numServices := len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
+		numRouters := len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
+		assert.Equal(t, 6, numServices)
+		assert.Equal(t, 3, numRouters)
+	case <-timeout:
+		t.Errorf("timeout while waiting for config")
 	}
 }
 

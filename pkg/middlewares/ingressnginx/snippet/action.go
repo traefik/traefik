@@ -393,7 +393,7 @@ func createProxySetHeaderAction(d config.IDirective) (action, error) {
 		return nil, errors.New("proxy_set_header directive requires 2 parameters (header and value)")
 	}
 
-	key := params[0].String()
+	key := trimQuote(params[0].String())
 	val := trimQuote(params[1].String())
 
 	return func(rw http.ResponseWriter, req *http.Request, ctx *actionContext) (bool, error) {
@@ -793,6 +793,18 @@ func createRewriteAction(d config.IDirective) (action, error) {
 				req.URL.RawQuery = ""
 			}
 			// Otherwise, keep the original query string.
+		}
+
+		// Here we are sanitizing the URL when the path is not empty,
+		// as the JoinPath method is adding a leading slash if the path is empty.
+		rewrittenPath := req.URL.Path
+		if rewrittenPath != "" {
+			req.URL = req.URL.JoinPath()
+		}
+		// Stop here if the normalization of the path produces a different path.
+		if rewrittenPath != req.URL.Path {
+			ctx.statusCode = http.StatusBadRequest
+			return true, nil
 		}
 
 		req.RequestURI = req.URL.RequestURI()

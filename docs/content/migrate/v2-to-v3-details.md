@@ -642,7 +642,7 @@ Use `PathRegexp` instead for dynamic path segments.
 
 `QueryRegexp` has been introduced to match query values using a regular expression.
 
-`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://golang.org/pkg/regexp/syntax/).
+`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://pkg.go.dev/regexp/syntax).
 
 All matchers now take a single value (except `Header`, `HeaderRegexp`, `Query`, and `QueryRegexp` which take two)
 and should be explicitly combined using logical operators to mimic previous behavior.
@@ -680,7 +680,7 @@ It can be configured in the install configuration.
 ##### Configure the Syntax Per Router
 
 The rule syntax can also be configured on a per-router basis.
-This allows to have heterogeneous router configurations and ease migration.
+This allows you to have heterogeneous router configurations and ease migration.
 
 ??? example "An example router with syntax configuration"
 

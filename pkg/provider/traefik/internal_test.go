@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
@@ -18,8 +19,6 @@ import (
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
-
-func pointer[T any](v T) *T { return &v }
 
 func Test_createConfiguration(t *testing.T) {
 	testCases := []struct {
@@ -188,9 +187,9 @@ func Test_createConfiguration(t *testing.T) {
 							},
 						},
 						Observability: &static.ObservabilityConfig{
-							AccessLogs: pointer(false),
-							Tracing:    pointer(false),
-							Metrics:    pointer(false),
+							AccessLogs: new(false),
+							Tracing:    new(false),
+							Metrics:    new(false),
 						},
 					},
 				},
@@ -343,6 +342,98 @@ func Test_createConfiguration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.JSONEq(t, string(expectedJSON), string(actualJSON))
+		})
+	}
+}
+
+func Test_createConfiguration_spiffe(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		staticCfg    static.Configuration
+		expectedHTTP *dynamic.Spiffe
+		expectedTCP  *dynamic.Spiffe
+	}{
+		{
+			desc: "only the HTTP servers transport defines a SPIFFE configuration",
+			staticCfg: static.Configuration{
+				ServersTransport: &static.ServersTransport{
+					Spiffe: &static.Spiffe{
+						IDs:         []string{"spiffe://trust.domain/http"},
+						TrustDomain: "http.trust.domain",
+					},
+				},
+				TCPServersTransport: &static.TCPServersTransport{
+					TLS: &static.TLSClientConfig{},
+				},
+			},
+			expectedHTTP: &dynamic.Spiffe{
+				IDs:         []string{"spiffe://trust.domain/http"},
+				TrustDomain: "http.trust.domain",
+			},
+		},
+		{
+			desc: "only the TCP servers transport defines a SPIFFE configuration",
+			staticCfg: static.Configuration{
+				ServersTransport: &static.ServersTransport{},
+				TCPServersTransport: &static.TCPServersTransport{
+					TLS: &static.TLSClientConfig{
+						Spiffe: &static.Spiffe{
+							IDs:         []string{"spiffe://trust.domain/tcp"},
+							TrustDomain: "tcp.trust.domain",
+						},
+					},
+				},
+			},
+			expectedTCP: &dynamic.Spiffe{
+				IDs:         []string{"spiffe://trust.domain/tcp"},
+				TrustDomain: "tcp.trust.domain",
+			},
+		},
+		{
+			desc: "the HTTP and the TCP servers transports define distinct SPIFFE configurations",
+			staticCfg: static.Configuration{
+				ServersTransport: &static.ServersTransport{
+					Spiffe: &static.Spiffe{
+						IDs:         []string{"spiffe://trust.domain/http"},
+						TrustDomain: "http.trust.domain",
+					},
+				},
+				TCPServersTransport: &static.TCPServersTransport{
+					TLS: &static.TLSClientConfig{
+						Spiffe: &static.Spiffe{
+							IDs:         []string{"spiffe://trust.domain/tcp"},
+							TrustDomain: "tcp.trust.domain",
+						},
+					},
+				},
+			},
+			expectedHTTP: &dynamic.Spiffe{
+				IDs:         []string{"spiffe://trust.domain/http"},
+				TrustDomain: "http.trust.domain",
+			},
+			expectedTCP: &dynamic.Spiffe{
+				IDs:         []string{"spiffe://trust.domain/tcp"},
+				TrustDomain: "tcp.trust.domain",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			provider := Provider{staticCfg: test.staticCfg}
+
+			cfg := provider.createConfiguration(t.Context())
+
+			httpServersTransport := cfg.HTTP.ServersTransports["default"]
+			require.NotNil(t, httpServersTransport)
+			assert.Equal(t, test.expectedHTTP, httpServersTransport.Spiffe)
+
+			tcpServersTransport := cfg.TCP.ServersTransports["default"]
+			require.NotNil(t, tcpServersTransport)
+			require.NotNil(t, tcpServersTransport.TLS)
+			assert.Equal(t, test.expectedTCP, tcpServersTransport.TLS.Spiffe)
 		})
 	}
 }

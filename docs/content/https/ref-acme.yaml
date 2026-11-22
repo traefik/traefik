@@ -65,6 +65,13 @@ certificatesResolvers:
       #
       # keyType: RSA4096
 
+      # Reuse the private key from the previous certificate generation during the renewal.
+      #
+      # Optional
+      # Default: true
+      #
+      # reusePrivateKey: false
+
       # Use a TLS-ALPN-01 ACME challenge.
       #
       # Optional (but recommended)

@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-rewrite-target-absolute-url
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: https://bar.example.org/$1
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: rewrite-target-absolute-url.localhost
+      http:
+        paths:
+          - path: /original/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

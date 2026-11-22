@@ -12,6 +12,8 @@ func CheckFile(name string) (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			defer f.Close()
+
 			return false, f.Chmod(0o600)
 		}
 		return false, err

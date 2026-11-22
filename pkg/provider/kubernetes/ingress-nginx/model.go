@@ -14,6 +14,10 @@ type model struct {
 	// Servers holds one entry per distinct hostname across all ingresses.
 	Servers map[string]*server
 
+	// ProcessedIngresses holds the ingresses that contributed routing
+	// configuration and should have their published status refreshed.
+	ProcessedIngresses []*netv1.Ingress
+
 	// PassthroughBackends holds ssl-passthrough entries.
 	PassthroughBackends []*sslPassthroughBackend
 
@@ -29,9 +33,17 @@ type model struct {
 	DefaultBackendLocation *location
 
 	// Certs holds all TLS certificates resolved from Kubernetes Secrets across all ingresses.
-	// The map key is the certificate PEM, the value is the matching private key PEM.
-	// Using the cert PEM as the key naturally deduplicates certificates that appear in multiple ingresses.
-	Certs map[string]string
+	// The map key is "<namespace>/<secretName>", which deduplicates by Secret identity
+	// rather than by certificate PEM (so two distinct Secrets with the same cert
+	// content remain separate entries, matching ingress-nginx behavior).
+	Certs map[string]certPair
+}
+
+// certPair holds the certificate and private key PEM bytes for a single
+// Kubernetes Secret resolved from a TLS section.
+type certPair struct {
+	Cert string
+	Key  string
 }
 
 // backend represents a resolved upstream service.
@@ -45,6 +57,9 @@ type backend struct {
 
 	// ServiceName is the original Kubernetes service name (without namespace or port).
 	ServiceName string
+
+	// ServicePort is the original port specification (number or name) from the Ingress rule.
+	ServicePort string
 
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
@@ -67,6 +82,26 @@ type server struct {
 
 	// Locations holds the per-path routing units for this hostname.
 	Locations []*location
+
+	// TLSOptionName is the name of the TLS option of the server.
+	// Every host gets its own TLS option, as ingress-nginx configures TLS per server block.
+	// Host-less rules belong to the ingress-nginx default server, which answers unknown server names:
+	// in Traefik, only the default TLS option applies to them.
+	TLSOptionName string
+
+	// TLSOption is the TLS option of the server, nil when the server has none to define.
+	TLSOption *tls.Options
+
+	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
+	clientAuthIngress string
+
+	// clientAuthPassCertificate is the auth-tls-pass-certificate-to-upstream annotation of that Ingress,
+	// as ingress-nginx reads it from the server block and not from the location.
+	clientAuthPassCertificate bool
+
+	// AuthTLSError tells why the first unusable auth-tls-secret declared for the server cannot be used.
+	// ingress-nginx answers 403 to every request of such a server.
+	AuthTLSError string
 }
 
 // location is the per-path routing unit. It is the central type of the metamodel:
@@ -115,6 +150,9 @@ type location struct {
 	// DigestAuth holds the resolved digest-auth middleware (nil unless auth-type=digest).
 	DigestAuth *dynamic.DigestAuth
 
+	// AuthURNRefs holds the values of the users of BasicAuth or DigestAuth, which only hold their URNs.
+	AuthURNRefs map[string]string
+
 	// ResolvedCustomHeaders holds the pre-fetched custom response headers.
 	// Populated in Phase 1 from the custom-headers ConfigMap.
 	ResolvedCustomHeaders map[string]string
@@ -122,14 +160,6 @@ type location struct {
 	// ResolvedHTTPErrorBackendName is the key into Configuration.Backends for the
 	// custom-http-errors default backend service. Empty if no custom errors configured.
 	ResolvedHTTPErrorBackendName string
-
-	// TLSOptionName is set to the TLS option name when auth-tls-secret is configured.
-	TLSOptionName string
-
-	// TLSOption holds the resolved client-auth TLS option for this Location
-	// (nil when auth-tls-secret is not configured). The translator registers it
-	// once per unique TLSOptionName in conf.TLS.Options.
-	TLSOption *tls.Options
 
 	// HasTLS is true when the parent ingress has a TLS section covering this
 	// location's host. The certs themselves live on the parent Server.
@@ -153,6 +183,10 @@ type location struct {
 	ServiceName string
 	ServicePort string
 
+	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
+	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
+	SSLPassthrough bool
+
 	// SSLRedirectOnly is true when the non-TLS router should only perform an
 	// HTTPS redirect. All other middlewares are suppressed for that router.
 	SSLRedirectOnly bool
@@ -160,8 +194,11 @@ type location struct {
 	// AccessLog, if non-nil, overrides the router-level access log setting.
 	AccessLog *bool
 
-	// AppRoot, if non-nil, is the path to redirect bare "/" requests to.
-	AppRoot *string
+	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
+	AppRoot *dynamic.AppRoot
+
+	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
+	AppRootExtraRouterRule string
 
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
@@ -196,7 +233,12 @@ type location struct {
 	// LimitConnections, if non-nil, caps concurrent in-flight requests per source IP.
 	LimitConnections *dynamic.InFlightReq
 
-	// AuthTLSPassCert, if non-nil, forwards the client TLS certificate to the backend.
+	// LimitAllowlist holds the client IP ranges exempted from the rate and connection
+	// limits above. In nginx those limits share a single counting key, and the allowlist
+	// empties it, so an allowlisted client is exempted from all of them at once.
+	LimitAllowlist []string
+
+	// AuthTLSPassCert, if non-nil, sets the Ssl-Client-* headers from the client TLS certificate, removing the values the client sent for them.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
 
 	// SnippetAuth, if non-nil, configures server/configuration snippets and forward auth.
@@ -212,6 +254,11 @@ type location struct {
 	// ingress-level spec.defaultBackend fallback (host-only rule, no path,
 	// no serversTransport).
 	IsIngressDefaultBackend bool
+}
+
+// hasLimits returns true when the location carries at least one rate or connection limit.
+func (l *location) hasLimits() bool {
+	return l.RateLimitRPM != nil || l.RateLimitRPS != nil || l.LimitConnections != nil
 }
 
 // middlewareCustomHTTPErrors configures error-page routing for specific HTTP status codes.
@@ -269,6 +316,7 @@ func (c *canaryConfig) RequiresNonCanaryRouter() bool {
 }
 
 // sslPassthroughBackend holds a TLS passthrough entry.
+// It only describes the TCP router: the HTTP side of an ssl-passthrough ingress goes through the regular location path, like any other ingress.
 type sslPassthroughBackend struct {
 	// BackendName is the key into Configuration.Backends.
 	BackendName string

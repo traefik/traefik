@@ -1,14 +1,21 @@
 package authtlspasscertificatetoupstream
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	cryptoTLS "crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -250,6 +257,85 @@ var next = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}
 })
 
+// testPKI holds certificates generated for the tests, as PEM, since the verification checks their validity period.
+var testPKI = newTestPKI()
+
+type pki struct {
+	ca                     string
+	intermediate           string
+	clientCert             string
+	intermediateClientCert string
+	serverCert             string
+	untrustedCert          string
+}
+
+func newTestPKI() pki {
+	caCert, caKey, caPEM := issueCert(&x509.Certificate{
+		Subject:               pkix.Name{CommonName: "Test CA"},
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}, nil, nil)
+	intermediateCert, intermediateKey, intermediatePEM := issueCert(&x509.Certificate{
+		Subject:               pkix.Name{CommonName: "Test intermediate CA"},
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign,
+	}, caCert, caKey)
+	_, _, clientPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "client", Organization: []string{"Cheese"}},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, caCert, caKey)
+	_, _, intermediateClientPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "intermediate client"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, intermediateCert, intermediateKey)
+	_, _, serverPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "server"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}, caCert, caKey)
+	_, _, untrustedPEM := issueCert(&x509.Certificate{
+		Subject:     pkix.Name{CommonName: "client"},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, nil, nil)
+
+	return pki{
+		ca:                     caPEM,
+		intermediate:           intermediatePEM,
+		clientCert:             clientPEM,
+		intermediateClientCert: intermediateClientPEM,
+		serverCert:             serverPEM,
+		untrustedCert:          untrustedPEM,
+	}
+}
+
+// issueCert signs template with parentKey, or self-signs it when parent is nil.
+func issueCert(template, parent *x509.Certificate, parentKey crypto.Signer) (*x509.Certificate, crypto.Signer, string) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	template.SerialNumber = big.NewInt(time.Now().UnixNano())
+	template.NotBefore = time.Now().Add(-time.Hour)
+	template.NotAfter = time.Now().Add(time.Hour)
+	if parent == nil {
+		parent, parentKey = template, key
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, parent, key.Public(), parentKey)
+	if err != nil {
+		panic(err)
+	}
+
+	cert, err := x509.ParseCertificate(der)
+	if err != nil {
+		panic(err)
+	}
+
+	return cert, key, string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
+}
+
 func getCertPEM(certContent string) string {
 	cert := getCertificate(certContent)
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
@@ -257,24 +343,36 @@ func getCertPEM(certContent string) string {
 }
 
 func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
+	caFiles := []types.FileOrContent{types.FileOrContent(testPKI.ca)}
+
 	testCases := []struct {
 		desc                 string
 		clientAuthType       string
 		caFiles              []types.FileOrContent
+		passCertificate      bool
 		certContents         []string
+		noTLS                bool
 		expectedClientVerify string
 		expectedSubjectDN    string
 		expectedIssuerDN     string
 		expectedCert         string
 	}{
 		{
-			desc:                 "No TLS",
+			// Nginx builds these headers from variables that are empty outside of a TLS connection,
+			// and omits a header whose value is empty, so none of them is set.
+			desc:           "No TLS",
+			clientAuthType: tls.RequireAndVerifyClientCert,
+			noTLS:          true,
+		},
+		{
+			desc:                 "TLS without client certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
 			expectedClientVerify: "NONE",
 		},
 		{
 			desc:                 "TLS with simple certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -284,6 +382,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with complete certificate",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(completeCheeseCrt).Subject.String(),
@@ -293,6 +392,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with multiple certificates only uses leaf",
 			clientAuthType:       tls.RequireAndVerifyClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt, completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -302,6 +402,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with optional verify client",
 			clientAuthType:       tls.VerifyClientCertIfGiven,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -311,6 +412,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		{
 			desc:                 "TLS with optional_no_ca invalid cert (no matching CA)",
 			clientAuthType:       tls.RequestClientCert,
+			passCertificate:      true,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "FAILED:",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -318,7 +420,68 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:                 "No TLS with optional_no_ca",
+			desc:                 "TLS with optional_no_ca certificate signed by the CA",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			passCertificate:      true,
+			certContents:         []string{testPKI.clientCert},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(testPKI.clientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.clientCert).Issuer.String(),
+			expectedCert:         getCertPEM(testPKI.clientCert),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate signed by an intermediate CA only uses leaf",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			passCertificate:      true,
+			certContents:         []string{testPKI.intermediateClientCert, testPKI.intermediate},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(testPKI.intermediateClientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.intermediateClientCert).Issuer.String(),
+			expectedCert:         getCertPEM(testPKI.intermediateClientCert),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate not signed by the CA",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			certContents:         []string{testPKI.untrustedCert},
+			expectedClientVerify: "FAILED:",
+			expectedSubjectDN:    getCertificate(testPKI.untrustedCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.untrustedCert).Issuer.String(),
+		},
+		{
+			desc:                 "TLS with optional_no_ca certificate not allowed for client authentication",
+			clientAuthType:       tls.RequestClientCert,
+			caFiles:              caFiles,
+			certContents:         []string{testPKI.serverCert},
+			expectedClientVerify: "FAILED:",
+			expectedSubjectDN:    getCertificate(testPKI.serverCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.serverCert).Issuer.String(),
+		},
+		{
+			desc:                 "TLS with optional_no_ca without CA certificate",
+			clientAuthType:       tls.RequestClientCert,
+			certContents:         []string{testPKI.clientCert},
+			expectedClientVerify: "FAILED:no CA certificate",
+			expectedSubjectDN:    getCertificate(testPKI.clientCert).Subject.String(),
+			expectedIssuerDN:     getCertificate(testPKI.clientCert).Issuer.String(),
+		},
+		{
+			desc:                 "TLS without passing the certificate",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
+			certContents:         []string{minimalCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
+		},
+		{
+			desc:           "No TLS with optional_no_ca",
+			clientAuthType: tls.RequestClientCert,
+			noTLS:          true,
+		},
+		{
+			desc:                 "TLS without client certificate and optional_no_ca",
 			clientAuthType:       tls.RequestClientCert,
 			expectedClientVerify: "NONE",
 		},
@@ -329,8 +492,9 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			t.Parallel()
 
 			config := dynamic.AuthTLSPassCertificateToUpstream{
-				ClientAuthType: test.clientAuthType,
-				CAFiles:        test.caFiles,
+				ClientAuthType:  test.clientAuthType,
+				CAFiles:         test.caFiles,
+				PassCertificate: test.passCertificate,
 			}
 
 			handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
@@ -339,7 +503,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			res := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
-			if len(test.certContents) > 0 {
+			if !test.noTLS {
 				req.TLS = buildTLSWith(test.certContents)
 			}
 
@@ -358,6 +522,48 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			assert.Equal(t, test.expectedCert, req.Header.Get(sslClientCert))
 		})
 	}
+}
+
+func TestAuthTLSNoMTLSClearsCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "https://example.com/foo", nil)
+	req.TLS = &cryptoTLS.ConnectionState{}
+	req.Header.Set(sslClientCert, "client-cert")
+	req.Header.Set(sslClientSubjectDN, "CN=client")
+	req.Header.Set(sslClientIssuerDN, "CN=client-CA")
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, "NONE", req.Header.Get(sslClientVerify))
+	assert.Empty(t, req.Header.Get(sslClientCert))
+	assert.Empty(t, req.Header.Get(sslClientSubjectDN))
+	assert.Empty(t, req.Header.Get(sslClientIssuerDN))
+}
+
+// TestAuthTLSNoTLSClearsCertHeaders checks a request that never was over TLS, which is what the HTTP
+// router serves. Nginx builds these headers from variables that are empty there, and omits them, so
+// Traefik sends none of them either, Ssl-Client-Verify included.
+func TestAuthTLSNoTLSClearsCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Set(sslClientVerify, "SUCCESS")
+	req.Header.Set(sslClientCert, "client-cert")
+	req.Header.Set(sslClientSubjectDN, "CN=client")
+	req.Header.Set(sslClientIssuerDN, "CN=client-CA")
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, http.Header{}, req.Header)
 }
 
 func buildTLSWith(certContents []string) *cryptoTLS.ConnectionState {
@@ -388,4 +594,99 @@ func getCertificate(certContent string) *x509.Certificate {
 	}
 
 	return cert
+}
+
+// aliasChars holds the characters that are valid in a header name and that a backend deriving
+// variable names from the header names replaces by an underscore, hence making a name carrying one of
+// them alias another name.
+const aliasChars = "!#$%&'*+.^_`|~"
+
+// aliasesOf returns every spelling of name built by replacing its dashes with an aliasing character.
+func aliasesOf(name string) []string {
+	var aliases []string
+	for _, char := range aliasChars {
+		aliases = append(aliases, strings.ReplaceAll(name, "-", string(char)))
+	}
+
+	return aliases
+}
+
+// TestAuthTLSNoTLSClearsAliasingCertHeaders checks the plaintext path, the one an Ingress reaches when
+// ssl-redirect is disabled, against a client spelling the managed names so that they alias the
+// canonical ones. A backend deriving variable names from the header names reads Ssl_Client_Verify as
+// the Ssl-Client-Verify field, so none of those spellings may survive.
+func TestAuthTLSNoTLSClearsAliasingCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType: tls.VerifyClientCertIfGiven,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	for _, name := range []string{sslClientVerify, sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		for _, alias := range aliasesOf(name) {
+			// Assigning to the map directly: Header.Set would canonicalize these names on dashes.
+			req.Header[alias] = []string{"spoofed"}
+		}
+	}
+	// A name that merely carries an aliasing character is none of ours, and is left alone.
+	req.Header["X_Request_Id"] = []string{"42"}
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, http.Header{"X_Request_Id": {"42"}}, req.Header)
+}
+
+// TestAuthTLSMTLSClearsAliasingCertHeaders checks the same on the mutual TLS path: the middleware
+// sets the canonical names there, so an aliasing spelling the client supplied would otherwise reach
+// the backend beside Traefik's own value.
+func TestAuthTLSMTLSClearsAliasingCertHeaders(t *testing.T) {
+	config := dynamic.AuthTLSPassCertificateToUpstream{
+		ClientAuthType:  tls.RequireAndVerifyClientCert,
+		PassCertificate: true,
+	}
+	handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.TLS = buildTLSWith([]string{minimalCheeseCrt})
+	for _, name := range []string{sslClientVerify, sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		for _, alias := range aliasesOf(name) {
+			req.Header[alias] = []string{"spoofed"}
+		}
+	}
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	// Exactly the four canonical names, each carrying the value derived from the presented
+	// certificate, and no aliasing spelling beside them.
+	require.Len(t, req.Header, 4)
+	assert.Equal(t, "SUCCESS", req.Header.Get(sslClientVerify))
+	for _, name := range []string{sslClientCert, sslClientSubjectDN, sslClientIssuerDN} {
+		assert.NotEqual(t, "spoofed", req.Header.Get(name))
+		assert.NotEmpty(t, req.Header.Get(name))
+	}
+}
+
+func TestNormalizeHeaderName(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected string
+	}{
+		{desc: "canonical name", name: "Ssl-Client-Verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "lower case", name: "ssl-client-verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "underscores", name: "Ssl_Client_Verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "dots", name: "ssl.client.verify", expected: "SSL-CLIENT-VERIFY"},
+		{desc: "digits are kept", name: "X-Ssl-2", expected: "X-SSL-2"},
+		{desc: "empty name", name: "", expected: ""},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, normalizeHeaderName(test.name))
+		})
+	}
 }

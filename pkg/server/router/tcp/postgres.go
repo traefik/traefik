@@ -64,7 +64,7 @@ func (r *Router) servePostgres(conn *peekConn) error {
 		log.Error().Err(err).Msg("Error while setting deadline")
 	}
 
-	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
+	connData, err := tcpmuxer.NewConnData(hello.serverName, conn.RemoteAddr(), hello.protos)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while reading TCP connection data")
 		return nil

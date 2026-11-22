@@ -88,6 +88,30 @@ func TestGetBestCertificate(t *testing.T) {
 	}
 }
 
+// TestGetBestCertificate_SharedSAN ensures the selection stays deterministic
+// when distinct certificates share a SAN matching the server name (https://github.com/traefik/traefik/issues/13286).
+func TestGetBestCertificate_SharedSAN(t *testing.T) {
+	wildcardCert := &CertificateData{Certificate: &tls.Certificate{}}
+	exactCert := &CertificateData{Certificate: &tls.Certificate{}}
+
+	// Both certificates have a SAN matching app.example.test, but the exact-only
+	// certificate must always win as its identifier sorts last.
+	for range 100 {
+		dynamicMap := map[string]*CertificateData{
+			"*.app.example.test,app.example.test": wildcardCert,
+			"app.example.test":                    exactCert,
+		}
+
+		store := &CertificateStore{
+			DynamicCerts: safe.New(dynamicMap),
+			CertCache:    cache.New(1*time.Hour, 10*time.Minute),
+		}
+
+		clientHello := &tls.ClientHelloInfo{ServerName: "app.example.test"}
+		assert.Same(t, exactCert.Certificate, store.GetBestCertificate(clientHello))
+	}
+}
+
 func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	replacement := "wildcard"
 	if uppercase {

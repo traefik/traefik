@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -529,6 +530,67 @@ func (s *WebsocketSuite) TestHeaderAreForwarded() {
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", headers)
 
 	require.NoError(s.T(), err)
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	require.NoError(s.T(), err)
+
+	_, msg, err := conn.ReadMessage()
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), "OK", string(msg))
+}
+
+func (s *WebsocketSuite) TestSSLh2c() {
+	upgrader := gorillawebsocket.Upgrader{} // use default options
+
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = c.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+
+	ts.Config.Protocols = &http.Protocols{}
+	ts.Config.Protocols.SetHTTP1(true)
+	ts.Config.Protocols.SetUnencryptedHTTP2(true)
+	ts.Start()
+
+	url, err := url.Parse(ts.URL)
+	require.NoError(s.T(), err)
+	url.Scheme = "h2c"
+
+	file := s.adaptFile("fixtures/websocket/config_https.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: url.String(),
+	})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	require.NoError(s.T(), err)
+
+	// Add client self-signed cert
+	roots := x509.NewCertPool()
+	certContent, err := os.ReadFile("./resources/tls/local.cert")
+	require.NoError(s.T(), err)
+	roots.AppendCertsFromPEM(certContent)
+	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
+		RootCAs: roots,
+	}
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/echo", nil)
+	require.NoError(s.T(), err)
+
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
 	require.NoError(s.T(), err)
 

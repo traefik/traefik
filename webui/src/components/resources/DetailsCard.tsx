@@ -26,7 +26,7 @@ export const SectionTitle = ({ icon, title }: { icon?: ReactNode; title: string 
 type DetailsCardProps = {
   css?: CSS
   keyColumns?: number
-  items: { key: string; val: string | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
+  items: { key: string; val: string | number | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
   minKeyWidth?: string
   maxKeyWidth?: string
   testidPrefix?: string
@@ -100,7 +100,7 @@ export default function DetailsCard({
                     >
                       {item.key}
                     </StyledText>
-                    {typeof item.val === 'string' ? (
+                    {typeof item.val === 'string' || typeof item.val === 'number' ? (
                       <ValText>{item.val}</ValText>
                     ) : (
                       <Flex
@@ -149,7 +149,7 @@ export default function DetailsCard({
                         {item.key}
                       </StyledText>
                     </Grid>
-                    {typeof item.val === 'string' ? (
+                    {typeof item.val === 'string' || typeof item.val === 'number' ? (
                       <ValText css={{ flex: 1 }}>{item.val}</ValText>
                     ) : (
                       <Flex

@@ -8,7 +8,6 @@
 </p>
 
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.traefik.io/traefik)
-[![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](https://goreportcard.com/report/traefik/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
@@ -66,7 +65,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/traefik/) docker image
+- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/traefik/traefik/) docker image
 
 ## Supported Backends
 
@@ -151,7 +150,7 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Credits
 
-Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
+Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!
 
 The gopher's logo of Traefik is licensed under the Creative Commons 3.0 Attributions license.
 

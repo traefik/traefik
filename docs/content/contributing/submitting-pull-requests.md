@@ -77,6 +77,8 @@ in short, it looks like this:
     * During code review, we ask that you be reasonably responsive,
       if a PR languishes in code review it is at risk of rejection,
       or we may take ownership of the PR and the contributor will become a co-author.
+    * Maintainers may add the `ai/review` label to trigger an automated AI review of the pull request.
+      The review is based on repository-specific guidelines and posted as inline comments.
 * Merge.
     * Success!
 
@@ -93,6 +95,7 @@ Your PR will not be reviewed until these are green on the CI.
 * `make generate`
 * `make generate-crd`
 * `make test-gateway-api-conformance`
+* `make test-gateway-api-conformance-merged`
 * `make validate`
 * `make pull-images`
 * `make test`
@@ -203,7 +206,7 @@ here are some things you can do to move the process along:
 
 For more information on best practices, try these links:
 
-* [How to Write a Git Commit Message - Chris Beams](https://chris.beams.io/posts/git-commit/)
+* [How to Write a Git Commit Message - Chris Beams](https://chris.beams.io/git-commit)
 * [Distributed Git - Contributing to a Project (Commit Guidelines)](https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project)
 * [What’s with the 50/72 rule? - Preslav Rachev](https://preslav.me/2015/02/21/what-s-with-the-50-72-rule/)
 * [A Note About Git Commit Messages - Tim Pope](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
@@ -224,6 +227,26 @@ In this situation, you can ask the primary reviewer (assignee) whether they want
 to clear out all the comments.
 You do not have to fix every issue raised by every person who feels like commenting,
 but you should answer reasonable comments with an explanation.
+
+## AI-Assisted Code Review
+
+Maintainers may add the `ai/review` label to a pull request to trigger an automated AI code review.
+
+When the label is applied, an AI agent reads the diff and the full content of every changed file,
+then posts inline comments directly on the pull request.
+The review follows repository-specific guidelines covering security, correctness, breaking changes,
+performance, and Go conventions (error wrapping, context propagation, logging, test style, and more).
+
+**What to expect:**
+
+* Comments are categorized by severity: `CRITICAL`, `IMPORTANT`, `MINOR`, or `QUESTION`.
+* The agent checks call sites before flagging a change as unsafe — a finding that does not survive that check will not be posted.
+* Generated files, `//nolint:` directives, and patterns already used consistently across the codebase are not flagged.
+
+**How to respond:**
+
+Treat AI review comments the same way you would a human reviewer's comments.
+If a finding is incorrect or does not apply to your change, explain why in a reply — maintainers read every thread before approving.
 
 ## Common Sense and Courtesy
 

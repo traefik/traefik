@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/v2/vm"
 )
 
 // PP the interface of a plugin's provider.
@@ -74,6 +75,9 @@ type providerBuilder struct {
 	BasePkg string `json:"basePkg,omitempty" toml:"basePkg,omitempty" yaml:"basePkg,omitempty"`
 
 	interpreter *interp.Interpreter
+
+	// plugin is set when Yaegi v2 runs the plugin, interpreter otherwise.
+	plugin *vm.Plugin
 }
 
 // Provider is a plugin's provider wrapper.
@@ -83,6 +87,10 @@ type Provider struct {
 }
 
 func newProvider(builder providerBuilder, config map[string]any, providerName string) (*Provider, error) {
+	if builder.plugin != nil {
+		return newYaegiV2Provider(builder.plugin, config, providerName)
+	}
+
 	basePkg := builder.BasePkg
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(builder.Import), "-", "_")
@@ -142,7 +150,7 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 		return nil, results[1].Interface().(error)
 	}
 
-	prov, ok := results[0].Interface().(PP)
+	prov, ok := reflect.TypeAssert[PP](results[0])
 	if !ok {
 		return nil, fmt.Errorf("invalid provider type: %T", results[0].Interface())
 	}

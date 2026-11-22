@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"expvar"
 	"fmt"
@@ -29,9 +30,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/proxy/fast"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -194,6 +196,10 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
+	// The header names strategies warnings are logged here, and not in newHTTPServer,
+	// which is called once for the HTTP server and once for the HTTPS server.
+	logHeaderNamesStrategiesWarnings(ctx, config)
+
 	httpServer, err := newHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
 		return nil, fmt.Errorf("creating HTTP server: %w", err)
@@ -227,6 +233,24 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 	}, nil
 }
 
+// logHeaderNamesStrategiesWarnings warns about the deprecated underscoreHeadersStrategy option,
+// and about the entry points left without the aliasHeadersStrategy option configured.
+func logHeaderNamesStrategiesWarnings(ctx context.Context, configuration *static.EntryPoint) {
+	if configuration.HTTP.UnderscoreHeadersStrategy != "" {
+		log.Ctx(ctx).Warn().Msg("The underscoreHeadersStrategy option is deprecated, please use the aliasHeadersStrategy option instead. " +
+			"The underscoreHeadersStrategy option only handles the header names containing an underscore character, " +
+			"whereas the aliasHeadersStrategy option handles every header name aliasing another one.")
+	}
+
+	if configuration.HTTP.AliasHeadersStrategy == "" &&
+		(configuration.HTTP.UnderscoreHeadersStrategy == "" || configuration.HTTP.UnderscoreHeadersStrategy == static.UnderscoreHeadersStrategyKeep) {
+		log.Ctx(ctx).Warn().Msg("aliasHeadersStrategy is not configured: the request headers whose name aliases another header name " +
+			"(e.g. X_Auth_User or X.Auth.User for X-Auth-User) are forwarded as is. The backends deriving variable names from the header " +
+			"names (CGI, WSGI, PHP, NGINX, ...) read them as the header they alias, which allows a client to spoof the headers Traefik manages. " +
+			"Please set it to delete or reject on the entry points fronting such backends.")
+	}
+}
+
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.Ctx(ctx)
@@ -246,13 +270,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		if err != nil {
 			logger.Error().Err(err).Send()
 
-			var opErr *net.OpError
-			if errors.As(err, &opErr) && opErr.Temporary() {
+			if opErr, ok := errors.AsType[*net.OpError](err); ok && opErr.Temporary() {
 				continue
 			}
 
-			var urlErr *url.Error
-			if errors.As(err, &urlErr) && urlErr.Temporary() {
+			if urlErr, ok := errors.AsType[*url.Error](err); ok && urlErr.Temporary() {
 				continue
 			}
 
@@ -642,6 +664,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
 		configuration.ForwardedHeaders.NotAppendXForwardedFor,
+		configuration.ForwardedHeaders.AddXForwardedSchemeHeaders,
 		next)
 	if err != nil {
 		return nil, err
@@ -677,50 +700,107 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = denyFragment(handler)
 
-	serverHTTP := &http.Server{
-		Protocols:      &protocols,
-		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
-		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
-		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
-		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
-		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
-		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
-			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
-			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
-		},
+	handler = denyConnect(handler)
+
+	switch configuration.HTTP.AliasHeadersStrategy {
+	case "":
+		// The aliasHeadersStrategy option is not configured, fall back on the deprecated underscoreHeadersStrategy option.
+		switch configuration.HTTP.UnderscoreHeadersStrategy {
+		case "", static.UnderscoreHeadersStrategyKeep:
+			// Headers with underscores are forwarded as is.
+		case static.UnderscoreHeadersStrategyDelete:
+			handler = removeHeadersWithUnderscores(handler)
+		case static.UnderscoreHeadersStrategyReject:
+			handler = rejectHeadersWithUnderscores(handler)
+		default:
+			return nil, fmt.Errorf("invalid underscoreHeadersStrategy value %q", configuration.HTTP.UnderscoreHeadersStrategy)
+		}
+	case static.AliasHeadersStrategyKeep:
+		// Headers whose name aliases another header name are forwarded as is.
+	case static.AliasHeadersStrategyDelete:
+		handler = removeAliasingHeaders(handler)
+	case static.AliasHeadersStrategyReject:
+		handler = rejectAliasingHeaders(handler)
+	default:
+		return nil, fmt.Errorf("invalid aliasHeadersStrategy value %q", configuration.HTTP.AliasHeadersStrategy)
 	}
+
+	// An opaque URL has to be rejected before any handler deriving the path or the request URI from it,
+	// hence the wrapping has to be done last so that it is the first handler executed.
+	handler = denyOpaque(handler)
+
+	handler = populateRequestTLS(handler)
+
+	// The round trippers and connection pools dedicated to a connection (Kerberos or NTLM) are only reachable from its
+	// context, which is kept until the ConnState hook reports the connection closed to release them.
+	var transportConnContexts connContexts
+
+	var connContext multipleConnContext
+	connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
+		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
+		ctx = kerberos.AddTransportOnContext(ctx)
+		// Same as above for the FastProxy connection pools, storing a dedicated pool in case of Kerberos or NTLM.
+		ctx = fast.AddConnPoolsOnContext(ctx)
+		transportConnContexts.add(ctx, c)
+
+		if tlsConn, ok := c.(*tls.Conn); ok {
+			ctx = context.WithValue(ctx, tlsConnKey{}, tlsConn)
+
+			if tlsConnWithOptionsName, ok := tlsConn.NetConn().(tcp.TLSConn); ok {
+				return tcp.AddTLSOptionsNameInContext(ctx, tlsConnWithOptionsName.TLSOptionsName)
+			}
+		}
+
+		return ctx
+	})
+
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
+		connContext.AddConnContextFunc(func(ctx context.Context, c net.Conn) context.Context {
 			cState := &connState{Start: time.Now()}
 			if debugConnection {
 				clientConnectionStatesMu.Lock()
 				clientConnectionStates[getConnKey(c)] = cState
 				clientConnectionStatesMu.Unlock()
 			}
+
 			return context.WithValue(ctx, connStateKey, cState)
+		})
+	}
+
+	connState := func(c net.Conn, state http.ConnState) {
+		// A hijacked connection never reports the closed state, and serves no further request.
+		if state == http.StateClosed || state == http.StateHijacked {
+			if ctx, ok := transportConnContexts.remove(c); ok {
+				kerberos.ReleaseTransportOnContext(ctx)
+				fast.ReleaseConnPoolsOnContext(ctx)
+			}
 		}
 
 		if debugConnection {
-			serverHTTP.ConnState = func(c net.Conn, state http.ConnState) {
-				clientConnectionStatesMu.Lock()
-				if clientConnectionStates[getConnKey(c)] != nil {
-					clientConnectionStates[getConnKey(c)].State = state.String()
-				}
-				clientConnectionStatesMu.Unlock()
+			clientConnectionStatesMu.Lock()
+			if clientConnectionStates[getConnKey(c)] != nil {
+				clientConnectionStates[getConnKey(c)].State = state.String()
 			}
+			clientConnectionStatesMu.Unlock()
 		}
 	}
 
-	prevConnContext := serverHTTP.ConnContext
-	serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
-		// This adds an empty struct in order to store a RoundTripper in the ConnContext in case of Kerberos or NTLM.
-		ctx = service.AddTransportOnContext(ctx)
-		if prevConnContext != nil {
-			return prevConnContext(ctx, c)
-		}
-		return ctx
+	serverHTTP := &http.Server{
+		Protocols:           &protocols,
+		Handler:             handler,
+		ErrorLog:            stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ReadTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout:        time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:         time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		MaxHeaderBytes:      configuration.HTTP.MaxHeaderBytes,
+		MaxHeaderValueCount: configuration.HTTP.MaxHeaderValueCount,
+		HTTP2: &http.HTTP2Config{
+			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
+		},
+		ConnContext: connContext.Build(),
+		ConnState:   connState,
 	}
 
 	listener := newHTTPForwarder(ln)
@@ -760,6 +840,41 @@ func (t *trackedConnection) Close() error {
 	return t.WriteCloser.Close()
 }
 
+// denyOpaque rejects the request if the URL is opaque.
+// Go only populates URL.Opaque for a request target which is none of the four forms allowed by RFC 9112 section 3.2:
+// origin-form and absolute-form both leave a rest starting with a slash after the scheme,
+// and asterisk-form and authority-form are special-cased.
+// Such a target leaves Path, RawPath and Host empty, hence going unnoticed by the path handling and the routing,
+// while URL.RequestURI gives Opaque precedence over the path, which reinstates the target when forwarding to the backend.
+func denyOpaque(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.Opaque != "" {
+			log.Debug().Msgf("Rejecting request because it has an opaque URL: %s", req.URL.Opaque)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+type tlsConnKey struct{}
+
+// populateRequestTLS populates the TLS connection state of the request when it is missing on a TLS connection.
+func populateRequestTLS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			if tlsConn, ok := req.Context().Value(tlsConnKey{}).(*tls.Conn); ok {
+				state := tlsConn.ConnectionState()
+				req.TLS = &state
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
 // denyFragment rejects the request if the URL path contains a fragment (hash character).
 // When go receives an HTTP request, it assumes the absence of fragment URL.
 // However, it is still possible to send a fragment in the request.
@@ -772,6 +887,94 @@ func denyFragment(h http.Handler) http.Handler {
 			rw.WriteHeader(http.StatusBadRequest)
 
 			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// denyConnect rejects the CONNECT requests, whatever the HTTP version.
+// CONNECT tunnels are not supported, and forwarding them without a dedicated handling is unsafe.
+func denyConnect(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodConnect {
+			log.Debug().Msg("Rejecting CONNECT request: CONNECT tunnels are not supported")
+			rw.WriteHeader(http.StatusNotImplemented)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// isAliasingHeaderName reports whether the given header name contains a character which is neither a letter,
+// a digit, nor a dash, hence making it alias another header name.
+// Go canonicalizes header names on dashes only, whereas the backends deriving variable names from them
+// (CGI, WSGI, PHP, NGINX, ...) read X-Auth-User, X_Auth_User and X.Auth.User as the same HTTP_X_AUTH_USER variable.
+func isAliasingHeaderName(name string) bool {
+	for i := range len(name) {
+		switch c := name[i]; {
+		case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9', c == '-':
+			continue
+		default:
+			return true
+		}
+	}
+
+	return false
+}
+
+// removeHeadersWithUnderscores removes any request header whose name contains an underscore character.
+func removeHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectHeadersWithUnderscores rejects with a 400 Bad Request any request carrying a header whose name contains an underscore character.
+func rejectHeadersWithUnderscores(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if strings.Contains(key, "_") {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// removeAliasingHeaders removes any request header whose name contains a character
+// which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
+func removeAliasingHeaders(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if isAliasingHeaderName(key) {
+				delete(req.Header, key)
+			}
+		}
+
+		h.ServeHTTP(rw, req)
+	})
+}
+
+// rejectAliasingHeaders rejects with a 400 Bad Request any request carrying a header whose name
+// contains a character which is neither a letter, a digit, nor a dash, as such a name aliases another header name.
+func rejectAliasingHeaders(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for key := range req.Header {
+			if isAliasingHeaderName(key) {
+				http.Error(rw, "Bad Request", http.StatusBadRequest)
+				return
+			}
 		}
 
 		h.ServeHTTP(rw, req)
@@ -799,11 +1002,32 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 }
 
 // sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
+// The path parameters of the "..;", ".;" and ";" segments are removed first, as backends stripping path parameters (Servlet containers, Spring, ...) resolve them as dot-segments or duplicate slashes.
 // It cleans the request URL Path and RawPath, and updates the request URI.
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		r2 := new(http.Request)
 		*r2 = *req
+
+		// Removes the path parameters of the dot-segments and empty segments, so that JoinPath collapses them.
+		if escapedPath := req.URL.EscapedPath(); strings.Contains(escapedPath, ";") {
+			segments := strings.Split(escapedPath, "/")
+			for i, segment := range segments {
+				switch {
+				case strings.HasPrefix(segment, "..;"):
+					segments[i] = ".."
+				case strings.HasPrefix(segment, ".;"):
+					segments[i] = "."
+				case strings.HasPrefix(segment, ";"):
+					segments[i] = ""
+				}
+			}
+
+			r2.URL = new(url.URL)
+			*r2.URL = *req.URL
+			r2.URL.RawPath = strings.Join(segments, "/")
+			r2.URL.Path, _ = url.PathUnescape(r2.URL.RawPath)
+		}
 
 		// Cleans the URL raw path and path.
 		r2.URL = r2.URL.JoinPath()

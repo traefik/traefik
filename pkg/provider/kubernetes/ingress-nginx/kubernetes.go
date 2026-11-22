@@ -2,6 +2,7 @@ package ingressnginx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	kclientset "k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -28,6 +29,9 @@ const (
 
 	// unavailableServiceName is the name of a Traefik service returning a 503 Service Unavailable.
 	unavailableServiceName = "unavailable-service"
+
+	// forbiddenServiceName is the name of a Traefik service returning a 403 Forbidden.
+	forbiddenServiceName = "forbidden-service"
 
 	// NGINX default values.
 	annotationIngressClass = "kubernetes.io/ingress.class"
@@ -98,44 +102,42 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
-	// Configuration options available within the NGINX Ingress Controller ConfigMap.
-	ProxyRequestBuffering    bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
-	ClientBodyBufferSize     int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
-	ProxyBodySize            int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
-	ProxyBuffering           bool     `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
-	ProxyBufferSize          int64    `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
-	ProxyBuffersNumber       int      `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
-	ProxyConnectTimeout      int      `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
-	ProxyReadTimeout         int      `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
-	ProxySendTimeout         int      `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
-	ProxyNextUpstream        string   `description:"Defines in which cases a request should be retried." json:"proxyNextUpstream,omitempty" toml:"proxyNextUpstream,omitempty" yaml:"proxyNextUpstream,omitempty" export:"true"`
-	ProxyNextUpstreamTries   int      `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
-	ProxyNextUpstreamTimeout int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
-	CustomHTTPErrors         []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
-	UpstreamKeepaliveTimeout int      `description:"Defines the idle timeout for keep-alive connections to upstream servers. Timeout value is unitless and in seconds." json:"upstreamKeepaliveTimeout,omitempty" toml:"upstreamKeepaliveTimeout,omitempty" yaml:"upstreamKeepaliveTimeout,omitempty" export:"true"`
+	IPAllowListStrategy *dynamic.IPStrategy `description:"Defines the IP strategy to determine the client IP for allowlist/whitelist source range annotations." json:"ipAllowListStrategy,omitempty" toml:"ipAllowListStrategy,omitempty" yaml:"ipAllowListStrategy,omitempty" export:"true"`
 
-	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
-	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
-
-	AllowSnippetAnnotations bool `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
-
-	HTTPEntryPoint  string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
-	HTTPSEntryPoint string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	HTTPEntryPoint       string `description:"Defines the EntryPoint to use for HTTP requests." json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
+	HTTPSEntryPoint      string `description:"Defines the EntryPoint to use for HTTPS requests." json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	DisableNonTLSRouters bool   `description:"Disables the creation of non-TLS routers for Ingress resources. Cannot be used together with httpEntryPoint." json:"disableNonTLSRouters,omitempty" toml:"disableNonTLSRouters,omitempty" yaml:"disableNonTLSRouters,omitempty" export:"true"`
 	// TLSEntryPoints is set to the HTTPSEntryPoint value if it is set, otherwise it is left empty.
 	TLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	// Its value is set to the HTTPEntryPoint value if it is set, otherwise it is computed in SetEffectiveConfiguration.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
-	StrictValidatePathType bool `description:"Defines whether to reject the entire ingress when any path contains regex characters and pathType is Prefix or Exact." json:"strictValidatePathType,omitempty" toml:"strictValidatePathType,omitempty" yaml:"strictValidatePathType,omitempty" export:"true"`
+	// Configuration options available within the NGINX Ingress Controller ConfigMap.
+	ProxyRequestBuffering        bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
+	ClientBodyBufferSize         int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
+	ProxyBodySize                int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
+	ProxyBuffering               bool     `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
+	ProxyBufferSize              int64    `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
+	ProxyBuffersNumber           int      `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+	ProxyConnectTimeout          int      `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyReadTimeout             int      `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
+	ProxySendTimeout             int      `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
+	ProxyNextUpstream            string   `description:"Defines in which cases a request should be retried." json:"proxyNextUpstream,omitempty" toml:"proxyNextUpstream,omitempty" yaml:"proxyNextUpstream,omitempty" export:"true"`
+	ProxyNextUpstreamTries       int      `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
+	ProxyNextUpstreamTimeout     int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
+	CustomHTTPErrors             []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
+	UpstreamKeepaliveTimeout     int      `description:"Defines the idle timeout for keep-alive connections to upstream servers. Timeout value is unitless and in seconds." json:"upstreamKeepaliveTimeout,omitempty" toml:"upstreamKeepaliveTimeout,omitempty" yaml:"upstreamKeepaliveTimeout,omitempty" export:"true"`
+	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
+	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
+	AllowSnippetAnnotations      bool     `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
+	StrictValidatePathType       bool     `description:"Defines whether to reject the entire ingress when any path contains regex characters and pathType is Prefix or Exact." json:"strictValidatePathType,omitempty" toml:"strictValidatePathType,omitempty" yaml:"strictValidatePathType,omitempty" export:"true"`
 
 	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
-	k8sClient         *clientWrapper
-	lastConfiguration safe.Safe
-
+	k8sClient           *Client
 	applyMiddlewareFunc func(routerKey string, router *dynamic.Router, config *dynamic.Configuration, ingressConfig IngressConfig) error
 }
 
@@ -164,6 +166,20 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	client, err := p.newK8sClient()
+	if err != nil {
+		return fmt.Errorf("creating kubernetes client: %w", err)
+	}
+
+	return p.InitWithClient(client)
+}
+
+// InitWithClient initializes the provider with the given client instead of creating one.
+func (p *Provider) InitWithClient(client *Client) error {
+	if client == nil {
+		return errors.New("client must not be nil")
+	}
+
 	if err := p.validateConfiguration(); err != nil {
 		return fmt.Errorf("validating %s provider configuration: %w", ProviderName, err)
 	}
@@ -175,12 +191,7 @@ func (p *Provider) Init() error {
 		p.TLSEntryPoints = []string{p.HTTPSEntryPoint}
 	}
 
-	// Initializes Kubernetes client.
-	var err error
-	p.k8sClient, err = p.newK8sClient()
-	if err != nil {
-		return fmt.Errorf("creating kubernetes client: %w", err)
-	}
+	p.k8sClient = client
 
 	return nil
 }
@@ -214,26 +225,17 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ctxPool.Done():
 					return nil
-				case event := <-eventsChan:
+				case <-eventsChan:
 					// Note that event is the *first* event that came in during this
 					// throttling interval -- if we're hitting our throttle, we may have
 					// dropped events. This is fine, because we don't treat different
 					// event types differently. But if we do in the future, we'll need to
 					// track more information about the dropped events.
-					conf := p.loadConfiguration(ctxLog)
+					conf := p.BuildConfiguration(ctxLog)
 
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  ProviderName,
-							Configuration: conf,
-						}
+					configurationChan <- dynamic.Message{
+						ProviderName:  ProviderName,
+						Configuration: conf,
 					}
 
 					// If we're throttling, we sleep here for the throttle duration to
@@ -257,7 +259,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration {
+// BuildConfiguration builds the dynamic configuration from the resources that the client gives.
+func (p *Provider) BuildConfiguration(ctx context.Context) *dynamic.Configuration {
 	var ingressClasses []*netv1.IngressClass
 	ics, err := p.k8sClient.ListIngressClasses()
 	if err != nil {
@@ -269,23 +272,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	mc := p.build(ctx, ingressClasses)
 
 	// Update ingress statuses (requires k8s access, must happen in Phase 1 context).
-	for _, server := range mc.Servers {
-		for _, loc := range server.Locations {
-			if loc.IngressName == "" {
-				continue
-			}
-			// Retrieve the original ingress to update its status.
-			for _, ing := range p.k8sClient.ListIngresses() {
-				if ing.Namespace == loc.Namespace && ing.Name == loc.IngressName {
-					if err := p.updateIngressStatus(ing); err != nil {
-						log.Ctx(ctx).Error().Err(err).
-							Str("namespace", ing.Namespace).
-							Str("ingress", ing.Name).
-							Msg("Error while updating ingress status")
-					}
-					break
-				}
-			}
+	for _, ing := range mc.ProcessedIngresses {
+		if err := p.updateIngressStatus(ing); err != nil {
+			log.Ctx(ctx).Error().Err(err).
+				Str("namespace", ing.Namespace).
+				Str("ingress", ing.Name).
+				Msg("Error while updating ingress status")
 		}
 	}
 
@@ -294,6 +286,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) validateConfiguration() error {
+	if p.DisableNonTLSRouters && p.HTTPEntryPoint != "" {
+		return errors.New("httpEntryPoint cannot be set when disableNonTLSRouters is true")
+	}
+
 	// Validates and parses the default backend configuration.
 	if p.DefaultBackendService != "" {
 		parts := strings.Split(p.DefaultBackendService, "/")
@@ -318,23 +314,33 @@ func (p *Provider) validateConfiguration() error {
 	return nil
 }
 
-func (p *Provider) newK8sClient() (*clientWrapper, error) {
+func (p *Provider) newK8sClient() (*Client, error) {
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
 	}
 
+	var (
+		clientset kclientset.Interface
+		err       error
+	)
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
 		log.Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		return newInClusterClient(p.Endpoint)
+		clientset, err = newInClusterClientset(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
 		log.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		return newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+		clientset, err = newExternalClusterClientsetFromFile(os.Getenv("KUBECONFIG"))
 	default:
 		log.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		return newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+		clientset, err = newExternalClusterClientset(p.Endpoint, p.CertAuthFilePath, p.Token)
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(clientset), nil
 }
 
 func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {

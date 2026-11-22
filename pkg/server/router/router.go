@@ -19,6 +19,8 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/respondingtimeout"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -117,7 +119,8 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Observability config.
-		if router.Observability != nil {
+		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
+		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
@@ -125,6 +128,12 @@ func (m *Manager) ParseRouterTree() {
 		// Check for non-root router with Entrypoint config.
 		if len(router.EntryPoints) > 0 {
 			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
+			continue
+		}
+
+		// Responding timeouts are set on one level only: the deadlines of a child router would silently replace its parent ones.
+		if router.RespondingTimeouts != nil && m.hasAncestorWithRespondingTimeouts(router, map[string]bool{routerName: true}) {
+			router.AddError(errors.New("router cannot have RespondingTimeouts configuration when a parent router has one"), true)
 			continue
 		}
 	}
@@ -298,6 +307,10 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 	}
 
 	if routerConfig.TLS != nil {
+		if routerConfig.TLS.ConflictingOptions {
+			return nil, errors.New("router's TLSOptions configuration is conflicting with other routers on the same entrypoint and host")
+		}
+
 		// Don't build the router if the TLSOptions configuration is invalid.
 		tlsOptionsName := tls.DefaultTLSConfigName
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
@@ -375,9 +388,43 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		})
 	}
 
+	if router.TLS != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return snicheck.New(routerName, router.TLS.ResolvedOptions, next), nil
+		})
+	}
+
+	// Appended below observability so that the 504 is observed, and above the user middlewares so that the
+	// deadline bounds them all, retry attempts included.
+	if router.RespondingTimeouts != nil {
+		chain = chain.Append(respondingtimeout.WrapHandler(*router.RespondingTimeouts))
+	}
+
 	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
+}
+
+// hasAncestorWithRespondingTimeouts reports whether a router up the tree has responding timeouts.
+// The visited routers guard against cycles, which are reported by the traversal.
+func (m *Manager) hasAncestorWithRespondingTimeouts(router *runtime.RouterInfo, visited map[string]bool) bool {
+	for _, parentName := range router.ParentRefs {
+		if visited[parentName] {
+			continue
+		}
+		visited[parentName] = true
+
+		parent, ok := m.conf.Routers[parentName]
+		if !ok {
+			continue
+		}
+
+		if parent.RespondingTimeouts != nil || m.hasAncestorWithRespondingTimeouts(parent, visited) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // traverse performs a depth-first traversal starting from root routers,

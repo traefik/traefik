@@ -87,6 +87,11 @@ func (m *Manager) SetMiddlewareChainBuilder(middlewareChainBuilder middlewareCha
 	m.middlewareChainBuilder = middlewareChainBuilder
 }
 
+// RoutinePool returns the routine pool used to run the services background tasks.
+func (m *Manager) RoutinePool() *safe.Pool {
+	return m.routinePool
+}
+
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
 	serviceName = provider.GetQualifiedName(rootCtx, serviceName)
@@ -123,7 +128,11 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
-		if value.Type().Field(i).Name != "Middlewares" && !value.Field(i).IsNil() {
+		name := value.Type().Field(i).Name
+		if name == "Middlewares" || name == "Observability" {
+			continue
+		}
+		if !value.Field(i).IsNil() {
 			count++
 		}
 	}
@@ -183,22 +192,31 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, sErr
 	}
 
+	// We keep the originalLB and if it is StatusUpdater to allow wrapping to keep the state.
+	originalLB, isStatusUpdater := lb.(healthcheck.StatusUpdater)
+
 	if len(conf.Middlewares) > 0 {
 		if m.middlewareChainBuilder == nil {
 			// This should happen only in tests.
 			return nil, errors.New("chain builder not defined")
 		}
 		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
-		originalLB := lb
 		var err error
 		lb, err = chain.Then(lb)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
-		if su, ok := originalLB.(healthcheck.StatusUpdater); ok {
-			lb = &statusUpdaterHandler{Handler: lb, statusUpdater: su}
-		}
+	}
+
+	// Publish the service-level observability metadata to the per-request state
+	// container when this service is reached. No-op for services without metadata
+	// (Weighted/Mirroring/etc.), a published value for leaves with a backend
+	// identity (e.g. the Kubernetes Service name/namespace/port).
+	lb = observability.NewServiceMetadataHandler(conf.Observability, lb)
+
+	if isStatusUpdater {
+		lb = &statusUpdaterHandler{Handler: lb, statusUpdater: originalLB}
 	}
 
 	m.services[serviceName] = lb
@@ -280,14 +298,21 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.HealthCheck)
+
+	// The body is never buffered when streamed, so there is no body size to bound.
+	if config.StreamBody && mirrorBody && maxBodySize >= 0 {
+		return nil, errors.New("maxBodySize cannot be used with streamBody")
+	}
+
+	handler := mirror.New(serviceHandler, m.routinePool, mirrorBody, maxBodySize, config.StreamBody, config.HealthCheck)
+
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		err = handler.AddMirror(mirrorHandler, int64(mirrorConfig.Percent), 100)
 		if err != nil {
 			return nil, err
 		}

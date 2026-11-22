@@ -81,20 +81,16 @@ func TestMergeCollectionSet_BasicMapMerge(t *testing.T) {
 
 func TestMergeCollectionSet_EmbeddedStruct(t *testing.T) {
 	dst := &testCollectionSetWithEmbedded{
-		TestEmbedded: TestEmbedded{
-			EmbeddedItems: map[string]*testResource{
-				"embedded1": {Value: "dst-embedded"},
-			},
+		EmbeddedItems: map[string]*testResource{
+			"embedded1": {Value: "dst-embedded"},
 		},
 		Items: map[string]*testResource{
 			"item1": {Value: "dst-item"},
 		},
 	}
 	src := &testCollectionSetWithEmbedded{
-		TestEmbedded: TestEmbedded{
-			EmbeddedItems: map[string]*testResource{
-				"embedded2": {Value: "src-embedded"},
-			},
+		EmbeddedItems: map[string]*testResource{
+			"embedded2": {Value: "src-embedded"},
 		},
 		Items: map[string]*testResource{
 			"item2": {Value: "src-item"},
@@ -106,11 +102,9 @@ func TestMergeCollectionSet_EmbeddedStruct(t *testing.T) {
 
 	assert.Empty(t, tracker.toDelete)
 	assert.Equal(t, &testCollectionSetWithEmbedded{
-		TestEmbedded: TestEmbedded{
-			EmbeddedItems: map[string]*testResource{
-				"embedded1": {Value: "dst-embedded"},
-				"embedded2": {Value: "src-embedded"},
-			},
+		EmbeddedItems: map[string]*testResource{
+			"embedded1": {Value: "dst-embedded"},
+			"embedded2": {Value: "src-embedded"},
 		},
 		Items: map[string]*testResource{
 			"item1": {Value: "dst-item"},
@@ -348,8 +342,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert1.pem", KeyFile: "key1.pem"},
-								Stores:      []string{"store1"},
+								CertFile: "cert1.pem", KeyFile: "key1.pem",
+								Stores: []string{"store1"},
 							},
 						},
 					},
@@ -358,8 +352,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert2.pem", KeyFile: "key2.pem"},
-								Stores:      []string{"store2"},
+								CertFile: "cert2.pem", KeyFile: "key2.pem",
+								Stores: []string{"store2"},
 							},
 						},
 					},
@@ -369,12 +363,12 @@ func TestMerge(t *testing.T) {
 			expected: buildExpectedConfiguration(func(c *dynamic.Configuration) {
 				c.TLS.Certificates = []*tls.CertAndStores{
 					{
-						Certificate: tls.Certificate{CertFile: "cert1.pem", KeyFile: "key1.pem"},
-						Stores:      []string{"store1"},
+						CertFile: "cert1.pem", KeyFile: "key1.pem",
+						Stores: []string{"store1"},
 					},
 					{
-						Certificate: tls.Certificate{CertFile: "cert2.pem", KeyFile: "key2.pem"},
-						Stores:      []string{"store2"},
+						CertFile: "cert2.pem", KeyFile: "key2.pem",
+						Stores: []string{"store2"},
 					},
 				}
 			}),
@@ -386,8 +380,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store1"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store1"},
 							},
 						},
 					},
@@ -396,8 +390,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store2"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store2"},
 							},
 						},
 					},
@@ -407,8 +401,8 @@ func TestMerge(t *testing.T) {
 			expected: buildExpectedConfiguration(func(c *dynamic.Configuration) {
 				c.TLS.Certificates = []*tls.CertAndStores{
 					{
-						Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-						Stores:      []string{"store1", "store2"},
+						CertFile: "cert.pem", KeyFile: "key.pem",
+						Stores: []string{"store1", "store2"},
 					},
 				}
 			}),
@@ -420,8 +414,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store1", "store2"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store1", "store2"},
 							},
 						},
 					},
@@ -430,8 +424,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store2", "store3"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store2", "store3"},
 							},
 						},
 					},
@@ -441,8 +435,8 @@ func TestMerge(t *testing.T) {
 			expected: buildExpectedConfiguration(func(c *dynamic.Configuration) {
 				c.TLS.Certificates = []*tls.CertAndStores{
 					{
-						Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-						Stores:      []string{"store1", "store2", "store3"},
+						CertFile: "cert.pem", KeyFile: "key.pem",
+						Stores: []string{"store1", "store2", "store3"},
 					},
 				}
 			}),
@@ -454,8 +448,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store1"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store1"},
 							},
 						},
 					},
@@ -464,8 +458,8 @@ func TestMerge(t *testing.T) {
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{
 							{
-								Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-								Stores:      []string{"store2"},
+								CertFile: "cert.pem", KeyFile: "key.pem",
+								Stores: []string{"store2"},
 							},
 						},
 					},
@@ -475,8 +469,8 @@ func TestMerge(t *testing.T) {
 			expected: buildExpectedConfiguration(func(c *dynamic.Configuration) {
 				c.TLS.Certificates = []*tls.CertAndStores{
 					{
-						Certificate: tls.Certificate{CertFile: "cert.pem", KeyFile: "key.pem"},
-						Stores:      []string{"store1"},
+						CertFile: "cert.pem", KeyFile: "key.pem",
+						Stores: []string{"store1"},
 					},
 				}
 			}),

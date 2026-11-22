@@ -5,16 +5,16 @@ description: "Learn how to Setup Traefik on Kubernetes with HTTP/HTTPS entrypoin
 
 This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Kubernetes cluster using the official Helm chart. In this guide, we'll cover the following:
 
-- Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points, 
+- Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points
 - Implement automatic redirection from HTTP to HTTPS
-- Secure the Traefik Dashboard using Basic Authentication.
+- Secure the Traefik Dashboard using Basic Authentication
 - Deploy a demo application to test the setup
 - Explore some other key configuration options
 
 ## Prerequisites
 
 - A Kubernetes cluster
-- Helm v3, 
+- Helm v3 
 - Kubectl 
 
 ## Create the Cluster
@@ -178,12 +178,11 @@ gateway:
           group: ""
 
 # Enable Observability
-logs:
-  general:
-    level: INFO
-  # This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
-  access:
-    enabled: true
+log:
+  level: INFO
+# This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
+accessLog:
+  enabled: true
 
 # Enables Prometheus for Metrics
 metrics:
@@ -259,7 +258,7 @@ Apply the manifest:
 kubectl apply -f whoami.yaml
 ```
 
-After deploying the application, you can expose the application by creating a [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/). To do this, create a file named `whoami-route.yaml` and paste the following:
+After deploying the application, you can expose the application by creating a [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/reference/api-types/httproute/). To do this, create a file named `whoami-route.yaml` and paste the following:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1

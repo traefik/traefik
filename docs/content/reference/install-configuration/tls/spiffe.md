@@ -22,7 +22,7 @@ Traefik is able to connect to the Workload API to obtain an X509-SVID used to se
 
 ## Workload API
 
-To enable SPIFFE globally, you need to set up the [static configuration](../../../getting-started/configuration-overview.md#the-static-configuration). The `workloadAPIAddr` option specifies the address of the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api).
+To enable SPIFFE globally, you need to set up the [static configuration](../../../getting-started/configuration-overview.md#the-install-configuration). The `workloadAPIAddr` option specifies the address of the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api).
 
 ```yaml tab="File (YAML)"
 ## Static configuration.
@@ -33,7 +33,7 @@ spiffe:
 ```toml tab="File (TOML)"
 ## Static configuration
 [spiffe]
-    workloadAPIAddr: localhost
+    workloadAPIAddr = "localhost"
 ```
 
 ```bash tab="CLI"
@@ -44,7 +44,7 @@ spiffe:
 ## ServersTransport
 
 Enabling SPIFFE does not imply that backend connections are going to use it automatically.
-Each [ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md) or [TCPServersTransport](../../routing-configuration/tcp/serverstransport.md), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md#opt-spiffe) or [SPIFFE with TCPServersTransport](../../routing-configuration/tcp/serverstransport.md#opt-serverstransport-spiffe)).
+Each [ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md) or [TCPServersTransport](../../routing-configuration/tcp/serverstransport.md), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md#opt-spiffe) or [SPIFFE with TCPServersTransport](../../routing-configuration/tcp/serverstransport.md#opt-serverstransport-tls-spiffe)).
 
 ### Configuration Example
 
