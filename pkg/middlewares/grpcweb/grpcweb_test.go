@@ -2,6 +2,7 @@ package grpcweb_test
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,6 +17,42 @@ import (
 // trailers: the MSB of the first byte marks a trailer frame, and the following
 // four bytes encode the payload length (0).
 var emptyTrailerFrame = []byte{1 << 7, 0, 0, 0, 0}
+
+// errClientDisconnected is what disconnectedRecorder reports once closed,
+// mimicking the error of a write on a connection closed by the client.
+var errClientDisconnected = errors.New("client disconnected")
+
+// disconnectedRecorder is an http.ResponseWriter mimicking a connection the
+// client has closed: writes fail, and flushes stay silent like the net/http
+// response writer, which ignores the flush error. It records the writes
+// attempted after it was closed.
+type disconnectedRecorder struct {
+	header http.Header
+	body   bytes.Buffer
+
+	closed           bool
+	writesAfterClose int
+}
+
+func (d *disconnectedRecorder) Header() http.Header {
+	if d.header == nil {
+		d.header = make(http.Header)
+	}
+	return d.header
+}
+
+func (d *disconnectedRecorder) WriteHeader(statusCode int) {}
+
+func (d *disconnectedRecorder) Write(p []byte) (int, error) {
+	if d.closed {
+		d.writesAfterClose++
+		return 0, errClientDisconnected
+	}
+
+	return d.body.Write(p)
+}
+
+func (d *disconnectedRecorder) Flush() {}
 
 // trailersOnlyBackend mimics what httputil.ReverseProxy writes for a gRPC
 // trailers-only upstream response: the fields of the single HEADERS frame
@@ -163,4 +200,77 @@ func TestGRPCWebFlushedMessageStream(t *testing.T) {
 	assert.Contains(t, string(body), "a")
 	assert.Contains(t, string(body), "b")
 	assert.True(t, bytes.HasSuffix(body, []byte("grpc-status: 0\r\n")))
+}
+
+// disconnectingStreamBackend mimics a gRPC handler streaming message frames to
+// a client that disconnects mid-stream: its first (empty) message frame is held
+// back by the guard, which reports success for it right away, and the
+// afterDisconnect callback carries on once that happened.
+func disconnectingStreamBackend(t *testing.T, afterDisconnect func(rw http.ResponseWriter)) http.Handler {
+	t.Helper()
+
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("Content-Type", "application/grpc")
+		rw.WriteHeader(http.StatusOK)
+
+		// One empty message frame: small enough to be held back by the guard.
+		n, err := rw.Write([]byte{0x00, 0x00, 0x00, 0x00, 0x00})
+		require.NoError(t, err)
+		assert.Equal(t, 5, n)
+
+		afterDisconnect(rw)
+	})
+}
+
+func TestGRPCWebForwardErrorIsReportedOnWrite(t *testing.T) {
+	rec := &disconnectedRecorder{}
+
+	handler := grpcweb.New(t.Context(), disconnectingStreamBackend(t, func(rw http.ResponseWriter) {
+		// The client disconnects before the held back frame is forwarded.
+		rec.closed = true
+
+		// The next message frame is bigger than what the guard holds back, so
+		// forwarding the held back frame is due: its write failure must surface
+		// here, instead of being swallowed by the guard.
+		n, err := rw.Write([]byte{0x00, 0x00, 0x00, 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'})
+		require.Equal(t, errClientDisconnected, err)
+		assert.Zero(t, n)
+
+		// The reported failure was the forwarding itself: the new frame must
+		// not have hit the broken connection.
+		assert.Equal(t, 1, rec.writesAfterClose)
+	}), dynamic.GrpcWeb{AllowOrigins: []string{"*"}}, "grpc-web")
+
+	req := httptest.NewRequest(http.MethodPost, "/pkg.Service/Method", bytes.NewReader([]byte{0x00, 0x00, 0x00, 0x00, 0x00}))
+	req.Header.Set("Content-Type", "application/grpc-web+proto")
+
+	handler.ServeHTTP(rec, req)
+
+	// Nothing may reach the client after the reported failure.
+	assert.Empty(t, rec.body.Bytes())
+}
+
+func TestGRPCWebForwardErrorIsReportedOnFlush(t *testing.T) {
+	rec := &disconnectedRecorder{}
+
+	handler := grpcweb.New(t.Context(), disconnectingStreamBackend(t, func(rw http.ResponseWriter) {
+		// The client disconnects before the held back frame is forwarded.
+		rec.closed = true
+
+		// Flushing forwards the held back frame, and the net/http response
+		// writer ignores the flush error of a broken connection: the forwarding
+		// failure must surface through the flush itself.
+		err := http.NewResponseController(rw).Flush()
+		require.Equal(t, errClientDisconnected, err)
+
+		assert.Equal(t, 1, rec.writesAfterClose)
+	}), dynamic.GrpcWeb{AllowOrigins: []string{"*"}}, "grpc-web")
+
+	req := httptest.NewRequest(http.MethodPost, "/pkg.Service/Method", bytes.NewReader([]byte{0x00, 0x00, 0x00, 0x00, 0x00}))
+	req.Header.Set("Content-Type", "application/grpc-web+proto")
+
+	handler.ServeHTTP(rec, req)
+
+	// Nothing may reach the client after the reported failure.
+	assert.Empty(t, rec.body.Bytes())
 }

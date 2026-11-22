@@ -3,7 +3,6 @@ package grpcweb
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/traefik/grpc-web/go/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -46,11 +45,15 @@ func New(ctx context.Context, next http.Handler, config dynamic.GrpcWeb, name st
 }
 
 type grpcWeb struct {
-	handler http.Handler
+	handler *grpcweb.WrappedGrpcServer
 }
 
 func (g *grpcWeb) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if needsTrailerFrameGuard(req) {
+	// The guard is only useful for requests that the conversion rewrites, while
+	// passthrough responses must stay untouched. IsGrpcWebRequest is the
+	// conversion's own request detection, so the guard cannot drift from the
+	// code it protects.
+	if g.handler.IsGrpcWebRequest(req) {
 		guard := &emptyTrailerFrameGuard{wrapped: rw}
 		// Ensures bytes held back are not lost if the conversion does not flush.
 		defer guard.forwardPending()
@@ -60,13 +63,6 @@ func (g *grpcWeb) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	g.handler.ServeHTTP(rw, req)
-}
-
-// needsTrailerFrameGuard mirrors the gRPC-Web request detection of
-// github.com/traefik/grpc-web: the guard is only useful for requests that the
-// conversion rewrites, while passthrough responses must stay untouched.
-func needsTrailerFrameGuard(req *http.Request) bool {
-	return req.Method == http.MethodPost && strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc-web")
 }
 
 // emptyTrailerFrameGuard is an http.ResponseWriter wrapper dropping the empty
@@ -84,6 +80,11 @@ type emptyTrailerFrameGuard struct {
 
 	// pending holds the small writes not yet forwarded to wrapped.
 	pending []byte
+	// pendingErr holds the error of a failed forwarding of held back bytes to
+	// wrapped: the write that produced those bytes has already reported
+	// success, so the next Write or Flush touching the connection reports the
+	// failure instead.
+	pendingErr error
 }
 
 func (g *emptyTrailerFrameGuard) Header() http.Header {
@@ -103,6 +104,11 @@ func (g *emptyTrailerFrameGuard) Write(p []byte) (int, error) {
 
 	if len(p) > maxHeldWrite || len(g.pending)+len(p) > maxPendingBytes {
 		g.forwardPending()
+		if err := g.takePendingError(); err != nil {
+			// Forwarding the held back bytes failed: report it before writing
+			// anything else to the broken connection.
+			return 0, err
+		}
 		return g.wrapped.Write(p)
 	}
 
@@ -124,6 +130,12 @@ func (g *emptyTrailerFrameGuard) FlushError() error {
 		return nil
 	}
 
+	if err := g.takePendingError(); err != nil {
+		// Forwarding the held back bytes failed: report it instead of flushing
+		// anything else to the broken connection.
+		return err
+	}
+
 	return http.NewResponseController(g.wrapped).Flush()
 }
 
@@ -136,7 +148,9 @@ func (g *emptyTrailerFrameGuard) Unwrap() http.ResponseWriter {
 
 // forwardPending writes the held back bytes to the wrapped writer, unless they
 // are exactly an empty trailer frame, in which case they are dropped. It
-// reports whether bytes were dropped.
+// reports whether bytes were dropped. A write error cannot be returned, as the
+// method also runs deferred once the wrapped handler has no caller left to
+// observe it: it is held in pendingErr for the next Write or Flush call.
 func (g *emptyTrailerFrameGuard) forwardPending() bool {
 	if len(g.pending) == 0 {
 		return false
@@ -144,9 +158,19 @@ func (g *emptyTrailerFrameGuard) forwardPending() bool {
 
 	dropped := string(g.pending) == emptyTrailerFrame || string(g.pending) == emptyTrailerFrameBase64
 	if !dropped {
-		_, _ = g.wrapped.Write(g.pending)
+		if _, err := g.wrapped.Write(g.pending); err != nil && g.pendingErr == nil {
+			g.pendingErr = err
+		}
 	}
 	g.pending = g.pending[:0]
 
 	return dropped
+}
+
+// takePendingError reports the error stored by a previous forwardPending call,
+// if any, and clears it.
+func (g *emptyTrailerFrameGuard) takePendingError() error {
+	err := g.pendingErr
+	g.pendingErr = nil
+	return err
 }
