@@ -215,12 +215,12 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, otelRouterTCPOpenConnectionsName,
+		reg.routerTCPOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
-			"1")
-		reg.routerTCPTLSOpenConnectionsGauge = newOTLPGaugeFrom(meter, otelRouterTCPTLSOpenConnectionsName,
+			"{connection}")
+		reg.routerTCPTLSOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPTLSOpenConnectionsName,
 			"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
-			"1")
+			"{connection}")
 	}
 
 	return reg
@@ -494,6 +494,39 @@ func (g *otelGauge) Add(delta float64) {
 func (g *otelGauge) Set(value float64) {
 	openTelemetryGaugeCollector.set(g.name, value, g.labelNamesValues)
 }
+
+func newOTLPUpDownCounterFrom(meter metric.Meter, name, desc string, unit string) *otelUpDownCounter {
+	c, _ := meter.Float64UpDownCounter(name,
+		metric.WithDescription(desc),
+		metric.WithUnit(unit),
+	)
+
+	return &otelUpDownCounter{
+		ip: c,
+	}
+}
+
+// otelUpDownCounter is a gauge whose value is only changed by increments and decrements,
+// and can be summed across its labels, like a count of open connections.
+// The OpenTelemetry instrument for such a value is the UpDownCounter.
+type otelUpDownCounter struct {
+	labelNamesValues otelLabelNamesValues
+	ip               metric.Float64UpDownCounter
+}
+
+func (c *otelUpDownCounter) With(labelValues ...string) metrics.Gauge {
+	return &otelUpDownCounter{
+		labelNamesValues: c.labelNamesValues.With(labelValues...),
+		ip:               c.ip,
+	}
+}
+
+func (c *otelUpDownCounter) Add(delta float64) {
+	c.ip.Add(context.Background(), delta, metric.WithAttributes(c.labelNamesValues.ToLabels()...))
+}
+
+// Set does nothing, as the value of an UpDownCounter cannot be set.
+func (c *otelUpDownCounter) Set(_ float64) {}
 
 func newOTLPHistogramFrom(meter metric.Meter, name, desc string, unit string) *otelHistogram {
 	c, _ := meter.Float64Histogram(name,
