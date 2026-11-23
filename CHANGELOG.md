@@ -1,3 +1,11 @@
+## [v2.11.64](https://github.com/traefik/traefik/tree/v2.11.64) (2026-11-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.63...v2.11.64)
+
+**Bug fixes:**
+- **[logs]** Redact the static plugin provider configuration ([#14304](https://github.com/traefik/traefik/pull/14304) @jspdown)
+- **[otel]** Bump go.opentelemetry.io/otel to v1.47.0 ([#14316](https://github.com/traefik/traefik/pull/14316) @kevinpollet)
+- **[tls]** Detect TLS options conflicts on hosts with a trailing dot ([#14192](https://github.com/traefik/traefik/pull/14192) @juliens)
+
 ## [v3.7.19](https://github.com/traefik/traefik/tree/v3.7.19) (2026-11-12)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.18...v3.7.19)
 
