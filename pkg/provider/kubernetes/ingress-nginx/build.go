@@ -512,7 +512,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
 				// even when the Ingress declares no "/" path. In Traefik a request has to match
 				// a router before any middleware runs, hence the extra router.
-				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+				// A location in error emits no extra router, so it must leave it to the next location of the host.
+				if !loc.Error && loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
 					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
 					hostsWithAppRootRouter[rule.Host] = true
 				}
