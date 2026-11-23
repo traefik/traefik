@@ -19,6 +19,21 @@ const (
 	xForwardedMethod = "X-Forwarded-Method"
 )
 
+// Headers that ingress-nginx sets in the external auth location (proxy_set_header).
+// X-Original-URI and X-Scheme are set only when auth-method is set; the others are always set.
+// The client values must never reach the auth service.
+// The headers list has been extracted from here: https://github.com/kubernetes/ingress-nginx/blob/main/rootfs/etc/nginx/template/nginx.tmpl
+const (
+	xOriginalURL         = "X-Original-Url"
+	xOriginalURI         = "X-Original-Uri"
+	xOriginalMethod      = "X-Original-Method"
+	xAuthRequestRedirect = "X-Auth-Request-Redirect"
+	xRealIP              = "X-Real-IP"
+	xScheme              = "X-Scheme"
+
+	xSentFrom = "X-Sent-From"
+)
+
 var userAgentHeader = http.CanonicalHeaderKey("User-Agent")
 
 // RemoveConnectionHeaders removes hop-by-hop headers listed in the "Connection" header.

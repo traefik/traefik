@@ -2124,6 +2124,121 @@ func TestForwardAuthAddress_interpolation(t *testing.T) {
 	assert.True(t, authSrvCalled)
 }
 
+func TestForwardAuth_nginxIdentityHeaders(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		authSnippet     string
+		method          string
+		requestHeaders  map[string]string
+		expectedHeaders map[string][]string
+	}{
+		{
+			desc:   "headers are derived from the request",
+			method: http.MethodGet,
+			expectedHeaders: map[string][]string{
+				"X-Original-URL":          {"http://admin.example.com/protected?foo=bar"},
+				"X-Original-URI":          {"/protected?foo=bar"},
+				"X-Original-Method":       {http.MethodGet},
+				"X-Auth-Request-Redirect": {"/protected?foo=bar"},
+				"X-Real-IP":               {"127.0.0.1"},
+				"X-Scheme":                {"http"},
+				"X-Sent-From":             nil,
+			},
+		},
+		{
+			desc:   "client values are ignored",
+			method: http.MethodPost,
+			requestHeaders: map[string]string{
+				"X-Original-URL":          "https://public.example.com/",
+				"X-Original-URI":          "/public",
+				"X-Original-Method":       http.MethodGet,
+				"X-Auth-Request-Redirect": "https://evil.example.com/",
+				"X-Real-IP":               "10.10.10.10",
+				"X-Scheme":                "https",
+				"X-Sent-From":             "client",
+			},
+			expectedHeaders: map[string][]string{
+				"X-Original-URL":          {"http://admin.example.com/protected?foo=bar"},
+				"X-Original-URI":          {"/protected?foo=bar"},
+				"X-Original-Method":       {http.MethodPost},
+				"X-Auth-Request-Redirect": {"/protected?foo=bar"},
+				"X-Real-IP":               {"127.0.0.1"},
+				"X-Scheme":                {"http"},
+				"X-Sent-From":             nil,
+			},
+		},
+		{
+			desc:        "auth-snippet proxy_set_header overrides the derived value",
+			authSnippet: `proxy_set_header X-Original-URL "https://override.example.com/";`,
+			method:      http.MethodGet,
+			requestHeaders: map[string]string{
+				"X-Original-URL": "https://public.example.com/",
+			},
+			expectedHeaders: map[string][]string{
+				"X-Original-URL":          {"https://override.example.com/"},
+				"X-Original-URI":          {"/protected?foo=bar"},
+				"X-Original-Method":       {http.MethodGet},
+				"X-Auth-Request-Redirect": {"/protected?foo=bar"},
+				"X-Real-IP":               {"127.0.0.1"},
+				"X-Scheme":                {"http"},
+				"X-Sent-From":             nil,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			authHeaders := make(chan http.Header, 1)
+			authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				authHeaders <- req.Header.Clone()
+				rw.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(authSrv.Close)
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			middleware, err := New(t.Context(), next, &dynamic.Snippet{
+				Auth: &dynamic.Auth{
+					Address: authSrv.URL,
+					Snippet: test.authSnippet,
+				},
+			}, "authTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewServer(middleware)
+			t.Cleanup(ts.Close)
+
+			req := testhelpers.MustNewRequest(test.method, ts.URL+"/protected?foo=bar", nil)
+			// A fixed Host keeps the expected X-Original-URL independent of the test server port.
+			req.Host = "admin.example.com"
+			for k, v := range test.requestHeaders {
+				req.Header.Set(k, v)
+			}
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = res.Body.Close() })
+
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+
+			var got http.Header
+			select {
+			case got = <-authHeaders:
+			default:
+				require.FailNow(t, "auth server was not called")
+			}
+
+			for name, values := range test.expectedHeaders {
+				assert.Equal(t, values, got.Values(name), name)
+			}
+		})
+	}
+}
+
 func TestForwardAuthConnectionBoundAuthentication(t *testing.T) {
 	type authConnKey struct{}
 	type authConn struct{ user string }

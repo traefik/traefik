@@ -579,6 +579,14 @@ func WriteResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext
 // sources already have these headers removed upstream. Re-deciding that trust
 // per middleware was a mistake in the legacy ForwardAuth path and is not
 // replicated here.
+//
+// The nginx identity headers (X-Original-*, X-Auth-Request-Redirect, X-Sent-From,
+// X-Real-IP and X-Scheme) are different: no entrypoint option removes them, and
+// ingress-nginx sets them in the external auth location (X-Original-URI and
+// X-Scheme only when auth-method is set). They are always derived from the
+// request here, and the client values are dropped.
+// X-Sent-From is only removed: Traefik does not claim to be ingress-nginx.
+// An auth-snippet proxy_set_header can still override them, as it runs after.
 func writeHeader(req, forwardReq *http.Request) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 
@@ -591,27 +599,48 @@ func writeHeader(req, forwardReq *http.Request) {
 		forwardReq.Header.Set(userAgentHeader, "")
 	}
 
+	forwardReq.Header.Del(xRealIP)
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
+		forwardReq.Header.Set(xRealIP, clientIP)
 	}
 
 	forwardReq.Header.Del(xForwardedMethod)
+	forwardReq.Header.Del(xOriginalMethod)
 	if req.Method != "" {
 		forwardReq.Header.Set(xForwardedMethod, req.Method)
+		forwardReq.Header.Set(xOriginalMethod, req.Method)
 	}
 
-	forwardReq.Header.Set(forward.XForwardedProto, "http")
+	scheme := "http"
 	if req.TLS != nil {
-		forwardReq.Header.Set(forward.XForwardedProto, "https")
+		scheme = "https"
 	}
+	forwardReq.Header.Set(forward.XForwardedProto, scheme)
+	forwardReq.Header.Set(xScheme, scheme)
 
 	forwardReq.Header.Del(forward.XForwardedHost)
 	if req.Host != "" {
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
 	}
 
+	requestURI := req.URL.RequestURI()
+
 	forwardReq.Header.Del(xForwardedURI)
-	if req.URL.RequestURI() != "" {
-		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
+	forwardReq.Header.Del(xOriginalURI)
+	forwardReq.Header.Del(xAuthRequestRedirect)
+	if requestURI != "" {
+		forwardReq.Header.Set(xForwardedURI, requestURI)
+		forwardReq.Header.Set(xOriginalURI, requestURI)
+		// The auth-request-redirect annotation is not supported,
+		// so the value is the request URI, as in ingress-nginx without this annotation.
+		forwardReq.Header.Set(xAuthRequestRedirect, requestURI)
 	}
+
+	// X-Original-URL is $scheme://$http_host$request_uri in ingress-nginx.
+	forwardReq.Header.Set(xOriginalURL, scheme+"://"+req.Host+requestURI)
+
+	// xSentFrom is set to "nginx-ingress-controller" by ingress-nginx.
+	// Traefik does not claim to be ingress-nginx: it only removes the client value.
+	forwardReq.Header.Del(xSentFrom)
 }
