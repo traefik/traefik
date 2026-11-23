@@ -363,7 +363,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 				[]*traefiktls.CertAndStores{})
 
-			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager, nil)
@@ -458,7 +458,7 @@ func TestConflictingTLSOptions(t *testing.T) {
 				},
 				[]*traefiktls.CertAndStores{})
 
-			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, nil, tlsManager, nil)
 

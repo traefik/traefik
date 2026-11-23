@@ -381,6 +381,11 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
 	h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
 
+	h.writeEntry(ctx, map[string]any(core), fields)
+}
+
+// writeEntry writes one access-log line. HTTP and TCP share this path, including OTLP formatting.
+func (h *Handler) writeEntry(ctx context.Context, core map[string]any, fields logrus.Fields) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 

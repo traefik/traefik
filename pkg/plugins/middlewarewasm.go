@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/tetratelabs/wazero"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 type wasmMiddlewareBuilder struct {
@@ -167,4 +169,10 @@ type WasmMiddleware struct {
 // NewHandler creates a new HTTP handler.
 func (m WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
+}
+
+// NewTCPHandler creates a TCP constructor.
+// WASM plugins do not support TCP yet, so this always returns an error.
+func (m WasmMiddleware) NewTCPHandler(_ context.Context, _ tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
+	return nil, errors.New("WASM plugins do not support TCP")
 }

@@ -177,6 +177,29 @@ When `OriginStatus` is empty (logged as `0`), the request was never proxied to a
     Both fields are only available with the `json` format. 
     The `common` and `genericCLF` formats, and the `statusCodes` filter, use the `DownstreamStatus` value.
 
+## TCP Connections
+
+The same access log records TCP connections. Traefik writes one line when the connection handling finishes, including when a middleware closes the connection and does not call the next handler.
+
+TCP lines set `RequestProtocol` to `TCP`. `RequestMethod` and `RequestPath` are `-`, because a TCP connection has no HTTP request. `ConnectionStatus` is `success` when Traefik opened a connection to a backend server, and `rejected` when the connection was closed before that: by a middleware, because the service has no available server, or because the backend could not be reached. `Error` carries the reason. A middleware that only closes the connection, without recording a reason, is logged as `connection closed before reaching the service`.
+
+For TCP routers that terminate TLS, the handshake happens after Traefik connects to the backend, so a failed handshake does not turn the line into `rejected`.
+
+A TCP middleware plugin can add fields by writing into the metadata map it gets from the connection context with the key `"metadata"`:
+
+```go
+metadata, _ := ctx.Value("metadata").(map[string]string)
+if metadata != nil {
+    metadata["X-Client-IP"] = clientIP
+}
+```
+
+The map has to be updated in place. Each entry is copied as its own field, and the [field filter](#log-fields-customization) applies. An entry named after a field Traefik writes itself (such as `DownstreamStatus` or `StartUTC`), or starting with `request_`, `origin_` or `downstream_`, is ignored. `ConnectionStatus` and `Error` are part of the JSON format.
+
+The `entryPoints.<name>.observability.accessLogs` option applies to TCP routers as well.
+
+The `statusCodes` and `retryAttempts` filters do not apply to TCP lines. `minDuration` does.
+
 ## Access Log Filters
 
 You can configure Traefik Proxy to only record access logs for requests that match certain criteria. This is useful for reducing the volume of logs and focusing on specific events.

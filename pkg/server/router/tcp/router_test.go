@@ -156,7 +156,7 @@ func Test_Routing(t *testing.T) {
 			Stores: []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 
-	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
 		nil, nil, tlsManager, nil)
@@ -564,7 +564,7 @@ func Test_Routing(t *testing.T) {
 				router(dynConf)
 			}
 
-			router, err := manager.buildEntryPointHandler(t.Context(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
+			router, err := manager.buildEntryPointHandler(t.Context(), "test", dynConf.TCPRouters, dynConf.Routers, nil, nil)
 			require.NoError(t, err)
 
 			if test.allowACMETLSPassthrough {
@@ -633,7 +633,7 @@ func Test_Routing(t *testing.T) {
 						t.Error("not a write closer")
 					}
 
-					router.ServeTCP(tcpConn)
+					router.ServeTCP(t.Context(), tcpConn)
 				}
 			}()
 
@@ -686,7 +686,7 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 		defer listener.Close()
 
 		router.acmeTLSALPNHandler().
-			ServeTCP(conn.(*net.TCPConn))
+			ServeTCP(t.Context(), conn.(*net.TCPConn))
 	}()
 
 	<-acceptCh
@@ -866,7 +866,7 @@ func TestPostgresTLSTermination(t *testing.T) {
 	// The TLSHandler wraps the actual handler, performing the TLS handshake.
 	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", &traefiktcp.TLSHandler{
 		Config: tlsConf,
-		Next: traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
+		Next: traefiktcp.HandlerFunc(func(_ context.Context, conn traefiktcp.WriteCloser) {
 			_, _ = conn.Write([]byte("OK"))
 			_ = conn.Close()
 		}),
@@ -882,7 +882,7 @@ func TestPostgresTLSTermination(t *testing.T) {
 		require.NoError(t, err)
 
 		tcpConn := conn.(*net.TCPConn)
-		router.ServeTCP(tcpConn)
+		router.ServeTCP(t.Context(), tcpConn)
 	}()
 
 	clientConn, err := net.Dial("tcp", ln.Addr().String())
@@ -929,7 +929,7 @@ func TestPostgresTLSPassthrough(t *testing.T) {
 	require.NoError(t, err)
 
 	// Register a TCPTLS route (TLS passthrough) with a tcp.Handler.
-	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", traefiktcp.HandlerFunc(func(conn traefiktcp.WriteCloser) {
+	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, "", traefiktcp.HandlerFunc(func(_ context.Context, conn traefiktcp.WriteCloser) {
 		// First we should receive the PostgresStartTLSMsg.
 		buf := make([]byte, len(PostgresStartTLSMsg))
 		_, err := conn.Read(buf)
@@ -959,7 +959,7 @@ func TestPostgresTLSPassthrough(t *testing.T) {
 		require.NoError(t, err)
 
 		tcpConn := conn.(*net.TCPConn)
-		router.ServeTCP(tcpConn)
+		router.ServeTCP(t.Context(), tcpConn)
 	}()
 
 	clientConn, err := net.Dial("tcp", ln.Addr().String())
@@ -1376,7 +1376,7 @@ func (h *httpForwarder) Close() error {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn traefiktcp.WriteCloser) {
+func (h *httpForwarder) ServeTCP(_ context.Context, conn traefiktcp.WriteCloser) {
 	h.connChan <- conn
 }
 

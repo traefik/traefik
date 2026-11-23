@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/plugins"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
@@ -402,6 +403,10 @@ func (b *fakePluginsBuilder) Build(_ string, config map[string]any, _ string) (p
 
 		return next, nil
 	}, nil
+}
+
+func (b *fakePluginsBuilder) BuildTCP(_ string, _ map[string]any, _ string) (tcp.Constructor, error) {
+	return nil, errors.New("not implemented")
 }
 
 func TestBuilder_BuildMiddlewareChain_pluginURNRefs(t *testing.T) {

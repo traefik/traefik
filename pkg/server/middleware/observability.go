@@ -107,6 +107,15 @@ func (o *ObservabilityMgr) SemConvMetricsRegistry() *metrics.SemConvMetricsRegis
 	return o.semConvMetricRegistry
 }
 
+// AccessLogHandler returns the shared HTTP and TCP access logger.
+// It is nil when access logs are disabled.
+func (o *ObservabilityMgr) AccessLogHandler() *accesslog.Handler {
+	if o == nil {
+		return nil
+	}
+	return o.accessLoggerMiddleware
+}
+
 // Close closes the accessLogger and tracer.
 func (o *ObservabilityMgr) Close() {
 	if o == nil {

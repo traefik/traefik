@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -38,7 +39,7 @@ func isPostgres(conn *peekConn) (bool, error) {
 
 // servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
-func (r *Router) servePostgres(conn *peekConn) error {
+func (r *Router) servePostgres(ctx context.Context, conn *peekConn) error {
 	if _, err := conn.Write(PostgresStartTLSReply); err != nil {
 		return fmt.Errorf("writing PostgresStartTLSReply: %w", err)
 	}
@@ -82,7 +83,10 @@ func (r *Router) servePostgres(conn *peekConn) error {
 		proxiedConn = &postgresConn{WriteCloser: conn}
 	}
 
-	handlerTCPTLS.ServeTCP(proxiedConn)
+	// Reuse the connection metadata map. A new map would hide the one the access log reads.
+	ctx = tcp.WithMetadata(ctx)
+
+	handlerTCPTLS.ServeTCP(ctx, proxiedConn)
 	return nil
 }
 

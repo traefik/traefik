@@ -20,8 +20,8 @@ type TLSHandler struct {
 }
 
 // ServeTCP terminates the TLS connection.
-func (t *TLSHandler) ServeTCP(conn WriteCloser) {
-	t.Next.ServeTCP(tls.Server(TLSConn{WriteCloser: conn, TLSOptionsName: t.TLSOptionsName}, t.Config))
+func (t *TLSHandler) ServeTCP(ctx context.Context, conn WriteCloser) {
+	t.Next.ServeTCP(ctx, tls.Server(TLSConn{WriteCloser: conn, TLSOptionsName: t.TLSOptionsName}, t.Config))
 }
 
 type tlsOptionsNameKey struct{}

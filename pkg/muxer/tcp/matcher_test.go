@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func Test_HostSNICatchAll(t *testing.T) {
 			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{
@@ -179,7 +180,7 @@ func Test_HostSNI(t *testing.T) {
 			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -261,7 +262,7 @@ func Test_HostSNIRegexp(t *testing.T) {
 			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -332,7 +333,7 @@ func Test_ClientIP(t *testing.T) {
 			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -395,7 +396,7 @@ func Test_ALPN(t *testing.T) {
 			muxer, err := NewMuxer(nil)
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "", 0, "", tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			if test.buildErr {
 				require.Error(t, err)
 				return

@@ -76,7 +76,7 @@ func newHTTPForwarder(ln net.Listener) *httpForwarder {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
+func (h *httpForwarder) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -307,7 +307,18 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
+			// The connection context derives from the server context, so shutdown cancels it.
+			// Middlewares and the access log share the metadata map it carries.
+			connCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			connCtx = tcp.WithMetadata(connCtx)
+
+			conn := &contextualWriteCloser{
+				WriteCloser: newTrackedConnection(writeCloser, e.tracker),
+				cancel:      cancel,
+			}
+
+			e.switcher.ServeTCP(connCtx, conn)
 		})
 	}
 }
@@ -891,6 +902,21 @@ func denyFragment(h http.Handler) http.Handler {
 
 		h.ServeHTTP(rw, req)
 	})
+}
+
+// contextualWriteCloser cancels the connection context on Close,
+// so work a middleware started for the connection stops as soon as it is closed.
+type contextualWriteCloser struct {
+	tcp.WriteCloser
+
+	cancel context.CancelFunc
+}
+
+func (c *contextualWriteCloser) Close() error {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	return c.WriteCloser.Close()
 }
 
 // denyConnect rejects the CONNECT requests, whatever the HTTP version.

@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
@@ -35,6 +36,8 @@ type Manager struct {
 	tlsManager          *traefiktls.Manager
 	conf                *runtime.Configuration
 	providersPrecedence []string
+	accessLogger        *accesslog.Handler
+	accessLogDisabled   map[string]bool
 }
 
 // NewManager Creates a new Manager.
@@ -57,6 +60,15 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
+// SetAccessLogHandler records TCP connections with the same access log as HTTP.
+// A nil handler leaves TCP connections unlogged.
+// The entryPoints in disabledEntryPoints are skipped: the entryPoint observability option
+// only reaches HTTP routers through the models, so TCP routers need it here.
+func (m *Manager) SetAccessLogHandler(handler *accesslog.Handler, disabledEntryPoints map[string]bool) {
+	m.accessLogger = handler
+	m.accessLogDisabled = disabledEntryPoints
+}
+
 // BuildHandlers builds the handlers for the given entrypoints.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*Router {
 	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
@@ -69,7 +81,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -95,7 +107,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
 	// Build a new Router.
 	router, err := NewRouter(m.providersPrecedence)
 	if err != nil {
@@ -207,13 +219,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Keep in mind that defaultTLSConf might be nil here.
 	router.SetHTTPSHandler(handlerHTTPS, defaultTLSConf)
 
-	m.addTCPHandlers(ctx, configs, router)
+	m.addTCPHandlers(ctx, entryPointName, configs, router)
 
 	return router, nil
 }
 
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
-func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
+func (m *Manager) addTCPHandlers(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
@@ -262,7 +274,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		var handler tcp.Handler
 		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
-			handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+			handler, err = m.buildTCPHandler(ctxRouter, entryPointName, routerName, routerConfig)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -337,7 +349,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		// This seems to be the case so far with the existing matchers (HostSNI, and ClientIP), so it's all good.
 		// Otherwise, we would have to do as for HTTPS, i.e. disallow different TLS configs for the same HostSNIs.
 
-		handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+		handler, err = m.buildTCPHandler(ctxRouter, entryPointName, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -360,7 +372,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 	}
 }
 
-func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
+func (m *Manager) buildTCPHandler(ctx context.Context, entryPointName, routerName string, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -378,7 +390,26 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
+	handler, err := tcp.NewChain().Extend(*mHandler).Then(sHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.wrapAccessLog(entryPointName, routerName, provider.GetQualifiedName(ctx, router.Service), handler), nil
+}
+
+// wrapAccessLog places the access log outside the middleware chain,
+// so a middleware that closes the connection without calling next is still recorded.
+// TLS termination wraps this handler, but the handshake is lazy: it runs on the first read,
+// after the backend dial, so a failed handshake is not reported as a rejection.
+func (m *Manager) wrapAccessLog(entryPointName, routerName, serviceName string, handler tcp.Handler) tcp.Handler {
+	if m.accessLogger == nil || m.accessLogDisabled[entryPointName] {
+		return handler
+	}
+	if strings.HasSuffix(routerName, "@internal") && !m.accessLogger.IncludeInternalRouters() {
+		return handler
+	}
+	return m.accessLogger.WrapTCP(entryPointName, routerName, serviceName, handler)
 }
 
 func providerName(routerName string) string {

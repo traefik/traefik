@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -9,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type HandlerTCPFunc func(WriteCloser)
+type HandlerTCPFunc func(context.Context, WriteCloser)
 
 // ServeTCP calls f(conn).
-func (f HandlerTCPFunc) ServeTCP(conn WriteCloser) {
-	f(conn)
+func (f HandlerTCPFunc) ServeTCP(ctx context.Context, conn WriteCloser) {
+	f(ctx, conn)
 }
 
 // A constructor for middleware
@@ -21,17 +22,17 @@ func (f HandlerTCPFunc) ServeTCP(conn WriteCloser) {
 // Useful in checking if a chain is behaving in the right order.
 func tagMiddleware(tag string) Constructor {
 	return func(h Handler) (Handler, error) {
-		return HandlerTCPFunc(func(conn WriteCloser) {
+		return HandlerTCPFunc(func(ctx context.Context, conn WriteCloser) {
 			_, err := conn.Write([]byte(tag))
 			if err != nil {
 				panic("Unexpected")
 			}
-			h.ServeTCP(conn)
+			h.ServeTCP(ctx, conn)
 		}), nil
 	}
 }
 
-var testApp = HandlerTCPFunc(func(conn WriteCloser) {
+var testApp = HandlerTCPFunc(func(ctx context.Context, conn WriteCloser) {
 	_, err := conn.Write([]byte("app\n"))
 	if err != nil {
 		panic("unexpected")
@@ -118,7 +119,7 @@ func TestThenOrdersHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\napp\n", string(conn.data))
 }
@@ -134,7 +135,7 @@ func TestAppendAddsHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\nt4\napp\n", string(conn.data))
 }
@@ -161,7 +162,7 @@ func TestExtendAddsHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\nt4\napp\n", string(conn.data))
 }

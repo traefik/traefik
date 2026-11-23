@@ -1,7 +1,9 @@
 package tcp
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"syscall"
@@ -25,7 +27,7 @@ func NewProxy(address string, dialer Dialer) (*Proxy, error) {
 }
 
 // ServeTCP forwards the connection to a service.
-func (p *Proxy) ServeTCP(conn WriteCloser) {
+func (p *Proxy) ServeTCP(ctx context.Context, conn WriteCloser) {
 	log.Debug().
 		Str("address", p.address).
 		Str("remoteAddr", conn.RemoteAddr().String()).
@@ -37,8 +39,11 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	connBackend, err := p.dialBackend(conn)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while dialing backend")
+		SetRejection(conn, fmt.Errorf("dialing backend: %w", err))
 		return
 	}
+
+	MarkBackend(conn)
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()

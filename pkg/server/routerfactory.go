@@ -28,6 +28,9 @@ type RouterFactory struct {
 
 	allowACMEByPass map[string]bool
 
+	// accessLogDisabledTCP holds the entryPoints whose access logs are disabled for TCP routers.
+	accessLogDisabledTCP map[string]bool
+
 	managerFactory *service.ManagerFactory
 
 	pluginBuilder middleware.PluginsBuilder
@@ -56,9 +59,14 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	allowACMEByPass := map[string]bool{}
+	accessLogDisabledTCP := map[string]bool{}
 	var entryPointsTCP, entryPointsUDP []string
 	for name, ep := range staticConfiguration.EntryPoints {
 		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
+
+		if ep.Observability != nil && ep.Observability.AccessLogs != nil && !*ep.Observability.AccessLogs {
+			accessLogDisabledTCP[name] = true
+		}
 
 		protocol, err := ep.GetProtocol()
 		if err != nil {
@@ -84,16 +92,17 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:      entryPointsTCP,
-		entryPointsUDP:      entryPointsUDP,
-		managerFactory:      managerFactory,
-		observabilityMgr:    observabilityMgr,
-		tlsManager:          tlsManager,
-		pluginBuilder:       pluginBuilder,
-		dialerManager:       dialerManager,
-		allowACMEByPass:     allowACMEByPass,
-		parser:              parser,
-		providersPrecedence: providersPrecedence,
+		entryPointsTCP:       entryPointsTCP,
+		entryPointsUDP:       entryPointsUDP,
+		managerFactory:       managerFactory,
+		observabilityMgr:     observabilityMgr,
+		tlsManager:           tlsManager,
+		pluginBuilder:        pluginBuilder,
+		dialerManager:        dialerManager,
+		allowACMEByPass:      allowACMEByPass,
+		accessLogDisabledTCP: accessLogDisabledTCP,
+		parser:               parser,
+		providersPrecedence:  providersPrecedence,
 	}, nil
 }
 
@@ -125,9 +134,10 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	// TCP
 	svcTCPManager := tcpsvc.NewManager(rtConf, f.dialerManager)
 
-	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
+	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares, f.pluginBuilder)
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager, f.providersPrecedence)
+	rtTCPManager.SetAccessLogHandler(f.observabilityMgr.AccessLogHandler(), f.accessLogDisabledTCP)
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
 
 	for ep, r := range routersTCP {
