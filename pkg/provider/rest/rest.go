@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -15,6 +16,8 @@ import (
 
 // ProviderName is the REST provider name.
 const ProviderName = "rest"
+
+const maxBodySize = 10 << 20
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -50,7 +53,12 @@ func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	configuration := new(dynamic.Configuration)
 
-	if err := json.NewDecoder(req.Body).Decode(configuration); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(rw, req.Body, maxBodySize)).Decode(configuration); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(rw, "request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		log.Error().Err(err).Msg("Error parsing configuration")
 		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 		return
