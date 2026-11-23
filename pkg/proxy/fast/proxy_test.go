@@ -548,6 +548,13 @@ func TestConnectionCloseResponse(t *testing.T) {
 			expectedBody:  "ok",
 			expectedConns: 3,
 		},
+		{
+			desc:          "HEAD response without Content-Length",
+			method:        http.MethodHead,
+			response:      "HTTP/1.1 200 OK\r\n\r\n",
+			expectedBody:  "",
+			expectedConns: 3,
+		},
 	}
 
 	for _, test := range testCases {
