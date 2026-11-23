@@ -211,7 +211,9 @@ func testTimeout(t *testing.T, withRead bool) {
 	assert.Zero(t, connsLen(ln))
 }
 
-// connsLen reads the number of sessions under the listener lock, as each session removes itself from the map when it times out.
+// connsLen returns the number of ongoing sessions of the listener.
+// It reads them under the listener lock,
+// as each session removes itself from the listener when it times out.
 func connsLen(ln *Listener) int {
 	ln.mu.RLock()
 	defer ln.mu.RUnlock()
