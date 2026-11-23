@@ -16,7 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-const providerNameALPN = "tlsalpn.acme"
+const providerNameALPN = "tlsalpn.internal"
 
 // ChallengeTLSALPN TLSALPN challenge provider implements challenge.Provider.
 type ChallengeTLSALPN struct {
