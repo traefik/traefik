@@ -25,6 +25,47 @@ import (
 	"google.golang.org/grpc/encoding/gzip"
 )
 
+// The OpenTelemetry metrics have their own names,
+// for them not to depend on the ones of the Prometheus metrics.
+// The historical ones are named as the Prometheus metrics,
+// the TCP router ones follow the OpenTelemetry naming conventions.
+const (
+	// server meta information.
+	otelConfigReloadsTotalName      = "traefik_config_reloads_total"
+	otelConfigLastReloadSuccessName = "traefik_config_last_reload_success"
+	otelOpenConnectionsName         = "traefik_open_connections"
+
+	// TLS.
+	otelTLSCertsNotAfterTimestampName = "traefik_tls_certs_not_after"
+
+	// entry point.
+	otelEntryPointReqsTotalName       = "traefik_entrypoint_requests_total"
+	otelEntryPointReqsTLSTotalName    = "traefik_entrypoint_requests_tls_total"
+	otelEntryPointReqDurationName     = "traefik_entrypoint_request_duration_seconds"
+	otelEntryPointReqsBytesTotalName  = "traefik_entrypoint_requests_bytes_total"
+	otelEntryPointRespsBytesTotalName = "traefik_entrypoint_responses_bytes_total"
+
+	// router level.
+	otelRouterReqsTotalName       = "traefik_router_requests_total"
+	otelRouterReqsTLSTotalName    = "traefik_router_requests_tls_total"
+	otelRouterReqDurationName     = "traefik_router_request_duration_seconds"
+	otelRouterReqsBytesTotalName  = "traefik_router_requests_bytes_total"
+	otelRouterRespsBytesTotalName = "traefik_router_responses_bytes_total"
+
+	// service level.
+	otelServiceReqsTotalName       = "traefik_service_requests_total"
+	otelServiceReqsTLSTotalName    = "traefik_service_requests_tls_total"
+	otelServiceReqDurationName     = "traefik_service_request_duration_seconds"
+	otelServiceRetriesTotalName    = "traefik_service_retries_total"
+	otelServiceServerUpName        = "traefik_service_server_up"
+	otelServiceReqsBytesTotalName  = "traefik_service_requests_bytes_total"
+	otelServiceRespsBytesTotalName = "traefik_service_responses_bytes_total"
+
+	// TCP router level.
+	otelRouterTCPOpenConnectionsName    = "traefik.router.tcp.open_connections"
+	otelRouterTCPTLSOpenConnectionsName = "traefik.router.tcp.tls.open_connections"
+)
+
 var (
 	openTelemetryMeterProvider  *sdkmetric.MeterProvider
 	openTelemetryGaugeCollector *gaugeCollector
@@ -119,65 +160,65 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
-		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
-		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", "ms"),
-		openConnectionsGauge:           newOTLPGaugeFrom(meter, openConnectionsName, "How many open connections exist, by entryPoint and protocol", "1"),
-		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestampName, "Certificate expiration timestamp", "s"),
+		configReloadsCounter:           newOTLPCounterFrom(meter, otelConfigReloadsTotalName, "Config reloads"),
+		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, otelConfigLastReloadSuccessName, "Last config reload success", "ms"),
+		openConnectionsGauge:           newOTLPGaugeFrom(meter, otelOpenConnectionsName, "How many open connections exist, by entryPoint and protocol", "1"),
+		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, otelTLSCertsNotAfterTimestampName, "Certificate expiration timestamp", "s"),
 	}
 
 	if config.AddEntryPointsLabels {
-		reg.entryPointReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, entryPointReqsTotalName,
+		reg.entryPointReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelEntryPointReqsTotalName,
 			"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method."))
-		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, entryPointReqsTLSTotalName,
+		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, otelEntryPointReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.")
-		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
+		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelEntryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			"s"), time.Second)
-		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
+		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointReqsBytesTotalName,
 			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
-		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, entryPointRespsBytesTotalName,
+		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointRespsBytesTotalName,
 			"The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddRoutersLabels {
-		reg.routerReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, routerReqsTotalName,
+		reg.routerReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelRouterReqsTotalName,
 			"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method."))
-		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, routerReqsTLSTotalName,
+		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, otelRouterReqsTLSTotalName,
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.")
-		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
+		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			"s"), time.Second)
-		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, routerReqsBytesTotalName,
+		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, otelRouterReqsBytesTotalName,
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
-		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
+		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, otelRouterRespsBytesTotalName,
 			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddServicesLabels {
-		reg.serviceReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, serviceReqsTotalName,
+		reg.serviceReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelServiceReqsTotalName,
 			"How many HTTP requests processed on a service, partitioned by status code, protocol, and method."))
-		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, serviceReqsTLSTotalName,
+		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, otelServiceReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.")
-		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
+		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelServiceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			"s"), time.Second)
-		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
+		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, otelServiceRetriesTotalName,
 			"How many request retries happened on a service.")
-		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
+		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, otelServiceServerUpName,
 			"service server is up, described by gauge value of 0 or 1.",
 			"1")
-		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, serviceReqsBytesTotalName,
+		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, otelServiceReqsBytesTotalName,
 			"The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.")
-		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, serviceRespsBytesTotalName,
+		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, otelServiceRespsBytesTotalName,
 			"The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.")
 	}
 
 	if config.EnableTCPRouterMetrics {
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPOpenConnectionsName,
+		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, otelRouterTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
 			"1")
-		reg.routerTCPTLSOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPTLSOpenConnectionsName,
+		reg.routerTCPTLSOpenConnectionsGauge = newOTLPGaugeFrom(meter, otelRouterTCPTLSOpenConnectionsName,
 			"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
 			"1")
 	}

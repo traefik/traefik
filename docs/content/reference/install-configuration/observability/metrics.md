@@ -632,8 +632,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
-    | <a id="opt-traefik-router-tcp-tls-open-connections" href="#opt-traefik-router-tcp-tls-open-connections" title="#opt-traefik-router-tcp-tls-open-connections">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik.router.tcp.open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-open-connections" href="#opt-traefik-router-tcp-tls-open-connections" title="#opt-traefik-router-tcp-tls-open-connections">`traefik.router.tcp.tls.open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
 === "Prometheus"
 
