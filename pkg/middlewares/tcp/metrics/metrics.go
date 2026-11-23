@@ -93,9 +93,9 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	// the passthrough ones are forwarded without their TLS parameters being known.
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		mConn := &tlsMetricsConn{
-			Conn:   tlsConn,
-			gauge:  m.tlsOpenConnectionsGauge,
-			labels: slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
+			Conn:                    tlsConn,
+			tlsOpenConnectionsGauge: m.tlsOpenConnectionsGauge,
+			labels:                  slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
 		}
 		defer mConn.release()
 
@@ -128,11 +128,11 @@ func getNetworkLabels(conn net.Conn) []string {
 type tlsMetricsConn struct {
 	*tls.Conn
 
-	gauge  gokitmetrics.Gauge
-	labels []string
+	tlsOpenConnectionsGauge gokitmetrics.Gauge
+	labels                  []string
 
-	once        sync.Once
-	established gokitmetrics.Gauge
+	once     sync.Once
+	observed bool
 }
 
 // A read or a write of a TLS connection only succeeds once the handshake is done.
@@ -155,17 +155,23 @@ func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 }
 
 func (c *tlsMetricsConn) observe() {
-	state := c.Conn.ConnectionState()
-
-	c.established = c.gauge.With(append(c.labels, tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state))...)
-	c.established.Add(1)
+	c.observed = true
+	c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...).Add(1)
 }
 
 func (c *tlsMetricsConn) release() {
 	// Waits for an ongoing observation, and prevents the connection from being counted afterwards.
 	c.once.Do(func() {})
 
-	if c.established != nil {
-		c.established.Add(-1)
+	if c.observed {
+		c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...).Add(-1)
 	}
+}
+
+// getTLSLabels returns the tls.protocol.version and tls.cipher labels of the given connection.
+// The values are still known once the connection is closed.
+func getTLSLabels(conn *tls.Conn) []string {
+	state := conn.ConnectionState()
+
+	return []string{tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state)}
 }
