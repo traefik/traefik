@@ -51,10 +51,14 @@ const (
 	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
 	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
 
-	influxDBRouterTCPConnsName        = "traefik.router.tcp.connections.total"
-	influxDBRouterTCPTLSConnsName     = "traefik.router.tcp.tls.connections.total"
-	influxDBRouterTCPOpenConnsName    = "traefik.router.tcp.open.connections"
-	influxDBRouterTCPTLSOpenConnsName = "traefik.router.tcp.tls.open.connections"
+	influxDBRouterTCPConnsName            = "traefik.router.tcp.connections.total"
+	influxDBRouterTCPTLSConnsName         = "traefik.router.tcp.tls.connections.total"
+	influxDBRouterTCPOpenConnsName        = "traefik.router.tcp.open.connections"
+	influxDBRouterTCPTLSOpenConnsName     = "traefik.router.tcp.tls.open.connections"
+	influxDBRouterTCPReceivedBytesName    = "traefik.router.tcp.received.bytes.total"
+	influxDBRouterTCPTLSReceivedBytesName = "traefik.router.tcp.tls.received.bytes.total"
+	influxDBRouterTCPSentBytesName        = "traefik.router.tcp.sent.bytes.total"
+	influxDBRouterTCPTLSSentBytesName     = "traefik.router.tcp.tls.sent.bytes.total"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
@@ -126,6 +130,10 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 		registry.routerTCPTLSConnectionsCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSConnsName)
 		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName), false)
 		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPTLSOpenConnsName), false)
+		registry.routerTCPReceivedBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPReceivedBytesName)
+		registry.routerTCPTLSReceivedBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSReceivedBytesName)
+		registry.routerTCPSentBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPSentBytesName)
+		registry.routerTCPTLSSentBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSSentBytesName)
 	}
 
 	return registry

@@ -168,6 +168,22 @@ func TestPrometheus(t *testing.T) {
 		RouterTCPTLSOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
 		Set(1)
+	prometheusRegistry.
+		RouterTCPReceivedBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSReceivedBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPSentBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSSentBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
 
 	prometheusRegistry.
 		ServiceReqsCounter().
@@ -373,6 +389,52 @@ func TestPrometheus(t *testing.T) {
 				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
 			},
 			assert: buildGaugeAssert(t, routerTCPTLSOpenConnectionsName, 1),
+		},
+		{
+			name: routerTCPReceivedBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPReceivedBytesTotalName, 1),
+		},
+		{
+			name: routerTCPTLSReceivedBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSReceivedBytesTotalName, 1),
+		},
+		{
+			name: routerTCPSentBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPSentBytesTotalName, 1),
+		},
+		{
+			name: routerTCPTLSSentBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSSentBytesTotalName, 1),
 		},
 		{
 			name: serviceReqsTotalName,

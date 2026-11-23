@@ -125,6 +125,10 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		metricsPrefix + ".router.tcp.tls.connections.total:1.000000|c|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,network.type:ipv4,tls.protocol.version:1.3,tls.cipher:TLS_AES_128_GCM_SHA256\n",
 		metricsPrefix + ".router.tcp.open.connections:1.000000|g|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,traefik.tls.mode:terminated,network.type:ipv4\n",
 		metricsPrefix + ".router.tcp.tls.open.connections:1.000000|g|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,network.type:ipv4,tls.protocol.version:1.3,tls.cipher:TLS_AES_128_GCM_SHA256\n",
+		metricsPrefix + ".router.tcp.received.bytes.total:1.000000|c|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,traefik.tls.mode:terminated,network.type:ipv4\n",
+		metricsPrefix + ".router.tcp.tls.received.bytes.total:1.000000|c|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,network.type:ipv4,tls.protocol.version:1.3,tls.cipher:TLS_AES_128_GCM_SHA256\n",
+		metricsPrefix + ".router.tcp.sent.bytes.total:1.000000|c|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,traefik.tls.mode:terminated,network.type:ipv4\n",
+		metricsPrefix + ".router.tcp.tls.sent.bytes.total:1.000000|c|#traefik.entrypoint.name:websecure,traefik.router.name:demo,traefik.service.name:test,network.type:ipv4,tls.protocol.version:1.3,tls.cipher:TLS_AES_128_GCM_SHA256\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -161,5 +165,9 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		datadogRegistry.RouterTCPTLSConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 		datadogRegistry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 		datadogRegistry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+		datadogRegistry.RouterTCPReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+		datadogRegistry.RouterTCPTLSReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+		datadogRegistry.RouterTCPSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+		datadogRegistry.RouterTCPTLSSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 	})
 }

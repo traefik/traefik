@@ -59,6 +59,12 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 	var openConnections map[string]float64
 	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		openConnections = maps.Clone(registry.gauge.values)
+
+		_, err := conn.Read(make([]byte, 8))
+		assert.NoError(t, err)
+
+		_, err = conn.Write([]byte("hello"))
+		assert.NoError(t, err)
 	})
 
 	handler := NewRouterMiddleware(t.Context(), next, registry, "web", "router@file", "service@file", &dynamic.RouterTCPTLSConfig{Passthrough: true})
@@ -71,8 +77,12 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
 	assert.Equal(t, map[string]float64{labels: 0}, registry.gauge.values)
 	assert.Equal(t, map[string]float64{labels: 1}, registry.counter.values)
+	assert.Equal(t, map[string]float64{labels: 4}, registry.receivedBytes.values)
+	assert.Equal(t, map[string]float64{labels: 5}, registry.sentBytes.values)
 	assert.Empty(t, registry.tlsGauge.values)
 	assert.Empty(t, registry.tlsCounter.values)
+	assert.Empty(t, registry.tlsReceivedBytes.values)
+	assert.Empty(t, registry.tlsSentBytes.values)
 }
 
 func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
@@ -88,6 +98,7 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 	go func() {
 		client := tls.Client(clientConn, &tls.Config{InsecureSkipVerify: true})
 		_, _ = client.Write([]byte("ping"))
+		_, _ = io.ReadFull(client, make([]byte, 5))
 	}()
 
 	registry := newRegistryMock(true)
@@ -101,6 +112,9 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 		assert.NoError(t, err)
 
 		afterHandshake = maps.Clone(registry.tlsGauge.values)
+
+		_, err = conn.Write([]byte("hello"))
+		assert.NoError(t, err)
 	})
 
 	handler := NewRouterMiddleware(t.Context(), next, registry, "websecure", "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
@@ -114,8 +128,16 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 	// The network label is empty because the local address of a pipe is not a TCP one.
 	labels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,network.type=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
 
-	assert.Contains(t, registry.gauge.values, "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=")
-	assert.Equal(t, map[string]float64{"traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=": 1}, registry.counter.values)
+	terminatedLabels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type="
+
+	assert.Contains(t, registry.gauge.values, terminatedLabels)
+	assert.Equal(t, map[string]float64{terminatedLabels: 1}, registry.counter.values)
+
+	// Only the application bytes are counted, the handshake ones are not.
+	assert.Equal(t, map[string]float64{terminatedLabels: 4}, registry.receivedBytes.values)
+	assert.Equal(t, map[string]float64{terminatedLabels: 5}, registry.sentBytes.values)
+	assert.Equal(t, map[string]float64{labels: 4}, registry.tlsReceivedBytes.values)
+	assert.Equal(t, map[string]float64{labels: 5}, registry.tlsSentBytes.values)
 
 	// The TLS connection is counted once the handshake is done, and released afterwards.
 	assert.Empty(t, beforeHandshake)
@@ -176,23 +198,39 @@ func (c connMock) LocalAddr() net.Addr {
 	return c.localAddr
 }
 
+func (c connMock) Read(b []byte) (int, error) {
+	return copy(b, "ping"), nil
+}
+
+func (c connMock) Write(b []byte) (int, error) {
+	return len(b), nil
+}
+
 type registryMock struct {
 	metrics.Registry
 
-	routerEnabled bool
-	counter       *counterMock
-	tlsCounter    *counterMock
-	gauge         *gaugeMock
-	tlsGauge      *gaugeMock
+	routerEnabled    bool
+	counter          *counterMock
+	tlsCounter       *counterMock
+	gauge            *gaugeMock
+	tlsGauge         *gaugeMock
+	receivedBytes    *counterMock
+	tlsReceivedBytes *counterMock
+	sentBytes        *counterMock
+	tlsSentBytes     *counterMock
 }
 
 func newRegistryMock(routerEnabled bool) *registryMock {
 	return &registryMock{
-		routerEnabled: routerEnabled,
-		counter:       &counterMock{values: make(map[string]float64)},
-		tlsCounter:    &counterMock{values: make(map[string]float64)},
-		gauge:         &gaugeMock{values: make(map[string]float64)},
-		tlsGauge:      &gaugeMock{values: make(map[string]float64)},
+		routerEnabled:    routerEnabled,
+		counter:          &counterMock{values: make(map[string]float64)},
+		tlsCounter:       &counterMock{values: make(map[string]float64)},
+		gauge:            &gaugeMock{values: make(map[string]float64)},
+		tlsGauge:         &gaugeMock{values: make(map[string]float64)},
+		receivedBytes:    &counterMock{values: make(map[string]float64)},
+		tlsReceivedBytes: &counterMock{values: make(map[string]float64)},
+		sentBytes:        &counterMock{values: make(map[string]float64)},
+		tlsSentBytes:     &counterMock{values: make(map[string]float64)},
 	}
 }
 
@@ -214,6 +252,22 @@ func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
 
 func (r *registryMock) RouterTCPTLSOpenConnectionsGauge() gokitmetrics.Gauge {
 	return r.tlsGauge
+}
+
+func (r *registryMock) RouterTCPReceivedBytesCounter() gokitmetrics.Counter {
+	return r.receivedBytes
+}
+
+func (r *registryMock) RouterTCPTLSReceivedBytesCounter() gokitmetrics.Counter {
+	return r.tlsReceivedBytes
+}
+
+func (r *registryMock) RouterTCPSentBytesCounter() gokitmetrics.Counter {
+	return r.sentBytes
+}
+
+func (r *registryMock) RouterTCPTLSSentBytesCounter() gokitmetrics.Counter {
+	return r.tlsSentBytes
 }
 
 // gaugeMock holds the values of a gauge by labels.

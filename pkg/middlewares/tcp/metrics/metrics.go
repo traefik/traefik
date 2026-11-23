@@ -43,10 +43,14 @@ type metricsMiddleware struct {
 
 	connectionsCounter    gokitmetrics.Counter
 	openConnectionsGauge  gokitmetrics.Gauge
+	receivedBytesCounter  gokitmetrics.Counter
+	sentBytesCounter      gokitmetrics.Counter
 	openConnectionsLabels []string
 
 	tlsConnectionsCounter    gokitmetrics.Counter
 	tlsOpenConnectionsGauge  gokitmetrics.Gauge
+	tlsReceivedBytesCounter  gokitmetrics.Counter
+	tlsSentBytesCounter      gokitmetrics.Counter
 	tlsOpenConnectionsLabels []string
 }
 
@@ -67,9 +71,13 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 		next:                     next,
 		connectionsCounter:       registry.RouterTCPConnectionsCounter(),
 		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
+		receivedBytesCounter:     registry.RouterTCPReceivedBytesCounter(),
+		sentBytesCounter:         registry.RouterTCPSentBytesCounter(),
 		openConnectionsLabels:    []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
 		tlsConnectionsCounter:    registry.RouterTCPTLSConnectionsCounter(),
 		tlsOpenConnectionsGauge:  registry.RouterTCPTLSOpenConnectionsGauge(),
+		tlsReceivedBytesCounter:  registry.RouterTCPTLSReceivedBytesCounter(),
+		tlsSentBytesCounter:      registry.RouterTCPTLSSentBytesCounter(),
 		tlsOpenConnectionsLabels: []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
 }
@@ -104,11 +112,19 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 			Conn:                    tlsConn,
 			tlsConnectionsCounter:   m.tlsConnectionsCounter,
 			tlsOpenConnectionsGauge: m.tlsOpenConnectionsGauge,
+			tlsReceivedBytesCounter: m.tlsReceivedBytesCounter,
+			tlsSentBytesCounter:     m.tlsSentBytesCounter,
 			labels:                  slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
 		}
 		defer mConn.release()
 
 		conn = mConn
+	}
+
+	conn = &bytesMetricsConn{
+		WriteCloser:   conn,
+		receivedBytes: m.receivedBytesCounter.With(labels...),
+		sentBytes:     m.sentBytesCounter.With(labels...),
 	}
 
 	m.next.ServeTCP(conn)
@@ -131,7 +147,35 @@ func getNetworkLabels(conn net.Conn) []string {
 	return []string{networkTypeLabel, networkType}
 }
 
-// tlsMetricsConn counts a TLS connection, and counts it as open, once its handshake is done.
+// bytesMetricsConn counts the bytes read from and written to a connection as they are transferred,
+// rather than when the connection is closed, as a TCP connection can stay open for a long time.
+type bytesMetricsConn struct {
+	tcp.WriteCloser
+
+	receivedBytes gokitmetrics.Counter
+	sentBytes     gokitmetrics.Counter
+}
+
+func (c *bytesMetricsConn) Read(b []byte) (int, error) {
+	n, err := c.WriteCloser.Read(b)
+	if n > 0 {
+		c.receivedBytes.Add(float64(n))
+	}
+
+	return n, err
+}
+
+func (c *bytesMetricsConn) Write(b []byte) (int, error) {
+	n, err := c.WriteCloser.Write(b)
+	if n > 0 {
+		c.sentBytes.Add(float64(n))
+	}
+
+	return n, err
+}
+
+// tlsMetricsConn counts a TLS connection, and counts it as open, once its handshake is done,
+// and then counts the application bytes read from and written to it.
 // The handshake is not forced, as it has to stay driven by the first read or write of the next handlers,
 // and the TLS version and cipher are not known before it.
 type tlsMetricsConn struct {
@@ -139,6 +183,8 @@ type tlsMetricsConn struct {
 
 	tlsConnectionsCounter   gokitmetrics.Counter
 	tlsOpenConnectionsGauge gokitmetrics.Gauge
+	tlsReceivedBytesCounter gokitmetrics.Counter
+	tlsSentBytesCounter     gokitmetrics.Counter
 	labels                  []string
 
 	once sync.Once
@@ -146,15 +192,24 @@ type tlsMetricsConn struct {
 	// so that the connection is released with the very same labels.
 	// It is nil as long as the connection is not counted.
 	tlsOpenConnectionsGaugeWithLabels gokitmetrics.Gauge
+	// The bytes counters are kept with their labels as well, as they are added to on every read and write.
+	// They are nil as long as the connection is not counted.
+	tlsReceivedBytesCounterWithLabels gokitmetrics.Counter
+	tlsSentBytesCounterWithLabels     gokitmetrics.Counter
 }
 
-// A read or a write of a TLS connection only succeeds once the handshake is done.
+// A read or a write of a TLS connection only succeeds, or transfers bytes, once the handshake is done.
 // When it fails, the handshake state tells whether the failure happened after the handshake,
 // e.g. when the client closes the connection without sending any data.
 func (c *tlsMetricsConn) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
 	if err == nil || c.Conn.ConnectionState().HandshakeComplete {
 		c.once.Do(c.observe)
+	}
+
+	// The connection is not counted when it was released before its handshake was done.
+	if n > 0 && c.tlsReceivedBytesCounterWithLabels != nil {
+		c.tlsReceivedBytesCounterWithLabels.Add(float64(n))
 	}
 
 	return n, err
@@ -166,16 +221,24 @@ func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 		c.once.Do(c.observe)
 	}
 
+	if n > 0 && c.tlsSentBytesCounterWithLabels != nil {
+		c.tlsSentBytesCounterWithLabels.Add(float64(n))
+	}
+
 	return n, err
 }
 
 func (c *tlsMetricsConn) observe() {
-	labels := slices.Concat(c.labels, getTLSLabels(c.Conn))
+	state := c.Conn.ConnectionState()
+	labels := slices.Concat(c.labels, []string{tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state)})
 
 	c.tlsConnectionsCounter.With(labels...).Add(1)
 
 	c.tlsOpenConnectionsGaugeWithLabels = c.tlsOpenConnectionsGauge.With(labels...)
 	c.tlsOpenConnectionsGaugeWithLabels.Add(1)
+
+	c.tlsReceivedBytesCounterWithLabels = c.tlsReceivedBytesCounter.With(labels...)
+	c.tlsSentBytesCounterWithLabels = c.tlsSentBytesCounter.With(labels...)
 }
 
 func (c *tlsMetricsConn) release() {
@@ -185,11 +248,4 @@ func (c *tlsMetricsConn) release() {
 	if c.tlsOpenConnectionsGaugeWithLabels != nil {
 		c.tlsOpenConnectionsGaugeWithLabels.Add(-1)
 	}
-}
-
-// getTLSLabels returns the tls.protocol.version and tls.cipher labels of the given connection.
-func getTLSLabels(conn *tls.Conn) []string {
-	state := conn.ConnectionState()
-
-	return []string{tlsProtocolVersionLabel, traefiktls.GetVersion(&state), tlsCipherLabel, traefiktls.GetCipherName(&state)}
 }

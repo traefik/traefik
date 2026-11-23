@@ -64,6 +64,10 @@ type Registry interface {
 	RouterTCPTLSConnectionsCounter() metrics.Counter
 	RouterTCPOpenConnectionsGauge() metrics.Gauge
 	RouterTCPTLSOpenConnectionsGauge() metrics.Gauge
+	RouterTCPReceivedBytesCounter() metrics.Counter
+	RouterTCPTLSReceivedBytesCounter() metrics.Counter
+	RouterTCPSentBytesCounter() metrics.Counter
+	RouterTCPTLSSentBytesCounter() metrics.Counter
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -102,6 +106,10 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var routerTCPTLSConnectionsCounter []metrics.Counter
 	var routerTCPOpenConnectionsGauge []metrics.Gauge
 	var routerTCPTLSOpenConnectionsGauge []metrics.Gauge
+	var routerTCPReceivedBytesCounter []metrics.Counter
+	var routerTCPTLSReceivedBytesCounter []metrics.Counter
+	var routerTCPSentBytesCounter []metrics.Counter
+	var routerTCPTLSSentBytesCounter []metrics.Counter
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -180,6 +188,18 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.RouterTCPTLSOpenConnectionsGauge() != nil {
 			routerTCPTLSOpenConnectionsGauge = append(routerTCPTLSOpenConnectionsGauge, r.RouterTCPTLSOpenConnectionsGauge())
 		}
+		if r.RouterTCPReceivedBytesCounter() != nil {
+			routerTCPReceivedBytesCounter = append(routerTCPReceivedBytesCounter, r.RouterTCPReceivedBytesCounter())
+		}
+		if r.RouterTCPTLSReceivedBytesCounter() != nil {
+			routerTCPTLSReceivedBytesCounter = append(routerTCPTLSReceivedBytesCounter, r.RouterTCPTLSReceivedBytesCounter())
+		}
+		if r.RouterTCPSentBytesCounter() != nil {
+			routerTCPSentBytesCounter = append(routerTCPSentBytesCounter, r.RouterTCPSentBytesCounter())
+		}
+		if r.RouterTCPTLSSentBytesCounter() != nil {
+			routerTCPTLSSentBytesCounter = append(routerTCPTLSSentBytesCounter, r.RouterTCPTLSSentBytesCounter())
+		}
 	}
 
 	return &standardRegistry{
@@ -213,6 +233,10 @@ func NewMultiRegistry(registries []Registry) Registry {
 		routerTCPTLSConnectionsCounter:   multi.NewCounter(routerTCPTLSConnectionsCounter...),
 		routerTCPOpenConnectionsGauge:    multi.NewGauge(routerTCPOpenConnectionsGauge...),
 		routerTCPTLSOpenConnectionsGauge: multi.NewGauge(routerTCPTLSOpenConnectionsGauge...),
+		routerTCPReceivedBytesCounter:    multi.NewCounter(routerTCPReceivedBytesCounter...),
+		routerTCPTLSReceivedBytesCounter: multi.NewCounter(routerTCPTLSReceivedBytesCounter...),
+		routerTCPSentBytesCounter:        multi.NewCounter(routerTCPSentBytesCounter...),
+		routerTCPTLSSentBytesCounter:     multi.NewCounter(routerTCPTLSSentBytesCounter...),
 	}
 }
 
@@ -247,6 +271,10 @@ type standardRegistry struct {
 	routerTCPTLSConnectionsCounter   metrics.Counter
 	routerTCPOpenConnectionsGauge    metrics.Gauge
 	routerTCPTLSOpenConnectionsGauge metrics.Gauge
+	routerTCPReceivedBytesCounter    metrics.Counter
+	routerTCPTLSReceivedBytesCounter metrics.Counter
+	routerTCPSentBytesCounter        metrics.Counter
+	routerTCPTLSSentBytesCounter     metrics.Counter
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -363,6 +391,22 @@ func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
 
 func (r *standardRegistry) RouterTCPTLSOpenConnectionsGauge() metrics.Gauge {
 	return r.routerTCPTLSOpenConnectionsGauge
+}
+
+func (r *standardRegistry) RouterTCPReceivedBytesCounter() metrics.Counter {
+	return r.routerTCPReceivedBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPTLSReceivedBytesCounter() metrics.Counter {
+	return r.routerTCPTLSReceivedBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPSentBytesCounter() metrics.Counter {
+	return r.routerTCPSentBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPTLSSentBytesCounter() metrics.Counter {
+	return r.routerTCPTLSSentBytesCounter
 }
 
 // ScalableHistogram is a Histogram with a predefined time unit,

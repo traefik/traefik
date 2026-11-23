@@ -43,10 +43,14 @@ const (
 	statsdServiceReqsBytesName    = "service.requests.bytes.total"
 	statsdServiceRespsBytesName   = "service.responses.bytes.total"
 
-	statsdRouterTCPConnsName        = "router.tcp.connections.total"
-	statsdRouterTCPTLSConnsName     = "router.tcp.tls.connections.total"
-	statsdRouterTCPOpenConnsName    = "router.tcp.open.connections"
-	statsdRouterTCPTLSOpenConnsName = "router.tcp.tls.open.connections"
+	statsdRouterTCPConnsName            = "router.tcp.connections.total"
+	statsdRouterTCPTLSConnsName         = "router.tcp.tls.connections.total"
+	statsdRouterTCPOpenConnsName        = "router.tcp.open.connections"
+	statsdRouterTCPTLSOpenConnsName     = "router.tcp.tls.open.connections"
+	statsdRouterTCPReceivedBytesName    = "router.tcp.received.bytes.total"
+	statsdRouterTCPTLSReceivedBytesName = "router.tcp.tls.received.bytes.total"
+	statsdRouterTCPSentBytesName        = "router.tcp.sent.bytes.total"
+	statsdRouterTCPTLSSentBytesName     = "router.tcp.tls.sent.bytes.total"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -104,6 +108,10 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.routerTCPTLSConnectionsCounter = statsdClient.NewCounter(statsdRouterTCPTLSConnsName, 1.0)
 		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPOpenConnsName), true)
 		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPTLSOpenConnsName), true)
+		registry.routerTCPReceivedBytesCounter = statsdClient.NewCounter(statsdRouterTCPReceivedBytesName, 1.0)
+		registry.routerTCPTLSReceivedBytesCounter = statsdClient.NewCounter(statsdRouterTCPTLSReceivedBytesName, 1.0)
+		registry.routerTCPSentBytesCounter = statsdClient.NewCounter(statsdRouterTCPSentBytesName, 1.0)
+		registry.routerTCPTLSSentBytesCounter = statsdClient.NewCounter(statsdRouterTCPTLSSentBytesName, 1.0)
 	}
 
 	return registry

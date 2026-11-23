@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -236,6 +237,19 @@ func (s *MetricsSuite) TestMetricsPrometheusTCPRouters() {
 		`traefik_router_tcp_tls_connections_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file"} 1` + "\n",
 	}
 
+	// Only the received bytes of the routers that see the plain data are checked exactly,
+	// as the TLS records of the passthrough router, and the whoami response, are not of a constant size.
+	bytesTotal := []string{
+		`traefik_router_tcp_received_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-tls@file",traefik_service_name="whoami-no-tls@file",traefik_tls_mode="none"} 3` + "\n",
+		`traefik_router_tcp_received_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file",traefik_service_name="whoami-a@file",traefik_tls_mode="passthrough"} `,
+		`traefik_router_tcp_received_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file",traefik_tls_mode="terminated"} 3` + "\n",
+		`traefik_router_tcp_tls_received_bytes_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file"} 3` + "\n",
+		`traefik_router_tcp_sent_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-tls@file",traefik_service_name="whoami-no-tls@file",traefik_tls_mode="none"} `,
+		`traefik_router_tcp_sent_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file",traefik_service_name="whoami-a@file",traefik_tls_mode="passthrough"} `,
+		`traefik_router_tcp_sent_bytes_total{network_type="ipv4",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file",traefik_tls_mode="terminated"} `,
+		`traefik_router_tcp_tls_sent_bytes_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-no-cert@file",traefik_service_name="whoami-no-cert@file"} `,
+	}
+
 	withValue := func(value string) []string {
 		var metrics []string
 		for _, metric := range openConnections {
@@ -245,13 +259,15 @@ func (s *MetricsSuite) TestMetricsPrometheusTCPRouters() {
 		return metrics
 	}
 
-	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(append(withValue("1"), connectionsTotal...)...))
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(slices.Concat(withValue("1"), connectionsTotal, bytesTotal)...))
 	require.NoError(s.T(), err)
 
 	// Only the connection whose TLS is terminated by Traefik is counted as a TLS connection.
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.BodyNotContains(
 		`traefik_router_tcp_tls_open_connections{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file"`,
 		`traefik_router_tcp_tls_connections_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file"`,
+		`traefik_router_tcp_tls_received_bytes_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file"`,
+		`traefik_router_tcp_tls_sent_bytes_total{network_type="ipv4",tls_cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",tls_protocol_version="1.2",traefik_entrypoint_name="tcp",traefik_router_name="to-whoami-a@file"`,
 	))
 	require.NoError(s.T(), err)
 
@@ -259,7 +275,7 @@ func (s *MetricsSuite) TestMetricsPrometheusTCPRouters() {
 		require.NoError(s.T(), conn.Close())
 	}
 
-	// The connections stay counted once closed.
-	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.BodyContains(append(withValue("0"), connectionsTotal...)...))
+	// The connections and their bytes stay counted once closed.
+	err = try.GetRequest("http://127.0.0.1:8080/metrics", 5*time.Second, try.BodyContains(slices.Concat(withValue("0"), connectionsTotal, bytesTotal)...))
 	require.NoError(s.T(), err)
 }

@@ -144,12 +144,20 @@ func TestInfluxDB2(t *testing.T) {
 		`(traefik\.router\.tcp\.tls\.connections\.total,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test count=1) [\d]{19}`,
 		`(traefik\.router\.tcp\.open\.connections,network\.type=ipv4,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test,traefik\.tls\.mode=terminated value=1) [\d]{19}`,
 		`(traefik\.router\.tcp\.tls\.open\.connections,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test value=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.received\.bytes\.total,network\.type=ipv4,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test,traefik\.tls\.mode=terminated count=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.tls\.received\.bytes\.total,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test count=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.sent\.bytes\.total,network\.type=ipv4,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test,traefik\.tls\.mode=terminated count=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.tls\.sent\.bytes\.total,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test count=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.RouterTCPConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 	influxDB2Registry.RouterTCPTLSConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 	influxDB2Registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+	influxDB2Registry.RouterTCPReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+	influxDB2Registry.RouterTCPTLSReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+	influxDB2Registry.RouterTCPSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+	influxDB2Registry.RouterTCPTLSSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 
 	msgTCPRouter := <-c
 
