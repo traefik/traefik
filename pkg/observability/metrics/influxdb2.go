@@ -52,7 +52,7 @@ const (
 	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
 
 	influxDBRouterTCPOpenConnsName    = "traefik.router.tcp.open.connections"
-	influxDBRouterTCPOpenTLSConnsName = "traefik.router.tcp.open.tls.connections"
+	influxDBRouterTCPTLSOpenConnsName = "traefik.router.tcp.tls.open.connections"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
@@ -121,7 +121,7 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
 		registry.routerTCPOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName)
-		registry.routerTCPOpenTLSConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPOpenTLSConnsName)
+		registry.routerTCPTLSOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPTLSOpenConnsName)
 	}
 
 	return registry

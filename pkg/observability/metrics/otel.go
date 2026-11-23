@@ -177,7 +177,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.routerTCPOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
 			"1")
-		reg.routerTCPOpenTLSConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPOpenTLSConnectionsName,
+		reg.routerTCPTLSOpenConnectionsGauge = newOTLPGaugeFrom(meter, routerTCPTLSOpenConnectionsName,
 			"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
 			"1")
 	}

@@ -61,7 +61,7 @@ type Registry interface {
 	// TCP router metrics
 
 	RouterTCPOpenConnectionsGauge() metrics.Gauge
-	RouterTCPOpenTLSConnectionsGauge() metrics.Gauge
+	RouterTCPTLSOpenConnectionsGauge() metrics.Gauge
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -97,7 +97,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceRespsBytesCounter []metrics.Counter
 
 	var routerTCPOpenConnectionsGauge []metrics.Gauge
-	var routerTCPOpenTLSConnectionsGauge []metrics.Gauge
+	var routerTCPTLSOpenConnectionsGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -167,8 +167,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.RouterTCPOpenConnectionsGauge() != nil {
 			routerTCPOpenConnectionsGauge = append(routerTCPOpenConnectionsGauge, r.RouterTCPOpenConnectionsGauge())
 		}
-		if r.RouterTCPOpenTLSConnectionsGauge() != nil {
-			routerTCPOpenTLSConnectionsGauge = append(routerTCPOpenTLSConnectionsGauge, r.RouterTCPOpenTLSConnectionsGauge())
+		if r.RouterTCPTLSOpenConnectionsGauge() != nil {
+			routerTCPTLSOpenConnectionsGauge = append(routerTCPTLSOpenConnectionsGauge, r.RouterTCPTLSOpenConnectionsGauge())
 		}
 	}
 
@@ -200,7 +200,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 
 		tcpRouterEnabled:                 len(routerTCPOpenConnectionsGauge) > 0,
 		routerTCPOpenConnectionsGauge:    multi.NewGauge(routerTCPOpenConnectionsGauge...),
-		routerTCPOpenTLSConnectionsGauge: multi.NewGauge(routerTCPOpenTLSConnectionsGauge...),
+		routerTCPTLSOpenConnectionsGauge: multi.NewGauge(routerTCPTLSOpenConnectionsGauge...),
 	}
 }
 
@@ -232,7 +232,7 @@ type standardRegistry struct {
 
 	tcpRouterEnabled                 bool
 	routerTCPOpenConnectionsGauge    metrics.Gauge
-	routerTCPOpenTLSConnectionsGauge metrics.Gauge
+	routerTCPTLSOpenConnectionsGauge metrics.Gauge
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -339,8 +339,8 @@ func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {
 	return r.routerTCPOpenConnectionsGauge
 }
 
-func (r *standardRegistry) RouterTCPOpenTLSConnectionsGauge() metrics.Gauge {
-	return r.routerTCPOpenTLSConnectionsGauge
+func (r *standardRegistry) RouterTCPTLSOpenConnectionsGauge() metrics.Gauge {
+	return r.routerTCPTLSOpenConnectionsGauge
 }
 
 // ScalableHistogram is a Histogram with a predefined time unit,

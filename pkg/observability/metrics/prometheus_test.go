@@ -157,7 +157,7 @@ func TestPrometheus(t *testing.T) {
 		With("traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").
 		Set(1)
 	prometheusRegistry.
-		RouterTCPOpenTLSConnectionsGauge().
+		RouterTCPTLSOpenConnectionsGauge().
 		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
 		Set(1)
 
@@ -332,7 +332,7 @@ func TestPrometheus(t *testing.T) {
 			assert: buildGaugeAssert(t, routerTCPOpenConnectionsName, 1),
 		},
 		{
-			name: routerTCPOpenTLSConnectionsName,
+			name: routerTCPTLSOpenConnectionsName,
 			labels: map[string]string{
 				"traefik_router_name":  "demo",
 				"traefik_service_name": "service1",
@@ -341,7 +341,7 @@ func TestPrometheus(t *testing.T) {
 				"tls_protocol_version": "1.3",
 				"tls_cipher":           "TLS_AES_128_GCM_SHA256",
 			},
-			assert: buildGaugeAssert(t, routerTCPOpenTLSConnectionsName, 1),
+			assert: buildGaugeAssert(t, routerTCPTLSOpenConnectionsName, 1),
 		},
 		{
 			name: serviceReqsTotalName,

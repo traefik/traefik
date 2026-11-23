@@ -633,35 +633,35 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
     | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
-    | <a id="opt-traefik-router-tcp-open-tls-connections" href="#opt-traefik-router-tcp-open-tls-connections" title="#opt-traefik-router-tcp-open-tls-connections">`traefik_router_tcp_open_tls_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-open-connections" href="#opt-traefik-router-tcp-tls-open-connections" title="#opt-traefik-router-tcp-tls-open-connections">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
 === "Prometheus"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
     | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `traefik_tls_mode`, `network_type`, `server_port` | The current count of open connections on a TCP router. |
-    | <a id="opt-traefik-router-tcp-open-tls-connections-2" href="#opt-traefik-router-tcp-open-tls-connections-2" title="#opt-traefik-router-tcp-open-tls-connections-2">`traefik_router_tcp_open_tls_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `network_type`, `server_port`, `tls_protocol_version`, `tls_cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-open-connections-2" href="#opt-traefik-router-tcp-tls-open-connections-2" title="#opt-traefik-router-tcp-tls-open-connections-2">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `network_type`, `server_port`, `tls_protocol_version`, `tls_cipher` | The current count of open TLS connections on a TCP router. |
 
 === "Datadog"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
     | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
-    | <a id="opt-router-tcp-open-tls-connections" href="#opt-router-tcp-open-tls-connections" title="#opt-router-tcp-open-tls-connections">`router.tcp.open.tls.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-router-tcp-tls-open-connections" href="#opt-router-tcp-tls-open-connections" title="#opt-router-tcp-tls-open-connections">`router.tcp.tls.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
 === "InfluxDB2"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
     | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
-    | <a id="opt-traefik-router-tcp-open-tls-connections-3" href="#opt-traefik-router-tcp-open-tls-connections-3" title="#opt-traefik-router-tcp-open-tls-connections-3">`traefik.router.tcp.open.tls.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-open-connections-3" href="#opt-traefik-router-tcp-tls-open-connections-3" title="#opt-traefik-router-tcp-tls-open-connections-3">`traefik.router.tcp.tls.open.connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
 === "StatsD"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
     | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections on a TCP router. |
-    | <a id="opt-prefix-router-tcp-open-tls-connections" href="#opt-prefix-router-tcp-open-tls-connections" title="#opt-prefix-router-tcp-open-tls-connections">`{prefix}.router.tcp.open.tls.connections`</a> | Gauge | | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-prefix-router-tcp-tls-open-connections" href="#opt-prefix-router-tcp-tls-open-connections" title="#opt-prefix-router-tcp-tls-open-connections">`{prefix}.router.tcp.tls.open.connections`</a> | Gauge | | The current count of open TLS connections on a TCP router. |
 
 !!! note "\{prefix\} Default Value"
         By default, \{prefix\} value is `traefik`.

@@ -44,8 +44,8 @@ type metricsMiddleware struct {
 	openConnectionsGauge  gokitmetrics.Gauge
 	openConnectionsLabels []string
 
-	openTLSConnectionsGauge  gokitmetrics.Gauge
-	openTLSConnectionsLabels []string
+	tlsOpenConnectionsGauge  gokitmetrics.Gauge
+	tlsOpenConnectionsLabels []string
 }
 
 // NewRouterMiddleware creates a new metrics middleware for a TCP Router.
@@ -65,8 +65,8 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 		next:                     next,
 		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
 		openConnectionsLabels:    []string{routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
-		openTLSConnectionsGauge:  registry.RouterTCPOpenTLSConnectionsGauge(),
-		openTLSConnectionsLabels: []string{routerNameLabel, routerName, serviceNameLabel, serviceName},
+		tlsOpenConnectionsGauge:  registry.RouterTCPTLSOpenConnectionsGauge(),
+		tlsOpenConnectionsLabels: []string{routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
 }
 
@@ -94,8 +94,8 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		mConn := &tlsMetricsConn{
 			Conn:   tlsConn,
-			gauge:  m.openTLSConnectionsGauge,
-			labels: slices.Concat(m.openTLSConnectionsLabels, networkLabels),
+			gauge:  m.tlsOpenConnectionsGauge,
+			labels: slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
 		}
 		defer mConn.release()
 

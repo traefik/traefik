@@ -59,7 +59,7 @@ const (
 
 	// TCP router level.
 	routerTCPOpenConnectionsName    = metricRouterPrefix + "tcp_open_connections"
-	routerTCPOpenTLSConnectionsName = metricRouterPrefix + "tcp_open_tls_connections"
+	routerTCPTLSOpenConnectionsName = metricRouterPrefix + "tcp_tls_open_connections"
 
 	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes,
 	// with the dots replaced by underscores to comply with the Prometheus naming rules.
@@ -288,8 +288,8 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: routerTCPOpenConnectionsName,
 			Help: "How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
 		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel, tcpServerPortLabel})
-		routerTCPOpenTLSConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: routerTCPOpenTLSConnectionsName,
+		routerTCPTLSOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPTLSOpenConnectionsName,
 			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
 		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpServerPortLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 
@@ -297,12 +297,12 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		// because HTTP and TCP routers can share the same name.
 		promState.tcpVectors = append(promState.tcpVectors,
 			routerTCPOpenConns.gv,
-			routerTCPOpenTLSConns.gv,
+			routerTCPTLSOpenConns.gv,
 		)
 
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
 		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
-		reg.routerTCPOpenTLSConnectionsGauge = routerTCPOpenTLSConns
+		reg.routerTCPTLSOpenConnectionsGauge = routerTCPTLSOpenConns
 	}
 
 	return reg

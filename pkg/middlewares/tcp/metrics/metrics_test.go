@@ -153,7 +153,7 @@ func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
 	return r.gauge
 }
 
-func (r *registryMock) RouterTCPOpenTLSConnectionsGauge() gokitmetrics.Gauge {
+func (r *registryMock) RouterTCPTLSOpenConnectionsGauge() gokitmetrics.Gauge {
 	return r.tlsGauge
 }
 
