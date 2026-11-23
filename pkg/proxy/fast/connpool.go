@@ -328,9 +328,14 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 
 // isLastResponse reports whether the backend closes the connection after the response with the given headers,
 // in which case the connection must not be reused (RFC 9112 section 9.6).
-// fasthttp reports it as a "close" Connection header value, also for an HTTP/1.0 response without keep-alive,
-// and for a response without Content-Length or Transfer-Encoding, as its body ends with the connection close.
 func isLastResponse(h *fasthttp.ResponseHeader) bool {
+	// This covers an HTTP/1.0 response without keep-alive,
+	// and a response without Content-Length or Transfer-Encoding, as its body ends with the connection close.
+	if h.ConnectionClose() {
+		return true
+	}
+
+	// ConnectionClose only recognizes a Connection header value that is exactly "close".
 	for _, v := range h.PeekAll(fasthttp.HeaderConnection) {
 		if httpguts.HeaderValuesContainsToken([]string{string(v)}, "close") {
 			return true
