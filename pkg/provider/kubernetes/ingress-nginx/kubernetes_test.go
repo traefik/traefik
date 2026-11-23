@@ -2068,7 +2068,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Basic Auth with missing secret — ingress is skipped entirely",
+			desc: "Basic Auth with missing secret returns 503",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -2080,9 +2080,66 @@ func TestLoadIngresses(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-with-basicauth-secret-missing-37-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-basicauth-secret-missing-37-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
+						"default-7-ingress-with-basicauth-secret-missing-37-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-basicauth-secret-missing-37",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
@@ -2093,10 +2150,339 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-basicauth-secret-missing-37": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc: "Basic Auth with missing secret on a shared host returns 503 for its path",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-basicauth-secret-missing-shared-host.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-missing-secret-ingress-22-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && (Path("/admin") || PathPrefix("/admin/"))`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "missing-secret-ingress",
+									},
+								},
+							},
+						},
+						"default-7-missing-secret-ingress-22-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && (Path("/admin") || PathPrefix("/admin/"))`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "missing-secret-ingress",
+									},
+								},
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-retry"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     "default-7-public-ingress-14-whoami-6-80-2",
+							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-retry"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "public-ingress",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-7-public-ingress-14-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+						"default-7-public-ingress-14-rule-0-path-0-tls-retry": {
+							Retry: &dynamic.Retry{
+								Attempts:            3,
+								MaxRequestBodyBytes: new(defaultProxyBodySize),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-7-missing-secret-ingress-22-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-missing-secret-ingress-22",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-public-ingress-14-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-public-ingress-14",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-missing-secret-ingress-22": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-7-public-ingress-14": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc: "Basic Auth with missing secret and canary by header returns 503",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-and-basicauth-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("production.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-canary-and-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("production.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "production.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-canary-and-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-canary-and-basicauth-secret-missing-48",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48-whoami-6-80-2-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.7:80"},
+									{URL: "http://10.10.0.8:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-canary-and-basicauth-secret-missing-48",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "canary",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48-whoami-6-80-2-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-7-ingress-with-canary-and-basicauth-secret-missing-48-whoami-6-80-2",
+										Weight: new(100),
+									},
+									{
+										Name:   "default-7-ingress-with-canary-and-basicauth-secret-missing-48-whoami-6-80-2-canary",
+										Weight: new(0),
+									},
+								},
+							},
+						},
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-canary-and-basicauth-secret-missing-48": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"production.localhost": hostTLSOption(),
+					},
 				},
 			},
 		},
@@ -3962,9 +4348,48 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-with-ssl-passthrough-and-missing-auth-secret-52-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("passthrough-missing-auth.whoami.localhost") && PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-ssl-passthrough-and-missing-auth-secret",
+									},
+								},
+							},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
+						"default-7-ingress-with-ssl-passthrough-and-missing-auth-secret-52-whoami-tls-10-443-3": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.3:8443"},
+									{URL: "http://10.10.0.4:8443"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-ssl-passthrough-and-missing-auth-secret-52",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami-tls",
+										Port:      "443",
+									},
+								},
+							},
+						},
 						"unavailable-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy:       "wrr",
@@ -3975,7 +4400,16 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-ssl-passthrough-and-missing-auth-secret-52": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{},
@@ -9299,6 +9733,105 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress default backend without rules with missing basic auth secret returns 503",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-no-rules-basicauth-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `PathPrefix("/")`,
+							RuleSyntax:  "default",
+							Priority:    math.MinInt32,
+							Service:     unavailableServiceName,
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-no-rules-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-default-backend-no-rules-basicauth-secret-missing-62",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-default-backend-no-rules-basicauth-secret-missing-62": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
 			desc:                         "Ingress default backend without rules inherits custom headers on the catch-all routers",
 			globalAllowedResponseHeaders: []string{"X-Custom-Header"},
 			paths: []string{
@@ -9755,6 +10288,163 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-7-ingress-with-default-backend-per-host-basic-auth-48": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"whoami.localhost": hostTLSOption(),
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress per-host default backend with missing basic auth secret returns 503",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-default-backend-per-host-basicauth-secret-missing.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-rule-0-default-backend": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-per-host-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-rule-0-default-backend-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-per-host-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-rule-0-path-0": {
+							EntryPoints: []string{"http"},
+							Rule:        `Host("whoami.localhost") && Path("/foo")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-per-host-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-rule-0-path-0-tls": {
+							EntryPoints: []string{"https"},
+							Rule:        `Host("whoami.localhost") && Path("/foo")`,
+							RuleSyntax:  "default",
+							Service:     unavailableServiceName,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "whoami.localhost",
+							},
+							Observability: &dynamic.RouterObservabilityConfig{
+								Metadata: &dynamic.ObservabilityMetadata{
+									Ingress: &dynamic.KubernetesMetadata{
+										Kind:      "Ingress",
+										Namespace: "default",
+										Name:      "ingress-with-default-backend-per-host-basicauth-secret-missing",
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"unavailable-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: new(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62-whoami-6-80-2": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   new(true),
+								ServersTransport: "default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-7-ingress-with-default-backend-per-host-basicauth-secret-missing-62": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:     ptypes.Duration(60 * time.Second),
 								ReadTimeout:     ptypes.Duration(60 * time.Second),
