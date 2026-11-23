@@ -191,6 +191,7 @@ This label selector locates the controller ConfigMap regardless of the namespace
 | `ssl-protocols` / `ssl-ciphers` | [TLS options](../reference/routing-configuration/http/tls/tls-options.md) | Apply them globally through an entryPoint TLS option, or per Ingress via `traefik.ingress.kubernetes.io/router.tls.options`. |
 | `hsts`, `hsts-max-age`, `hsts-include-subdomains`, `hsts-preload` | [Headers middleware](../reference/routing-configuration/http/middlewares/headers.md) | Use `stsSeconds`, `stsIncludeSubdomains`, `stsPreload`, and `forceSTSHeader`. Attach the middleware on an entryPoint for a cluster-wide default. |
 | `use-proxy-protocol` | [EntryPoint `proxyProtocol` configuration](../reference/install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) | Configure it on every entryPoint that sits behind a load balancer speaking PROXY protocol. |
+| `client-body-timeout` | [EntryPoint `transport.respondingTimeouts.readTimeout`](../reference/install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) | Both default to `60s`, but Traefik applies the timeout to the whole request, not to the time between two reads. See the warning below. |
 | `access-log-path` | `accessLog.filePath` | Static configuration. |
 | `log-format-upstream` | `accessLog.format` | Use Traefik's built-in `common`, `genericCLF`, or `json` formats. Custom NGINX log format strings do not have a 1:1 equivalent. |
 
@@ -201,10 +202,11 @@ This label selector locates the controller ConfigMap regardless of the namespace
     A slow upload therefore keeps going as long as the client keeps sending data.
     Traefik's entryPoint [`transport.respondingTimeouts.readTimeout`](../reference/install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) is the maximum duration for reading the entire request, including the body,
     and defaults to `60s`.
-    After the migration, uploads that take longer than 60 seconds are cut off, even while data is still arriving.
+    After the migration, Traefik cuts off uploads that take longer than 60 seconds, even while data is still arriving.
 
     Raise `readTimeout` on the entryPoints that receive large or slow uploads.
-    Setting it to `0s` disables it, which is best kept to entryPoints that are not exposed to the Internet.
+    Setting it to `0s` disables the timeout.
+    Reserve `0s` for entryPoints that are not exposed to the Internet.
 
     ```yaml tab="traefik-values.yaml"
     ports:
