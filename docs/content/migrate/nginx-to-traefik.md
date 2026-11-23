@@ -194,6 +194,26 @@ This label selector locates the controller ConfigMap regardless of the namespace
 | `access-log-path` | `accessLog.filePath` | Static configuration. |
 | `log-format-upstream` | `accessLog.format` | Use Traefik's built-in `common`, `genericCLF`, or `json` formats. Custom NGINX log format strings do not have a 1:1 equivalent. |
 
+!!! warning "Request Body Timeout"
+
+    ingress-nginx's `client-body-timeout` (default `60s`) maps to the NGINX [`client_body_timeout`](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_timeout) directive,
+    which only applies between two successive reads of the request body.
+    A slow upload therefore keeps going as long as the client keeps sending data.
+    Traefik's entryPoint [`transport.respondingTimeouts.readTimeout`](../reference/install-configuration/entrypoints.md#opt-transport-respondingTimeouts-readTimeout) is the maximum duration for reading the entire request, including the body,
+    and defaults to `60s`.
+    After the migration, uploads that take longer than 60 seconds are cut off, even while data is still arriving.
+
+    Raise `readTimeout` on the entryPoints that receive large or slow uploads.
+    Setting it to `0s` disables it, which is best kept to entryPoints that are not exposed to the Internet.
+
+    ```yaml tab="traefik-values.yaml"
+    ports:
+      websecure:
+        transport:
+          respondingTimeouts:
+            readTimeout: "600s"
+    ```
+
 ### ConfigMap Keys Without a Direct Equivalent
 
 Some ingress-nginx ConfigMap keys are NGINX-specific and can be dropped during migration because Traefik does not expose raw NGINX internals.
