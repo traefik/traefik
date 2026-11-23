@@ -71,11 +71,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -98,13 +99,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -144,10 +147,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Tracing:        new(true),
 								Metrics:        new(true),
 								TraceVerbosity: otypes.MinimalVerbosity,
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -179,13 +185,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								},
 								ServersTransport: "foobar@file",
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -202,11 +210,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -214,11 +223,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
 							},
@@ -241,13 +251,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -264,11 +277,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar-bar-41871576e140babe40bd": {
 							Rule:    `Host("*.bar") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -276,11 +290,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar-bar-605945111a3c9f84dc65": {
 							Rule:    `Host("bar") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
 							},
@@ -303,13 +318,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -326,11 +344,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo-bar-930f0e8b221e60bc7ab7": {
 							Rule:    `PathPrefix("/foo/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -338,11 +357,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo-bar-207cc2245cb31ba18e29": {
 							Rule:    `PathPrefix("/foo-bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
 							},
@@ -365,13 +385,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -388,11 +411,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -400,11 +424,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
 							},
@@ -427,13 +452,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -450,11 +478,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -477,13 +506,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -500,11 +531,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com": {
 							Rule:    `Host("example.com")`,
 							Service: "testing-example-com-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -524,13 +556,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "example-com",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -547,11 +581,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -559,11 +594,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-foo": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
 							},
@@ -586,13 +622,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -609,11 +648,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -621,11 +661,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-courgette-carotte": {
 							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
 							},
@@ -648,13 +689,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -671,11 +715,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -683,11 +728,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-courgette-carotte": {
 							Rule:    `Host("traefik.courgette") && PathPrefix("/carotte")`,
 							Service: "testing-service2-8082",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0"},
 									},
 								},
 							},
@@ -710,13 +756,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -736,13 +784,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service2",
-										Port:      "8082",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service2"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service2", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service2", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/1/http/paths/0/backend"},
 									},
+									ServicePort: "8082",
 								},
 							},
 						},
@@ -760,11 +810,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -779,13 +830,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -856,11 +909,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Service:    "default-backend",
 							Priority:   math.MinInt32,
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
 								},
 							},
@@ -883,13 +937,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -906,11 +962,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -933,13 +990,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -956,11 +1015,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -983,13 +1043,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1006,11 +1068,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1033,13 +1096,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1056,11 +1121,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1068,11 +1134,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-foo": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/foo")`,
 							Service: "testing-service1-carotte",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1"},
 									},
 								},
 							},
@@ -1095,13 +1162,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1121,13 +1190,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "carotte",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/1/backend"},
 									},
+									ServicePort: "carotte",
 								},
 							},
 						},
@@ -1144,11 +1215,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1171,13 +1243,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/1"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1194,11 +1268,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1206,11 +1281,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"toto-toto-traefik-tchouk-bar": {
 							Rule:    `Host("toto.traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "toto-service1-tchouk",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "toto",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1233,13 +1309,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1259,13 +1337,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "toto",
-										Name:      "service1",
-										Port:      "tchouk",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "toto", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "toto", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "toto", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "toto", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "tchouk",
 								},
 							},
 						},
@@ -1302,11 +1382,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-traefik-port-port": {
 							Rule:    `Host("traefik.port") && PathPrefix("/port")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1326,13 +1407,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -1349,15 +1432,16 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-example-com": {
 							Rule:    `Host("example.com")`,
 							Service: "testing-example-com-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							TLS:     &dynamic.RouterTLSConfig{},
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
-							TLS: &dynamic.RouterTLSConfig{},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1374,13 +1458,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "example-com",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "example-com", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1405,11 +1491,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1432,13 +1519,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "443",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "443",
 								},
 							},
 						},
@@ -1455,11 +1544,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-8443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1482,13 +1572,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8443",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8443",
 								},
 							},
 						},
@@ -1506,11 +1598,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-8443",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1533,13 +1626,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8443",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8443",
 								},
 							},
 						},
@@ -1558,11 +1653,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Service:    "default-backend",
 							Priority:   math.MinInt32,
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
 								},
 							},
@@ -1585,13 +1681,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/defaultBackend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1608,11 +1706,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1632,13 +1731,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1698,11 +1799,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foobar-com-bar": {
 							Rule:    `Host("*.foobar.com") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1724,13 +1826,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1748,11 +1852,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foobar-com-bar": {
 							Rule:    `HostRegexp("{subdomain:[a-zA-Z0-9-]+}.foobar.com") && PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1774,13 +1879,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1797,11 +1904,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1809,11 +1917,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1833,13 +1942,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1857,11 +1968,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1881,13 +1993,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1904,11 +2018,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1928,13 +2043,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1951,11 +2068,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -1975,13 +2093,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -1998,11 +2118,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2022,13 +2143,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2045,11 +2168,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `Path("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2069,13 +2193,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2092,11 +2218,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2116,13 +2243,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2142,11 +2271,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2166,13 +2296,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2192,11 +2324,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2216,13 +2349,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2239,11 +2374,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2263,13 +2399,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2312,11 +2450,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-foobar",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2336,13 +2475,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "foobar",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "foobar",
 								},
 							},
 						},
@@ -2371,12 +2512,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							RuleSyntax: "default",
 							Priority:   math.MinInt32,
 							Service:    "default-backend",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "defaultbackend",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/spec/defaultBackend"},
 									},
 								},
 							},
@@ -2396,13 +2537,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "defaultservice",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "defaultservice"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "defaultservice", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "defaultservice", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "defaultbackend", Path: "/spec/defaultBackend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -2419,11 +2562,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2454,13 +2598,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2477,11 +2623,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"testing-bar": {
 							Rule:    `(Path("/bar") || PathPrefix("/bar/"))`,
 							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2504,13 +2651,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2539,13 +2688,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2563,12 +2714,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-name-whoami-localhost": {
 							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
 							Service: "default-whoami-nil-port-name-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "ingress-with-nil-endpointslice-port-name",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2583,13 +2734,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami-nil-port-name",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-name", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-name", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2607,12 +2760,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"default-ingress-with-nil-endpointslice-port-value-whoami-localhost": {
 							Rule:    `Host("whoami.localhost") && PathPrefix("/")`,
 							Service: "default-whoami-nil-port-value-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "ingress-with-nil-endpointslice-port-value",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2627,13 +2780,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami-nil-port-value",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami-nil-port-value", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "ingress-with-nil-endpointslice-port-value", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -2690,11 +2845,12 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2714,13 +2870,15 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -2737,12 +2895,12 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-example-com-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service-bar-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "example.com",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2762,13 +2920,15 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service-bar",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-bar"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-bar", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-bar", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -2786,12 +2946,12 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 						"testing-example-com-foo": {
 							Rule:    `PathPrefix("/foo")`,
 							Service: "testing-service-foo-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-										Name:      "example.com",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2811,13 +2971,15 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service-foo",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-foo"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-foo", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service-foo", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Name: "example.com", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -2857,11 +3019,12 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2879,13 +3042,15 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -2924,11 +3089,12 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -2946,13 +3112,15 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -3348,11 +3516,12 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"testing-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "testing-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -3370,13 +3539,15 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "testing",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "testing", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "testing", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -3393,12 +3564,12 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"default-global-native-lb-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "default-service1-8080",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "global-native-lb",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -3416,13 +3587,15 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "service1",
-										Port:      "8080",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "service1"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "service1", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "service1", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "8080",
 								},
 							},
 						},
@@ -3439,12 +3612,12 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 						"default-global-native-lb-traefik-tchouk-bar": {
 							Rule:    `Host("traefik.tchouk") && PathPrefix("/bar")`,
 							Service: "default-native-disabled-svc-web",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "default",
-										Name:      "global-native-lb",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/metadata/annotations"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0"},
 									},
 								},
 							},
@@ -3465,13 +3638,15 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 									},
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "native-disabled-svc",
-										Port:      "web",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "native-disabled-svc"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "native-disabled-svc", Path: "/metadata/annotations"},
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "native-disabled-svc", Path: "/spec/ports/0"},
+										{Group: "networking.k8s.io", Version: "v1", Kind: "Ingress", Namespace: "default", Name: "global-native-lb", Path: "/spec/rules/0/http/paths/0/backend"},
 									},
+									ServicePort: "web",
 								},
 							},
 						},
