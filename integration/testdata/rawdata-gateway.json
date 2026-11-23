@@ -50,6 +50,43 @@
 			],
 			"ruleSyntax": "default",
 			"priority": 100008,
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-gateway",
+							"path": "/spec/listeners/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/parentRefs/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/matches/0"
+						}
+					]
+				}
+			},
 			"status": "enabled"
 		},
 		"httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-119934658cf45eae45a6@kubernetesgateway": {
@@ -60,6 +97,43 @@
 			],
 			"ruleSyntax": "default",
 			"priority": 100008,
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-https-gateway",
+							"path": "/spec/listeners/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/parentRefs/1"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/matches/0"
+						}
+					]
+				}
+			},
 			"status": "enabled"
 		},
 		"listener-web-http-5b3226d4ebd42b7200f1@kubernetesgateway": {
@@ -73,6 +147,20 @@
 				"metrics": true,
 				"tracing": true,
 				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-gateway",
+							"path": "/spec/listeners/0"
+						}
+					]
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -93,6 +181,20 @@
 				"metrics": true,
 				"tracing": true,
 				"traceVerbosity": "minimal"
+			},
+			"metadata": {
+				"kubernetes": {
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-https-gateway",
+							"path": "/spec/listeners/0"
+						}
+					]
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -142,10 +244,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"strategy": "wrr",
@@ -154,9 +256,44 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/backendRefs/0"
+						}
+					],
+					"servicePort": "80"
+				}
+			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.8:80": "UP"
 			}
 		},
@@ -169,6 +306,27 @@
 					}
 				]
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/backendRefs"
+						}
+					]
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-799bcbf0c2317c5d1c93@kubernetesgateway"
@@ -178,10 +336,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.8:80"
 					},
 					{
-						"url": "http://10.42.0.8:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"strategy": "wrr",
@@ -190,9 +348,44 @@
 					"flushInterval": "100ms"
 				}
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoami"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoami",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/backendRefs/0"
+						}
+					],
+					"servicePort": "80"
+				}
+			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP",
 				"http://10.42.0.8:80": "UP"
 			}
 		},
@@ -204,6 +397,27 @@
 						"weight": 1
 					}
 				]
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "HTTPRoute",
+						"namespace": "default",
+						"name": "http-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "HTTPRoute",
+							"namespace": "default",
+							"name": "http-app-1",
+							"path": "/spec/rules/0/backendRefs"
+						}
+					]
+				}
 			},
 			"status": "enabled",
 			"usedBy": [
@@ -246,6 +460,43 @@
 			"rule": "HostSNI(\"*\")",
 			"ruleSyntax": "default",
 			"priority": -1,
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TCPRoute",
+						"namespace": "default",
+						"name": "tcp-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-tcp-gateway",
+							"path": "/spec/listeners/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TCPRoute",
+							"namespace": "default",
+							"name": "tcp-app-1",
+							"path": "/spec/parentRefs/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TCPRoute",
+							"namespace": "default",
+							"name": "tcp-app-1",
+							"path": "/spec/rules/0"
+						}
+					]
+				}
+			},
 			"status": "enabled",
 			"using": [
 				"footcp"
@@ -261,6 +512,43 @@
 			"priority": 7,
 			"tls": {
 				"passthrough": true
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TLSRoute",
+						"namespace": "default",
+						"name": "tls-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "Gateway",
+							"namespace": "default",
+							"name": "my-tls-gateway",
+							"path": "/spec/listeners/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TLSRoute",
+							"namespace": "default",
+							"name": "tls-app-1",
+							"path": "/spec/parentRefs/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TLSRoute",
+							"namespace": "default",
+							"name": "tls-app-1",
+							"path": "/spec/rules/0"
+						}
+					]
+				}
 			},
 			"status": "enabled",
 			"using": [
@@ -280,17 +568,52 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.6:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.7:8080"
 					}
 				]
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoamitcp"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TCPRoute",
+							"namespace": "default",
+							"name": "tcp-app-1",
+							"path": "/spec/rules/0/backendRefs/0"
+						}
+					],
+					"servicePort": "8080"
+				}
+			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.5:8080": "UP",
-				"10.42.0.6:8080": "UP"
+				"10.42.0.2:8080": "UP",
+				"10.42.0.7:8080": "UP"
 			}
 		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-ea7aa4e0bb352b30e06c-wrr@kubernetesgateway": {
@@ -302,6 +625,27 @@
 					}
 				]
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TCPRoute",
+						"namespace": "default",
+						"name": "tcp-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TCPRoute",
+							"namespace": "default",
+							"name": "tcp-app-1",
+							"path": "/spec/rules/0/backendRefs"
+						}
+					]
+				}
+			},
 			"status": "enabled",
 			"usedBy": [
 				"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-ea7aa4e0bb352b30e06c@kubernetesgateway"
@@ -311,17 +655,52 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.6:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.7:8080"
 					}
 				]
 			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"version": "v1",
+						"kind": "Service",
+						"namespace": "default",
+						"name": "whoamitcp"
+					},
+					"sources": [
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/metadata/annotations"
+						},
+						{
+							"version": "v1",
+							"kind": "Service",
+							"namespace": "default",
+							"name": "whoamitcp",
+							"path": "/spec/ports/0"
+						},
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TLSRoute",
+							"namespace": "default",
+							"name": "tls-app-1",
+							"path": "/spec/rules/0/backendRefs/0"
+						}
+					],
+					"servicePort": "8080"
+				}
+			},
 			"status": "enabled",
 			"serverStatus": {
-				"10.42.0.5:8080": "UP",
-				"10.42.0.6:8080": "UP"
+				"10.42.0.2:8080": "UP",
+				"10.42.0.7:8080": "UP"
 			}
 		},
 		"tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-42f3967530c6b666e7b4-wrr@kubernetesgateway": {
@@ -332,6 +711,27 @@
 						"weight": 1
 					}
 				]
+			},
+			"metadata": {
+				"kubernetes": {
+					"primary": {
+						"group": "gateway.networking.k8s.io",
+						"version": "v1",
+						"kind": "TLSRoute",
+						"namespace": "default",
+						"name": "tls-app-1"
+					},
+					"sources": [
+						{
+							"group": "gateway.networking.k8s.io",
+							"version": "v1",
+							"kind": "TLSRoute",
+							"namespace": "default",
+							"name": "tls-app-1",
+							"path": "/spec/rules/0/backendRefs"
+						}
+					]
+				}
 			},
 			"status": "enabled",
 			"usedBy": [
