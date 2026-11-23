@@ -131,8 +131,11 @@ type tlsMetricsConn struct {
 	tlsOpenConnectionsGauge gokitmetrics.Gauge
 	labels                  []string
 
-	once     sync.Once
-	observed bool
+	once sync.Once
+	// The gauge is kept with the labels it was given when the connection was counted,
+	// so that the connection is released with the very same labels.
+	// It is nil as long as the connection is not counted.
+	tlsOpenConnectionsGaugeWithLabels gokitmetrics.Gauge
 }
 
 // A read or a write of a TLS connection only succeeds once the handshake is done.
@@ -155,21 +158,20 @@ func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 }
 
 func (c *tlsMetricsConn) observe() {
-	c.observed = true
-	c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...).Add(1)
+	c.tlsOpenConnectionsGaugeWithLabels = c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...)
+	c.tlsOpenConnectionsGaugeWithLabels.Add(1)
 }
 
 func (c *tlsMetricsConn) release() {
 	// Waits for an ongoing observation, and prevents the connection from being counted afterwards.
 	c.once.Do(func() {})
 
-	if c.observed {
-		c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...).Add(-1)
+	if c.tlsOpenConnectionsGaugeWithLabels != nil {
+		c.tlsOpenConnectionsGaugeWithLabels.Add(-1)
 	}
 }
 
 // getTLSLabels returns the tls.protocol.version and tls.cipher labels of the given connection.
-// The values are still known once the connection is closed.
 func getTLSLabels(conn *tls.Conn) []string {
 	state := conn.ConnectionState()
 
