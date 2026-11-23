@@ -9,6 +9,7 @@ import (
 	"net/textproto"
 	"testing"
 
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/assert"
@@ -666,6 +667,35 @@ func TestZstdWindowSize(t *testing.T) {
 	assert.Equal(t, fakeBody, body)
 }
 
+func TestBrotliWindowSize(t *testing.T) {
+	fakeBody := generateBytes(1 << 20)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		if _, err := rw.Write(fakeBody); err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	require.NoError(t, err)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliName)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, brotliName, rw.Header().Get(contentEncodingHeader))
+
+	// Each in-flight response holds one writer, and the writer memory grows with the window size.
+	// The window size is encoded in the first bits of the stream (WBITS, RFC 7932 section 9.1).
+	require.NotEmpty(t, rw.Body.Bytes())
+	assert.Equal(t, 18, brotliWindowBits(rw.Body.Bytes()[0]))
+
+	body, err := io.ReadAll(brotli.NewReader(rw.Body))
+	require.NoError(t, err)
+	assert.Equal(t, fakeBody, body)
+}
+
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
 	fakeBody := generateBytes(100000)
@@ -851,4 +881,18 @@ func generateBytes(length int) []byte {
 		value = append(value, 0x61+byte(i))
 	}
 	return value
+}
+
+// brotliWindowBits decodes the WBITS stream header field (RFC 7932 section 9.1).
+func brotliWindowBits(b byte) int {
+	if b&1 == 0 {
+		return 16
+	}
+	if n := int(b>>1) & 7; n != 0 {
+		return 17 + n
+	}
+	if n := int(b>>4) & 7; n != 0 {
+		return 8 + n
+	}
+	return 17
 }
