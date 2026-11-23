@@ -42,7 +42,7 @@ func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Re
 }
 
 // BuildEPChain an observability middleware chain by entry point.
-func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, internal bool, config dynamic.RouterObservabilityConfig) alice.Chain {
+func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, internal bool, config dynamic.RouterObservabilityConfig, metadata *dynamic.Metadata) alice.Chain {
 	chain := alice.New()
 
 	if o == nil {
@@ -52,7 +52,7 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	// Injection of the observability variables in the request context.
 	// This injection must be the first step in order for other observability middlewares to rely on it.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return o.observabilityContextHandler(next, internal, config), nil
+		return o.observabilityContextHandler(next, internal, config, metadata), nil
 	})
 
 	// Seed the per-request service observability state container. The leaf
@@ -134,14 +134,14 @@ func (o *ObservabilityMgr) RotateAccessLogs() error {
 	return o.accessLoggerMiddleware.Rotate()
 }
 
-func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {
+func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig, metadata *dynamic.Metadata) http.Handler {
 	return observability.WithObservabilityHandler(next, observability.Observability{
 		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
 		MetricsEnabled:         o.shouldMeter(internal, config),
 		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
 		TracingEnabled:         o.shouldTrace(internal, config, otypes.MinimalVerbosity),
 		DetailedTracingEnabled: o.shouldTrace(internal, config, otypes.DetailedVerbosity),
-		Metadata:               config.Metadata,
+		Metadata:               metadata,
 	})
 }
 

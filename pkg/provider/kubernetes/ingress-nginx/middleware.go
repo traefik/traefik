@@ -414,6 +414,7 @@ func buildAuthTLSPassCert(srv *server, loc *location) {
 		CAFiles:         caFiles,
 		PassCertificate: srv.clientAuthPassCertificate,
 	}
+	loc.AuthTLSPassCertSources = []dynamic.KubernetesRef{srv.clientAuthSource}
 }
 
 func (p *Provider) buildCustomHeaders(loc *location) {

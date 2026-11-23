@@ -63,6 +63,9 @@ type backend struct {
 
 	// Endpoints holds the resolved pod addresses.
 	Endpoints []endpoint
+
+	// Metadata is the metadata of the services built from the backend, nil when the Service is missing.
+	Metadata *dynamic.ServiceMetadata
 }
 
 // endpoint is a single resolved pod address.
@@ -94,6 +97,9 @@ type server struct {
 
 	// clientAuthIngress is the namespace/name of the Ingress whose client auth TLSOption holds, if any.
 	clientAuthIngress string
+
+	// clientAuthSource is the annotations of that Ingress.
+	clientAuthSource dynamic.KubernetesRef
 
 	// clientAuthPassCertificate is the auth-tls-pass-certificate-to-upstream annotation of that Ingress,
 	// as ingress-nginx reads it from the server block and not from the location.
@@ -169,6 +175,12 @@ type location struct {
 	// (may come from a different ingress on the same host).
 	ServerSnippet string
 
+	// ServerSnippetSources are the annotations of the Ingress declaring ServerSnippet.
+	ServerSnippetSources []dynamic.KubernetesRef
+
+	// UseRegexSources are the annotations of the Ingresses of the host enabling UseRegex.
+	UseRegexSources []dynamic.KubernetesRef
+
 	// LocationIndex is the per-ingress-rule path index (pi) set by the builder.
 	// Used by the translator to build stable router key names that are independent
 	// of how many other ingresses share the same virtual host.
@@ -177,11 +189,18 @@ type location struct {
 	// RuleIndex is the spec.rules index (ri) this location was generated from.
 	RuleIndex int
 
-	// Observability metadata.
+	// Identity of the Ingress and of the backend Service of this location.
 	Namespace   string
 	IngressName string
 	ServiceName string
 	ServicePort string
+
+	// Sources are the parts of the Ingress declaring this location:
+	// its path, or its default backend, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the Ingress declaring the backend of this location, and its annotations.
+	BackendSources []dynamic.KubernetesRef
 
 	// SSLPassthrough is true when the parent ingress carries ssl-passthrough.
 	// The host is then served over TCP on the TLS entryPoints, so no TLS router is created for this location.
@@ -196,6 +215,9 @@ type location struct {
 
 	// AppRoot, if non-nil, configures the path to redirect bare "/" requests to.
 	AppRoot *dynamic.AppRoot
+
+	// AppRootSources are the annotations of the Ingress of the host declaring AppRoot, when it is not this location's one.
+	AppRootSources []dynamic.KubernetesRef
 
 	// AppRootExtraRouterRule, when non-empty, is the rule for app-root's extra "/" router.
 	AppRootExtraRouterRule string
@@ -240,6 +262,9 @@ type location struct {
 
 	// AuthTLSPassCert, if non-nil, sets the Ssl-Client-* headers from the client TLS certificate, removing the values the client sent for them.
 	AuthTLSPassCert *dynamic.AuthTLSPassCertificateToUpstream
+
+	// AuthTLSPassCertSources are the annotations of the Ingress declaring the client auth of the server.
+	AuthTLSPassCertSources []dynamic.KubernetesRef
 
 	// SnippetAuth, if non-nil, configures server/configuration snippets and forward auth.
 	SnippetAuth *dynamic.Snippet
@@ -302,6 +327,12 @@ type canaryConfig struct {
 	HeaderValue   string
 	HeaderPattern string
 	Cookie        string
+
+	// Sources are the parts of the canary Ingress declaring the canary: its path, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the canary Ingress declaring the canary backend, and its annotations.
+	BackendSources []dynamic.KubernetesRef
 }
 
 // RequiresCanaryRouter returns true when a dedicated canary router is needed
@@ -326,4 +357,10 @@ type sslPassthroughBackend struct {
 
 	// RouterKey is the unique key used to name the TCP router.
 	RouterKey string
+
+	// Sources are the parts of the Ingress declaring the passthrough: the host of its rule, and its annotations.
+	Sources []dynamic.KubernetesRef
+
+	// BackendSources are the parts of the Ingress declaring the backend, and its annotations.
+	BackendSources []dynamic.KubernetesRef
 }

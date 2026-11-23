@@ -25,6 +25,7 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
+	gatescheme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
 
@@ -138,7 +140,7 @@ func (c *Client) WatchAll(ctx context.Context, namespaces []string, stopCh <-cha
 	}
 
 	for _, ns := range namespaces {
-		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFields))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTransform(k8s.StripManagedFieldsAndSetGVK(kscheme.Scheme)))
 		err = addEventHandler(logger, factoryKube.Core().V1().Services().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
@@ -152,7 +154,7 @@ func (c *Client) WatchAll(ctx context.Context, namespaces []string, stopCh <-cha
 			return nil, err
 		}
 
-		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFields))
+		factoryGateway := gateinformers.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, gateinformers.WithNamespace(ns), gateinformers.WithTransform(k8s.StripManagedFieldsAndSetGVK(gatescheme.Scheme)))
 		err = addEventHandler(logger, factoryGateway.Gateway().V1().Gateways().Informer(), eventHandler)
 		if err != nil {
 			return nil, err
