@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -53,13 +54,25 @@ func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	configuration := new(dynamic.Configuration)
 
-	if err := json.NewDecoder(http.MaxBytesReader(rw, req.Body, maxBodySize)).Decode(configuration); err != nil {
+	limitedBody := http.MaxBytesReader(rw, req.Body, maxBodySize)
+	if err := json.NewDecoder(limitedBody).Decode(configuration); err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
 			http.Error(rw, "request body too large", http.StatusRequestEntityTooLarge)
 			return
 		}
 		log.Error().Err(err).Msg("Error parsing configuration")
+		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := io.Copy(io.Discard, limitedBody); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(rw, "request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		log.Error().Err(err).Msg("Error reading configuration")
 		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 		return
 	}

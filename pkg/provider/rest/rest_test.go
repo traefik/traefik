@@ -24,3 +24,16 @@ func TestServeHTTPRejectsOversizedBody(t *testing.T) {
 	require.Equal(t, http.StatusRequestEntityTooLarge, rw.Code)
 	require.Empty(t, provider.configurationChan)
 }
+
+func TestServeHTTPRejectsOversizedTrailingBody(t *testing.T) {
+	provider := &Provider{configurationChan: make(chan dynamic.Message, 1)}
+	body := strings.NewReader(`{}` + strings.Repeat(" ", maxBodySize+1))
+	req := httptest.NewRequest(http.MethodPut, "/api/providers/rest", body)
+	req = mux.SetURLVars(req, map[string]string{"provider": "rest"})
+	rw := httptest.NewRecorder()
+
+	provider.ServeHTTP(rw, req)
+
+	require.Equal(t, http.StatusRequestEntityTooLarge, rw.Code)
+	require.Empty(t, provider.configurationChan)
+}
