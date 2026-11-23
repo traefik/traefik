@@ -54,6 +54,8 @@ const (
 	ddServiceReqsBytesName    = "service.requests.bytes.total"
 	ddServiceRespsBytesName   = "service.responses.bytes.total"
 
+	ddRouterTCPConnsName        = "router.tcp.connections.total"
+	ddRouterTCPTLSConnsName     = "router.tcp.tls.connections.total"
 	ddRouterTCPOpenConnsName    = "router.tcp.open.connections"
 	ddRouterTCPTLSOpenConnsName = "router.tcp.tls.open.connections"
 )
@@ -111,6 +113,8 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		registry.routerTCPConnectionsCounter = datadogClient.NewCounter(ddRouterTCPConnsName, 1.0)
+		registry.routerTCPTLSConnectionsCounter = datadogClient.NewCounter(ddRouterTCPTLSConnsName, 1.0)
 		registry.routerTCPOpenConnectionsGauge = datadogClient.NewGauge(ddRouterTCPOpenConnsName)
 		registry.routerTCPTLSOpenConnectionsGauge = datadogClient.NewGauge(ddRouterTCPTLSOpenConnsName)
 	}

@@ -153,6 +153,14 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSConnectionsCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
+	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
 		Set(1)
@@ -319,6 +327,29 @@ func TestPrometheus(t *testing.T) {
 				"router":   "demo",
 			},
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
+		},
+		{
+			name: routerTCPConnectionsTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPConnectionsTotalName, 1),
+		},
+		{
+			name: routerTCPTLSConnectionsTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSConnectionsTotalName, 1),
 		},
 		{
 			name: routerTCPOpenConnectionsName,
@@ -564,16 +595,30 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 		RouterTCPOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
 		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Add(1)
 
 	// The metric of the removed router is exported on the first scrape,
 	// and removed after that scrape.
-	family := findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	families := mustScrape()
+	for _, name := range []string{routerTCPOpenConnectionsName, routerTCPConnectionsTotalName} {
+		family := findMetricFamily(name, families)
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	}
 
-	family = findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
-	assert.Nil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	families = mustScrape()
+	for _, name := range []string{routerTCPOpenConnectionsName, routerTCPConnectionsTotalName} {
+		family := findMetricFamily(name, families)
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
+		assert.Nil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	}
 }
 
 func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {

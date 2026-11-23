@@ -636,6 +636,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections-total" href="#opt-traefik-router-tcp-connections-total" title="#opt-traefik-router-tcp-connections-total">`traefik_router_tcp_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections-total" href="#opt-traefik-router-tcp-tls-connections-total" title="#opt-traefik-router-tcp-tls-connections-total">`traefik_router_tcp_tls_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik.router.tcp.open_connections`</a> | UpDownCounter | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections" href="#opt-traefik-router-tcp-tls-open-connections" title="#opt-traefik-router-tcp-tls-open-connections">`traefik.router.tcp.tls.open_connections`</a> | UpDownCounter | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
@@ -643,6 +645,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections-total-2" href="#opt-traefik-router-tcp-connections-total-2" title="#opt-traefik-router-tcp-connections-total-2">`traefik_router_tcp_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections-total-2" href="#opt-traefik-router-tcp-tls-connections-total-2" title="#opt-traefik-router-tcp-tls-connections-total-2">`traefik_router_tcp_tls_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections-2" href="#opt-traefik-router-tcp-tls-open-connections-2" title="#opt-traefik-router-tcp-tls-open-connections-2">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
@@ -650,6 +654,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-router-tcp-connections-total" href="#opt-router-tcp-connections-total" title="#opt-router-tcp-connections-total">`router.tcp.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-router-tcp-tls-connections-total" href="#opt-router-tcp-tls-connections-total" title="#opt-router-tcp-tls-connections-total">`router.tcp.tls.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-router-tcp-tls-open-connections" href="#opt-router-tcp-tls-open-connections" title="#opt-router-tcp-tls-open-connections">`router.tcp.tls.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
@@ -657,6 +663,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections-total-3" href="#opt-traefik-router-tcp-connections-total-3" title="#opt-traefik-router-tcp-connections-total-3">`traefik.router.tcp.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections-total-3" href="#opt-traefik-router-tcp-tls-connections-total-3" title="#opt-traefik-router-tcp-tls-connections-total-3">`traefik.router.tcp.tls.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections-3" href="#opt-traefik-router-tcp-tls-open-connections-3" title="#opt-traefik-router-tcp-tls-open-connections-3">`traefik.router.tcp.tls.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
@@ -664,6 +672,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-prefix-router-tcp-connections-total" href="#opt-prefix-router-tcp-connections-total" title="#opt-prefix-router-tcp-connections-total">`{prefix}.router.tcp.connections.total`</a> | Count | | The total count of connections, over all the TCP routers. |
+    | <a id="opt-prefix-router-tcp-tls-connections-total" href="#opt-prefix-router-tcp-tls-connections-total" title="#opt-prefix-router-tcp-tls-connections-total">`{prefix}.router.tcp.tls.connections.total`</a> | Count | | The total count of TLS connections, over all the TCP routers. |
     | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections, over all the TCP routers. |
     | <a id="opt-prefix-router-tcp-tls-open-connections" href="#opt-prefix-router-tcp-tls-open-connections" title="#opt-prefix-router-tcp-tls-open-connections">`{prefix}.router.tcp.tls.open.connections`</a> | Gauge | | The current count of open TLS connections, over all the TCP routers. |
 
@@ -672,10 +682,10 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
 !!! info "TLS connections"
 
-    The TLS connections metric only counts the connections whose TLS is terminated by Traefik,
+    The TLS connections metrics only count the connections whose TLS is terminated by Traefik,
     once the TLS handshake is done.
-    These connections are also counted by the open connections metric.
-    The connections of a router with TLS passthrough are only counted by the open connections metric,
+    These connections are also counted by the connections metrics.
+    The connections of a router with TLS passthrough are only counted by the connections metrics,
     because Traefik forwards them without knowing the negotiated TLS version and cipher.
 
 ##### Labels

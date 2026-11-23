@@ -51,6 +51,8 @@ const (
 	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
 	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
 
+	influxDBRouterTCPConnsName        = "traefik.router.tcp.connections.total"
+	influxDBRouterTCPTLSConnsName     = "traefik.router.tcp.tls.connections.total"
 	influxDBRouterTCPOpenConnsName    = "traefik.router.tcp.open.connections"
 	influxDBRouterTCPTLSOpenConnsName = "traefik.router.tcp.tls.open.connections"
 )
@@ -120,6 +122,8 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		registry.routerTCPConnectionsCounter = influxDB2Store.NewCounter(influxDBRouterTCPConnsName)
+		registry.routerTCPTLSConnectionsCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSConnsName)
 		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName), false)
 		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPTLSOpenConnsName), false)
 	}

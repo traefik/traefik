@@ -37,12 +37,15 @@ const (
 
 // The gauges are given all their labels at once, when a connection is served,
 // because the Prometheus gauge does not support being given its labels in several steps.
+// The counters share the labels of the gauges, so that both can be compared.
 type metricsMiddleware struct {
 	next tcp.Handler
 
+	connectionsCounter    gokitmetrics.Counter
 	openConnectionsGauge  gokitmetrics.Gauge
 	openConnectionsLabels []string
 
+	tlsConnectionsCounter    gokitmetrics.Counter
 	tlsOpenConnectionsGauge  gokitmetrics.Gauge
 	tlsOpenConnectionsLabels []string
 }
@@ -62,8 +65,10 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 
 	return &metricsMiddleware{
 		next:                     next,
+		connectionsCounter:       registry.RouterTCPConnectionsCounter(),
 		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
 		openConnectionsLabels:    []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
+		tlsConnectionsCounter:    registry.RouterTCPTLSConnectionsCounter(),
 		tlsOpenConnectionsGauge:  registry.RouterTCPTLSOpenConnectionsGauge(),
 		tlsOpenConnectionsLabels: []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
@@ -84,7 +89,11 @@ func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, entryP
 func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	networkLabels := getNetworkLabels(conn)
 
-	openConnectionsGauge := m.openConnectionsGauge.With(slices.Concat(m.openConnectionsLabels, networkLabels)...)
+	labels := slices.Concat(m.openConnectionsLabels, networkLabels)
+
+	m.connectionsCounter.With(labels...).Add(1)
+
+	openConnectionsGauge := m.openConnectionsGauge.With(labels...)
 	openConnectionsGauge.Add(1)
 	defer openConnectionsGauge.Add(-1)
 
@@ -93,6 +102,7 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		mConn := &tlsMetricsConn{
 			Conn:                    tlsConn,
+			tlsConnectionsCounter:   m.tlsConnectionsCounter,
 			tlsOpenConnectionsGauge: m.tlsOpenConnectionsGauge,
 			labels:                  slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
 		}
@@ -121,12 +131,13 @@ func getNetworkLabels(conn net.Conn) []string {
 	return []string{networkTypeLabel, networkType}
 }
 
-// tlsMetricsConn counts a TLS connection as open once its handshake is done.
+// tlsMetricsConn counts a TLS connection, and counts it as open, once its handshake is done.
 // The handshake is not forced, as it has to stay driven by the first read or write of the next handlers,
 // and the TLS version and cipher are not known before it.
 type tlsMetricsConn struct {
 	*tls.Conn
 
+	tlsConnectionsCounter   gokitmetrics.Counter
 	tlsOpenConnectionsGauge gokitmetrics.Gauge
 	labels                  []string
 
@@ -159,7 +170,11 @@ func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 }
 
 func (c *tlsMetricsConn) observe() {
-	c.tlsOpenConnectionsGaugeWithLabels = c.tlsOpenConnectionsGauge.With(slices.Concat(c.labels, getTLSLabels(c.Conn))...)
+	labels := slices.Concat(c.labels, getTLSLabels(c.Conn))
+
+	c.tlsConnectionsCounter.With(labels...).Add(1)
+
+	c.tlsOpenConnectionsGaugeWithLabels = c.tlsOpenConnectionsGauge.With(labels...)
 	c.tlsOpenConnectionsGaugeWithLabels.Add(1)
 }
 

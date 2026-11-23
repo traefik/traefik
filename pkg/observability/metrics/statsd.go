@@ -43,6 +43,8 @@ const (
 	statsdServiceReqsBytesName    = "service.requests.bytes.total"
 	statsdServiceRespsBytesName   = "service.responses.bytes.total"
 
+	statsdRouterTCPConnsName        = "router.tcp.connections.total"
+	statsdRouterTCPTLSConnsName     = "router.tcp.tls.connections.total"
 	statsdRouterTCPOpenConnsName    = "router.tcp.open.connections"
 	statsdRouterTCPTLSOpenConnsName = "router.tcp.tls.open.connections"
 )
@@ -98,6 +100,8 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		registry.routerTCPConnectionsCounter = statsdClient.NewCounter(statsdRouterTCPConnsName, 1.0)
+		registry.routerTCPTLSConnectionsCounter = statsdClient.NewCounter(statsdRouterTCPTLSConnsName, 1.0)
 		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPOpenConnsName), true)
 		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPTLSOpenConnsName), true)
 	}

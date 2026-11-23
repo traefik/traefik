@@ -60,6 +60,8 @@ type Registry interface {
 
 	// TCP router metrics
 
+	RouterTCPConnectionsCounter() metrics.Counter
+	RouterTCPTLSConnectionsCounter() metrics.Counter
 	RouterTCPOpenConnectionsGauge() metrics.Gauge
 	RouterTCPTLSOpenConnectionsGauge() metrics.Gauge
 }
@@ -96,6 +98,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var serviceReqsBytesCounter []metrics.Counter
 	var serviceRespsBytesCounter []metrics.Counter
 
+	var routerTCPConnectionsCounter []metrics.Counter
+	var routerTCPTLSConnectionsCounter []metrics.Counter
 	var routerTCPOpenConnectionsGauge []metrics.Gauge
 	var routerTCPTLSOpenConnectionsGauge []metrics.Gauge
 
@@ -164,6 +168,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 			serviceRespsBytesCounter = append(serviceRespsBytesCounter, r.ServiceRespsBytesCounter())
 		}
 
+		if r.RouterTCPConnectionsCounter() != nil {
+			routerTCPConnectionsCounter = append(routerTCPConnectionsCounter, r.RouterTCPConnectionsCounter())
+		}
+		if r.RouterTCPTLSConnectionsCounter() != nil {
+			routerTCPTLSConnectionsCounter = append(routerTCPTLSConnectionsCounter, r.RouterTCPTLSConnectionsCounter())
+		}
 		if r.RouterTCPOpenConnectionsGauge() != nil {
 			routerTCPOpenConnectionsGauge = append(routerTCPOpenConnectionsGauge, r.RouterTCPOpenConnectionsGauge())
 		}
@@ -199,6 +209,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 		serviceRespsBytesCounter:       multi.NewCounter(serviceRespsBytesCounter...),
 
 		tcpRouterEnabled:                 len(routerTCPOpenConnectionsGauge) > 0,
+		routerTCPConnectionsCounter:      multi.NewCounter(routerTCPConnectionsCounter...),
+		routerTCPTLSConnectionsCounter:   multi.NewCounter(routerTCPTLSConnectionsCounter...),
 		routerTCPOpenConnectionsGauge:    multi.NewGauge(routerTCPOpenConnectionsGauge...),
 		routerTCPTLSOpenConnectionsGauge: multi.NewGauge(routerTCPTLSOpenConnectionsGauge...),
 	}
@@ -231,6 +243,8 @@ type standardRegistry struct {
 	serviceRespsBytesCounter       metrics.Counter
 
 	tcpRouterEnabled                 bool
+	routerTCPConnectionsCounter      metrics.Counter
+	routerTCPTLSConnectionsCounter   metrics.Counter
 	routerTCPOpenConnectionsGauge    metrics.Gauge
 	routerTCPTLSOpenConnectionsGauge metrics.Gauge
 }
@@ -333,6 +347,14 @@ func (r *standardRegistry) ServiceReqsBytesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceRespsBytesCounter() metrics.Counter {
 	return r.serviceRespsBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPConnectionsCounter() metrics.Counter {
+	return r.routerTCPConnectionsCounter
+}
+
+func (r *standardRegistry) RouterTCPTLSConnectionsCounter() metrics.Counter {
+	return r.routerTCPTLSConnectionsCounter
 }
 
 func (r *standardRegistry) RouterTCPOpenConnectionsGauge() metrics.Gauge {

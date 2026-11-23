@@ -70,7 +70,9 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 	// The connection is counted while it is served, and released afterwards.
 	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
 	assert.Equal(t, map[string]float64{labels: 0}, registry.gauge.values)
+	assert.Equal(t, map[string]float64{labels: 1}, registry.counter.values)
 	assert.Empty(t, registry.tlsGauge.values)
+	assert.Empty(t, registry.tlsCounter.values)
 }
 
 func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
@@ -90,9 +92,10 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 
 	registry := newRegistryMock(true)
 
-	var beforeHandshake, afterHandshake map[string]float64
+	var beforeHandshake, afterHandshake, countedBeforeHandshake map[string]float64
 	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		beforeHandshake = maps.Clone(registry.tlsGauge.values)
+		countedBeforeHandshake = maps.Clone(registry.tlsCounter.values)
 
 		_, err := io.ReadFull(conn, make([]byte, 4))
 		assert.NoError(t, err)
@@ -112,11 +115,14 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 	labels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,network.type=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
 
 	assert.Contains(t, registry.gauge.values, "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=")
+	assert.Equal(t, map[string]float64{"traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=": 1}, registry.counter.values)
 
 	// The TLS connection is counted once the handshake is done, and released afterwards.
 	assert.Empty(t, beforeHandshake)
+	assert.Empty(t, countedBeforeHandshake)
 	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)
 	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
+	assert.Equal(t, map[string]float64{labels: 1}, registry.tlsCounter.values)
 }
 
 func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
@@ -174,6 +180,8 @@ type registryMock struct {
 	metrics.Registry
 
 	routerEnabled bool
+	counter       *counterMock
+	tlsCounter    *counterMock
 	gauge         *gaugeMock
 	tlsGauge      *gaugeMock
 }
@@ -181,6 +189,8 @@ type registryMock struct {
 func newRegistryMock(routerEnabled bool) *registryMock {
 	return &registryMock{
 		routerEnabled: routerEnabled,
+		counter:       &counterMock{values: make(map[string]float64)},
+		tlsCounter:    &counterMock{values: make(map[string]float64)},
 		gauge:         &gaugeMock{values: make(map[string]float64)},
 		tlsGauge:      &gaugeMock{values: make(map[string]float64)},
 	}
@@ -188,6 +198,14 @@ func newRegistryMock(routerEnabled bool) *registryMock {
 
 func (r *registryMock) IsTCPRouterEnabled() bool {
 	return r.routerEnabled
+}
+
+func (r *registryMock) RouterTCPConnectionsCounter() gokitmetrics.Counter {
+	return r.counter
+}
+
+func (r *registryMock) RouterTCPTLSConnectionsCounter() gokitmetrics.Counter {
+	return r.tlsCounter
 }
 
 func (r *registryMock) RouterTCPOpenConnectionsGauge() gokitmetrics.Gauge {
@@ -219,4 +237,23 @@ func (g *gaugeMock) Set(value float64) {
 
 func (g *gaugeMock) Add(delta float64) {
 	g.values[strings.Join(g.labels, ",")] += delta
+}
+
+// counterMock holds the values of a counter by labels.
+type counterMock struct {
+	values map[string]float64
+	labels []string
+}
+
+func (c *counterMock) With(labelValues ...string) gokitmetrics.Counter {
+	labels := slices.Clone(c.labels)
+	for i := 0; i < len(labelValues); i += 2 {
+		labels = append(labels, labelValues[i]+"="+labelValues[i+1])
+	}
+
+	return &counterMock{values: c.values, labels: labels}
+}
+
+func (c *counterMock) Add(delta float64) {
+	c.values[strings.Join(c.labels, ",")] += delta
 }

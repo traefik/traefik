@@ -215,6 +215,10 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		reg.routerTCPConnectionsCounter = newOTLPCounterFrom(meter, routerTCPConnectionsTotalName,
+			"How many connections were handled by a TCP router, partitioned by entrypoint, service, TLS mode, and network type.")
+		reg.routerTCPTLSConnectionsCounter = newOTLPCounterFrom(meter, routerTCPTLSConnectionsTotalName,
+			"How many TLS connections, terminated by Traefik, were handled by a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.")
 		reg.routerTCPOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
 			"{connection}")

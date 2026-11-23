@@ -73,6 +73,8 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".service.requests.bytes.total:1.000000|c\n",
 		metricsPrefix + ".service.responses.bytes.total:1.000000|c\n",
 
+		metricsPrefix + ".router.tcp.connections.total:1.000000|c\n",
+		metricsPrefix + ".router.tcp.tls.connections.total:1.000000|c\n",
 		metricsPrefix + ".router.tcp.open.connections:3.000000|g\n",
 		metricsPrefix + ".router.tcp.tls.open.connections:3.000000|g\n",
 	}
@@ -108,6 +110,8 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		registry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		registry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
+		registry.RouterTCPConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+		registry.RouterTCPTLSConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 		registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 		registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo2", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(2)
 		registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
