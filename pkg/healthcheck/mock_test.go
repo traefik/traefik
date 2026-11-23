@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -199,4 +201,34 @@ type MetricsMock struct {
 
 func (m *MetricsMock) ServiceServerUpGauge() gokitmetrics.Gauge {
 	return m.Gauge
+}
+
+// logCounter counts the log events emitted per level.
+// It lets tests assert on log verbosity without touching the global logger.
+type logCounter struct {
+	mu     sync.Mutex
+	counts map[zerolog.Level]int
+}
+
+func newLogCounter() *logCounter {
+	return &logCounter{counts: make(map[zerolog.Level]int)}
+}
+
+func (c *logCounter) Hook() zerolog.Hook {
+	return zerolog.HookFunc(func(_ *zerolog.Event, level zerolog.Level, _ string) {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.counts[level]++
+	})
+}
+
+func (c *logCounter) Count(level zerolog.Level) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.counts[level]
+}
+
+// loggerContext returns a context carrying a logger whose events are counted per level.
+func (c *logCounter) loggerContext(ctx context.Context) context.Context {
+	return zerolog.New(io.Discard).Hook(c.Hook()).WithContext(ctx)
 }
