@@ -3,6 +3,7 @@ package acme
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"maps"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
+
+const maxStorageFileSize = 10 << 20
 
 var _ Store = (*LocalStore)(nil)
 
@@ -109,9 +112,12 @@ func (s *LocalStore) get(resolverName string) (*StoredData, error) {
 			}
 			defer f.Close()
 
-			file, err := io.ReadAll(f)
+			file, err := io.ReadAll(io.LimitReader(f, maxStorageFileSize+1))
 			if err != nil {
 				return nil, err
+			}
+			if len(file) > maxStorageFileSize {
+				return nil, fmt.Errorf("ACME storage file %s exceeds the %d byte limit", s.filename, maxStorageFileSize)
 			}
 
 			if len(file) > 0 {

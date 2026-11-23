@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/paerser/flag"
 )
+
+const maxConfigFileSize = 10 << 20
 
 // FileLoader loads a configuration from a file.
 type FileLoader struct {
@@ -75,6 +78,14 @@ func loadConfigFiles(configFile string, element any) (string, error) {
 
 	if len(filePath) == 0 {
 		return "", nil
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return "", err
+	}
+	if info.Size() > maxConfigFileSize {
+		return "", fmt.Errorf("configuration file %s exceeds the %d byte limit", filePath, maxConfigFileSize)
 	}
 
 	if err := file.Decode(filePath, element); err != nil {
