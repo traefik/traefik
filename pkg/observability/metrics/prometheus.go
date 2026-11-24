@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -61,15 +60,15 @@ const (
 	routerTCPOpenConnectionsName    = metricRouterPrefix + "tcp_open_connections"
 	routerTCPTLSOpenConnectionsName = metricRouterPrefix + "tcp_tls_open_connections"
 
-	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes,
-	// with the dots replaced by underscores to comply with the Prometheus naming rules.
-	tcpRouterNameLabel         = "traefik_router_name"
-	tcpServiceNameLabel        = "traefik_service_name"
-	tcpTLSModeLabel            = "traefik_tls_mode"
-	tcpNetworkTypeLabel        = "network_type"
-	tcpServerPortLabel         = "server_port"
-	tcpTLSProtocolVersionLabel = "tls_protocol_version"
-	tcpTLSCipherLabel          = "tls_cipher"
+	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes.
+	// The Prometheus client escapes their dots when the scraper does not support them.
+	tcpRouterNameLabel         = "traefik.router.name"
+	tcpServiceNameLabel        = "traefik.service.name"
+	tcpTLSModeLabel            = "traefik.tls.mode"
+	tcpNetworkTypeLabel        = "network.type"
+	tcpServerPortLabel         = "server.port"
+	tcpTLSProtocolVersionLabel = "tls.protocol.version"
+	tcpTLSCipherLabel          = "tls.cipher"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -739,11 +738,10 @@ func (lvs labelNamesValues) With(labelValues ...string) labelNamesValues {
 
 // ToLabels is a convenience method to convert a labelNamesValues
 // to the native prometheus.Labels.
-// The dots in the label names are replaced by underscores to comply with the Prometheus naming rules.
 func (lvs labelNamesValues) ToLabels() stdprometheus.Labels {
 	labels := make(map[string]string, len(lvs)/2)
 	for i := 0; i < len(lvs); i += 2 {
-		labels[strings.ReplaceAll(lvs[i], ".", "_")] = lvs[i+1]
+		labels[lvs[i]] = lvs[i+1]
 	}
 	return labels
 }

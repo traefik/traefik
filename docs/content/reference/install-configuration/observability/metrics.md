@@ -639,8 +639,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `traefik_tls_mode`, `network_type`, `server_port` | The current count of open connections on a TCP router. |
-    | <a id="opt-traefik-router-tcp-tls-open-connections-2" href="#opt-traefik-router-tcp-tls-open-connections-2" title="#opt-traefik-router-tcp-tls-open-connections-2">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik_router_name`, `traefik_service_name`, `network_type`, `server_port`, `tls_protocol_version`, `tls_cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type`, `server.port` | The current count of open connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-open-connections-2" href="#opt-traefik-router-tcp-tls-open-connections-2" title="#opt-traefik-router-tcp-tls-open-connections-2">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik.router.name`, `traefik.service.name`, `network.type`, `server.port`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
 
 === "Datadog"
 
@@ -692,5 +692,6 @@ Here is a comprehensive list of labels that are provided by the TCP metrics:
 
     The router and service labels are named after the attributes of the tracing spans,
     and the other ones after the [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/) attributes.
-    With Prometheus, the dots are replaced by underscores (e.g. `traefik_router_name`),
-    and StatsD does not support labels.
+    With Prometheus, the dots are replaced by underscores (e.g. `traefik_router_name`)
+    when the scraper does not support UTF-8 label names.
+    StatsD does not support labels.
