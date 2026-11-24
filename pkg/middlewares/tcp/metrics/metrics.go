@@ -139,9 +139,11 @@ type tlsMetricsConn struct {
 }
 
 // A read or a write of a TLS connection only succeeds once the handshake is done.
+// When it fails, the handshake state tells whether the failure happened after the handshake,
+// e.g. when the client closes the connection without sending any data.
 func (c *tlsMetricsConn) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
-	if err == nil {
+	if err == nil || c.Conn.ConnectionState().HandshakeComplete {
 		c.once.Do(c.observe)
 	}
 
@@ -150,7 +152,7 @@ func (c *tlsMetricsConn) Read(b []byte) (int, error) {
 
 func (c *tlsMetricsConn) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
-	if err == nil {
+	if err == nil || c.Conn.ConnectionState().HandshakeComplete {
 		c.once.Do(c.observe)
 	}
 

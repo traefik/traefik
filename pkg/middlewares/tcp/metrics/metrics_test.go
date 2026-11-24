@@ -119,6 +119,47 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
 }
 
+func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
+	cert, err := generate.DefaultCertificate()
+	require.NoError(t, err)
+
+	serverConn, clientConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = serverConn.Close()
+		_ = clientConn.Close()
+	})
+
+	go func() {
+		client := tls.Client(clientConn, &tls.Config{InsecureSkipVerify: true})
+		_ = client.Handshake()
+		_ = client.Close()
+	}()
+
+	registry := newRegistryMock(true)
+
+	var afterHandshake map[string]float64
+	next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		_, err := conn.Read(make([]byte, 4))
+		assert.ErrorIs(t, err, io.EOF)
+
+		afterHandshake = maps.Clone(registry.tlsGauge.values)
+	})
+
+	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
+
+	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
+		Certificates: []tls.Certificate{*cert},
+		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+	}))
+
+	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=,server.port=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+
+	// The TLS connection is counted although its first read fails, as the handshake is done.
+	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)
+	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
+}
+
 type connMock struct {
 	tcp.WriteCloser
 
