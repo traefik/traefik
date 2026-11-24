@@ -26323,8 +26323,8 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-7-ingress-with-proxy-redirect-27-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3}},
-						"default-7-ingress-with-proxy-redirect-27-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3}},
+						"default-7-ingress-with-proxy-redirect-27-rule-0-path-0-retry":     {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
+						"default-7-ingress-with-proxy-redirect-27-rule-0-path-0-tls-retry": {Retry: &dynamic.Retry{Attempts: 3, MaxRequestBodyBytes: new(defaultProxyBodySize)}},
 						"default-7-ingress-with-proxy-redirect-27-rule-0-path-0-proxy-redirect": {
 							ProxyRedirect: &dynamic.ProxyRedirect{
 								From: "http://backend:8080/",
@@ -26355,6 +26355,15 @@ func TestLoadIngresses(t *testing.T) {
 								PassHostHeader:     new(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								ServersTransport:   "default-7-ingress-with-proxy-redirect-27",
+							},
+							Observability: &dynamic.ServiceObservabilityConfig{
+								Metadata: &dynamic.ServiceObservabilityMetadata{
+									Kubernetes: &dynamic.KubernetesServiceMetadata{
+										Namespace: "default",
+										Name:      "whoami",
+										Port:      "80",
+									},
+								},
 							},
 						},
 					},
