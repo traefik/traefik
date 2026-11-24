@@ -43,13 +43,14 @@ const (
 	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
 	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
 
-	influxDBServiceReqsName         = "traefik.service.requests.total"
-	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
-	influxDBServiceReqsDurationName = "traefik.service.request.duration"
-	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
-	influxDBServiceServerUpName     = "traefik.service.server.up"
-	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
-	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
+	influxDBServiceReqsName             = "traefik.service.requests.total"
+	influxDBServiceReqsTLSName          = "traefik.service.requests.tls.total"
+	influxDBServiceReqsDurationName     = "traefik.service.request.duration"
+	influxDBServiceRetriesTotalName     = "traefik.service.retries.total"
+	influxDBServiceServerUpName         = "traefik.service.server.up"
+	influxDBServiceInflightRequestsName = "traefik.service.inflight.requests"
+	influxDBServiceReqsBytesName        = "traefik.service.requests.bytes.total"
+	influxDBServiceRespsBytesName       = "traefik.service.responses.bytes.total"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
@@ -111,6 +112,7 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBServiceReqsDurationName), time.Second)
 		registry.serviceRetriesCounter = influxDB2Store.NewCounter(influxDBServiceRetriesTotalName)
 		registry.serviceServerUpGauge = influxDB2Store.NewGauge(influxDBServiceServerUpName)
+		registry.serviceInflightRequestsGauge = influxDB2Store.NewGauge(influxDBServiceInflightRequestsName)
 		registry.serviceReqsBytesCounter = influxDB2Store.NewCounter(influxDBServiceReqsBytesName)
 		registry.serviceRespsBytesCounter = influxDB2Store.NewCounter(influxDBServiceRespsBytesName)
 	}

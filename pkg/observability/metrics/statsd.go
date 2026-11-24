@@ -35,13 +35,14 @@ const (
 	statsdRouterReqsBytesName    = "router.requests.bytes.total"
 	statsdRouterRespsBytesName   = "router.responses.bytes.total"
 
-	statsdServiceReqsName         = "service.request.total"
-	statsdServiceReqsTLSName      = "service.request.tls.total"
-	statsdServiceReqsDurationName = "service.request.duration"
-	statsdServiceRetriesTotalName = "service.retries.total"
-	statsdServiceServerUpName     = "service.server.up"
-	statsdServiceReqsBytesName    = "service.requests.bytes.total"
-	statsdServiceRespsBytesName   = "service.responses.bytes.total"
+	statsdServiceReqsName             = "service.request.total"
+	statsdServiceReqsTLSName          = "service.request.tls.total"
+	statsdServiceReqsDurationName     = "service.request.duration"
+	statsdServiceRetriesTotalName     = "service.retries.total"
+	statsdServiceServerUpName         = "service.server.up"
+	statsdServiceInflightRequestsName = "service.inflight.requests"
+	statsdServiceReqsBytesName        = "service.requests.bytes.total"
+	statsdServiceRespsBytesName       = "service.responses.bytes.total"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -89,6 +90,7 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdServiceReqsDurationName, 1.0), time.Millisecond)
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdServiceRetriesTotalName, 1.0)
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServiceServerUpName)
+		registry.serviceInflightRequestsGauge = statsdClient.NewGauge(statsdServiceInflightRequestsName)
 		registry.serviceReqsBytesCounter = statsdClient.NewCounter(statsdServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = statsdClient.NewCounter(statsdServiceRespsBytesName, 1.0)
 	}
