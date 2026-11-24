@@ -1,3 +1,32 @@
+## [v3.7.20](https://github.com/traefik/traefik/tree/v3.7.20) (2026-11-23)
+[All Commits](https://github.com/traefik/traefik/compare/v3.7.19...v3.7.20)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v5 to v5.7.0 ([#14343](https://github.com/traefik/traefik/pull/14343) @ldez)
+- **[acme, tls]** Keep the OCSP staple cache janitor alive ([#14257](https://github.com/traefik/traefik/pull/14257) @rtribotte)
+- **[docker, docker/swarm, http, k8s/knative]** Redact static provider fields ([#14305](https://github.com/traefik/traefik/pull/14305) @jspdown)
+- **[k8s]** Split YAML test fixtures on CRLF document separators ([#13866](https://github.com/traefik/traefik/pull/13866) @masharma2004)
+- **[k8s/ingress-nginx]** Apply the upstream vhost after the auth middleware ([#13787](https://github.com/traefik/traefik/pull/13787) @SaiPisey2)
+- **[logs]** Redact the static plugin provider configuration ([#14304](https://github.com/traefik/traefik/pull/14304) @jspdown)
+- **[middleware]** Limit Brotli writer memory in the Compress middleware ([#14324](https://github.com/traefik/traefik/pull/14324) @rtribotte)
+- **[middleware, k8s/ingress-nginx]** Support the ^~ location modifier in ingress-nginx server-snippet ([#13904](https://github.com/traefik/traefik/pull/13904) @ArchitDewan)
+- **[otel]** Bump go.opentelemetry.io/otel/sdk/log to v1.47.0 ([#14315](https://github.com/traefik/traefik/pull/14315) @amazon7737)
+- **[otel]** Bump go.opentelemetry.io/otel to v1.47.0 ([#14316](https://github.com/traefik/traefik/pull/14316) @kevinpollet)
+- **[tls]** Detect TLS options conflicts on hosts with a trailing dot ([#14192](https://github.com/traefik/traefik/pull/14192) @juliens)
+
+**Documentation:**
+- **[accesslogs]** Document entryPointName, trace_id and span_id JSON access log fields ([#14302](https://github.com/traefik/traefik/pull/14302) @kunalvirwal)
+- **[k8s/crd]** Add Failover TraefikService to the list affected by safeNaming ([#14262](https://github.com/traefik/traefik/pull/14262) @NEwa-05)
+- **[middleware, k8s/gatewayapi]** Fix Gateway API conformance report and CRS ruleset links ([#14253](https://github.com/traefik/traefik/pull/14253) @sarankumar1325)
+
+## [v2.11.64](https://github.com/traefik/traefik/tree/v2.11.64) (2026-11-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.63...v2.11.64)
+
+**Bug fixes:**
+- **[logs]** Redact the static plugin provider configuration ([#14304](https://github.com/traefik/traefik/pull/14304) @jspdown)
+- **[otel]** Bump go.opentelemetry.io/otel to v1.47.0 ([#14316](https://github.com/traefik/traefik/pull/14316) @kevinpollet)
+- **[tls]** Detect TLS options conflicts on hosts with a trailing dot ([#14192](https://github.com/traefik/traefik/pull/14192) @juliens)
+
 ## [v3.7.19](https://github.com/traefik/traefik/tree/v3.7.19) (2026-11-12)
 [All Commits](https://github.com/traefik/traefik/compare/v3.7.18...v3.7.19)
 
