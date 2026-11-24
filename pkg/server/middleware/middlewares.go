@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/approot"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/proxyredirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/upstreamvhost"
@@ -379,6 +380,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return upstreamvhost.New(ctx, next, *config.UpstreamVHost, middlewareName)
+		}
+	}
+
+	// ProxyRedirect
+	if config.ProxyRedirect != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return proxyredirect.New(ctx, next, *config.ProxyRedirect, middlewareName)
 		}
 	}
 

@@ -72,6 +72,8 @@ type IngressConfig struct {
 	ProxyNextUpstreamTries   *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-tries"`
 	ProxyNextUpstreamTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-timeout"`
 	ProxyHTTPVersion         *string `annotation:"nginx.ingress.kubernetes.io/proxy-http-version"`
+	ProxyRedirectFrom        *string `annotation:"nginx.ingress.kubernetes.io/proxy-redirect-from"`
+	ProxyRedirectTo          *string `annotation:"nginx.ingress.kubernetes.io/proxy-redirect-to"`
 
 	EnableCORS                 *bool     `annotation:"nginx.ingress.kubernetes.io/enable-cors"`
 	EnableCORSAllowCredentials *bool     `annotation:"nginx.ingress.kubernetes.io/cors-allow-credentials"`

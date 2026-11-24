@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-proxy-redirect
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-redirect-from: "http://backend:8080/"
+    nginx.ingress.kubernetes.io/proxy-redirect-to: "https://whoami.localhost/"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: whoami.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: whoami
+            port:
+              number: 80

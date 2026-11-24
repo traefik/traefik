@@ -203,6 +203,9 @@ type location struct {
 	// UpstreamVhost, if non-nil, overrides the Host header forwarded to the backend.
 	UpstreamVhost *dynamic.UpstreamVHost
 
+	// ProxyRedirect, if non-nil, rewrites the Location and Refresh response headers.
+	ProxyRedirect *dynamic.ProxyRedirect
+
 	// CustomHTTPErrors, if non-nil, configures custom error-page routing.
 	CustomHTTPErrors *middlewareCustomHTTPErrors
 
