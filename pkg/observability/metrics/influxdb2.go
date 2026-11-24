@@ -59,6 +59,8 @@ const (
 	influxDBRouterTCPTLSReceivedBytesName = "traefik.router.tcp.tls.received.bytes.total"
 	influxDBRouterTCPSentBytesName        = "traefik.router.tcp.sent.bytes.total"
 	influxDBRouterTCPTLSSentBytesName     = "traefik.router.tcp.tls.sent.bytes.total"
+	influxDBRouterTCPConnDurationName     = "traefik.router.tcp.connection.duration"
+	influxDBRouterTCPTLSConnDurationName  = "traefik.router.tcp.tls.connection.duration"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
@@ -134,6 +136,8 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 		registry.routerTCPTLSReceivedBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSReceivedBytesName)
 		registry.routerTCPSentBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPSentBytesName)
 		registry.routerTCPTLSSentBytesCounter = influxDB2Store.NewCounter(influxDBRouterTCPTLSSentBytesName)
+		registry.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBRouterTCPConnDurationName), time.Second)
+		registry.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBRouterTCPTLSConnDurationName), time.Second)
 	}
 
 	return registry

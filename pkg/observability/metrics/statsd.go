@@ -51,6 +51,8 @@ const (
 	statsdRouterTCPTLSReceivedBytesName = "router.tcp.tls.received.bytes.total"
 	statsdRouterTCPSentBytesName        = "router.tcp.sent.bytes.total"
 	statsdRouterTCPTLSSentBytesName     = "router.tcp.tls.sent.bytes.total"
+	statsdRouterTCPConnDurationName     = "router.tcp.connection.duration"
+	statsdRouterTCPTLSConnDurationName  = "router.tcp.tls.connection.duration"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -112,6 +114,8 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.routerTCPTLSReceivedBytesCounter = statsdClient.NewCounter(statsdRouterTCPTLSReceivedBytesName, 1.0)
 		registry.routerTCPSentBytesCounter = statsdClient.NewCounter(statsdRouterTCPSentBytesName, 1.0)
 		registry.routerTCPTLSSentBytesCounter = statsdClient.NewCounter(statsdRouterTCPTLSSentBytesName, 1.0)
+		registry.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterTCPConnDurationName, 1.0), time.Millisecond)
+		registry.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterTCPTLSConnDurationName, 1.0), time.Millisecond)
 	}
 
 	return registry

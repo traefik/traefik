@@ -68,6 +68,8 @@ type Registry interface {
 	RouterTCPTLSReceivedBytesCounter() metrics.Counter
 	RouterTCPSentBytesCounter() metrics.Counter
 	RouterTCPTLSSentBytesCounter() metrics.Counter
+	RouterTCPConnectionDurationHistogram() ScalableHistogram
+	RouterTCPTLSConnectionDurationHistogram() ScalableHistogram
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -110,6 +112,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var routerTCPTLSReceivedBytesCounter []metrics.Counter
 	var routerTCPSentBytesCounter []metrics.Counter
 	var routerTCPTLSSentBytesCounter []metrics.Counter
+	var routerTCPConnectionDurationHistogram []ScalableHistogram
+	var routerTCPTLSConnectionDurationHistogram []ScalableHistogram
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -200,6 +204,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.RouterTCPTLSSentBytesCounter() != nil {
 			routerTCPTLSSentBytesCounter = append(routerTCPTLSSentBytesCounter, r.RouterTCPTLSSentBytesCounter())
 		}
+		if r.RouterTCPConnectionDurationHistogram() != nil {
+			routerTCPConnectionDurationHistogram = append(routerTCPConnectionDurationHistogram, r.RouterTCPConnectionDurationHistogram())
+		}
+		if r.RouterTCPTLSConnectionDurationHistogram() != nil {
+			routerTCPTLSConnectionDurationHistogram = append(routerTCPTLSConnectionDurationHistogram, r.RouterTCPTLSConnectionDurationHistogram())
+		}
 	}
 
 	return &standardRegistry{
@@ -228,15 +238,17 @@ func NewMultiRegistry(registries []Registry) Registry {
 		serviceReqsBytesCounter:        multi.NewCounter(serviceReqsBytesCounter...),
 		serviceRespsBytesCounter:       multi.NewCounter(serviceRespsBytesCounter...),
 
-		tcpRouterEnabled:                 len(routerTCPOpenConnectionsGauge) > 0,
-		routerTCPConnectionsCounter:      multi.NewCounter(routerTCPConnectionsCounter...),
-		routerTCPTLSConnectionsCounter:   multi.NewCounter(routerTCPTLSConnectionsCounter...),
-		routerTCPOpenConnectionsGauge:    multi.NewGauge(routerTCPOpenConnectionsGauge...),
-		routerTCPTLSOpenConnectionsGauge: multi.NewGauge(routerTCPTLSOpenConnectionsGauge...),
-		routerTCPReceivedBytesCounter:    multi.NewCounter(routerTCPReceivedBytesCounter...),
-		routerTCPTLSReceivedBytesCounter: multi.NewCounter(routerTCPTLSReceivedBytesCounter...),
-		routerTCPSentBytesCounter:        multi.NewCounter(routerTCPSentBytesCounter...),
-		routerTCPTLSSentBytesCounter:     multi.NewCounter(routerTCPTLSSentBytesCounter...),
+		tcpRouterEnabled:                        len(routerTCPOpenConnectionsGauge) > 0,
+		routerTCPConnectionsCounter:             multi.NewCounter(routerTCPConnectionsCounter...),
+		routerTCPTLSConnectionsCounter:          multi.NewCounter(routerTCPTLSConnectionsCounter...),
+		routerTCPOpenConnectionsGauge:           multi.NewGauge(routerTCPOpenConnectionsGauge...),
+		routerTCPTLSOpenConnectionsGauge:        multi.NewGauge(routerTCPTLSOpenConnectionsGauge...),
+		routerTCPReceivedBytesCounter:           multi.NewCounter(routerTCPReceivedBytesCounter...),
+		routerTCPTLSReceivedBytesCounter:        multi.NewCounter(routerTCPTLSReceivedBytesCounter...),
+		routerTCPSentBytesCounter:               multi.NewCounter(routerTCPSentBytesCounter...),
+		routerTCPTLSSentBytesCounter:            multi.NewCounter(routerTCPTLSSentBytesCounter...),
+		routerTCPConnectionDurationHistogram:    MultiHistogram(routerTCPConnectionDurationHistogram),
+		routerTCPTLSConnectionDurationHistogram: MultiHistogram(routerTCPTLSConnectionDurationHistogram),
 	}
 }
 
@@ -266,15 +278,17 @@ type standardRegistry struct {
 	serviceReqsBytesCounter        metrics.Counter
 	serviceRespsBytesCounter       metrics.Counter
 
-	tcpRouterEnabled                 bool
-	routerTCPConnectionsCounter      metrics.Counter
-	routerTCPTLSConnectionsCounter   metrics.Counter
-	routerTCPOpenConnectionsGauge    metrics.Gauge
-	routerTCPTLSOpenConnectionsGauge metrics.Gauge
-	routerTCPReceivedBytesCounter    metrics.Counter
-	routerTCPTLSReceivedBytesCounter metrics.Counter
-	routerTCPSentBytesCounter        metrics.Counter
-	routerTCPTLSSentBytesCounter     metrics.Counter
+	tcpRouterEnabled                        bool
+	routerTCPConnectionsCounter             metrics.Counter
+	routerTCPTLSConnectionsCounter          metrics.Counter
+	routerTCPOpenConnectionsGauge           metrics.Gauge
+	routerTCPTLSOpenConnectionsGauge        metrics.Gauge
+	routerTCPReceivedBytesCounter           metrics.Counter
+	routerTCPTLSReceivedBytesCounter        metrics.Counter
+	routerTCPSentBytesCounter               metrics.Counter
+	routerTCPTLSSentBytesCounter            metrics.Counter
+	routerTCPConnectionDurationHistogram    ScalableHistogram
+	routerTCPTLSConnectionDurationHistogram ScalableHistogram
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -407,6 +421,14 @@ func (r *standardRegistry) RouterTCPSentBytesCounter() metrics.Counter {
 
 func (r *standardRegistry) RouterTCPTLSSentBytesCounter() metrics.Counter {
 	return r.routerTCPTLSSentBytesCounter
+}
+
+func (r *standardRegistry) RouterTCPConnectionDurationHistogram() ScalableHistogram {
+	return r.routerTCPConnectionDurationHistogram
+}
+
+func (r *standardRegistry) RouterTCPTLSConnectionDurationHistogram() ScalableHistogram {
+	return r.routerTCPTLSConnectionDurationHistogram
 }
 
 // ScalableHistogram is a Histogram with a predefined time unit,

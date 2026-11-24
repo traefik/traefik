@@ -65,6 +65,8 @@ const (
 	routerTCPTLSReceivedBytesTotalName = metricRouterPrefix + "tcp_tls_received_bytes_total"
 	routerTCPSentBytesTotalName        = metricRouterPrefix + "tcp_sent_bytes_total"
 	routerTCPTLSSentBytesTotalName     = metricRouterPrefix + "tcp_tls_sent_bytes_total"
+	routerTCPConnectionDurationName    = metricRouterPrefix + "tcp_connection_duration_seconds"
+	routerTCPTLSConnectionDurationName = metricRouterPrefix + "tcp_tls_connection_duration_seconds"
 
 	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes.
 	// The Prometheus client escapes their dots when the scraper does not support them.
@@ -321,6 +323,16 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: routerTCPTLSSentBytesTotalName,
 			Help: "The total size in bytes of the data sent by a TCP router to its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
 		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+		routerTCPConnDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+			Name:    routerTCPConnectionDurationName,
+			Help:    "How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type.",
+			Buckets: buckets,
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSConnDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+			Name:    routerTCPTLSConnectionDurationName,
+			Help:    "How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+			Buckets: buckets,
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 
 		// TCP metrics are tracked apart from the HTTP ones,
 		// because HTTP and TCP routers can share the same name.
@@ -333,6 +345,8 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			routerTCPTLSReceivedBytes.cv,
 			routerTCPSentBytes.cv,
 			routerTCPTLSSentBytes.cv,
+			routerTCPConnDurations.hv,
+			routerTCPTLSConnDurations.hv,
 		)
 
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
@@ -344,6 +358,8 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		reg.routerTCPTLSReceivedBytesCounter = routerTCPTLSReceivedBytes
 		reg.routerTCPSentBytesCounter = routerTCPSentBytes
 		reg.routerTCPTLSSentBytesCounter = routerTCPTLSSentBytes
+		reg.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(routerTCPConnDurations, time.Second)
+		reg.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(routerTCPTLSConnDurations, time.Second)
 	}
 
 	return reg

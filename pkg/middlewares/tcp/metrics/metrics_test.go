@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
@@ -79,10 +80,12 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 	assert.Equal(t, map[string]float64{labels: 1}, registry.counter.values)
 	assert.Equal(t, map[string]float64{labels: 4}, registry.receivedBytes.values)
 	assert.Equal(t, map[string]float64{labels: 5}, registry.sentBytes.values)
+	assert.Equal(t, map[string]int{labels: 1}, registry.connectionDuration.observations)
 	assert.Empty(t, registry.tlsGauge.values)
 	assert.Empty(t, registry.tlsCounter.values)
 	assert.Empty(t, registry.tlsReceivedBytes.values)
 	assert.Empty(t, registry.tlsSentBytes.values)
+	assert.Empty(t, registry.tlsConnectionDuration.observations)
 }
 
 func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
@@ -145,6 +148,9 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)
 	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
 	assert.Equal(t, map[string]float64{labels: 1}, registry.tlsCounter.values)
+
+	assert.Equal(t, map[string]int{terminatedLabels: 1}, registry.connectionDuration.observations)
+	assert.Equal(t, map[string]int{labels: 1}, registry.tlsConnectionDuration.observations)
 }
 
 func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
@@ -183,9 +189,21 @@ func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
 
 	labels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,network.type=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
 
+	terminatedLabels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type="
+
 	// The TLS connection is counted although its first read fails, as the handshake is done.
 	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)
 	assert.Equal(t, map[string]float64{labels: 0}, registry.tlsGauge.values)
+	assert.Equal(t, map[string]float64{labels: 1}, registry.tlsCounter.values)
+	assert.Equal(t, map[string]int{labels: 1}, registry.tlsConnectionDuration.observations)
+	assert.Equal(t, map[string]float64{terminatedLabels: 1}, registry.counter.values)
+	assert.Equal(t, map[string]int{terminatedLabels: 1}, registry.connectionDuration.observations)
+
+	// No application data was transferred.
+	assert.Empty(t, registry.receivedBytes.values)
+	assert.Empty(t, registry.sentBytes.values)
+	assert.Empty(t, registry.tlsReceivedBytes.values)
+	assert.Empty(t, registry.tlsSentBytes.values)
 }
 
 type connMock struct {
@@ -218,6 +236,9 @@ type registryMock struct {
 	tlsReceivedBytes *counterMock
 	sentBytes        *counterMock
 	tlsSentBytes     *counterMock
+
+	connectionDuration    *histogramMock
+	tlsConnectionDuration *histogramMock
 }
 
 func newRegistryMock(routerEnabled bool) *registryMock {
@@ -231,6 +252,9 @@ func newRegistryMock(routerEnabled bool) *registryMock {
 		tlsReceivedBytes: &counterMock{values: make(map[string]float64)},
 		sentBytes:        &counterMock{values: make(map[string]float64)},
 		tlsSentBytes:     &counterMock{values: make(map[string]float64)},
+
+		connectionDuration:    &histogramMock{observations: make(map[string]int)},
+		tlsConnectionDuration: &histogramMock{observations: make(map[string]int)},
 	}
 }
 
@@ -268,6 +292,14 @@ func (r *registryMock) RouterTCPSentBytesCounter() gokitmetrics.Counter {
 
 func (r *registryMock) RouterTCPTLSSentBytesCounter() gokitmetrics.Counter {
 	return r.tlsSentBytes
+}
+
+func (r *registryMock) RouterTCPConnectionDurationHistogram() metrics.ScalableHistogram {
+	return r.connectionDuration
+}
+
+func (r *registryMock) RouterTCPTLSConnectionDurationHistogram() metrics.ScalableHistogram {
+	return r.tlsConnectionDuration
 }
 
 // gaugeMock holds the values of a gauge by labels.
@@ -310,4 +342,27 @@ func (c *counterMock) With(labelValues ...string) gokitmetrics.Counter {
 
 func (c *counterMock) Add(delta float64) {
 	c.values[strings.Join(c.labels, ",")] += delta
+}
+
+// histogramMock holds the number of observations of a histogram by labels.
+type histogramMock struct {
+	observations map[string]int
+	labels       []string
+}
+
+func (h *histogramMock) With(labelValues ...string) metrics.ScalableHistogram {
+	labels := slices.Clone(h.labels)
+	for i := 0; i < len(labelValues); i += 2 {
+		labels = append(labels, labelValues[i]+"="+labelValues[i+1])
+	}
+
+	return &histogramMock{observations: h.observations, labels: labels}
+}
+
+func (h *histogramMock) ObserveFromStart(time.Time) {
+	h.Observe(0)
+}
+
+func (h *histogramMock) Observe(float64) {
+	h.observations[strings.Join(h.labels, ",")]++
 }

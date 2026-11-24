@@ -6,6 +6,7 @@ import (
 	"net"
 	"slices"
 	"sync"
+	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -41,17 +42,19 @@ const (
 type metricsMiddleware struct {
 	next tcp.Handler
 
-	connectionsCounter    gokitmetrics.Counter
-	openConnectionsGauge  gokitmetrics.Gauge
-	receivedBytesCounter  gokitmetrics.Counter
-	sentBytesCounter      gokitmetrics.Counter
-	openConnectionsLabels []string
+	connectionsCounter          gokitmetrics.Counter
+	openConnectionsGauge        gokitmetrics.Gauge
+	receivedBytesCounter        gokitmetrics.Counter
+	sentBytesCounter            gokitmetrics.Counter
+	connectionDurationHistogram metrics.ScalableHistogram
+	openConnectionsLabels       []string
 
-	tlsConnectionsCounter    gokitmetrics.Counter
-	tlsOpenConnectionsGauge  gokitmetrics.Gauge
-	tlsReceivedBytesCounter  gokitmetrics.Counter
-	tlsSentBytesCounter      gokitmetrics.Counter
-	tlsOpenConnectionsLabels []string
+	tlsConnectionsCounter          gokitmetrics.Counter
+	tlsOpenConnectionsGauge        gokitmetrics.Gauge
+	tlsReceivedBytesCounter        gokitmetrics.Counter
+	tlsSentBytesCounter            gokitmetrics.Counter
+	tlsConnectionDurationHistogram metrics.ScalableHistogram
+	tlsOpenConnectionsLabels       []string
 }
 
 // NewRouterMiddleware creates a new metrics middleware for a TCP Router.
@@ -68,17 +71,19 @@ func NewRouterMiddleware(ctx context.Context, next tcp.Handler, registry metrics
 	}
 
 	return &metricsMiddleware{
-		next:                     next,
-		connectionsCounter:       registry.RouterTCPConnectionsCounter(),
-		openConnectionsGauge:     registry.RouterTCPOpenConnectionsGauge(),
-		receivedBytesCounter:     registry.RouterTCPReceivedBytesCounter(),
-		sentBytesCounter:         registry.RouterTCPSentBytesCounter(),
-		openConnectionsLabels:    []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
-		tlsConnectionsCounter:    registry.RouterTCPTLSConnectionsCounter(),
-		tlsOpenConnectionsGauge:  registry.RouterTCPTLSOpenConnectionsGauge(),
-		tlsReceivedBytesCounter:  registry.RouterTCPTLSReceivedBytesCounter(),
-		tlsSentBytesCounter:      registry.RouterTCPTLSSentBytesCounter(),
-		tlsOpenConnectionsLabels: []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName},
+		next:                           next,
+		connectionsCounter:             registry.RouterTCPConnectionsCounter(),
+		openConnectionsGauge:           registry.RouterTCPOpenConnectionsGauge(),
+		receivedBytesCounter:           registry.RouterTCPReceivedBytesCounter(),
+		sentBytesCounter:               registry.RouterTCPSentBytesCounter(),
+		connectionDurationHistogram:    registry.RouterTCPConnectionDurationHistogram(),
+		openConnectionsLabels:          []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName, tlsModeLabel, tlsMode},
+		tlsConnectionsCounter:          registry.RouterTCPTLSConnectionsCounter(),
+		tlsOpenConnectionsGauge:        registry.RouterTCPTLSOpenConnectionsGauge(),
+		tlsReceivedBytesCounter:        registry.RouterTCPTLSReceivedBytesCounter(),
+		tlsSentBytesCounter:            registry.RouterTCPTLSSentBytesCounter(),
+		tlsConnectionDurationHistogram: registry.RouterTCPTLSConnectionDurationHistogram(),
+		tlsOpenConnectionsLabels:       []string{entryPointNameLabel, entryPointName, routerNameLabel, routerName, serviceNameLabel, serviceName},
 	}
 }
 
@@ -95,6 +100,8 @@ func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, entryP
 
 // ServeTCP serves the given TCP connection.
 func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
+	start := time.Now()
+
 	networkLabels := getNetworkLabels(conn)
 
 	labels := slices.Concat(m.openConnectionsLabels, networkLabels)
@@ -105,16 +112,21 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 	openConnectionsGauge.Add(1)
 	defer openConnectionsGauge.Add(-1)
 
+	connectionDurationHistogram := m.connectionDurationHistogram.With(labels...)
+	defer connectionDurationHistogram.ObserveFromStart(start)
+
 	// Only the connections whose TLS is terminated by Traefik are TLS connections here,
 	// the passthrough ones are forwarded without their TLS parameters being known.
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		mConn := &tlsMetricsConn{
-			Conn:                    tlsConn,
-			tlsConnectionsCounter:   m.tlsConnectionsCounter,
-			tlsOpenConnectionsGauge: m.tlsOpenConnectionsGauge,
-			tlsReceivedBytesCounter: m.tlsReceivedBytesCounter,
-			tlsSentBytesCounter:     m.tlsSentBytesCounter,
-			labels:                  slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
+			Conn:                           tlsConn,
+			tlsConnectionsCounter:          m.tlsConnectionsCounter,
+			tlsOpenConnectionsGauge:        m.tlsOpenConnectionsGauge,
+			tlsReceivedBytesCounter:        m.tlsReceivedBytesCounter,
+			tlsSentBytesCounter:            m.tlsSentBytesCounter,
+			tlsConnectionDurationHistogram: m.tlsConnectionDurationHistogram,
+			labels:                         slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
+			start:                          start,
 		}
 		defer mConn.release()
 
@@ -181,21 +193,25 @@ func (c *bytesMetricsConn) Write(b []byte) (int, error) {
 type tlsMetricsConn struct {
 	*tls.Conn
 
-	tlsConnectionsCounter   gokitmetrics.Counter
-	tlsOpenConnectionsGauge gokitmetrics.Gauge
-	tlsReceivedBytesCounter gokitmetrics.Counter
-	tlsSentBytesCounter     gokitmetrics.Counter
-	labels                  []string
+	tlsConnectionsCounter          gokitmetrics.Counter
+	tlsOpenConnectionsGauge        gokitmetrics.Gauge
+	tlsReceivedBytesCounter        gokitmetrics.Counter
+	tlsSentBytesCounter            gokitmetrics.Counter
+	tlsConnectionDurationHistogram metrics.ScalableHistogram
+	labels                         []string
+	// The TLS connection duration is measured from when the connection is served, as the non-TLS one,
+	// so that both can be compared. It includes the handshake.
+	start time.Time
 
 	once sync.Once
-	// The gauge is kept with the labels it was given when the connection was counted,
-	// so that the connection is released with the very same labels.
-	// It is nil as long as the connection is not counted.
-	tlsOpenConnectionsGaugeWithLabels gokitmetrics.Gauge
-	// The bytes counters are kept with their labels as well, as they are added to on every read and write.
+	// The metrics are given their labels once, when the connection is counted, as the non-TLS ones:
+	// the bytes counters are not given them again on every read and write,
+	// and the connection is released with the labels it was counted with.
 	// They are nil as long as the connection is not counted.
-	tlsReceivedBytesCounterWithLabels gokitmetrics.Counter
-	tlsSentBytesCounterWithLabels     gokitmetrics.Counter
+	tlsOpenConnectionsGaugeWithLabels        gokitmetrics.Gauge
+	tlsReceivedBytesCounterWithLabels        gokitmetrics.Counter
+	tlsSentBytesCounterWithLabels            gokitmetrics.Counter
+	tlsConnectionDurationHistogramWithLabels metrics.ScalableHistogram
 }
 
 // A read or a write of a TLS connection only succeeds, or transfers bytes, once the handshake is done.
@@ -239,6 +255,7 @@ func (c *tlsMetricsConn) observe() {
 
 	c.tlsReceivedBytesCounterWithLabels = c.tlsReceivedBytesCounter.With(labels...)
 	c.tlsSentBytesCounterWithLabels = c.tlsSentBytesCounter.With(labels...)
+	c.tlsConnectionDurationHistogramWithLabels = c.tlsConnectionDurationHistogram.With(labels...)
 }
 
 func (c *tlsMetricsConn) release() {
@@ -247,5 +264,6 @@ func (c *tlsMetricsConn) release() {
 
 	if c.tlsOpenConnectionsGaugeWithLabels != nil {
 		c.tlsOpenConnectionsGaugeWithLabels.Add(-1)
+		c.tlsConnectionDurationHistogramWithLabels.ObserveFromStart(c.start)
 	}
 }

@@ -62,8 +62,16 @@ const (
 	otelServiceRespsBytesTotalName = "traefik_service_responses_bytes_total"
 
 	// TCP router level.
-	otelRouterTCPOpenConnectionsName    = "traefik.router.tcp.open_connections"
-	otelRouterTCPTLSOpenConnectionsName = "traefik.router.tcp.tls.open_connections"
+	otelRouterTCPConnectionsName           = "traefik.router.tcp.connections"
+	otelRouterTCPTLSConnectionsName        = "traefik.router.tcp.tls.connections"
+	otelRouterTCPOpenConnectionsName       = "traefik.router.tcp.open_connections"
+	otelRouterTCPTLSOpenConnectionsName    = "traefik.router.tcp.tls.open_connections"
+	otelRouterTCPReceivedBytesName         = "traefik.router.tcp.received_bytes"
+	otelRouterTCPTLSReceivedBytesName      = "traefik.router.tcp.tls.received_bytes"
+	otelRouterTCPSentBytesName             = "traefik.router.tcp.sent_bytes"
+	otelRouterTCPTLSSentBytesName          = "traefik.router.tcp.tls.sent_bytes"
+	otelRouterTCPConnectionDurationName    = "traefik.router.tcp.connection.duration"
+	otelRouterTCPTLSConnectionDurationName = "traefik.router.tcp.tls.connection.duration"
 )
 
 var (
@@ -215,24 +223,30 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		reg.routerTCPConnectionsCounter = newOTLPCounterFrom(meter, routerTCPConnectionsTotalName,
-			"How many connections were handled by a TCP router, partitioned by entrypoint, service, TLS mode, and network type.", "1")
-		reg.routerTCPTLSConnectionsCounter = newOTLPCounterFrom(meter, routerTCPTLSConnectionsTotalName,
-			"How many TLS connections, terminated by Traefik, were handled by a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.", "1")
+		reg.routerTCPConnectionsCounter = newOTLPCounterFrom(meter, otelRouterTCPConnectionsName,
+			"How many connections were handled by a TCP router, partitioned by entrypoint, service, TLS mode, and network type.", "{connection}")
+		reg.routerTCPTLSConnectionsCounter = newOTLPCounterFrom(meter, otelRouterTCPTLSConnectionsName,
+			"How many TLS connections, terminated by Traefik, were handled by a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.", "{connection}")
 		reg.routerTCPOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPOpenConnectionsName,
 			"How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
 			"{connection}")
 		reg.routerTCPTLSOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPTLSOpenConnectionsName,
 			"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
 			"{connection}")
-		reg.routerTCPReceivedBytesCounter = newOTLPCounterFrom(meter, routerTCPReceivedBytesTotalName,
+		reg.routerTCPReceivedBytesCounter = newOTLPCounterFrom(meter, otelRouterTCPReceivedBytesName,
 			"The total size in bytes of the data received by a TCP router from its clients, partitioned by entrypoint, service, TLS mode, and network type.", "By")
-		reg.routerTCPTLSReceivedBytesCounter = newOTLPCounterFrom(meter, routerTCPTLSReceivedBytesTotalName,
+		reg.routerTCPTLSReceivedBytesCounter = newOTLPCounterFrom(meter, otelRouterTCPTLSReceivedBytesName,
 			"The total size in bytes of the data received by a TCP router from its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.", "By")
-		reg.routerTCPSentBytesCounter = newOTLPCounterFrom(meter, routerTCPSentBytesTotalName,
+		reg.routerTCPSentBytesCounter = newOTLPCounterFrom(meter, otelRouterTCPSentBytesName,
 			"The total size in bytes of the data sent by a TCP router to its clients, partitioned by entrypoint, service, TLS mode, and network type.", "By")
-		reg.routerTCPTLSSentBytesCounter = newOTLPCounterFrom(meter, routerTCPTLSSentBytesTotalName,
+		reg.routerTCPTLSSentBytesCounter = newOTLPCounterFrom(meter, otelRouterTCPTLSSentBytesName,
 			"The total size in bytes of the data sent by a TCP router to its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.", "By")
+		reg.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterTCPConnectionDurationName,
+			"How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type.",
+			"s"), time.Second)
+		reg.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterTCPTLSConnectionDurationName,
+			"How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+			"s"), time.Second)
 	}
 
 	return reg
@@ -283,18 +297,21 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
 	}
 
-	// The view applies the configured explicit boundaries to the Traefik histograms.
+	// The views apply the configured explicit boundaries to the Traefik histograms.
 	// As a view takes precedence over the exporter's aggregation,
-	// it is only added when the exporter uses explicit bucket histograms (the default).
+	// they are only added when the exporter uses explicit bucket histograms (the default).
 	// This lets OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram
 	// switch these histograms to exponential bucket histograms.
 	if _, ok := exporter.Aggregation(sdkmetric.InstrumentKindHistogram).(sdkmetric.AggregationExplicitBucketHistogram); ok {
-		meterProviderOpts = append(meterProviderOpts, sdkmetric.WithView(sdkmetric.NewView(
-			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
-			sdkmetric.Stream{Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
-				Boundaries: config.ExplicitBoundaries,
-			}},
-		)))
+		explicitBoundaries := sdkmetric.Stream{Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
+			Boundaries: config.ExplicitBoundaries,
+		}}
+
+		meterProviderOpts = append(meterProviderOpts, sdkmetric.WithView(
+			sdkmetric.NewView(sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"}, explicitBoundaries),
+			sdkmetric.NewView(sdkmetric.Instrument{Name: otelRouterTCPConnectionDurationName}, explicitBoundaries),
+			sdkmetric.NewView(sdkmetric.Instrument{Name: otelRouterTCPTLSConnectionDurationName}, explicitBoundaries),
+		))
 	}
 
 	meterProvider := sdkmetric.NewMeterProvider(meterProviderOpts...)

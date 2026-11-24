@@ -81,6 +81,8 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".router.tcp.tls.received.bytes.total:1.000000|c\n",
 		metricsPrefix + ".router.tcp.sent.bytes.total:1.000000|c\n",
 		metricsPrefix + ".router.tcp.tls.sent.bytes.total:1.000000|c\n",
+		metricsPrefix + ".router.tcp.connection.duration:10000.000000|ms",
+		metricsPrefix + ".router.tcp.tls.connection.duration:10000.000000|ms",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -124,5 +126,7 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		registry.RouterTCPTLSReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 		registry.RouterTCPSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 		registry.RouterTCPTLSSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+		registry.RouterTCPConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Observe(10000)
+		registry.RouterTCPTLSConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Observe(10000)
 	})
 }

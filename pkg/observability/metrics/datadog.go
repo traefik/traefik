@@ -62,6 +62,8 @@ const (
 	ddRouterTCPTLSReceivedBytesName = "router.tcp.tls.received.bytes.total"
 	ddRouterTCPSentBytesName        = "router.tcp.sent.bytes.total"
 	ddRouterTCPTLSSentBytesName     = "router.tcp.tls.sent.bytes.total"
+	ddRouterTCPConnDurationName     = "router.tcp.connection.duration"
+	ddRouterTCPTLSConnDurationName  = "router.tcp.tls.connection.duration"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -125,6 +127,8 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.routerTCPTLSReceivedBytesCounter = datadogClient.NewCounter(ddRouterTCPTLSReceivedBytesName, 1.0)
 		registry.routerTCPSentBytesCounter = datadogClient.NewCounter(ddRouterTCPSentBytesName, 1.0)
 		registry.routerTCPTLSSentBytesCounter = datadogClient.NewCounter(ddRouterTCPTLSSentBytesName, 1.0)
+		registry.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterTCPConnDurationName, 1.0), time.Second)
+		registry.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterTCPTLSConnDurationName, 1.0), time.Second)
 	}
 
 	return registry
