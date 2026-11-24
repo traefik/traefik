@@ -339,7 +339,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 		// Sending the responseWriter unlocks the connection readLoop, to handle the response.
 		// The readLoop can have returned while the request was written, for example when the backend closed the
-		// connection. Nothing receives on RWCh anymore, and the send would block forever.
+		// connection. Nothing receives on RWCh anymore, and the error that made it return waits on ErrCh.
 		select {
 		case co.RWCh <- rwWithUpgrade{
 			ReqMethod:           req.Method,
@@ -348,19 +348,18 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			ResponseHeaderTimer: responseHeaderTimer,
 		}:
 
-		case <-co.DoneCh:
-			// The timer can have fired before the readLoop received the responseWriter, the readLoop then exits without
-			// reporting the error.
+		case err = <-co.ErrCh:
+			// The timer can have fired before the readLoop received the responseWriter.
 			if responseHeaderTimer != nil && !responseHeaderTimer.Stop() {
 				return timeoutError{errors.New("timeout awaiting response headers")}
 			}
 
-			log.Ctx(ctx).Debug().Msg("Connection closed before handling the response")
+			log.Ctx(ctx).Debug().Err(err).Msg("Connection closed before handling the response")
 
 			co.Close()
 
 			if !co.reused || !isReplayable(req) {
-				return errors.New("connection closed before handling the response")
+				return err
 			}
 
 			continue

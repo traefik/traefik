@@ -35,12 +35,11 @@ type rwWithUpgrade struct {
 type conn struct {
 	net.Conn
 
-	RWCh  chan rwWithUpgrade
+	// RWCh carries the responseWriter from roundTrip to the readLoop once the request is written.
+	RWCh chan rwWithUpgrade
+	// ErrCh carries one value per responseWriter received, nil or the response error, and the error that makes the
+	// readLoop return. The buffer lets the readLoop return when no roundTrip waits, on an idle connection.
 	ErrCh chan error
-
-	// DoneCh is closed when the readLoop returns.
-	// Nothing receives on RWCh anymore, so a roundTrip waiting to send on it must give up.
-	DoneCh chan struct{}
 
 	br *bufio.Reader
 
@@ -50,6 +49,9 @@ type conn struct {
 	// reused reports whether the connection went back to the pool after a request.
 	// A request is only replayed on a reused connection, as the backend has no reason to close a fresh one.
 	// Replaying on fresh connections loops until the client gives up when the backend closes every connection.
+	// Known gap: when a request takes a released connection while its own dial is in flight, the dialed connection
+	// sits idle in the pool without the flag, and the request that gets it later is not replayed. The flag cannot
+	// be set when a connection enters the pool, as a fresh connection also goes through the pool to reach its request.
 	reused bool
 
 	responseHeaderTimeout time.Duration
@@ -104,26 +106,21 @@ func (c *conn) isUpgraded() bool {
 // readLoop handles the successive HTTP response read operations on the connection,
 // and watches for unsolicited bytes or connection errors when idle.
 func (c *conn) readLoop() {
-	defer close(c.DoneCh)
 	defer c.Close()
 
 	for {
 		_, err := c.br.Peek(1)
 		if err != nil {
-			select {
-			// An error occurred while a response was expected to be handled.
-			case <-c.RWCh:
-				c.ErrCh <- err
-			// An error occurred on an idle connection.
-			default:
-				c.broken.Store(true)
-			}
+			// The connection can be idle in the pool, the error then waits on ErrCh for a request that never comes.
+			c.broken.Store(true)
+			c.ErrCh <- err
 			return
 		}
 
 		// Unsolicited response received on an idle connection.
 		if !c.expectedResponse.Load() {
 			c.broken.Store(true)
+			c.ErrCh <- errors.New("unsolicited response on an idle connection")
 			return
 		}
 
@@ -530,8 +527,7 @@ func (c *connPool) askForNewConn(errCh chan<- error) {
 		idleTimeout:           c.idleConnTimeout,
 		responseHeaderTimeout: c.responseHeaderTimeout,
 		RWCh:                  make(chan rwWithUpgrade),
-		ErrCh:                 make(chan error),
-		DoneCh:                make(chan struct{}),
+		ErrCh:                 make(chan error, 1),
 		bufferPool:            &c.bufferPool,
 		limitedReaderPool:     &c.limitedReaderPool,
 	}

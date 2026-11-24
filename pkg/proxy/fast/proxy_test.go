@@ -15,6 +15,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -488,7 +489,7 @@ func TestReadLoopExitBeforeHandoff(t *testing.T) {
 			desc:             "non-replayable request fails",
 			method:           http.MethodPost,
 			body:             strings.NewReader("data"),
-			expectedStatus:   http.StatusInternalServerError,
+			expectedStatus:   http.StatusBadGateway,
 			expectedRequests: 1,
 		},
 	}
@@ -510,12 +511,18 @@ func TestReadLoopExitBeforeHandoff(t *testing.T) {
 			}))
 			t.Cleanup(backend.Close)
 
+			// Every connection signals its close, so the test can wait for its readLoop to exit.
+			closed := make(chan struct{}, 100)
 			pool := newConnPool(1, 0, 0, func() (net.Conn, error) {
-				return net.Dial("tcp", backend.Listener.Addr().String())
+				conn, err := net.Dial("tcp", backend.Listener.Addr().String())
+				if err != nil {
+					return nil, err
+				}
+				return closeNotifyingConn{Conn: conn, closed: closed}, nil
 			})
 			t.Cleanup(pool.Close)
 
-			// The first connection is dialed ahead, so the test can wait for its readLoop to exit.
+			// The first connection comes from the pool, the replay dials a fresh one.
 			co, err := pool.AcquireConn()
 			require.NoError(t, err)
 			pool.ReleaseConn(co)
@@ -523,10 +530,12 @@ func TestReadLoopExitBeforeHandoff(t *testing.T) {
 			proxy, err := NewReverseProxy(testhelpers.MustParseURL(backend.URL), nil, false, true, false, pool)
 			require.NoError(t, err)
 
-			// The request goroutine is held after writing the request until the readLoop has exited,
+			// The request goroutine is held after writing the first request until the readLoop has exited,
 			// so the response writer is always passed to a connection whose readLoop is gone.
+			// The replay is not held, as the backend answers it.
+			var hold sync.Once
 			trace := &httptrace.ClientTrace{
-				WroteRequest: func(httptrace.WroteRequestInfo) { <-co.DoneCh },
+				WroteRequest: func(httptrace.WroteRequestInfo) { hold.Do(func() { <-closed }) },
 			}
 			req := httptest.NewRequest(test.method, "/", test.body).WithContext(httptrace.WithClientTrace(t.Context(), trace))
 			res := httptest.NewRecorder()
@@ -602,7 +611,7 @@ func TestReplayOnReusedConnOnly(t *testing.T) {
 		t.Fatal("request replayed in a loop")
 	}
 
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusBadGateway, res.Code)
 	assert.Equal(t, int32(2), requests.Load())
 }
 
