@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"maps"
 	"os"
 	"os/signal"
@@ -291,6 +292,11 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 					continue
 				}
 
+				// The default certificate is kept, as the ACME provider only issues defaultGeneratedCert when it is unset.
+				if err := checkCertificateFiles(store.DefaultCertificate); err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+				}
+
 				content, err := store.DefaultCertificate.CertFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
@@ -315,6 +321,11 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		for name, st := range configuration.HTTP.ServersTransports {
 			var certificates []tls.Certificate
 			for _, cert := range st.Certificates {
+				if err := checkCertificateFiles(&cert); err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+					continue
+				}
+
 				content, err := cert.CertFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
@@ -357,6 +368,11 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				continue
 			}
 			for _, cert := range st.TLS.Certificates {
+				if err := checkCertificateFiles(&cert); err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+					continue
+				}
+
 				content, err := cert.CertFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
@@ -482,6 +498,11 @@ func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration
 func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
 	var certs []*tls.CertAndStores
 	for _, cert := range tlsConfig.Certificates {
+		if err := checkCertificateFiles(&cert.Certificate); err != nil {
+			log.Ctx(ctx).Error().Err(err).Send()
+			continue
+		}
+
 		content, err := cert.Certificate.CertFile.Read()
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Send()
@@ -500,6 +521,34 @@ func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguratio
 	}
 
 	return certs
+}
+
+// errNotFileNorPEM covers a mistyped path as well as inline content without PEM armor, which the provider cannot tell apart.
+var errNotFileNorPEM = fmt.Errorf("%w and value is not PEM data", fs.ErrNotExist)
+
+// checkCertificateFiles reports a certFile or keyFile naming a missing file,
+// which the TLS manager would otherwise read as content and fail to find PEM data in.
+// The os.Stat error is not wrapped, as it holds the full configured value, which may be secret content.
+func checkCertificateFiles(cert *tls.Certificate) error {
+	if isMissingFile(cert.CertFile) {
+		return fmt.Errorf("reading certFile %s: %w", cert.GetTruncatedCertificateName(), errNotFileNorPEM)
+	}
+
+	if isMissingFile(cert.KeyFile) {
+		return fmt.Errorf("reading keyFile of certificate %s: %w", cert.GetTruncatedCertificateName(), errNotFileNorPEM)
+	}
+
+	return nil
+}
+
+func isMissingFile(value types.FileOrContent) bool {
+	// Inline PEM content can look like a missing relative path to os.Stat, and an empty value is an unset one.
+	if value == "" || strings.Contains(value.String(), "-----BEGIN") {
+		return false
+	}
+
+	_, err := os.Stat(value.String())
+	return errors.Is(err, fs.ErrNotExist)
 }
 
 func readFile(filename string) (string, error) {
