@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/network"
 	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -20,6 +21,10 @@ type Server struct {
 	udpEntryPoints   UDPEntryPoints
 	observabilityMgr *middleware.ObservabilityMgr
 
+	// networks gives the entryPoints what the host network does not.
+	// It is nil when Traefik serves on the host network only.
+	networks network.Extension
+
 	signals  chan os.Signal
 	stopChan chan bool
 
@@ -27,7 +32,9 @@ type Server struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher, observabilityMgr *middleware.ObservabilityMgr) *Server {
+// The networks extension is the one the entryPoints were given, whose lifecycle the server drives;
+// it is nil when there is none.
+func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher, observabilityMgr *middleware.ObservabilityMgr, networks network.Extension) *Server {
 	srv := &Server{
 		watcher:          watcher,
 		tcpEntryPoints:   entryPoints,
@@ -36,6 +43,7 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 		stopChan:         make(chan bool, 1),
 		routinesPool:     routinesPool,
 		udpEntryPoints:   entryPointsUDP,
+		networks:         networks,
 	}
 
 	srv.configureSignals()
@@ -43,15 +51,34 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 	return srv
 }
 
+// networksWithdrawTimeout bounds the withdrawal of the networks extension that starts a shutdown.
+// The entryPoints do not start draining until it returns, so it is kept short.
+const networksWithdrawTimeout = 5 * time.Second
+
 // Start starts the server and Stop/Close it when context is Done.
 func (s *Server) Start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
 		logger := log.Ctx(ctx)
 		logger.Info().Msg("I have to go...")
+
+		if s.networks != nil {
+			// First, before any entryPoint stops accepting:
+			// the extension stops attracting new connections while this instance still answers,
+			// so that peers have moved elsewhere by the time the listeners close.
+			withdrawCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), networksWithdrawTimeout)
+			s.networks.Withdraw(withdrawCtx)
+			cancel()
+		}
+
 		logger.Info().Msg("Stopping server gracefully")
 		s.Stop()
 	}()
+
+	if s.networks != nil {
+		// Before the entryPoints: what the extension brings up may be what they accept on.
+		s.networks.Start(ctx)
+	}
 
 	s.tcpEntryPoints.Start()
 	s.udpEntryPoints.Start()
@@ -98,6 +125,11 @@ func (s *Server) Close() {
 	close(s.stopChan)
 
 	s.observabilityMgr.Close()
+
+	if s.networks != nil {
+		// Last: the extension backs the entryPoint listeners that have just been shut down.
+		s.networks.Close()
+	}
 
 	cancel()
 }
