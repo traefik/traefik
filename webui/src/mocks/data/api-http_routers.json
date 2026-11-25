@@ -1,7 +1,34 @@
 [
   {
+    "service": "or-example",
+    "rule": "Host(`api.example.com`) || Host(`api2.example.com`)",
+    "status": "enabled",
+    "name": "or-example@file",
+    "using": ["web"],
+    "priority": 5,
+    "provider": "file"
+  },
+  {
+    "service": "not-example",
+    "rule": "!Header(`X-Forwarded-Proto`, `http`) && Host(`secure.example.com`)",
+    "status": "enabled",
+    "name": "not-example@file",
+    "using": ["web-secured"],
+    "priority": 8,
+    "provider": "file"
+  },
+  {
+    "service": "group-example",
+    "rule": "(Host(`app.com`) || Host(`www.app.com`)) && PathPrefix(`/dashboard`) && (Method(`GET`) || Method(`POST`))",
+    "status": "enabled",
+    "name": "group-example@file",
+    "using": ["web-secured"],
+    "priority": 15,
+    "provider": "file"
+  },
+  {
     "service": "jaeger_v2-example-beta1",
-    "rule": "Host(`jaeger-v2-example-beta1`)",
+    "rule": "Host(`jaeger-v2-example-beta1`) && Path(`/api`) && Method(`GET`) && Header(`X-Auth-Token`, `secret`) && ClientIP(`192.168.1.0/24`)",
     "status": "enabled",
     "name": "jaeger_v2-example-beta1@docker",
     "using": ["web-secured", "web"],

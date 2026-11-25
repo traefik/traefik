@@ -7,6 +7,7 @@ import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
 import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
+import RuleDisplay from 'components/routers/RuleDisplay'
 import TlsIcon from 'components/routers/TlsIcon'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import ClickableRow from 'components/tables/ClickableRow'
@@ -36,22 +37,11 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
             )}
           </AriaTd>
           <AriaTd>
-            <TooltipText
-              text={row.rule}
-              css={{
-                display: '-webkit-box',
-                '-webkit-line-clamp': 2,
-                '-webkit-box-orient': 'vertical',
-                overflow: 'hidden',
-                wordBreak: 'break-word',
-                maxWidth: '100%',
-                lineHeight: 1.3,
-              }}
-            />
+            <RuleDisplay rule={row.rule} compact />
           </AriaTd>
         </>
       )}
-      <AriaTd>{row.using && row.using.length > 0 && <Chips items={row.using} />}</AriaTd>
+      <AriaTd>{row.using && row.using.length > 0 && <Chips items={row.using} limit={2} />}</AriaTd>
       <AriaTd>
         <TooltipText text={row.name} isTruncated />
       </AriaTd>
