@@ -349,7 +349,7 @@ metrics:
     |----------------------------|-------|--------------------------|--------------------------------------------------------------------|
     | <a id="opt-prefix-config-reload-total" href="#opt-prefix-config-reload-total" title="#opt-prefix-config-reload-total">`{prefix}.config.reload.total`</a> | Count |     | The total count of configuration reloads. |
     | <a id="opt-prefix-config-reload-lastSuccessTimestamp" href="#opt-prefix-config-reload-lastSuccessTimestamp" title="#opt-prefix-config-reload-lastSuccessTimestamp">`{prefix}.config.reload.lastSuccessTimestamp`</a> | Gauge |          | The timestamp of the last configuration reload success.            |
-    | <a id="opt-prefix-open-connections" href="#opt-prefix-open-connections" title="#opt-prefix-open-connections">`{prefix}.open.connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
+    | <a id="opt-prefix-open-connections" href="#opt-prefix-open-connections" title="#opt-prefix-open-connections">`{prefix}.open.connections`</a> | Gauge |                          | The current count of open connections, over all the entrypoints. |
     | <a id="opt-prefix-tls-certs-notAfterTimestamp" href="#opt-prefix-tls-certs-notAfterTimestamp" title="#opt-prefix-tls-certs-notAfterTimestamp">`{prefix}.tls.certs.notAfterTimestamp`</a> | Gauge |    | The expiration date of certificates.   |
 
 !!! note "\{prefix\} Default Value"
