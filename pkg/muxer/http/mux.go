@@ -189,6 +189,33 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 
 // ParseDomains extract the domains from positive Host matchers (not negated) in a rule.
 func ParseDomains(rule string) ([]string, error) {
+	tree, err := parseRuleTree(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	return tree.ParsePositiveMatchers([]string{hostMatcher}), nil
+}
+
+const hostMatcher = "Host"
+
+// ParseBoundedDomains returns the host expressions of the positive Host and
+// HostHeader matchers in a rule, and whether every request the rule matches
+// must match one of them, the "*" catch-all aside.
+func ParseBoundedDomains(rule string) ([]string, bool, error) {
+	tree, err := parseRuleTree(rule)
+	if err != nil {
+		return nil, false, err
+	}
+
+	matchers := []string{hostMatcher, "HostHeader"}
+	names := tree.ParsePositiveMatchers(matchers)
+	bounded := tree.RequiresPositiveMatchers(matchers) && !slices.Contains(names, "*")
+
+	return names, bounded, nil
+}
+
+func parseRuleTree(rule string) (*rules.Tree, error) {
 	var matchers []string
 	for matcher := range httpFuncs {
 		matchers = append(matchers, matcher)
@@ -212,7 +239,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParsePositiveMatchers([]string{"Host"}), nil
+	return buildTree(), nil
 }
 
 // routes implements sort.Interface.

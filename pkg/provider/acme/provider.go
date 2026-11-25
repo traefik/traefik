@@ -31,6 +31,7 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
@@ -143,6 +144,10 @@ type Provider struct {
 	TLSChallengeProvider  challenge.Provider
 	HTTPChallengeProvider challenge.Provider
 
+	// CNAMEFlattening mirrors hostResolver.cnameFlattening: Host rules then
+	// also match CNAME aliases, so they no longer list every served domain.
+	CNAMEFlattening bool
+
 	certificates   []*CertAndStore
 	certificatesMu sync.RWMutex
 
@@ -155,6 +160,25 @@ type Provider struct {
 	pool                   *safe.Pool
 	resolvingDomains       map[string]struct{}
 	resolvingDomainsMutex  sync.RWMutex
+
+	// configuredAt is when the first configuration was recorded; until then
+	// every certificate counts as used.
+	configuredAt time.Time
+	// requestedDomains holds the domains the TLS routers of the last
+	// configuration serve, droppedDomains when each domain left it.
+	requestedDomains map[string]struct{}
+	droppedDomains   map[string]time.Time
+	// unbounded is set while a TLS router can serve any domain, boundedSince
+	// is when the last such router went away.
+	unbounded    bool
+	boundedSince time.Time
+	// skippedDomains holds the domains of each certificate the last renewal
+	// pass skipped or set for removal as unused.
+	skippedDomains     [][]string
+	requestedDomainsMu sync.Mutex
+
+	// renewNow asks for a renewal pass before the next tick.
+	renewNow chan struct{}
 }
 
 // SetTLSManager sets the tls manager to use.
@@ -245,8 +269,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctx := logger.WithContext(context.Background())
 
 	p.pool = pool
+	p.renewNow = make(chan struct{}, 1)
 
-	p.watchNewDomains(ctx)
+	renewPeriod, renewInterval := getCertificateRenewDurations(p.CertificatesDuration)
+
+	p.watchNewDomains(ctx, renewInterval)
 
 	p.configurationChan = configurationChan
 
@@ -256,26 +283,35 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	p.configurationChan <- msg
 
-	renewPeriod, renewInterval := getCertificateRenewDurations(p.CertificatesDuration)
 	logger.Debug().Msgf("Attempt to renew certificates %q before expiry and check every %q",
 		renewPeriod, renewInterval)
 
-	p.renewCertificates(ctx, renewPeriod)
+	p.renewCertificates(ctx, renewPeriod, renewInterval)
 
 	ticker := time.NewTicker(renewInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
-		for {
-			select {
-			case <-ticker.C:
-				p.renewCertificates(ctx, renewPeriod)
-			case <-ctxPool.Done():
-				ticker.Stop()
-				return
-			}
-		}
+		defer ticker.Stop()
+
+		p.watchRenewals(ctxPool, ticker.C, func() {
+			p.renewCertificates(ctx, renewPeriod, renewInterval)
+		})
 	})
 
 	return nil
+}
+
+// watchRenewals runs renew on every tick and every signalRenew until ctx ends.
+func (p *Provider) watchRenewals(ctx context.Context, tick <-chan time.Time, renew func()) {
+	for {
+		select {
+		case <-tick:
+			renew()
+		case <-p.renewNow:
+			renew()
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (p *Provider) getClient() (*lego.Client, error) {
@@ -513,7 +549,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 	}
 }
 
-func (p *Provider) watchNewDomains(ctx context.Context) {
+func (p *Provider) watchNewDomains(ctx context.Context, unusedAfter time.Duration) {
 	rootLogger := log.Ctx(ctx).With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("ACME CA", p.Configuration.CAServer).Logger()
 	ctx = rootLogger.WithContext(ctx)
 
@@ -521,6 +557,12 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 		for {
 			select {
 			case config := <-p.configFromListenerChan:
+				domains, bounded := p.requestedDomainsFrom(ctx, config)
+				if p.markDomainsRequested(domains, bounded, time.Now(), unusedAfter) {
+					// A skipped certificate is wanted again, renew it before the next tick.
+					p.signalRenew()
+				}
+
 				if config.TCP != nil {
 					for routerName, route := range config.TCP.Routers {
 						if route.TLS == nil || route.TLS.CertResolver != p.ResolverName {
@@ -909,23 +951,40 @@ func (p *Provider) buildMessage() dynamic.Message {
 	return conf
 }
 
-func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration) {
+func (p *Provider) renewCertificates(ctx context.Context, renewPeriod, unusedAfter time.Duration) {
 	logger := log.Ctx(ctx)
 
 	logger.Info().Msg("Testing certificate renew...")
 
-	p.certificatesMu.RLock()
+	now := time.Now()
 
-	var certificates []*CertAndStore
-	for _, cert := range p.certificates {
-		crt, err := getX509Certificate(ctx, &cert.Certificate)
-		// If there's an error, we assume the cert is broken, and needs update
-		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
-			certificates = append(certificates, cert)
+	p.certificatesMu.RLock()
+	certificates, expiredUnused, skipped := p.selectCertificates(ctx, p.certificates, now, renewPeriod, unusedAfter)
+	p.certificatesMu.RUnlock()
+
+	p.requestedDomainsMu.Lock()
+	previous := p.skippedDomains
+	p.skippedDomains = skipped
+	// A configuration may have asked for one of them again during selection.
+	revived := p.coversRequestedLocked(skipped)
+	p.requestedDomainsMu.Unlock()
+
+	if revived {
+		p.signalRenew()
+	}
+
+	// Log once when a certificate becomes unused, not on every pass.
+	for _, names := range skipped {
+		if !slices.ContainsFunc(previous, func(prev []string) bool { return slices.Equal(prev, names) }) {
+			logger.Info().Strs("domains", names).Msg("Skipping renewal of ACME certificate not used by any router")
 		}
 	}
 
-	p.certificatesMu.RUnlock()
+	if len(expiredUnused) > 0 {
+		if err := p.removeCertificates(ctx, expiredUnused, now, unusedAfter); err != nil {
+			logger.Error().Err(err).Msg("Error removing expired ACME certificates not used by any router")
+		}
+	}
 
 	for _, cert := range certificates {
 		client, err := p.getClient()
@@ -976,6 +1035,286 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			logger.Error().Err(err).Msg("Error adding certificate for domain")
 		}
 	}
+}
+
+// selectCertificates returns the certificates to renew, the expired ones no
+// router has requested within unusedAfter, and the domains of all unused ones.
+func (p *Provider) selectCertificates(ctx context.Context, certs []*CertAndStore, now time.Time, renewPeriod, unusedAfter time.Duration) ([]*CertAndStore, []*CertAndStore, [][]string) {
+	var toRenew, toRemove []*CertAndStore
+	var unused [][]string
+	for _, cert := range certs {
+		crt, err := getX509Certificate(ctx, &cert.Certificate)
+		broken := err != nil || crt == nil
+		if !broken && !crt.NotAfter.Before(now.Add(renewPeriod)) {
+			// Not in the renew period yet.
+			continue
+		}
+
+		// The stored Domain can be narrower than the certificate, prefer its SANs.
+		names := cert.Domain.ToStrArray()
+		if !broken {
+			names = certcrypto.ExtractDomains(crt)
+		}
+
+		if now.Sub(p.lastRequested(names, now)) <= unusedAfter {
+			toRenew = append(toRenew, cert)
+			continue
+		}
+
+		// An unreadable certificate has no known expiry, so it is never removed.
+		if !broken && crt.NotAfter.Before(now) {
+			toRemove = append(toRemove, cert)
+		}
+		unused = append(unused, names)
+	}
+
+	return toRenew, toRemove, unused
+}
+
+// removeCertificates drops the given certificates still expired and unused at
+// now, and asks for a renewal pass for any a router requested again.
+func (p *Provider) removeCertificates(ctx context.Context, certs []*CertAndStore, now time.Time, unusedAfter time.Duration) error {
+	p.certificatesMu.Lock()
+	defer p.certificatesMu.Unlock()
+
+	// A new slice: the store may still be saving the current one.
+	kept := make([]*CertAndStore, 0, len(p.certificates))
+	var revived bool
+
+	// Hold both locks so no configuration lands between the check and the delete.
+	p.requestedDomainsMu.Lock()
+	for _, cert := range p.certificates {
+		if !slices.Contains(certs, cert) {
+			kept = append(kept, cert)
+			continue
+		}
+
+		// A renewal may have replaced it in place since it was selected.
+		crt, err := getX509Certificate(ctx, &cert.Certificate)
+		if err != nil || crt == nil || !crt.NotAfter.Before(now) {
+			kept = append(kept, cert)
+			continue
+		}
+
+		names := certcrypto.ExtractDomains(crt)
+		if now.Sub(p.lastRequestedLocked(names, now)) <= unusedAfter {
+			revived = true
+			kept = append(kept, cert)
+			continue
+		}
+
+		log.Ctx(ctx).Info().Strs("domains", names).Msg("Removing expired ACME certificate not used by any router")
+	}
+	p.requestedDomainsMu.Unlock()
+
+	if revived {
+		p.signalRenew()
+	}
+
+	if len(kept) == len(p.certificates) {
+		return nil
+	}
+	p.certificates = kept
+
+	p.configurationChan <- p.buildMessage()
+
+	return p.Store.SaveCertificates(p.ResolverName, p.certificates)
+}
+
+// requestedDomainsFrom returns the domains the TLS routers and default
+// certificate of the given configuration can be served, whatever resolver they
+// name, and false when a TLS router can be served domains its rule cannot list.
+func (p *Provider) requestedDomainsFrom(ctx context.Context, config dynamic.Configuration) ([]string, bool) {
+	var domains []string
+	bounded := true
+	add := func(names []string) {
+		for _, name := range names {
+			domains = append(domains, dns01.UnFqdn(types.CanonicalDomain(name)))
+		}
+	}
+	addRouter := func(name string, tlsDomains []types.Domain, parse func() ([]string, bool, error)) {
+		for _, domain := range tlsDomains {
+			add(domain.ToStrArray())
+		}
+
+		// A rule that does not parse makes no working router.
+		names, ruleBounded, err := parse()
+		if err != nil {
+			return
+		}
+		add(names)
+
+		if !ruleBounded {
+			log.Ctx(ctx).Debug().Str("router", name).Msg("TLS router can match unlisted domains, every ACME certificate counts as used")
+		}
+		bounded = bounded && ruleBounded
+	}
+
+	if config.HTTP != nil {
+		for name, route := range config.HTTP.Routers {
+			if route.TLS == nil {
+				continue
+			}
+			addRouter(name, route.TLS.Domains, func() ([]string, bool, error) {
+				names, ruleBounded, err := httpmuxer.ParseBoundedDomains(route.Rule)
+				return names, ruleBounded && !p.CNAMEFlattening, err
+			})
+		}
+	}
+
+	if config.TCP != nil {
+		for name, route := range config.TCP.Routers {
+			if route.TLS == nil || route.TLS.Passthrough {
+				continue
+			}
+			addRouter(name, route.TLS.Domains, func() ([]string, bool, error) { return tcpmuxer.ParseBoundedHostSNI(route.Rule) })
+		}
+	}
+
+	if config.TLS != nil {
+		for _, store := range config.TLS.Stores {
+			generated := store.DefaultGeneratedCert
+			if store.DefaultCertificate != nil || generated == nil || generated.Domain == nil {
+				continue
+			}
+			add(generated.Domain.ToStrArray())
+		}
+	}
+
+	return domains, bounded
+}
+
+// markDomainsRequested replaces the requested domains with those of a new
+// configuration, and forgets domains dropped for longer than retention. It
+// reports whether the configuration now wants a skipped certificate.
+func (p *Provider) markDomainsRequested(domains []string, bounded bool, now time.Time, retention time.Duration) bool {
+	p.requestedDomainsMu.Lock()
+	defer p.requestedDomainsMu.Unlock()
+
+	if p.droppedDomains == nil {
+		p.droppedDomains = make(map[string]time.Time)
+	}
+	if p.configuredAt.IsZero() {
+		p.configuredAt = now
+	}
+
+	// A router that can serve any domain makes every certificate used.
+	revived := !bounded && !p.unbounded && len(p.skippedDomains) > 0
+	if bounded && p.unbounded {
+		p.boundedSince = now
+	}
+	p.unbounded = !bounded
+
+	requested := make(map[string]struct{}, len(domains))
+	for _, domain := range domains {
+		requested[domain] = struct{}{}
+		delete(p.droppedDomains, domain)
+
+		if _, ok := p.requestedDomains[domain]; ok || revived {
+			continue
+		}
+
+		revived = slices.ContainsFunc(p.skippedDomains, func(certDomains []string) bool {
+			return coversDomain(certDomains, domain)
+		})
+	}
+
+	for domain := range p.requestedDomains {
+		if _, ok := requested[domain]; !ok {
+			p.droppedDomains[domain] = now
+		}
+	}
+
+	for domain, dropped := range p.droppedDomains {
+		if now.Sub(dropped) > retention {
+			delete(p.droppedDomains, domain)
+		}
+	}
+
+	p.requestedDomains = requested
+
+	return revived
+}
+
+// lastRequested returns now if certDomains cover a requested domain, else when
+// the last covered domain was dropped, and never earlier than configuredAt.
+func (p *Provider) lastRequested(certDomains []string, now time.Time) time.Time {
+	p.requestedDomainsMu.Lock()
+	defer p.requestedDomainsMu.Unlock()
+
+	return p.lastRequestedLocked(certDomains, now)
+}
+
+// lastRequestedLocked is lastRequested for a caller holding requestedDomainsMu.
+func (p *Provider) lastRequestedLocked(certDomains []string, now time.Time) time.Time {
+	if p.unbounded || p.configuredAt.IsZero() {
+		return now
+	}
+
+	for domain := range p.requestedDomains {
+		if coversDomain(certDomains, domain) {
+			return now
+		}
+	}
+
+	last := p.configuredAt
+	if p.boundedSince.After(last) {
+		last = p.boundedSince
+	}
+	for domain, dropped := range p.droppedDomains {
+		if dropped.After(last) && coversDomain(certDomains, domain) {
+			last = dropped
+		}
+	}
+
+	return last
+}
+
+// coversRequestedLocked reports whether one of the given certificates is now
+// used, for a caller holding requestedDomainsMu.
+func (p *Provider) coversRequestedLocked(certs [][]string) bool {
+	if p.unbounded {
+		return len(certs) > 0
+	}
+
+	return slices.ContainsFunc(certs, func(certDomains []string) bool {
+		for domain := range p.requestedDomains {
+			if coversDomain(certDomains, domain) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+// signalRenew asks for a renewal pass before the next tick, without blocking.
+func (p *Provider) signalRenew() {
+	select {
+	case p.renewNow <- struct{}{}:
+	default:
+	}
+}
+
+// coversDomain reports whether one of certDomains can be served for domain,
+// a name or a "*." / "**." host expression, wildcard SANs included.
+func coversDomain(certDomains []string, domain string) bool {
+	return slices.ContainsFunc(certDomains, func(certDomain string) bool {
+		certDomain = dns01.UnFqdn(types.CanonicalDomain(certDomain))
+		if types.MatchDomain(domain, certDomain) {
+			return true
+		}
+		if !strings.HasPrefix(domain, "*") {
+			return false
+		}
+
+		// Any single label stands for the names a wildcard SAN covers.
+		name := certDomain
+		if suffix, ok := strings.CutPrefix(certDomain, "*."); ok {
+			name = "x." + suffix
+		}
+
+		return muxer.DomainMatchHostExpression(name, domain)
+	})
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
@@ -1040,7 +1379,7 @@ func getX509Certificate(ctx context.Context, cert *Certificate) (*x509.Certifica
 		logger.Error().Err(err).
 			Str("domain", cert.Domain.Main).
 			Strs("SANs", cert.Domain.SANs).
-			Msg("Failed to load TLS key pair from ACME certificate for domain, certificate will be renewed")
+			Msg("Failed to load TLS key pair from ACME certificate for domain")
 		return nil, err
 	}
 
@@ -1051,7 +1390,7 @@ func getX509Certificate(ctx context.Context, cert *Certificate) (*x509.Certifica
 			logger.Error().Err(err).
 				Str("domain", cert.Domain.Main).
 				Strs("SANs", cert.Domain.SANs).
-				Msg("Failed to parse TLS key pair from ACME certificate for domain, certificate will be renewed")
+				Msg("Failed to parse TLS key pair from ACME certificate for domain")
 		}
 	}
 
