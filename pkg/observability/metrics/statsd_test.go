@@ -20,7 +20,7 @@ func TestStatsD(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
+	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, EnableTCPRouterMetrics: true})
 
 	testRegistry(t, defaultMetricsPrefix, statsdRegistry)
 }
@@ -34,7 +34,7 @@ func TestStatsDWithPrefix(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, Prefix: "testPrefix"})
+	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, EnableTCPRouterMetrics: true, Prefix: "testPrefix"})
 
 	testRegistry(t, "testPrefix", statsdRegistry)
 }
@@ -72,6 +72,9 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".service.server.up:1.000000|g\n",
 		metricsPrefix + ".service.requests.bytes.total:1.000000|c\n",
 		metricsPrefix + ".service.responses.bytes.total:1.000000|c\n",
+
+		metricsPrefix + ".router.tcp.open.connections:3.000000|g\n",
+		metricsPrefix + ".router.tcp.tls.open.connections:3.000000|g\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -104,5 +107,10 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		registry.ServiceServerUpGauge().With("service:test", "url", "http://127.0.0.1").Set(1)
 		registry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		registry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+
+		registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+		registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo2", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(2)
+		registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+		registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo2", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(2)
 	})
 }

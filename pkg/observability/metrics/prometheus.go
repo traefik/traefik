@@ -55,6 +55,20 @@ const (
 	serviceServerUpName        = metricServicePrefix + "server_up"
 	serviceReqsBytesTotalName  = metricServicePrefix + "requests_bytes_total"
 	serviceRespsBytesTotalName = metricServicePrefix + "responses_bytes_total"
+
+	// TCP router level.
+	routerTCPOpenConnectionsName    = metricRouterPrefix + "tcp_open_connections"
+	routerTCPTLSOpenConnectionsName = metricRouterPrefix + "tcp_tls_open_connections"
+
+	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes.
+	// The Prometheus client escapes their dots when the scraper does not support them.
+	tcpEntryPointNameLabel     = "traefik.entrypoint.name"
+	tcpRouterNameLabel         = "traefik.router.name"
+	tcpServiceNameLabel        = "traefik.service.name"
+	tcpTLSModeLabel            = "traefik.tls.mode"
+	tcpNetworkTypeLabel        = "network.type"
+	tcpTLSProtocolVersionLabel = "tls.protocol.version"
+	tcpTLSCipherLabel          = "tls.cipher"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -131,6 +145,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		tlsCertsNotAfterTimestamp.gv,
 		openConnections.gv,
 	}
+	promState.tcpVectors = nil
 
 	reg := &standardRegistry{
 		epEnabled:                      config.AddEntryPointsLabels,
@@ -267,6 +282,28 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		reg.serviceRespsBytesCounter = serviceRespsBytesTotal
 	}
 
+	if config.EnableTCPRouterMetrics {
+		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPOpenConnectionsName,
+			Help: "How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
+			Name: routerTCPTLSOpenConnectionsName,
+			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+
+		// TCP metrics are tracked apart from the HTTP ones,
+		// because HTTP and TCP routers can share the same name.
+		promState.tcpVectors = append(promState.tcpVectors,
+			routerTCPOpenConns.gv,
+			routerTCPTLSOpenConns.gv,
+		)
+
+		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
+		reg.routerTCPTLSOpenConnectionsGauge = routerTCPTLSOpenConns
+	}
+
 	return reg
 }
 
@@ -297,21 +334,24 @@ func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 		dynCfg.entryPoints[value] = true
 	}
 
-	if conf.HTTP == nil {
-		promState.SetDynamicConfig(dynCfg)
-		return
-	}
+	if conf.HTTP != nil {
+		for name := range conf.HTTP.Routers {
+			dynCfg.routers[name] = true
+		}
 
-	for name := range conf.HTTP.Routers {
-		dynCfg.routers[name] = true
-	}
-
-	for serviceName, service := range conf.HTTP.Services {
-		dynCfg.services[serviceName] = make(map[string]bool)
-		if service.LoadBalancer != nil {
-			for _, server := range service.LoadBalancer.Servers {
-				dynCfg.services[serviceName][server.URL] = true
+		for serviceName, service := range conf.HTTP.Services {
+			dynCfg.services[serviceName] = make(map[string]bool)
+			if service.LoadBalancer != nil {
+				for _, server := range service.LoadBalancer.Servers {
+					dynCfg.services[serviceName][server.URL] = true
+				}
 			}
+		}
+	}
+
+	if conf.TCP != nil {
+		for name := range conf.TCP.Routers {
+			dynCfg.tcpRouters[name] = true
 		}
 	}
 
@@ -339,6 +379,10 @@ type prometheusState struct {
 	deletedRouters  []string
 	deletedServices []string
 	deletedURLs     map[string][]string
+
+	// tcpVectors holds the metrics that belong to the TCP configuration.
+	tcpVectors        []vector
+	deletedTCPRouters []string
 }
 
 func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
@@ -369,6 +413,12 @@ func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 		}
 	}
 
+	for router := range ps.dynamicConfig.tcpRouters {
+		if _, ok := dynamicConfig.tcpRouters[router]; !ok {
+			ps.deletedTCPRouters = append(ps.deletedTCPRouters, router)
+		}
+	}
+
 	ps.dynamicConfig = dynamicConfig
 }
 
@@ -376,6 +426,10 @@ func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 // the registered describer functions.
 func (ps *prometheusState) Describe(ch chan<- *stdprometheus.Desc) {
 	for _, v := range ps.vectors {
+		v.Describe(ch)
+	}
+
+	for _, v := range ps.tcpVectors {
 		v.Describe(ch)
 	}
 }
@@ -387,6 +441,10 @@ func (ps *prometheusState) Describe(ch chan<- *stdprometheus.Desc) {
 // also those metrics will be exported on the current scrape.
 func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 	for _, v := range ps.vectors {
+		v.Collect(ch)
+	}
+
+	for _, v := range ps.tcpVectors {
 		v.Collect(ch)
 	}
 
@@ -419,10 +477,22 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 		}
 	}
 
+	for _, router := range ps.deletedTCPRouters {
+		if ps.dynamicConfig.hasTCPRouter(router) {
+			continue
+		}
+
+		for _, v := range ps.tcpVectors {
+			v.DeletePartialMatch(map[string]string{tcpRouterNameLabel: router})
+		}
+	}
+
 	ps.deletedEP = nil
 	ps.deletedRouters = nil
 	ps.deletedServices = nil
 	ps.deletedURLs = make(map[string][]string)
+
+	ps.deletedTCPRouters = nil
 }
 
 // DeletePartialMatch deletes all metrics where the variable labels contain all of those passed in as labels.
@@ -441,6 +511,8 @@ func newDynamicConfig() *dynamicConfig {
 		entryPoints: make(map[string]bool),
 		routers:     make(map[string]bool),
 		services:    make(map[string]map[string]bool),
+
+		tcpRouters: make(map[string]bool),
 	}
 }
 
@@ -452,6 +524,7 @@ type dynamicConfig struct {
 	entryPoints map[string]bool
 	routers     map[string]bool
 	services    map[string]map[string]bool
+	tcpRouters  map[string]bool
 }
 
 func (d *dynamicConfig) hasEntryPoint(entrypointName string) bool {
@@ -475,6 +548,11 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 		return ok
 	}
 	return false
+}
+
+func (d *dynamicConfig) hasTCPRouter(routerName string) bool {
+	_, ok := d.tcpRouters[routerName]
+	return ok
 }
 
 func newCounterWithHeadersFrom(opts stdprometheus.CounterOpts, headers map[string]string, labelNames []string) *counterWithHeaders {

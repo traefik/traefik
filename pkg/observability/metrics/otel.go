@@ -25,6 +25,47 @@ import (
 	"google.golang.org/grpc/encoding/gzip"
 )
 
+// The OpenTelemetry metrics have their own names,
+// for them not to depend on the ones of the Prometheus metrics.
+// The historical ones are named as the Prometheus metrics,
+// the TCP router ones follow the OpenTelemetry naming conventions.
+const (
+	// server meta information.
+	otelConfigReloadsTotalName      = "traefik_config_reloads_total"
+	otelConfigLastReloadSuccessName = "traefik_config_last_reload_success"
+	otelOpenConnectionsName         = "traefik_open_connections"
+
+	// TLS.
+	otelTLSCertsNotAfterTimestampName = "traefik_tls_certs_not_after"
+
+	// entry point.
+	otelEntryPointReqsTotalName       = "traefik_entrypoint_requests_total"
+	otelEntryPointReqsTLSTotalName    = "traefik_entrypoint_requests_tls_total"
+	otelEntryPointReqDurationName     = "traefik_entrypoint_request_duration_seconds"
+	otelEntryPointReqsBytesTotalName  = "traefik_entrypoint_requests_bytes_total"
+	otelEntryPointRespsBytesTotalName = "traefik_entrypoint_responses_bytes_total"
+
+	// router level.
+	otelRouterReqsTotalName       = "traefik_router_requests_total"
+	otelRouterReqsTLSTotalName    = "traefik_router_requests_tls_total"
+	otelRouterReqDurationName     = "traefik_router_request_duration_seconds"
+	otelRouterReqsBytesTotalName  = "traefik_router_requests_bytes_total"
+	otelRouterRespsBytesTotalName = "traefik_router_responses_bytes_total"
+
+	// service level.
+	otelServiceReqsTotalName       = "traefik_service_requests_total"
+	otelServiceReqsTLSTotalName    = "traefik_service_requests_tls_total"
+	otelServiceReqDurationName     = "traefik_service_request_duration_seconds"
+	otelServiceRetriesTotalName    = "traefik_service_retries_total"
+	otelServiceServerUpName        = "traefik_service_server_up"
+	otelServiceReqsBytesTotalName  = "traefik_service_requests_bytes_total"
+	otelServiceRespsBytesTotalName = "traefik_service_responses_bytes_total"
+
+	// TCP router level.
+	otelRouterTCPOpenConnectionsName    = "traefik.router.tcp.open_connections"
+	otelRouterTCPTLSOpenConnectionsName = "traefik.router.tcp.tls.open_connections"
+)
+
 var (
 	openTelemetryMeterProvider  *sdkmetric.MeterProvider
 	openTelemetryGaugeCollector *gaugeCollector
@@ -119,57 +160,67 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
-		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
-		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", "ms"),
-		openConnectionsGauge:           newOTLPGaugeFrom(meter, openConnectionsName, "How many open connections exist, by entryPoint and protocol", "1"),
-		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestampName, "Certificate expiration timestamp", "s"),
+		configReloadsCounter:           newOTLPCounterFrom(meter, otelConfigReloadsTotalName, "Config reloads"),
+		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, otelConfigLastReloadSuccessName, "Last config reload success", "ms"),
+		openConnectionsGauge:           newOTLPGaugeFrom(meter, otelOpenConnectionsName, "How many open connections exist, by entryPoint and protocol", "1"),
+		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, otelTLSCertsNotAfterTimestampName, "Certificate expiration timestamp", "s"),
 	}
 
 	if config.AddEntryPointsLabels {
-		reg.entryPointReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, entryPointReqsTotalName,
+		reg.entryPointReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelEntryPointReqsTotalName,
 			"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method."))
-		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, entryPointReqsTLSTotalName,
+		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, otelEntryPointReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.")
-		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
+		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelEntryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			"s"), time.Second)
-		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, entryPointReqsBytesTotalName,
+		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointReqsBytesTotalName,
 			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
-		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, entryPointRespsBytesTotalName,
+		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointRespsBytesTotalName,
 			"The total size of responses in bytes handled by an entrypoint, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddRoutersLabels {
-		reg.routerReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, routerReqsTotalName,
+		reg.routerReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelRouterReqsTotalName,
 			"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method."))
-		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, routerReqsTLSTotalName,
+		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, otelRouterReqsTLSTotalName,
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.")
-		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
+		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			"s"), time.Second)
-		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, routerReqsBytesTotalName,
+		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, otelRouterReqsBytesTotalName,
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.")
-		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, routerRespsBytesTotalName,
+		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, otelRouterRespsBytesTotalName,
 			"The total size of responses in bytes handled by a router, partitioned by status code, protocol, and method.")
 	}
 
 	if config.AddServicesLabels {
-		reg.serviceReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, serviceReqsTotalName,
+		reg.serviceReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, otelServiceReqsTotalName,
 			"How many HTTP requests processed on a service, partitioned by status code, protocol, and method."))
-		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, serviceReqsTLSTotalName,
+		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, otelServiceReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.")
-		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
+		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelServiceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			"s"), time.Second)
-		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
+		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, otelServiceRetriesTotalName,
 			"How many request retries happened on a service.")
-		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
+		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, otelServiceServerUpName,
 			"service server is up, described by gauge value of 0 or 1.",
 			"1")
-		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, serviceReqsBytesTotalName,
+		reg.serviceReqsBytesCounter = newOTLPCounterFrom(meter, otelServiceReqsBytesTotalName,
 			"The total size of requests in bytes received by a service, partitioned by status code, protocol, and method.")
-		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, serviceRespsBytesTotalName,
+		reg.serviceRespsBytesCounter = newOTLPCounterFrom(meter, otelServiceRespsBytesTotalName,
 			"The total size of responses in bytes returned by a service, partitioned by status code, protocol, and method.")
+	}
+
+	if config.EnableTCPRouterMetrics {
+		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		reg.routerTCPOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPOpenConnectionsName,
+			"How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
+			"{connection}")
+		reg.routerTCPTLSOpenConnectionsGauge = newOTLPUpDownCounterFrom(meter, otelRouterTCPTLSOpenConnectionsName,
+			"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+			"{connection}")
 	}
 
 	return reg
@@ -443,6 +494,39 @@ func (g *otelGauge) Add(delta float64) {
 func (g *otelGauge) Set(value float64) {
 	openTelemetryGaugeCollector.set(g.name, value, g.labelNamesValues)
 }
+
+func newOTLPUpDownCounterFrom(meter metric.Meter, name, desc string, unit string) *otelUpDownCounter {
+	c, _ := meter.Float64UpDownCounter(name,
+		metric.WithDescription(desc),
+		metric.WithUnit(unit),
+	)
+
+	return &otelUpDownCounter{
+		ip: c,
+	}
+}
+
+// otelUpDownCounter is a gauge whose value is only changed by increments and decrements,
+// and can be summed across its labels, like a count of open connections.
+// The OpenTelemetry instrument for such a value is the UpDownCounter.
+type otelUpDownCounter struct {
+	labelNamesValues otelLabelNamesValues
+	ip               metric.Float64UpDownCounter
+}
+
+func (c *otelUpDownCounter) With(labelValues ...string) metrics.Gauge {
+	return &otelUpDownCounter{
+		labelNamesValues: c.labelNamesValues.With(labelValues...),
+		ip:               c.ip,
+	}
+}
+
+func (c *otelUpDownCounter) Add(delta float64) {
+	c.ip.Add(context.Background(), delta, metric.WithAttributes(c.labelNamesValues.ToLabels()...))
+}
+
+// Set does nothing, as the value of an UpDownCounter cannot be set.
+func (c *otelUpDownCounter) Set(_ float64) {}
 
 func newOTLPHistogramFrom(meter metric.Meter, name, desc string, unit string) *otelHistogram {
 	c, _ := meter.Float64Histogram(name,
