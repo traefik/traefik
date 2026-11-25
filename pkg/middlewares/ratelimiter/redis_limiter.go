@@ -2,18 +2,93 @@ package ratelimiter
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefiktypes "github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/time/rate"
 )
 
 const redisPrefix = "rate:"
+
+// sharedRedisClients caches one client per distinct Redis configuration.
+//
+// Traefik rebuilds every middleware instance per router chain on every
+// dynamic configuration reload, and the dropped instances are never told to
+// close their clients. A fresh client per instance therefore leaks: since
+// go-redis v9.12 each NewUniversalClient (RESP3 + default "auto"
+// maintnotifications) spawns a CircuitBreakerManager.cleanupLoop goroutine
+// at construction, and a live goroutine is a GC root — orphaned clients are
+// pinned forever. The leak scales with routers-referencing-the-middleware
+// times reload frequency, each orphan holding a goroutine and its managers
+// until the process hits its memory ceiling.
+//
+// Sharing one client per unique configuration keeps the client count
+// bounded regardless of router fan-out or reload frequency. Clients live
+// for the process lifetime, which matches how the previous per-instance
+// clients behaved in aggregate (none were ever closed).
+var sharedRedisClients = struct {
+	mu      sync.Mutex
+	clients map[string]redis.UniversalClient
+}{clients: make(map[string]redis.UniversalClient)}
+
+// sharedRedisClient returns the cached client for the given Redis
+// configuration, creating it on first use. The cache key is the JSON
+// serialization of the dynamic config (pointers dereferenced, values
+// compared) plus a fingerprint of the materialized TLS inputs — never the
+// options struct, whose function and TLS pointers would differ on every
+// reload and defeat the cache.
+func sharedRedisClient(config *dynamic.Redis, options *redis.UniversalOptions) (redis.UniversalClient, error) {
+	rawKey, err := json.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling redis config for client cache key: %w", err)
+	}
+	key := string(rawKey) + "|" + clientTLSFingerprint(config.TLS)
+
+	sharedRedisClients.mu.Lock()
+	defer sharedRedisClients.mu.Unlock()
+
+	if client, ok := sharedRedisClients.clients[key]; ok {
+		return client, nil
+	}
+	client := redis.NewUniversalClient(options)
+	sharedRedisClients.clients[key] = client
+	return client, nil
+}
+
+// clientTLSFingerprint hashes the materialized TLS inputs: when CA/Cert/Key
+// are file paths the file contents are hashed, otherwise the literal
+// (inline PEM) values are. Certificates rotated at an unchanged path
+// therefore produce a new cache key and a fresh client, instead of the
+// cache pinning the pre-rotation material for the process lifetime.
+func clientTLSFingerprint(clientTLS *traefiktypes.ClientTLS) string {
+	if clientTLS == nil {
+		return ""
+	}
+	h := sha256.New()
+	for _, v := range []string{clientTLS.CA, clientTLS.Cert, clientTLS.Key} {
+		if content, err := os.ReadFile(v); err == nil {
+			h.Write(content)
+		} else {
+			h.Write([]byte(v))
+		}
+		h.Write([]byte{0})
+	}
+	if clientTLS.InsecureSkipVerify {
+		h.Write([]byte{1})
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
 
 type redisLimiter struct {
 	rate     rate.Limit // reqs/s
@@ -70,6 +145,11 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 		return nil, fmt.Errorf("loading bucket script: %w", err)
 	}
 
+	client, err := sharedRedisClient(config.Redis, options)
+	if err != nil {
+		return nil, fmt.Errorf("obtaining redis client: %w", err)
+	}
+
 	return &redisLimiter{
 		rate:     rate,
 		burst:    burst,
@@ -77,7 +157,7 @@ func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay
 		maxDelay: maxDelay,
 		logger:   logger,
 		ttl:      ttl,
-		client:   redis.NewUniversalClient(options),
+		client:   client,
 		script:   script,
 	}, nil
 }
