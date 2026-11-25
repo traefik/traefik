@@ -144,8 +144,8 @@ func TestInfluxDB2(t *testing.T) {
 		`(traefik\.router\.tcp\.tls\.open\.connections,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test value=1) [\d]{19}`,
 	}
 
-	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Set(1)
-	influxDB2Registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Set(1)
+	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+	influxDB2Registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 
 	msgTCPRouter := <-c
 

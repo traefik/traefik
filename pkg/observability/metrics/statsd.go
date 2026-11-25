@@ -98,8 +98,8 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		registry.routerTCPOpenConnectionsGauge = statsdClient.NewGauge(statsdRouterTCPOpenConnsName)
-		registry.routerTCPTLSOpenConnectionsGauge = statsdClient.NewGauge(statsdRouterTCPTLSOpenConnsName)
+		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPOpenConnsName), true)
+		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPTLSOpenConnsName), true)
 	}
 
 	return registry

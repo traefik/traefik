@@ -664,8 +664,8 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
-    | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections on a TCP router. |
-    | <a id="opt-prefix-router-tcp-tls-open-connections" href="#opt-prefix-router-tcp-tls-open-connections" title="#opt-prefix-router-tcp-tls-open-connections">`{prefix}.router.tcp.tls.open.connections`</a> | Gauge | | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections, over all the TCP routers. |
+    | <a id="opt-prefix-router-tcp-tls-open-connections" href="#opt-prefix-router-tcp-tls-open-connections" title="#opt-prefix-router-tcp-tls-open-connections">`{prefix}.router.tcp.tls.open.connections`</a> | Gauge | | The current count of open TLS connections, over all the TCP routers. |
 
 !!! note "\{prefix\} Default Value"
         By default, \{prefix\} value is `traefik`.

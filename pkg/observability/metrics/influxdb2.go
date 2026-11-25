@@ -120,8 +120,8 @@ func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 
 	if config.EnableTCPRouterMetrics {
 		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
-		registry.routerTCPOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName)
-		registry.routerTCPTLSOpenConnectionsGauge = influxDB2Store.NewGauge(influxDBRouterTCPTLSOpenConnsName)
+		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPOpenConnsName), false)
+		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(influxDB2Store.NewGauge(influxDBRouterTCPTLSOpenConnsName), false)
 	}
 
 	return registry
