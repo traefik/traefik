@@ -194,18 +194,19 @@ scanners read it to tell which standard library the release is built with, and a
 
 ```bash
 latest=$(curl -sSfL 'https://go.dev/dl/?mode=json&include=all' \
-  | jq -r --arg v "go$(tr -d '[:space:]' < .go-version)" '[.[] | select(.stable) | .version | select(startswith($v + "."))] | first')
-pinned=$(GOTOOLCHAIN=local go mod edit -json | jq -r '.Toolchain // empty')
+  | jq -r --arg v "go$(tr -d '[:space:]' < .go-version)" '[.[] | select(.stable) | .version | select(startswith($v + "."))] | first // empty')
+pinned=$(GOTOOLCHAIN=local go mod edit -json | jq -r '.Toolchain // ("go" + .Go)')
 echo "latest=${latest} pinned=${pinned}"
 ```
 
+If `latest` is empty, stop and ask.
 If they differ, bump the pin (it is committed with `CHANGELOG.md` in the next step):
 
 ```bash
 GOTOOLCHAIN=local go mod edit -toolchain="${latest}"
 ```
 
-**Pause 2** — ask: "CHANGELOG.md updated. Review in your editor, adjust if needed. (y to commit)"
+**Pause 2** — ask: "CHANGELOG.md updated (and go.mod if the toolchain was bumped). Review in your editor, adjust if needed. (y to commit)"
 
 ```bash
 git add CHANGELOG.md go.mod

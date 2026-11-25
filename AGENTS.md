@@ -44,7 +44,7 @@ Read two or three existing files in the same package before adding a new one, an
 
 ## Build, test, lint
 
-The Go version is declared in [`go.mod`](./go.mod) — check there rather than hard-coding a version. The CI and the releases build with the latest patch of the Go version in [`.go-version`](./.go-version), and the `toolchain` directive of `go.mod` pins that patch so that vulnerability scanners do not report standard library issues already fixed in the binaries; if you notice a newer Go patch release on [go.dev/dl](https://go.dev/dl/), point out that the `toolchain` directive needs a bump (the release skill checks it when preparing a release). All day-to-day commands go through `make`:
+The Go version is declared in [`go.mod`](./go.mod) — check there rather than hard-coding a version. The CI and the releases build with the latest patch of the Go version in [`.go-version`](./.go-version), and the `toolchain` directive of `go.mod` pins that patch so that vulnerability scanners do not report standard library issues already fixed in the binaries; if you notice a newer Go patch release on [go.dev/dl](https://go.dev/dl/), point out that the `toolchain` directive needs a bump (the release skill checks it when preparing a release). When bumping the Go minor, update the `toolchain` directive too. All day-to-day commands go through `make`:
 
 ```bash
 make binary             # build the traefik binary (runs generate-webui first)

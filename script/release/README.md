@@ -65,10 +65,30 @@ Within each section (Enhancement, Bug fixes, Documentation, Misc), sort entries 
 
 Remove blank lines between entries within a section.
 
-**4. Commit, push and open PR**
+**4. Pin the Go toolchain**
+
+The binaries are built with the latest patch of the Go version in `.go-version`,
+and the `toolchain` directive of `go.mod` must match it:
+scanners read it to tell which standard library the release is built with.
 
 ```bash
-git add CHANGELOG.md
+latest=$(curl -sSfL 'https://go.dev/dl/?mode=json&include=all' \
+  | jq -r --arg v "go$(tr -d '[:space:]' < .go-version)" '[.[] | select(.stable) | .version | select(startswith($v + "."))] | first // empty')
+pinned=$(GOTOOLCHAIN=local go mod edit -json | jq -r '.Toolchain // ("go" + .Go)')
+echo "latest=${latest} pinned=${pinned}"
+```
+
+If `latest` is empty, stop and check the lookup.
+If they differ, bump the pin:
+
+```bash
+GOTOOLCHAIN=local go mod edit -toolchain="${latest}"
+```
+
+**5. Commit, push and open PR**
+
+```bash
+git add CHANGELOG.md go.mod
 git commit -m "Prepare release v2.11.51"
 git push origin prepare-release-v2.11.51
 ```
@@ -166,7 +186,7 @@ PREV_TAG=$(git tag --sort=-version:refname | grep -E "^v3\.7\.0-(rc|ea)\." | hea
 git cliff --config script/release/cliff.toml --ignore-tags 'v2\..*|v3\.7\.[0-9]+$' --tag v3.8.0-rc.1 ${PREV_TAG}..${RANGE_END}
 ```
 
-**5. Update CHANGELOG.md, commit, push and open PR**
+**5. Update CHANGELOG.md, pin the Go toolchain, commit, push and open PR**
 
 Same as patch procedure above, with:
 - Commit message: `Prepare release v3.8.0-rc.1`
@@ -181,4 +201,4 @@ Same as patch procedure but:
 - Branch: `v3.8`
 - Prev tag: `v3.8.0-rc.1`
 - git-cliff range: `v3.8.0-rc.1..$(git rev-parse upstream/v3.8)`
-- Only CHANGELOG.md is modified (no docs bump, no codename change)
+- Only CHANGELOG.md is modified, and go.mod if the toolchain is bumped (no docs bump, no codename change)
