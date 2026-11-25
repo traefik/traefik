@@ -1572,6 +1572,12 @@ spec:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
+                      caConfigMap:
+                        description: |-
+                          CAConfigMap is the name of a ConfigMap in the Middleware namespace containing the CA to validate the server certificate.
+                          The CA certificate is extracted from key `tls.ca` or `ca.crt`.
+                          CAConfigMap and CASecret are mutually exclusive.
+                        type: string
                       caOptional:
                         description: 'Deprecated: TLS client authentication is a server
                           side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).'
