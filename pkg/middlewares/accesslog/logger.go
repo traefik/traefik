@@ -369,10 +369,14 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 		core[Overhead] = totalDuration - origin.(time.Duration)
 	}
 
-	fields := logrus.Fields{}
+	fields := make(logrus.Fields, len(logDataTable.Core))
+	keepAllFields := h.config.Fields == nil
+	if !keepAllFields {
+		keepAllFields = len(h.config.Fields.Names) == 0 && h.config.Fields.DefaultMode != otypes.AccessLogDrop
+	}
 
 	for k, v := range logDataTable.Core {
-		if h.config.Fields.Keep(strings.ToLower(k)) {
+		if keepAllFields || h.config.Fields.Keep(strings.ToLower(k)) {
 			fields[k] = v
 		}
 	}
