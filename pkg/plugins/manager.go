@@ -141,6 +141,7 @@ func (m *Manager) CleanArchives(plugins map[string]Descriptor) error {
 	if err != nil {
 		return fmt.Errorf("failed to open state file %s: %w", m.stateFile, err)
 	}
+	defer func() { _ = stateFile.Close() }()
 
 	previous := make(map[string]string)
 	err = json.NewDecoder(stateFile).Decode(&previous)
