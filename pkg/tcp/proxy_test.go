@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net"
 	"testing"
@@ -157,4 +158,63 @@ func fakeServer(t *testing.T, listener net.Listener) {
 			}
 		}
 	}
+}
+
+// halfCloselessDialer opens connections that cannot close their write half, as net.Pipe ones cannot.
+type halfCloselessDialer struct {
+	backend net.Conn
+}
+
+func (d halfCloselessDialer) Dial(string, string, ClientConn) (net.Conn, error) {
+	return d.backend, nil
+}
+
+func (d halfCloselessDialer) DialContext(context.Context, string, string, ClientConn) (net.Conn, error) {
+	return d.backend, nil
+}
+
+func (d halfCloselessDialer) TerminationDelay() time.Duration { return 0 }
+
+// A dialer is not always a host one, and the connections of another network are not always *net.TCPConn:
+// one that cannot close its write half fails the connection it was opened for, and not the process.
+func TestProxyRefusesABackendConnectionThatCannotCloseItsWriteHalf(t *testing.T) {
+	backend, backendPeer := net.Pipe()
+	t.Cleanup(func() { _ = backendPeer.Close() })
+
+	proxy, err := NewProxy("backend.invalid:8080", halfCloselessDialer{backend: backend})
+	require.NoError(t, err)
+
+	clientListener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientListener.Close() })
+
+	served := make(chan struct{})
+	go func() {
+		defer close(served)
+
+		conn, err := clientListener.Accept()
+		if err != nil {
+			return
+		}
+
+		proxy.ServeTCP(conn.(*net.TCPConn))
+	}()
+
+	client, err := net.Dial("tcp", clientListener.Addr().String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.Close() })
+
+	select {
+	case <-served:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the connection was not refused")
+	}
+
+	// The client connection is closed, and so is the backend one that could not be used.
+	require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
+	_, err = client.Read(make([]byte, 1))
+	require.ErrorIs(t, err, io.EOF)
+
+	_, err = backendPeer.Read(make([]byte, 1))
+	require.ErrorIs(t, err, io.EOF)
 }
