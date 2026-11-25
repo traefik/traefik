@@ -10,10 +10,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/tcp/metrics"
 	"github.com/traefik/traefik/v3/pkg/muxer"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -30,6 +32,7 @@ type middlewareBuilder interface {
 type Manager struct {
 	serviceManager      *tcpservice.Manager
 	middlewaresBuilder  middlewareBuilder
+	observabilityMgr    *middleware.ObservabilityMgr
 	httpHandlers        map[string]http.Handler
 	httpsHandlers       map[string]http.Handler
 	tlsManager          *traefiktls.Manager
@@ -41,6 +44,7 @@ type Manager struct {
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	middlewaresBuilder middlewareBuilder,
+	observabilityMgr *middleware.ObservabilityMgr,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
@@ -49,6 +53,7 @@ func NewManager(conf *runtime.Configuration,
 	return &Manager{
 		serviceManager:      serviceManager,
 		middlewaresBuilder:  middlewaresBuilder,
+		observabilityMgr:    observabilityMgr,
 		httpHandlers:        httpHandlers,
 		httpsHandlers:       httpsHandlers,
 		tlsManager:          tlsManager,
@@ -69,7 +74,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -95,7 +100,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
 	// Build a new Router.
 	router, err := NewRouter(m.providersPrecedence)
 	if err != nil {
@@ -207,13 +212,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Keep in mind that defaultTLSConf might be nil here.
 	router.SetHTTPSHandler(handlerHTTPS, defaultTLSConf)
 
-	m.addTCPHandlers(ctx, configs, router)
+	m.addTCPHandlers(ctx, entryPointName, configs, router)
 
 	return router, nil
 }
 
 // addTCPHandlers creates the TCP handlers defined in configs, and adds them to router.
-func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, router *Router) {
+func (m *Manager) addTCPHandlers(ctx context.Context, entryPointName string, configs map[string]*runtime.TCPRouterInfo, router *Router) {
 	for routerName, routerConfig := range configs {
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
@@ -262,7 +267,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		var handler tcp.Handler
 		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
-			handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+			handler, err = m.buildTCPHandler(ctxRouter, entryPointName, routerName, routerConfig)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -337,7 +342,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		// This seems to be the case so far with the existing matchers (HostSNI, and ClientIP), so it's all good.
 		// Otherwise, we would have to do as for HTTPS, i.e. disallow different TLS configs for the same HostSNIs.
 
-		handler, err = m.buildTCPHandler(ctxRouter, routerConfig)
+		handler, err = m.buildTCPHandler(ctxRouter, entryPointName, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -360,7 +365,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 	}
 }
 
-func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
+func (m *Manager) buildTCPHandler(ctx context.Context, entryPointName, routerName string, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -376,9 +381,13 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 		return nil, err
 	}
 
+	// The metrics middleware is idempotent if the TCP routers metrics are disabled.
+	qualifiedService := provider.GetQualifiedName(ctx, router.Service)
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), entryPointName, routerName, qualifiedService, router.TLS)
+
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
+	return tcp.NewChain(metricsHandler).Extend(*mHandler).Then(sHandler)
 }
 
 func providerName(routerName string) string {

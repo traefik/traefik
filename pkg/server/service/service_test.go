@@ -573,6 +573,20 @@ func TestManager_Build(t *testing.T) {
 			},
 			providerName: "provider-1",
 		},
+		{
+			desc:        "Service with metadata",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.ServiceInfo{
+				"serviceName": {
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{
+							Strategy: dynamic.BalancerStrategyWRR,
+						},
+						Metadata: &dynamic.ServiceMetadata{},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

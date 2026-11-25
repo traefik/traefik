@@ -119,8 +119,7 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Observability config.
-		// Metadata is allowed, as it is provider-defined and only describes where the router comes from.
-		if router.Observability != nil && !router.Observability.IsMetadataOnly() {
+		if router.Observability != nil {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
@@ -217,7 +216,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			epObsConfig = model.Observability
 		}
 
-		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig, nil).Then(http.NotFoundHandler())
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -239,7 +238,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
 	muxer := httpmuxer.NewMuxer(m.parser, m.providersPrecedence)
 
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config, nil).Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +277,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			config = *routerConfig.Observability
 		}
 
-		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config, routerConfig.Metadata)
 		handler, err = observabilityChain.Then(handler)
 		if err != nil {
 			routerConfig.AddError(err, true)

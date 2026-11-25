@@ -327,6 +327,7 @@ func TestOpenTelemetry(t *testing.T) {
 			var cfg otypes.OTLP
 			(&cfg).SetDefaults()
 			cfg.AddRoutersLabels = true
+			cfg.EnableTCPRouterMetrics = true
 			cfg.HTTP = &otypes.OTelHTTP{
 				Endpoint: ts.URL,
 			}
@@ -435,6 +436,16 @@ func TestOpenTelemetry(t *testing.T) {
 			registry.ServiceRetriesCounter().With("service", "foobar").Add(1)
 
 			tryAssertMessage(t, c, expectedServicesRetries)
+
+			expectedTCPRouters := []string{
+				`({"name":"traefik\.router\.tcp\.open_connections","description":"How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2}})`,
+				`({"name":"traefik\.router\.tcp\.tls\.open_connections","description":"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2}})`,
+			}
+
+			registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+			registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+
+			tryAssertMessage(t, c, expectedTCPRouters)
 
 			// We cannot rely on the previous expected pattern,
 			// because this pattern was for matching only one dataPoint in the histogram,

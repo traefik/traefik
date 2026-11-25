@@ -20,7 +20,7 @@ type Observability struct {
 	SemConvMetricsEnabled  bool
 	TracingEnabled         bool
 	DetailedTracingEnabled bool
-	Metadata               *dynamic.ObservabilityMetadata
+	Metadata               *dynamic.Metadata
 }
 
 // WithObservabilityHandler sets the observability state in the context for the next handler.
@@ -66,8 +66,8 @@ func DetailedTracingEnabled(ctx context.Context) bool {
 	return ok && obs.DetailedTracingEnabled
 }
 
-// GetObservabilityMetadata returns the observability metadata.
-func GetObservabilityMetadata(ctx context.Context) *dynamic.ObservabilityMetadata {
+// GetObservabilityMetadata returns the metadata of the router.
+func GetObservabilityMetadata(ctx context.Context) *dynamic.Metadata {
 	obs, ok := ctx.Value(observabilityKey).(Observability)
 	if ok {
 		return obs.Metadata
@@ -77,13 +77,13 @@ func GetObservabilityMetadata(ctx context.Context) *dynamic.ObservabilityMetadat
 
 type serviceObservabilityKey struct{}
 
-// ServiceObservabilityState carries the service-level observability metadata
-// produced by the service handler during request processing. The pointer is
-// seeded once upstream (at the entrypoint chain) and mutated by the leaf
-// service handler when the load balancer dispatches; access-log middleware
-// reads the final state at log emission. Mirrors how *LogData is shared.
+// ServiceObservabilityState carries the metadata of the last service that
+// handled the request. The entrypoint chain seeds the pointer once. Each
+// service handler that the request goes through writes its metadata to it, and
+// the access-log middleware reads the final state when it emits the log.
+// Mirrors how *LogData is shared.
 type ServiceObservabilityState struct {
-	Metadata *dynamic.ServiceObservabilityMetadata
+	Metadata *dynamic.ServiceMetadata
 }
 
 // WithServiceObservabilityState seeds an empty state container in the context
@@ -99,16 +99,16 @@ func GetServiceObservabilityState(ctx context.Context) *ServiceObservabilityStat
 	return s
 }
 
-// NewServiceMetadataHandler wraps the service handler so that when the leaf is
+// NewServiceMetadataHandler wraps the service handler so that when the service is
 // reached at request time, its metadata is published into the per-request state
-// container. A no-op when the service has no observability metadata attached.
-func NewServiceMetadataHandler(cfg *dynamic.ServiceObservabilityConfig, next http.Handler) http.Handler {
-	if cfg == nil || cfg.Metadata == nil {
+// container. A no-op when the service has no metadata attached.
+func NewServiceMetadataHandler(metadata *dynamic.ServiceMetadata, next http.Handler) http.Handler {
+	if metadata == nil {
 		return next
 	}
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if state := GetServiceObservabilityState(req.Context()); state != nil {
-			state.Metadata = cfg.Metadata
+			state.Metadata = metadata
 		}
 		next.ServeHTTP(rw, req)
 	})

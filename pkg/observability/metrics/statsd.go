@@ -42,6 +42,9 @@ const (
 	statsdServiceServerUpName     = "service.server.up"
 	statsdServiceReqsBytesName    = "service.requests.bytes.total"
 	statsdServiceRespsBytesName   = "service.responses.bytes.total"
+
+	statsdRouterTCPOpenConnsName    = "router.tcp.open.connections"
+	statsdRouterTCPTLSOpenConnsName = "router.tcp.tls.open.connections"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -61,7 +64,7 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
-		openConnectionsGauge:           statsdClient.NewGauge(statsdOpenConnectionsName),
+		openConnectionsGauge:           newStatefulGauge(statsdClient.NewGauge(statsdOpenConnectionsName), true),
 	}
 
 	if config.AddEntryPointsLabels {
@@ -91,6 +94,12 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServiceServerUpName)
 		registry.serviceReqsBytesCounter = statsdClient.NewCounter(statsdServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = statsdClient.NewCounter(statsdServiceRespsBytesName, 1.0)
+	}
+
+	if config.EnableTCPRouterMetrics {
+		registry.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		registry.routerTCPOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPOpenConnsName), true)
+		registry.routerTCPTLSOpenConnectionsGauge = newStatefulGauge(statsdClient.NewGauge(statsdRouterTCPTLSOpenConnsName), true)
 	}
 
 	return registry

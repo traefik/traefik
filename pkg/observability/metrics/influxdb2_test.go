@@ -27,14 +27,15 @@ func TestInfluxDB2(t *testing.T) {
 
 	influxDB2Registry := RegisterInfluxDB2(t.Context(),
 		&otypes.InfluxDB2{
-			Address:              ts.URL,
-			Token:                "test-token",
-			PushInterval:         ptypes.Duration(10 * time.Millisecond),
-			Org:                  "test-org",
-			Bucket:               "test-bucket",
-			AddEntryPointsLabels: true,
-			AddRoutersLabels:     true,
-			AddServicesLabels:    true,
+			Address:                ts.URL,
+			Token:                  "test-token",
+			PushInterval:           ptypes.Duration(10 * time.Millisecond),
+			Org:                    "test-org",
+			Bucket:                 "test-bucket",
+			AddEntryPointsLabels:   true,
+			AddRoutersLabels:       true,
+			AddServicesLabels:      true,
+			EnableTCPRouterMetrics: true,
 		})
 
 	t.Cleanup(func() {
@@ -137,4 +138,16 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceRetries := <-c
 
 	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
+
+	expectedTCPRouter := []string{
+		`(traefik\.router\.tcp\.open\.connections,network\.type=ipv4,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test,traefik\.tls\.mode=terminated value=1) [\d]{19}`,
+		`(traefik\.router\.tcp\.tls\.open\.connections,network\.type=ipv4,tls\.cipher=TLS_AES_128_GCM_SHA256,tls\.protocol\.version=1\.3,traefik\.entrypoint\.name=websecure,traefik\.router\.name=demo,traefik\.service\.name=test value=1) [\d]{19}`,
+	}
+
+	influxDB2Registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+	influxDB2Registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+
+	msgTCPRouter := <-c
+
+	assertMessage(t, *msgTCPRouter, expectedTCPRouter)
 }

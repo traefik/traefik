@@ -159,7 +159,7 @@ func Test_Routing(t *testing.T) {
 	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
-		nil, nil, tlsManager, nil)
+		nil, nil, nil, tlsManager, nil)
 
 	type checkCase struct {
 		checkRouter
@@ -564,7 +564,7 @@ func Test_Routing(t *testing.T) {
 				router(dynConf)
 			}
 
-			router, err := manager.buildEntryPointHandler(t.Context(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
+			router, err := manager.buildEntryPointHandler(t.Context(), "web", dynConf.TCPRouters, dynConf.Routers, nil, nil)
 			require.NoError(t, err)
 
 			if test.allowACMETLSPassthrough {

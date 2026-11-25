@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -86,6 +87,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					continue
 				}
 
+				balancerServerTCP.Metadata.Kubernetes.Sources.Add(dynamic.MakeKubernetesRef(ingressRouteTCP, fmt.Sprintf("/spec/routes/%d/services/%d", ri, si)))
+
 				// If there is only one service defined, we skip the creation of the load balancer of services,
 				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
@@ -113,7 +116,10 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				}
 
 				if conf.Services[serviceName] == nil {
-					conf.Services[serviceName] = &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
+					conf.Services[serviceName] = &dynamic.TCPService{
+						Weighted: &dynamic.TCPWeightedRoundRobin{},
+						Metadata: k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(ingressRouteTCP, fmt.Sprintf("/spec/routes/%d/services", ri))),
+					}
 				}
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
@@ -125,6 +131,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				Priority:    route.Priority,
 				RuleSyntax:  route.Syntax,
 				Service:     serviceName,
+				Metadata:    k8s.NewMetadata(dynamic.MakeKubernetesRef(ingressRouteTCP, fmt.Sprintf("/spec/routes/%d", ri))),
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {
@@ -177,7 +184,7 @@ func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace s
 		return nil, fmt.Errorf("tcp service %s/%s is not in the parent resource namespace %s", ns, service.Name, parentNamespace)
 	}
 
-	servers, err := p.loadTCPServers(client, ns, service)
+	servers, metadata, err := p.loadTCPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +193,7 @@ func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace s
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
 			Servers: servers,
 		},
+		Metadata: metadata,
 	}
 
 	if service.ProxyProtocol != nil {
@@ -211,38 +219,41 @@ func (p *Provider) createLoadBalancerServerTCP(client *Client, parentNamespace s
 	return tcpService, nil
 }
 
-func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
+func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, *dynamic.ServiceMetadata, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !exists {
-		return nil, errors.New("service not found")
+		return nil, nil, errors.New("service not found")
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
-		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	metadata := k8s.NewServiceMetadata(dynamic.MakeKubernetesRef(service, servicePortPath(service, svcPort)))
+	metadata.Kubernetes.ServicePort = svc.Port.String()
 
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
 		if p.DisableClusterScopeResources {
-			return nil, errors.New("nodes lookup is disabled")
+			return nil, nil, errors.New("nodes lookup is disabled")
 		}
 
 		nodes, nodesExists, nodesErr := client.GetNodes()
 		if nodesErr != nil {
-			return nil, nodesErr
+			return nil, nil, nodesErr
 		}
 
 		if !nodesExists || len(nodes) == 0 {
-			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
 		}
 
 		for _, node := range nodes {
@@ -257,10 +268,10 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 		}
 
 		if len(servers) == 0 {
-			return nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
+			return nil, nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
 		}
 
-		return servers, nil
+		return servers, metadata, nil
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -276,15 +287,15 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 		if nativeLB {
 			address, err := getNativeServiceAddress(*service, *svcPort)
 			if err != nil {
-				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+				return nil, nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
 
-			return []dynamic.TCPServer{{Address: address, TLS: svc.TLS}}, nil
+			return []dynamic.TCPServer{{Address: address, TLS: svc.TLS}}, metadata, nil
 		}
 
 		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
 		if err != nil {
-			return nil, fmt.Errorf("getting endpointslices: %w", err)
+			return nil, nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
 
 		addresses := map[string]struct{}{}
@@ -321,10 +332,10 @@ func (p *Provider) loadTCPServers(client *Client, namespace string, svc traefikv
 	}
 
 	if len(servers) == 0 && !p.AllowEmptyServices {
-		return nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
+		return nil, nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
-	return servers, nil
+	return servers, metadata, nil
 }
 
 func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {

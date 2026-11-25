@@ -1,0 +1,44 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-a-with-server-snippet
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header X-Server-Snippet "server-value";
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: snippet.localhost
+      http:
+        paths:
+          - path: /a
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-b-without-server-snippet
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: snippet.localhost
+      http:
+        paths:
+          - path: /b
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
