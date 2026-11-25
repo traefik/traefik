@@ -3,6 +3,7 @@ package safe
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -141,6 +142,9 @@ func TestOperationWithRecoverPanic(t *testing.T) {
 	err := backoff.Retry(OperationWithRecover(operation), &backoff.StopBackOff{})
 	if err == nil {
 		t.Fatalf("Error in OperationWithRecover: %s", err)
+	}
+	if !strings.Contains(err.Error(), "BOOM") {
+		t.Fatalf("expected panic payload in error, got: %s", err)
 	}
 }
 
