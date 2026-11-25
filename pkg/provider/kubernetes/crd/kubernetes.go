@@ -1427,10 +1427,11 @@ func createBasicAuthMiddleware(client *Client, namespace string, basicAuth *trae
 
 		return &dynamic.BasicAuth{
 			// The user is computed from both keys: the password key is the one that must not be exposed.
-			Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, "password", credentials),
-			Realm:        basicAuth.Realm,
-			RemoveHeader: basicAuth.RemoveHeader,
-			HeaderField:  basicAuth.HeaderField,
+			Users:              refs.AddUsers("/basicAuth/users", basicAuth.Secret, "password", credentials),
+			Realm:              basicAuth.Realm,
+			RemoveHeader:       basicAuth.RemoveHeader,
+			AllowCORSPreflight: basicAuth.AllowCORSPreflight,
+			HeaderField:        basicAuth.HeaderField,
 		}, nil
 	}
 
@@ -1440,10 +1441,11 @@ func createBasicAuthMiddleware(client *Client, namespace string, basicAuth *trae
 	}
 
 	return &dynamic.BasicAuth{
-		Users:        refs.AddUsers("/basicAuth/users", basicAuth.Secret, key, credentials),
-		Realm:        basicAuth.Realm,
-		RemoveHeader: basicAuth.RemoveHeader,
-		HeaderField:  basicAuth.HeaderField,
+		Users:              refs.AddUsers("/basicAuth/users", basicAuth.Secret, key, credentials),
+		Realm:              basicAuth.Realm,
+		RemoveHeader:       basicAuth.RemoveHeader,
+		AllowCORSPreflight: basicAuth.AllowCORSPreflight,
+		HeaderField:        basicAuth.HeaderField,
 	}, nil
 }
 
