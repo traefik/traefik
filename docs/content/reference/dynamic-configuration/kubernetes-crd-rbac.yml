@@ -64,6 +64,13 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - traefik.io
+    resources:
+      - middlewares/status
+    verbs:
+      - patch
+      - update
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

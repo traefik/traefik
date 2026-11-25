@@ -1,6 +1,8 @@
 package crd
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -22,6 +24,7 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
@@ -503,6 +506,16 @@ func newExternalClusterClientsets(endpoint, caFilePath string, token types.FileO
 	}
 
 	return createClientsetsFromConfig(config)
+}
+
+// UpdateMiddlewareStatus patches the status subresource of a Middleware CRD object.
+func (c *Client) UpdateMiddlewareStatus(ctx context.Context, namespace, name string, status traefikv1alpha1.MiddlewareStatus) error {
+	patch, err := json.Marshal(map[string]any{"status": status})
+	if err != nil {
+		return fmt.Errorf("marshaling middleware status: %w", err)
+	}
+	_, err = c.csCrd.TraefikV1alpha1().Middlewares(namespace).Patch(ctx, name, k8stypes.MergePatchType, patch, metav1.PatchOptions{}, "status")
+	return err
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return
