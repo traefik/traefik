@@ -44,7 +44,7 @@ func TestRouterMetricsHandler(t *testing.T) {
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
 
-			handler, err := RouterMetricsHandler(t.Context(), test.registry, "router@file", "service@file", nil)(next)
+			handler, err := RouterMetricsHandler(t.Context(), test.registry, "web", "router@file", "service@file", nil)(next)
 			require.NoError(t, err)
 
 			_, wrapped := handler.(*metricsMiddleware)
@@ -61,11 +61,11 @@ func TestMetricsMiddleware_ServeTCP(t *testing.T) {
 		openConnections = maps.Clone(registry.gauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{Passthrough: true})
+	handler := NewRouterMiddleware(t.Context(), next, registry, "web", "router@file", "service@file", &dynamic.RouterTCPTLSConfig{Passthrough: true})
 
 	handler.ServeTCP(connMock{localAddr: &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 8080}})
 
-	labels := "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=passthrough,network.type=ipv4,server.port=8080"
+	labels := "traefik.entrypoint.name=web,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=passthrough,network.type=ipv4"
 
 	// The connection is counted while it is served, and released afterwards.
 	assert.Equal(t, map[string]float64{labels: 1}, openConnections)
@@ -100,7 +100,7 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 		afterHandshake = maps.Clone(registry.tlsGauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
+	handler := NewRouterMiddleware(t.Context(), next, registry, "websecure", "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
 
 	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
 		Certificates: []tls.Certificate{*cert},
@@ -108,10 +108,10 @@ func TestMetricsMiddleware_ServeTCP_tls(t *testing.T) {
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 	}))
 
-	// The network labels are empty because the local address of a pipe is not a TCP one.
-	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=,server.port=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+	// The network label is empty because the local address of a pipe is not a TCP one.
+	labels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,network.type=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
 
-	assert.Contains(t, registry.gauge.values, "traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=,server.port=")
+	assert.Contains(t, registry.gauge.values, "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,traefik.tls.mode=terminated,network.type=")
 
 	// The TLS connection is counted once the handshake is done, and released afterwards.
 	assert.Empty(t, beforeHandshake)
@@ -145,7 +145,7 @@ func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
 		afterHandshake = maps.Clone(registry.tlsGauge.values)
 	})
 
-	handler := NewRouterMiddleware(t.Context(), next, registry, "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
+	handler := NewRouterMiddleware(t.Context(), next, registry, "websecure", "router@file", "service@file", &dynamic.RouterTCPTLSConfig{})
 
 	handler.ServeTCP(tls.Server(serverConn, &tls.Config{
 		Certificates: []tls.Certificate{*cert},
@@ -153,7 +153,7 @@ func TestMetricsMiddleware_ServeTCP_tlsWithoutData(t *testing.T) {
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 	}))
 
-	labels := "traefik.router.name=router@file,traefik.service.name=service@file,network.type=,server.port=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+	labels := "traefik.entrypoint.name=websecure,traefik.router.name=router@file,traefik.service.name=service@file,network.type=,tls.protocol.version=1.2,tls.cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
 
 	// The TLS connection is counted although its first read fails, as the handshake is done.
 	assert.Equal(t, map[string]float64{labels: 1}, afterHandshake)

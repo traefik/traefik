@@ -154,11 +154,11 @@ func TestPrometheus(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4", "server.port", "443").
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
 		Set(1)
 	prometheusRegistry.
 		RouterTCPTLSOpenConnectionsGauge().
-		With("traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "server.port", "443", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
 		Set(1)
 
 	prometheusRegistry.
@@ -323,23 +323,23 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: routerTCPOpenConnectionsName,
 			labels: map[string]string{
-				"traefik.router.name":  "demo",
-				"traefik.service.name": "service1",
-				"traefik.tls.mode":     "terminated",
-				"network.type":         "ipv4",
-				"server.port":          "443",
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
 			},
 			assert: buildGaugeAssert(t, routerTCPOpenConnectionsName, 1),
 		},
 		{
 			name: routerTCPTLSOpenConnectionsName,
 			labels: map[string]string{
-				"traefik.router.name":  "demo",
-				"traefik.service.name": "service1",
-				"network.type":         "ipv4",
-				"server.port":          "443",
-				"tls.protocol.version": "1.3",
-				"tls.cipher":           "TLS_AES_128_GCM_SHA256",
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
 			},
 			assert: buildGaugeAssert(t, routerTCPTLSOpenConnectionsName, 1),
 		},
@@ -558,11 +558,11 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
 		Add(1)
 	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
-		With("traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4", "server.port", "443").
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
 		Add(1)
 
 	// The metric of the removed router is exported on the first scrape,

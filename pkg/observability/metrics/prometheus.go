@@ -62,11 +62,11 @@ const (
 
 	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes.
 	// The Prometheus client escapes their dots when the scraper does not support them.
+	tcpEntryPointNameLabel     = "traefik.entrypoint.name"
 	tcpRouterNameLabel         = "traefik.router.name"
 	tcpServiceNameLabel        = "traefik.service.name"
 	tcpTLSModeLabel            = "traefik.tls.mode"
 	tcpNetworkTypeLabel        = "network.type"
-	tcpServerPortLabel         = "server.port"
 	tcpTLSProtocolVersionLabel = "tls.protocol.version"
 	tcpTLSCipherLabel          = "tls.cipher"
 )
@@ -285,12 +285,12 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	if config.EnableTCPRouterMetrics {
 		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenConnectionsName,
-			Help: "How many open connections exist on a TCP router, partitioned by service, TLS mode, network type, and server port.",
-		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel, tcpServerPortLabel})
+			Help: "How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
 		routerTCPTLSOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPTLSOpenConnectionsName,
-			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by service, network type, server port, TLS version, and TLS cipher.",
-		}, []string{tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpServerPortLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 
 		// TCP metrics are tracked apart from the HTTP ones,
 		// because HTTP and TCP routers can share the same name.
