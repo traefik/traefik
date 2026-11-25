@@ -65,7 +65,7 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// PostRequestModifyResponseHeaders set or delete response headers.
+// PostRequestModifyResponseHeaders sets, appends, or deletes response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
 func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
@@ -75,6 +75,18 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 			res.Header.Del(header)
 		} else {
 			res.Header.Set(header, value)
+		}
+	}
+
+	if operations := s.headers.ResponseHeader; operations != nil {
+		for header, value := range operations.Set {
+			res.Header.Set(header, value)
+		}
+		for header, value := range operations.Append {
+			res.Header.Add(header, value)
+		}
+		for _, header := range operations.Delete {
+			res.Header.Del(header)
 		}
 	}
 
@@ -100,21 +112,25 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		return nil
 	}
 
-	varyHeader := res.Header.Get("Vary")
-	if varyHeader == "Origin" {
+	varyHeaders := res.Header.Values("Vary")
+	if slices.Contains(varyHeaders, "Origin") {
 		return nil
 	}
 
-	if varyHeader != "" {
-		varyHeader += ","
+	if len(varyHeaders) == 0 {
+		res.Header.Set("Vary", "Origin")
+		return nil
 	}
-	varyHeader += "Origin"
 
-	res.Header.Set("Vary", varyHeader)
+	varyHeader := "Origin"
+	if varyHeaders[0] != "" {
+		varyHeader = varyHeaders[0] + ",Origin"
+	}
+	res.Header["Vary"] = append([]string{varyHeader}, varyHeaders[1:]...)
 	return nil
 }
 
-// modifyCustomRequestHeaders sets or deletes custom request headers.
+// modifyCustomRequestHeaders sets, appends, or deletes custom request headers.
 func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	// Note: the header names aliasing the custom request headers (e.g. X_Auth_User) are not handled here,
 	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.
@@ -128,13 +144,44 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 		case value == "":
 			req.Header.Del(header)
 
-		case strings.EqualFold(header, "Host"):
-			req.Host = value
-
 		default:
-			req.Header.Set(header, value)
+			setRequestHeader(req, header, value)
 		}
 	}
+
+	operations := s.headers.RequestHeader
+	if operations == nil {
+		return
+	}
+
+	for header, value := range operations.Set {
+		setRequestHeader(req, header, value)
+	}
+	for header, value := range operations.Append {
+		// Host is a single value stored separately by net/http.
+		if !strings.EqualFold(header, "Host") {
+			req.Header.Add(header, value)
+		}
+	}
+	for _, header := range operations.Delete {
+		switch http.CanonicalHeaderKey(header) {
+		case forward.XForwardedFor:
+			req.Header[forward.XForwardedFor] = nil
+		case "Host":
+			req.Host = ""
+			req.Header.Del(header)
+		default:
+			req.Header.Del(header)
+		}
+	}
+}
+
+func setRequestHeader(req *http.Request, header, value string) {
+	if strings.EqualFold(header, "Host") {
+		req.Host = value
+		return
+	}
+	req.Header.Set(header, value)
 }
 
 // processCorsHeaders processes the incoming request,

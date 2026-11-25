@@ -3,6 +3,7 @@ package headers
 // Middleware tests based on https://github.com/unrolled/secure
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 )
 
 func TestNew_withoutOptions(t *testing.T) {
@@ -104,6 +107,122 @@ func TestNew_customHeaders(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rw.Code)
 	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"))
 	assert.Equal(t, "test_response", rw.Header().Get("X-Custom-Response-Header"))
+}
+
+func TestNew_headerOperations(t *testing.T) {
+	var middleware traefikv1alpha1.Middleware
+	err := json.Unmarshal([]byte(`{
+		"spec": {
+			"headers": {
+				"customRequestHeaders": {"X-Legacy": "request"},
+				"customResponseHeaders": {"X-Legacy": "response"},
+				"requestHeader": {
+					"set": {"Host": "backend.example", "X-Set": "set"},
+					"append": {"x-values": "third", "X-Set": "appended", "X-Delete": "appended"},
+					"delete": ["x-delete"]
+				},
+				"responseHeader": {
+					"set": {"X-Set": "set"},
+					"append": {"set-cookie": "theme=dark", "X-New": "new", "X-Set": "appended", "X-Delete": "appended"},
+					"delete": ["x-delete"]
+				}
+			}
+		}
+	}`), &middleware)
+	require.NoError(t, err)
+
+	cfg := (&dynamic.Middleware{Headers: middleware.Spec.Headers}).DeepCopy()
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, []string{"first, second", "original", "third"}, r.Header.Values("X-Values"))
+		assert.Equal(t, []string{"set", "appended"}, r.Header.Values("X-Set"))
+		assert.NotContains(t, r.Header, "X-Delete")
+		assert.Equal(t, "request", r.Header.Get("X-Legacy"))
+		assert.Equal(t, "backend.example", r.Host)
+
+		w.Header().Add("Set-Cookie", "session=abc")
+		w.Header().Add("Set-Cookie", "lang=en")
+		w.Header().Set("X-Set", "original")
+		w.Header().Set("X-Delete", "original")
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	mid, err := New(t.Context(), next, *cfg.Headers, "testing")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "http://original.example", nil)
+	req.Header.Add("X-Values", "first, second")
+	req.Header.Add("X-Values", "original")
+	req.Header.Set("X-Set", "original")
+	req.Header.Set("X-Delete", "original")
+	rw := httptest.NewRecorder()
+	mid.ServeHTTP(rw, req)
+
+	res := rw.Result()
+	defer res.Body.Close()
+	assert.Equal(t, http.StatusNoContent, res.StatusCode)
+	assert.Equal(t, []string{"session=abc", "lang=en", "theme=dark"}, res.Header.Values("Set-Cookie"))
+	assert.Equal(t, []string{"set", "appended"}, res.Header.Values("X-Set"))
+	assert.Equal(t, "new", res.Header.Get("X-New"))
+	assert.NotContains(t, res.Header, "X-Delete")
+	assert.Equal(t, "response", res.Header.Get("X-Legacy"))
+}
+
+func TestNew_appendHeadersFromLabels(t *testing.T) {
+	cfg, err := label.DecodeConfiguration(map[string]string{
+		"traefik.http.middlewares.test.headers.requestheader.append.X-Feature":      "enabled",
+		"traefik.http.middlewares.test.headers.responseheader.append.Cache-Control": "private",
+	})
+	require.NoError(t, err)
+
+	copied := cfg.DeepCopy()
+	cfg.HTTP.Middlewares["test"].Headers.RequestHeader.Append["X-Feature"] = "changed"
+	cfg.HTTP.Middlewares["test"].Headers.ResponseHeader.Append["Cache-Control"] = "changed"
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, []string{"enabled"}, r.Header.Values("X-Feature"))
+		w.Header().Set("Cache-Control", "max-age=60")
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	mid, err := New(t.Context(), next, *copied.HTTP.Middlewares["test"].Headers, "test")
+	require.NoError(t, err)
+
+	for range 2 {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rw := httptest.NewRecorder()
+		mid.ServeHTTP(rw, req)
+
+		res := rw.Result()
+		assert.Equal(t, http.StatusNoContent, res.StatusCode)
+		assert.Equal(t, []string{"max-age=60", "private"}, res.Header.Values("Cache-Control"))
+		require.NoError(t, res.Body.Close())
+	}
+}
+
+func TestNew_appendVaryHeaderWithCORS(t *testing.T) {
+	// Spare capacity lets Header.Add reuse the backend's slice.
+	backendVary := make([]string, 2, 3)
+	copy(backendVary, []string{"Accept-Encoding", "Accept-Language"})
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header()["Vary"] = backendVary
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	cfg := dynamic.Headers{
+		AddVaryHeader:  true,
+		ResponseHeader: &dynamic.HeaderOperations{Append: map[string]string{"Vary": "Accept"}},
+	}
+	mid, err := New(t.Context(), next, cfg, "test")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rw := httptest.NewRecorder()
+	mid.ServeHTTP(rw, req)
+
+	res := rw.Result()
+	defer res.Body.Close()
+	assert.Equal(t, []string{"Accept-Encoding,Origin", "Accept-Language", "Accept"}, res.Header.Values("Vary"))
+	assert.Equal(t, []string{"Accept-Encoding", "Accept-Language"}, backendVary)
 }
 
 func Test_headers_getTracingInformation(t *testing.T) {

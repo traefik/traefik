@@ -255,11 +255,66 @@ spec:
     addVaryHeader: true
 ```
 
+### Appending Header Values
+
+Use `requestHeader.append` to add values to the proxied request and `responseHeader.append` to add values to the response.
+Each configured value becomes a separate header field value after any existing values.
+
+```yaml tab="Structured (YAML)"
+http:
+  middlewares:
+    append-headers:
+      headers:
+        requestHeader:
+          append:
+            X-Feature: "preview"
+        responseHeader:
+          append:
+            Cache-Control: "private"
+```
+
+```toml tab="Structured (TOML)"
+[http.middlewares.append-headers.headers.requestHeader.append]
+  X-Feature = "preview"
+[http.middlewares.append-headers.headers.responseHeader.append]
+  Cache-Control = "private"
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.middlewares.append-headers.headers.requestheader.append.X-Feature=preview"
+  - "traefik.http.middlewares.append-headers.headers.responseheader.append.Cache-Control=private"
+```
+
+```json tab="Tags"
+{
+  "Tags": [
+    "traefik.http.middlewares.append-headers.headers.requestheader.append.X-Feature=preview",
+    "traefik.http.middlewares.append-headers.headers.responseheader.append.Cache-Control=private"
+  ]
+}
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: append-headers
+spec:
+  headers:
+    requestHeader:
+      append:
+        X-Feature: "preview"
+    responseHeader:
+      append:
+        Cache-Control: "private"
+```
+
 ## Configuration Options
 
 !!! warning
 
-    Custom headers will overwrite existing headers if they have identical names.
+    `customRequestHeaders` and `customResponseHeaders` overwrite existing values for matching header names.
 
 !!! note ""
 
@@ -269,6 +324,8 @@ spec:
 | ----------------------------- | ------------------------------------------------- | --------- | -------- |
 | <a id="opt-customRequestHeaders" href="#opt-customRequestHeaders" title="#opt-customRequestHeaders">`customRequestHeaders`</a> | Lists the header names and values for requests.  | [] | No |
 | <a id="opt-customResponseHeaders" href="#opt-customResponseHeaders" title="#opt-customResponseHeaders">`customResponseHeaders`</a> | Lists the header names and values for responses. | [] | No |
+| <a id="opt-requestHeader" href="#opt-requestHeader" title="#opt-requestHeader">`requestHeader`</a> | Sets, appends, or deletes request headers. | | No |
+| <a id="opt-responseHeader" href="#opt-responseHeader" title="#opt-responseHeader">`responseHeader`</a> | Sets, appends, or deletes response headers. | | No |
 | <a id="opt-accessControlAllowCredentials" href="#opt-accessControlAllowCredentials" title="#opt-accessControlAllowCredentials">`accessControlAllowCredentials`</a> | Indicates if the request can include user credentials.| false     | No |
 | <a id="opt-accessControlAllowHeaders" href="#opt-accessControlAllowHeaders" title="#opt-accessControlAllowHeaders">`accessControlAllowHeaders`</a> | Specifies allowed request header names.          | [] | No |
 | <a id="opt-accessControlAllowMethods" href="#opt-accessControlAllowMethods" title="#opt-accessControlAllowMethods">`accessControlAllowMethods`</a> | Specifies allowed request methods.               | [] | No |
@@ -295,6 +352,17 @@ spec:
 | <a id="opt-referrerPolicy" href="#opt-referrerPolicy" title="#opt-referrerPolicy">`referrerPolicy`</a> | Controls forwarding of `Referer` header.         | "" | No |
 | <a id="opt-permissionsPolicy" href="#opt-permissionsPolicy" title="#opt-permissionsPolicy">`permissionsPolicy`</a> | allows sites to control browser features.                   | ""      | No |
 | <a id="opt-isDevelopment" href="#opt-isDevelopment" title="#opt-isDevelopment">`isDevelopment`</a> | Set `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options. Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.    | false     | No |
+
+### `requestHeader` and `responseHeader`
+
+Traefik applies `customRequestHeaders` and `customResponseHeaders` first, then applies the following operations in order for each direction.
+
+1. `set` replaces all values for each named header with the configured value.
+2. `append` adds the configured value to each named header, creating the header if needed.
+3. `delete` removes all values for each listed header name.
+
+Use `requestHeader.set` to change the request's single `Host` value.
+CORS settings apply to response headers after these operations.
 
 ### `accessControlAllowOriginList`
 

@@ -1745,6 +1745,49 @@ spec:
                       ReferrerPolicy defines the Referrer-Policy header value.
                       This allows sites to control whether browsers forward the Referer header to other sites.
                     type: string
+                  requestHeader:
+                    description: RequestHeader defines operations on the request headers.
+                    properties:
+                      append:
+                        additionalProperties:
+                          type: string
+                        description: Append adds a value after any existing values.
+                        type: object
+                      delete:
+                        description: Delete removes all values for the listed header
+                          names.
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set replaces existing values with the configured
+                          value.
+                        type: object
+                    type: object
+                  responseHeader:
+                    description: ResponseHeader defines operations on the response
+                      headers.
+                    properties:
+                      append:
+                        additionalProperties:
+                          type: string
+                        description: Append adds a value after any existing values.
+                        type: object
+                      delete:
+                        description: Delete removes all values for the listed header
+                          names.
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        additionalProperties:
+                          type: string
+                        description: Set replaces existing values with the configured
+                          value.
+                        type: object
+                    type: object
                   sslForceHost:
                     description: 'Deprecated: SSLForceHost option is deprecated, please
                       use RedirectRegex instead.'
