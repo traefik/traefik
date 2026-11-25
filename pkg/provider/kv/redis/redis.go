@@ -48,6 +48,10 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	if len(p.Endpoints) == 0 {
+		return errors.New("no endpoint defined")
+	}
+
 	config := &redis.Config{
 		Username: p.Username,
 		Password: p.Password,
