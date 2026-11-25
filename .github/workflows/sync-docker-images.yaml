@@ -12,6 +12,7 @@ jobs:
     permissions:
       packages: write
       contents: read
+      id-token: write
     if: github.repository == 'traefik/traefik'
 
     steps:
@@ -20,10 +21,18 @@ jobs:
           persist-credentials: false
 
       - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
-      
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
       - name: Sync
         run: |
           EXCLUDED_TAGS="1.7.9-alpine v1.0.0-beta.392 v1.0.0-beta.404 v1.0.0-beta.704 v1.0.0-rc1 v1.7.9-alpine"
           EXCLUDED_REGEX=$(echo $EXCLUDED_TAGS | sed 's/ /|/g')
-          diff <(crane ls traefik) <(crane ls ghcr.io/traefik/traefik) | grep '^<' | awk '{print $2}' | while read -r tag; do [[ "$tag" =~ ^($EXCLUDED_REGEX)$ ]] || (echo "Processing image: traefik:$tag"; crane cp "traefik:$tag" "ghcr.io/traefik/traefik:$tag"); done
+          diff <(crane ls traefik) <(crane ls ghcr.io/traefik/traefik) | grep '^<' | awk '{print $2}' | while read -r tag; do
+            [[ "$tag" =~ ^($EXCLUDED_REGEX)$ ]] && continue
+            echo "Processing image: traefik:$tag"
+            crane cp "traefik:$tag" "ghcr.io/traefik/traefik:$tag"
+            # Keyless signature as this workflow, covering the index and every platform manifest.
+            cosign sign --yes --recursive "ghcr.io/traefik/traefik@$(crane digest "ghcr.io/traefik/traefik:$tag")"
+          done
           crane cp traefik:latest ghcr.io/traefik/traefik:latest
