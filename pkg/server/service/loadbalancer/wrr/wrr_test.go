@@ -392,3 +392,53 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	}
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
+
+func TestBalancerMinHealthyServers(t *testing.T) {
+	balancer := New(nil, true)
+	balancer.SetMinHealthyServers(2)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+	balancer.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), new(1), false)
+
+	var statuses []bool
+	_ = balancer.RegisterStatusUpdater(func(up bool) {
+		statuses = append(statuses, up)
+	})
+
+	ctx := context.WithValue(t.Context(), serviceName, "parent")
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Result().StatusCode)
+
+	// first gets downed, but the balancer is still up since two servers are healthy.
+	balancer.SetStatus(ctx, "first", false)
+	assert.Empty(t, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Result().StatusCode)
+
+	// second gets downed, only one healthy server remains: the balancer is down.
+	balancer.SetStatus(ctx, "second", false)
+	assert.Equal(t, []bool{false}, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+
+	// first gets up, two healthy servers again: the balancer is up.
+	balancer.SetStatus(ctx, "first", true)
+	assert.Equal(t, []bool{false, true}, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Result().StatusCode)
+}

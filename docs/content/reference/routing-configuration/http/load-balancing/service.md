@@ -290,6 +290,8 @@ For gRPC servers, Traefik will consider them healthy as long as they return SERV
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
+By default, a service is considered healthy as long as at least one server is healthy. The `minHealthyServers` option raises that threshold: the service is considered down until the configured number of servers are healthy.
+
 Below are the available options for the health check mechanism:
 
 | Field                                                                                                              | Description                                                                                                                   | Default | Required |
@@ -306,6 +308,7 @@ Below are the available options for the health check mechanism:
 | <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
 | <a id="opt-method" href="#opt-method" title="#opt-method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
 | <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
+| <a id="opt-minHealthyServers" href="#opt-minHealthyServers" title="#opt-minHealthyServers">`minHealthyServers`</a> | Defines the minimum number of healthy servers required for the service to be considered healthy. When fewer servers are healthy, the service is considered down and requests fail with a 503 status code. | 1 | No       |
 
 ### Sticky Sessions
 

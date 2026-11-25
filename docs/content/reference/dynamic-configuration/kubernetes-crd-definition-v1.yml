@@ -211,6 +211,12 @@ spec:
                               method:
                                 description: Method defines the healthcheck method.
                                 type: string
+                              minHealthyServers:
+                                description: |-
+                                  MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                  When fewer servers are healthy, the service is considered down.
+                                  Default: 1
+                                type: integer
                               mode:
                                 description: |-
                                   Mode defines the health check mode.
@@ -1265,6 +1271,12 @@ spec:
                           method:
                             description: Method defines the healthcheck method.
                             type: string
+                          minHealthyServers:
+                            description: |-
+                              MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                              When fewer servers are healthy, the service is considered down.
+                              Default: 1
+                            type: integer
                           mode:
                             description: |-
                               Mode defines the health check mode.
@@ -2402,6 +2414,12 @@ spec:
                               method:
                                 description: Method defines the healthcheck method.
                                 type: string
+                              minHealthyServers:
+                                description: |-
+                                  MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                  When fewer servers are healthy, the service is considered down.
+                                  Default: 1
+                                type: integer
                               mode:
                                 description: |-
                                   Mode defines the health check mode.
@@ -2706,6 +2724,12 @@ spec:
                               method:
                                 description: Method defines the healthcheck method.
                                 type: string
+                              minHealthyServers:
+                                description: |-
+                                  MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                  When fewer servers are healthy, the service is considered down.
+                                  Default: 1
+                                type: integer
                               mode:
                                 description: |-
                                   Mode defines the health check mode.
@@ -3742,6 +3766,12 @@ spec:
                           method:
                             description: Method defines the healthcheck method.
                             type: string
+                          minHealthyServers:
+                            description: |-
+                              MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                              When fewer servers are healthy, the service is considered down.
+                              Default: 1
+                            type: integer
                           mode:
                             description: |-
                               Mode defines the health check mode.
@@ -3992,6 +4022,12 @@ spec:
                           method:
                             description: Method defines the healthcheck method.
                             type: string
+                          minHealthyServers:
+                            description: |-
+                              MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                              When fewer servers are healthy, the service is considered down.
+                              Default: 1
+                            type: integer
                           mode:
                             description: |-
                               Mode defines the health check mode.
@@ -4255,6 +4291,12 @@ spec:
                             method:
                               description: Method defines the healthcheck method.
                               type: string
+                            minHealthyServers:
+                              description: |-
+                                MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                When fewer servers are healthy, the service is considered down.
+                                Default: 1
+                              type: integer
                             mode:
                               description: |-
                                 Mode defines the health check mode.
@@ -4507,6 +4549,12 @@ spec:
                       method:
                         description: Method defines the healthcheck method.
                         type: string
+                      minHealthyServers:
+                        description: |-
+                          MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                          When fewer servers are healthy, the service is considered down.
+                          Default: 1
+                        type: integer
                       mode:
                         description: |-
                           Mode defines the health check mode.
@@ -4619,6 +4667,12 @@ spec:
                             method:
                               description: Method defines the healthcheck method.
                               type: string
+                            minHealthyServers:
+                              description: |-
+                                MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                When fewer servers are healthy, the service is considered down.
+                                Default: 1
+                              type: integer
                             mode:
                               description: |-
                                 Mode defines the health check mode.
@@ -5040,6 +5094,12 @@ spec:
                             method:
                               description: Method defines the healthcheck method.
                               type: string
+                            minHealthyServers:
+                              description: |-
+                                MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+                                When fewer servers are healthy, the service is considered down.
+                                Default: 1
+                              type: integer
                             mode:
                               description: |-
                                 Mode defines the health check mode.

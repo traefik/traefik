@@ -474,6 +474,14 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
 	}
 
+	// The service is considered up only when at least minHealthyServers servers
+	// are healthy. A value below 1 means 1, preserving the current behavior.
+	minHealthyServers := 0
+	if service.HealthCheck != nil {
+		minHealthyServers = service.HealthCheck.MinHealthyServers
+	}
+	lb.SetMinHealthyServers(minHealthyServers)
+
 	var passiveHealthChecker *healthcheck.PassiveServiceHealthChecker
 	if service.PassiveHealthCheck != nil {
 		passiveHealthChecker = healthcheck.NewPassiveHealthChecker(
@@ -564,6 +572,7 @@ type serverBalancer interface {
 	healthcheck.StatusSetter
 
 	AddServer(name string, handler http.Handler, server dynamic.Server)
+	SetMinHealthyServers(minHealthyServers int)
 }
 
 // statusUpdaterHandler wraps an http.Handler while preserving the

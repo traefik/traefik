@@ -64,6 +64,10 @@ type ServerHealthCheckApplyConfiguration struct {
 	FollowRedirects *bool `json:"followRedirects,omitempty"`
 	// Headers defines custom headers to be sent to the health check endpoint.
 	Headers map[string]string `json:"headers,omitempty"`
+	// MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+	// When fewer servers are healthy, the service is considered down.
+	// Default: 1
+	MinHealthyServers *int `json:"minHealthyServers,omitempty"`
 }
 
 // ServerHealthCheckApplyConfiguration constructs a declarative configuration of the ServerHealthCheck type for use with
@@ -171,5 +175,13 @@ func (b *ServerHealthCheckApplyConfiguration) WithHeaders(entries map[string]str
 	for k, v := range entries {
 		b.Headers[k] = v
 	}
+	return b
+}
+
+// WithMinHealthyServers sets the MinHealthyServers field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MinHealthyServers field is set to the value of the last call.
+func (b *ServerHealthCheckApplyConfiguration) WithMinHealthyServers(value int) *ServerHealthCheckApplyConfiguration {
+	b.MinHealthyServers = &value
 	return b
 }
