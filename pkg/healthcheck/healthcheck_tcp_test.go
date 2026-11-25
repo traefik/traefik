@@ -4,12 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"net"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -787,3 +789,74 @@ func (cm *connMock) SetDeadline(_ time.Time) error { return nil }
 func (cm *connMock) SetReadDeadline(_ time.Time) error { return nil }
 
 func (cm *connMock) SetWriteDeadline(_ time.Time) error { return nil }
+
+func TestServiceTCPHealthChecker_LogsStatusChanges(t *testing.T) {
+	const failures = 2
+
+	var (
+		callsMu sync.Mutex
+		calls   int
+	)
+
+	// The first dials fail, then the server stays reachable.
+	dialer := &dialerMock{
+		onDial: func(_, _ string) (net.Conn, error) {
+			callsMu.Lock()
+			defer callsMu.Unlock()
+
+			calls++
+			if calls <= failures {
+				return nil, errors.New("connection refused")
+			}
+
+			return &connMock{}, nil
+		},
+	}
+
+	counter := newLogCounter()
+	ctx, cancel := context.WithCancel(counter.loggerContext(t.Context()))
+	t.Cleanup(cancel)
+
+	config := &dynamic.TCPServerHealthCheck{
+		Interval:          ptypes.Duration(50 * time.Millisecond),
+		UnhealthyInterval: new(ptypes.Duration(50 * time.Millisecond)),
+		Timeout:           ptypes.Duration(time.Second),
+	}
+
+	const address = "127.0.0.1:12345"
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+	serviceInfo := &truntime.TCPServiceInfo{}
+
+	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo,
+		[]TCPHealthCheckTarget{{Address: address, Dialer: dialer}}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Go(func() {
+		hc.Launch(ctx)
+	})
+
+	// Wait for the down-then-up cycle instead of sleeping a fixed duration.
+	require.Eventually(t, func() bool {
+		return counter.Count(zerolog.WarnLevel) >= 1 && counter.Count(zerolog.InfoLevel) >= 1
+	}, 5*time.Second, 10*time.Millisecond)
+
+	cancel()
+	wg.Wait()
+
+	// One warning on the transition to down, one info on recovery.
+	assert.Equal(t, 1, counter.Count(zerolog.WarnLevel))
+	assert.Equal(t, 1, counter.Count(zerolog.InfoLevel))
+	// Repeated failures stay visible at debug level.
+	assert.GreaterOrEqual(t, counter.Count(zerolog.DebugLevel), failures-1)
+
+	// The health check behavior itself must be unchanged.
+	lb.RLock()
+	removedServers := lb.numRemovedServers
+	upsertedServers := lb.numUpsertedServers
+	lb.RUnlock()
+
+	assert.Positive(t, removedServers)
+	assert.Positive(t, upsertedServers)
+	assert.Equal(t, map[string]string{address: truntime.StatusUp}, serviceInfo.GetAllStatus())
+}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -526,4 +527,80 @@ func TestDifferentIntervals(t *testing.T) {
 	defer lb.Unlock()
 
 	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "removed servers greater than upserted servers")
+}
+
+func TestServiceHealthChecker_LogsStatusChanges(t *testing.T) {
+	const failures = 2
+
+	var (
+		callsMu sync.Mutex
+		calls   int
+	)
+
+	// The first probes fail, then the server stays healthy.
+	srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		callsMu.Lock()
+		calls++
+		call := calls
+		callsMu.Unlock()
+
+		if call <= failures {
+			rw.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	counter := newLogCounter()
+	ctx, cancel := context.WithCancel(counter.loggerContext(t.Context()))
+	t.Cleanup(cancel)
+
+	config := &dynamic.ServerHealthCheck{
+		Mode:              "http",
+		Path:              "/health",
+		Interval:          ptypes.Duration(50 * time.Millisecond),
+		UnhealthyInterval: new(ptypes.Duration(50 * time.Millisecond)),
+		Timeout:           ptypes.Duration(time.Second),
+	}
+
+	targetURL := testhelpers.MustParseURL(srv.URL)
+
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport,
+		map[string]*url.URL{"test": targetURL}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Go(func() {
+		hc.Launch(ctx)
+	})
+
+	// Wait for the down-then-up cycle instead of sleeping a fixed duration.
+	require.Eventually(t, func() bool {
+		return counter.Count(zerolog.WarnLevel) >= 1 && counter.Count(zerolog.InfoLevel) >= 1
+	}, 5*time.Second, 10*time.Millisecond)
+
+	cancel()
+	wg.Wait()
+
+	// One warning on the transition to down, one info on recovery.
+	assert.Equal(t, 1, counter.Count(zerolog.WarnLevel))
+	assert.Equal(t, 1, counter.Count(zerolog.InfoLevel))
+	// Repeated failures stay visible at debug level.
+	assert.GreaterOrEqual(t, counter.Count(zerolog.DebugLevel), failures-1)
+
+	// The health check behavior itself must be unchanged.
+	lb.RLock()
+	removedServers := lb.numRemovedServers
+	upsertedServers := lb.numUpsertedServers
+	lb.RUnlock()
+
+	assert.Positive(t, removedServers)
+	assert.Positive(t, upsertedServers)
+	assert.Equal(t, float64(1), gauge.GaugeValue)
+	assert.Equal(t, map[string]string{targetURL.String(): runtime.StatusUp}, serviceInfo.GetAllStatus())
 }

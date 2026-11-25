@@ -47,6 +47,7 @@ type metricsHealthCheck interface {
 type target struct {
 	targetURL *url.URL
 	name      string
+	knownUp   bool
 }
 
 type ServiceHealthChecker struct {
@@ -111,6 +112,7 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		healthyTargets <- target{
 			targetURL: targetURL,
 			name:      name,
+			knownUp:   true,
 		}
 	}
 	unhealthyTargets := make(chan target, len(targets))
@@ -178,14 +180,15 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 						return
 					}
 
-					log.Ctx(ctx).Warn().
-						Str("targetURL", target.targetURL.String()).
-						Err(err).
-						Msg("Health check failed.")
+					shc.logHealthCheckResult(ctx, target, false, err)
 
 					up = false
 					serverUpMetricValue = float64(0)
+				} else {
+					shc.logHealthCheckResult(ctx, target, true, nil)
 				}
+
+				target.knownUp = up
 
 				shc.balancer.SetStatus(ctx, target.name, up)
 
@@ -205,6 +208,24 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 					Set(serverUpMetricValue)
 			}
 		}
+	}
+}
+
+// logHealthCheckResult reports a probe result only when it differs from the
+// previous one, so that a permanently failing server does not flood the logs
+// at every interval. Repeated failures are kept at debug level.
+func (shc *ServiceHealthChecker) logHealthCheckResult(ctx context.Context, target target, up bool, err error) {
+	logger := log.Ctx(ctx).With().Str("targetURL", target.targetURL.String()).Logger()
+
+	switch {
+	case up && target.knownUp:
+	// Still up, nothing to report
+	case !up && !target.knownUp:
+		logger.Debug().Err(err).Msg("Health check failed.")
+	case up:
+		logger.Info().Msg("Health check succeeded.")
+	default:
+		logger.Warn().Err(err).Msg("Health check failed.")
 	}
 }
 

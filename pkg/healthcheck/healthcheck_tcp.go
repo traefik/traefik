@@ -21,6 +21,10 @@ type TCPHealthCheckTarget struct {
 	Address string
 	TLS     bool
 	Dialer  tcp.Dialer
+
+	// knownUp is the last observed probe result. The target is owned by exactly
+	// one healthcheck loop at a time, so this field needs no synchronization.
+	knownUp bool
 }
 type ServiceTCPHealthChecker struct {
 	balancer StatusSetter
@@ -76,6 +80,7 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 
 	healthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
 	for _, target := range targets {
+		target.knownUp = true
 		healthyTargets <- &target
 	}
 	unhealthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
@@ -140,13 +145,14 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 						return
 					}
 
-					log.Ctx(ctx).Warn().
-						Str("targetAddress", target.Address).
-						Err(err).
-						Msg("Health check failed.")
+					thc.logHealthCheckResult(ctx, target, false, err)
 
 					up = false
+				} else {
+					thc.logHealthCheckResult(ctx, target, true, nil)
 				}
+
+				target.knownUp = up
 
 				thc.balancer.SetStatus(ctx, target.Address, up)
 
@@ -164,6 +170,24 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 				// TODO: add a TCP server up metric (like for HTTP).
 			}
 		}
+	}
+}
+
+// logHealthCheckResult reports a probe result only when it differs from the
+// previous one, so that a permanently failing server does not flood the logs
+// at every interval. Repeated failures are kept at debug level.
+func (thc *ServiceTCPHealthChecker) logHealthCheckResult(ctx context.Context, target *TCPHealthCheckTarget, up bool, err error) {
+	logger := log.Ctx(ctx).With().Str("targetAddress", target.Address).Logger()
+
+	switch {
+	case up && target.knownUp:
+	// Still up, nothing to report
+	case !up && !target.knownUp:
+		logger.Debug().Err(err).Msg("Health check failed.")
+	case up:
+		logger.Info().Msg("Health check succeeded.")
+	default:
+		logger.Warn().Err(err).Msg("Health check failed.")
 	}
 }
 
