@@ -420,7 +420,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 
 	u := parseURI(t, srv.URL)
 
-	f, err := NewReverseProxy(u, nil, true, false, false, newConnPool(1, 0, 0, func() (net.Conn, error) {
+	f, err := NewReverseProxy(u, nil, true, false, false, newConnPool(1, 0, 0, 0, 0, func() (net.Conn, error) {
 		return net.Dial("tcp", u.Host)
 	}))
 	require.NoError(t, err)
@@ -492,7 +492,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	defer srv.Close()
 
 	u := parseURI(t, srv.URL)
-	f, err := NewReverseProxy(u, nil, true, false, false, newConnPool(1, 0, 0, func() (net.Conn, error) {
+	f, err := NewReverseProxy(u, nil, true, false, false, newConnPool(1, 0, 0, 0, 0, func() (net.Conn, error) {
 		return net.Dial("tcp", u.Host)
 	}))
 	require.NoError(t, err)
@@ -719,7 +719,7 @@ func parseURI(t *testing.T, uri string) *url.URL {
 
 func createConnectionPool(target string, tlsConfig *tls.Config) *connPool {
 	u := testhelpers.MustParseURL(target)
-	return newConnPool(200, 0, 0, func() (net.Conn, error) {
+	return newConnPool(200, 0, 0, 0, 0, func() (net.Conn, error) {
 		if tlsConfig != nil {
 			return tls.Dial("tcp", u.Host, tlsConfig)
 		}
