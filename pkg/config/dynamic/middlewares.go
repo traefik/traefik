@@ -370,6 +370,10 @@ type Headers struct {
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 	// CustomResponseHeaders defines the header names and values to apply to the response.
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
+	// RequestHeader defines operations on the request headers.
+	RequestHeader *HeaderOperations `json:"requestHeader,omitempty" toml:"requestHeader,omitempty" yaml:"requestHeader,omitempty" export:"true"`
+	// ResponseHeader defines operations on the response headers.
+	ResponseHeader *HeaderOperations `json:"responseHeader,omitempty" toml:"responseHeader,omitempty" yaml:"responseHeader,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials defines whether the request can include user credentials.
 	AccessControlAllowCredentials bool `json:"accessControlAllowCredentials,omitempty" toml:"accessControlAllowCredentials,omitempty" yaml:"accessControlAllowCredentials,omitempty" export:"true"`
@@ -446,10 +450,28 @@ type Headers struct {
 	SSLForceHost *bool `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
+// HeaderOperations holds the operations to apply to a set of HTTP headers.
+type HeaderOperations struct {
+	// Set replaces existing values with the configured value.
+	Set map[string]string `json:"set,omitempty" toml:"set,omitempty" yaml:"set,omitempty" export:"true"`
+	// Append adds a value after any existing values.
+	Append map[string]string `json:"append,omitempty" toml:"append,omitempty" yaml:"append,omitempty" export:"true"`
+	// Delete removes all values for the listed header names.
+	Delete []string `json:"delete,omitempty" toml:"delete,omitempty" yaml:"delete,omitempty" export:"true"`
+}
+
+func (h *HeaderOperations) isDefined() bool {
+	return h != nil && (len(h.Set) != 0 || len(h.Append) != 0 || len(h.Delete) != 0)
+}
+
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
 func (h *Headers) HasCustomHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
-		len(h.CustomRequestHeaders) != 0)
+		len(h.CustomRequestHeaders) != 0 ||
+		h.RequestHeader.isDefined() ||
+		h.ResponseHeader.isDefined())
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.
