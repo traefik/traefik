@@ -28,6 +28,7 @@ type stickyCookie struct {
 	secure             bool
 	httpOnly           bool
 	sameSite           http.SameSite
+	partitioned        bool
 	maxAge             int
 	expires            time.Duration
 	path               string
@@ -56,10 +57,16 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 		secure:             cookieConfig.Secure,
 		httpOnly:           cookieConfig.HTTPOnly,
 		sameSite:           convertSameSite(cookieConfig.SameSite),
+		partitioned:        cookieConfig.Partitioned,
 		maxAge:             cookieConfig.MaxAge,
 		path:               "/",
 		domain:             cookieConfig.Domain,
 		preserveLeadingDot: cookieConfig.PreserveLeadingDot,
+	}
+	// Browsers reject a partitioned cookie that is not Secure,
+	// which would silently break stickiness.
+	if cookie.partitioned {
+		cookie.secure = true
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
@@ -137,14 +144,15 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:     s.cookie.name,
-		Value:    hash,
-		Path:     s.cookie.path,
-		Domain:   s.cookie.domain,
-		HttpOnly: s.cookie.httpOnly,
-		Secure:   s.cookie.secure,
-		SameSite: s.cookie.sameSite,
-		MaxAge:   s.cookie.maxAge,
+		Name:        s.cookie.name,
+		Value:       hash,
+		Path:        s.cookie.path,
+		Domain:      s.cookie.domain,
+		HttpOnly:    s.cookie.httpOnly,
+		Secure:      s.cookie.secure,
+		SameSite:    s.cookie.sameSite,
+		Partitioned: s.cookie.partitioned,
+		MaxAge:      s.cookie.maxAge,
 	}
 	if s.cookie.expires > 0 {
 		cookie.Expires = time.Now().Add(s.cookie.expires)

@@ -341,6 +341,11 @@ type Cookie struct {
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	// +kubebuilder:validation:Enum=none;lax;strict;None;Lax;Strict
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
+	// Partitioned defines whether the cookie is stored using partitioned storage (CHIPS),
+	// which keeps it available when the service is embedded in a third-party context.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies
+	// When enabled, the cookie is also marked as Secure, because browsers reject partitioned cookies that are not.
+	Partitioned bool `json:"partitioned,omitempty" toml:"partitioned,omitempty" yaml:"partitioned,omitempty" export:"true"`
 	// MaxAge defines the number of seconds until the cookie expires.
 	// When set to a negative number, the cookie expires immediately.
 	// When set to zero, the cookie never expires.
