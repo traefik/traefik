@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/metrics/generic"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1859,4 +1860,29 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 			assert.Eventually(t, func() bool { return backendConns.Load() == 0 }, 5*time.Second, 10*time.Millisecond)
 		})
 	}
+}
+
+func TestConnectionTracker_openConnectionsGauge(t *testing.T) {
+	gauge := generic.NewGauge("open_connections")
+	tracker := newConnectionTracker(gauge)
+
+	connA, peerA := net.Pipe()
+	t.Cleanup(func() { _ = peerA.Close() })
+	connB, peerB := net.Pipe()
+	t.Cleanup(func() { _ = peerB.Close() })
+
+	tracker.AddConnection(connA)
+	tracker.AddConnection(connA)
+	tracker.AddConnection(connB)
+	assert.InDelta(t, 2, gauge.Value(), 0)
+
+	tracker.RemoveConnection(connA)
+	tracker.RemoveConnection(connA)
+	assert.InDelta(t, 1, gauge.Value(), 0)
+
+	tracker.Close()
+	assert.InDelta(t, 0, gauge.Value(), 0)
+
+	tracker.RemoveConnection(connB)
+	assert.InDelta(t, 0, gauge.Value(), 0)
 }

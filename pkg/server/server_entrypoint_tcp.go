@@ -19,6 +19,7 @@ import (
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/discard"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -548,6 +549,10 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 }
 
 func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
+	if openConnectionsGauge == nil {
+		openConnectionsGauge = discard.NewGauge()
+	}
+
 	return &connectionTracker{
 		conns:                make(map[net.Conn]struct{}),
 		openConnectionsGauge: openConnectionsGauge,
@@ -563,20 +568,29 @@ type connectionTracker struct {
 
 // AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
-	defer c.syncOpenConnectionGauge()
-
 	c.connsMu.Lock()
+	defer c.connsMu.Unlock()
+
+	if _, ok := c.conns[conn]; ok {
+		return
+	}
+
 	c.conns[conn] = struct{}{}
-	c.connsMu.Unlock()
+	c.openConnectionsGauge.Add(1)
 }
 
 // RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
-	defer c.syncOpenConnectionGauge()
-
 	c.connsMu.Lock()
+	defer c.connsMu.Unlock()
+
+	// The connection is already removed when the tracker is closed.
+	if _, ok := c.conns[conn]; !ok {
+		return
+	}
+
 	delete(c.conns, conn)
-	c.connsMu.Unlock()
+	c.openConnectionsGauge.Add(-1)
 }
 
 // Shutdown wait for the connection closing.
@@ -604,18 +618,8 @@ func (c *connectionTracker) Close() {
 			log.Error().Err(err).Msg("Error while closing connection")
 		}
 		delete(c.conns, conn)
+		c.openConnectionsGauge.Add(-1)
 	}
-}
-
-// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
-func (c *connectionTracker) syncOpenConnectionGauge() {
-	if c.openConnectionsGauge == nil {
-		return
-	}
-
-	c.connsMu.RLock()
-	c.openConnectionsGauge.Set(float64(len(c.conns)))
-	c.connsMu.RUnlock()
 }
 
 func (c *connectionTracker) isEmpty() bool {

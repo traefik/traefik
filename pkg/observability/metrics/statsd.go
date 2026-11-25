@@ -61,7 +61,7 @@ func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
-		openConnectionsGauge:           statsdClient.NewGauge(statsdOpenConnectionsName),
+		openConnectionsGauge:           newStatefulGauge(statsdClient.NewGauge(statsdOpenConnectionsName), true),
 	}
 
 	if config.AddEntryPointsLabels {
