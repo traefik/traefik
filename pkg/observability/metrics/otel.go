@@ -180,8 +180,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, otelEntryPointReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.", "1")
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelEntryPointReqDurationName,
-			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
-			"s"), time.Second)
+			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method."), time.Second)
 		reg.entryPointReqsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointReqsBytesTotalName,
 			"The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.", "1")
 		reg.entryPointRespsBytesCounter = newOTLPCounterFrom(meter, otelEntryPointRespsBytesTotalName,
@@ -194,8 +193,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, otelRouterReqsTLSTotalName,
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.", "1")
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterReqDurationName,
-			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
-			"s"), time.Second)
+			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method."), time.Second)
 		reg.routerReqsBytesCounter = newOTLPCounterFrom(meter, otelRouterReqsBytesTotalName,
 			"The total size of requests in bytes handled by a router, partitioned by status code, protocol, and method.", "1")
 		reg.routerRespsBytesCounter = newOTLPCounterFrom(meter, otelRouterRespsBytesTotalName,
@@ -208,8 +206,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, otelServiceReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.", "1")
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelServiceReqDurationName,
-			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
-			"s"), time.Second)
+			"How long it took to process the request on a service, partitioned by status code, protocol, and method."), time.Second)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, otelServiceRetriesTotalName,
 			"How many request retries happened on a service.", "1")
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, otelServiceServerUpName,
@@ -242,11 +239,9 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		reg.routerTCPTLSSentBytesCounter = newOTLPCounterFrom(meter, otelRouterTCPTLSSentBytesName,
 			"The total size in bytes of the data sent by a TCP router to its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.", "By")
 		reg.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterTCPConnectionDurationName,
-			"How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type.",
-			"s"), time.Second)
+			"How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type."), time.Second)
 		reg.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, otelRouterTCPTLSConnectionDurationName,
-			"How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
-			"s"), time.Second)
+			"How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher."), time.Second)
 	}
 
 	return reg
@@ -557,10 +552,12 @@ func (c *otelUpDownCounter) Add(delta float64) {
 // Set does nothing, as the value of an UpDownCounter cannot be set.
 func (c *otelUpDownCounter) Set(_ float64) {}
 
-func newOTLPHistogramFrom(meter metric.Meter, name, desc string, unit string) *otelHistogram {
+// newOTLPHistogramFrom creates a histogram recording durations,
+// which are always observed in seconds through NewHistogramWithScale.
+func newOTLPHistogramFrom(meter metric.Meter, name, desc string) *otelHistogram {
 	c, _ := meter.Float64Histogram(name,
 		metric.WithDescription(desc),
-		metric.WithUnit(unit),
+		metric.WithUnit("s"),
 	)
 
 	return &otelHistogram{
