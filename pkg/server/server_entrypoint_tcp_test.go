@@ -1860,3 +1860,30 @@ func TestStickyBackendTransportReleasedWithClientConnection(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildListener_ProxyProtocolErrorClosesListener(t *testing.T) {
+	t.Parallel()
+
+	// Reserve an address first: if the listener of the failing entry point is
+	// left open, binding the same address again fails.
+	reserved, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	address := reserved.Addr().String()
+	require.NoError(t, reserved.Close())
+
+	cfg := &static.EntryPoint{
+		Address: address,
+		Transport: &static.EntryPointsTransport{
+			RespondingTimeouts: &static.RespondingTimeouts{},
+		},
+		ProxyProtocol: &static.ProxyProtocol{TrustedIPs: []string{"not-an-ip"}},
+	}
+
+	listener, err := buildListener(context.Background(), "test", cfg)
+	require.Error(t, err)
+	require.Nil(t, listener)
+
+	rebound, err := net.Listen("tcp", address)
+	require.NoError(t, err, "the listener must be closed when the proxy protocol setup fails")
+	require.NoError(t, rebound.Close())
+}
