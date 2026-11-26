@@ -8,6 +8,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // maxDatagramSize is the maximum size of a UDP datagram.
@@ -19,7 +21,11 @@ var errClosedListener = errors.New("udp: listener closed")
 
 // Listener augments a session-oriented Listener over a UDP PacketConn.
 type Listener struct {
-	pConn *net.UDPConn
+	// pConn is a net.PacketConn rather than a *net.UDPConn because the
+	// packets do not always come from a host socket: a userspace network
+	// stack hands over a net.PacketConn of its own. Only the PacketConn
+	// methods are used either way.
+	pConn net.PacketConn
 
 	mu    sync.RWMutex
 	conns map[string]*Conn
@@ -40,13 +46,12 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		return nil, errors.New("timeout should be greater than zero")
 	}
 
-	pConn, ok := packetConn.(*net.UDPConn)
-	if !ok {
-		return nil, errors.New("packet conn is not an UDPConn")
+	if packetConn == nil {
+		return nil, errors.New("packet conn is required")
 	}
 
 	l := &Listener{
-		pConn:     pConn,
+		pConn:     packetConn,
 		acceptCh:  make(chan *Conn),
 		conns:     make(map[string]*Conn),
 		accepting: true,
@@ -153,8 +158,16 @@ func (l *Listener) readLoop() {
 	for {
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
+			l.fail(err)
 			return
 		}
+
+		// Not every packet conn names the sender: a unix datagram socket does not, for a peer that is not bound.
+		// A session is keyed by that address and replies to it, so there is none to open without one.
+		if raddr == nil {
+			continue
+		}
+
 		conn, err := l.getConn(raddr)
 		if err != nil {
 			continue
@@ -172,6 +185,25 @@ func (l *Listener) readLoop() {
 			continue
 		}
 	}
+}
+
+// fail closes the listener after a read error that is not its own closing.
+// Nothing reads the conn past such an error, so left open the listener would look alive and serve nothing:
+// its sessions would hang, and Accept would never return.
+func (l *Listener) fail(err error) {
+	l.mu.Lock()
+	if !l.accepting {
+		// Shutdown is under way or done, and closes the listener itself:
+		// the error is the conn being closed, or is about to be moot.
+		l.mu.Unlock()
+		return
+	}
+	l.accepting = false
+	l.mu.Unlock()
+
+	log.Error().Err(err).Stringer("address", l.pConn.LocalAddr()).Msg("Error while reading UDP packets, closing the listener")
+
+	_ = l.close()
 }
 
 // getConn returns the ongoing session with raddr if it exists, or creates a new
