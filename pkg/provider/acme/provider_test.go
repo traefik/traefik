@@ -1,11 +1,17 @@
 package acme
 
 import (
+	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rsa"
 	"crypto/tls"
 	"testing"
 	"time"
 
+	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -514,6 +520,7 @@ func TestInitAccount(t *testing.T) {
 		email           string
 		keyType         string
 		expectedAccount *Account
+		expectedKeyType certcrypto.KeyType
 	}{
 		{
 			desc: "Existing account with all information",
@@ -531,6 +538,15 @@ func TestInitAccount(t *testing.T) {
 			expectedAccount: &Account{
 				Email: "foo@foo.net",
 			},
+			expectedKeyType: certcrypto.EC256,
+		},
+		{
+			desc:  "Account nil with default key type",
+			email: "foo@foo.net",
+			expectedAccount: &Account{
+				Email: "foo@foo.net",
+			},
+			expectedKeyType: certcrypto.RSA4096,
 		},
 		{
 			desc:    "Existing account with no email",
@@ -567,11 +583,30 @@ func TestInitAccount(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
+			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType, AccountKeyType: test.keyType}}
 
-			actualAccount, err := acmeProvider.initAccount()
-			assert.NoError(t, err, "Init account in error")
+			actualAccount, err := acmeProvider.initAccount(context.Background())
+			require.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
+
+			if test.expectedKeyType == "" {
+				return
+			}
+
+			key := actualAccount.GetPrivateKey()
+			require.NotNil(t, key)
+
+			switch test.expectedKeyType {
+			case certcrypto.EC256:
+				ecKey, ok := key.(*ecdsa.PrivateKey)
+				require.True(t, ok, "expected an ECDSA key")
+				assert.Equal(t, elliptic.P256().Params().Name, ecKey.Curve.Params().Name, "expected a P-256 key")
+
+			case certcrypto.RSA4096:
+				rsaKey, ok := key.(*rsa.PrivateKey)
+				require.True(t, ok, "expected an RSA key")
+				assert.Equal(t, 4096, rsaKey.N.BitLen(), "expected a 4096 bits key")
+			}
 		})
 	}
 }

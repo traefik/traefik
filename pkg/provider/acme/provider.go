@@ -53,6 +53,7 @@ type Configuration struct {
 	DisableCommonName    bool     `description:"Disable the common name in the CSR." json:"disableCommonName,omitempty" toml:"disableCommonName,omitempty" yaml:"disableCommonName,omitempty" export:"true"`
 	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	AccountKeyType       string   `description:"KeyType used for generating the ACME account private key (new accounts only, existing accounts keep their current key). Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"accountKeyType,omitempty" toml:"accountKeyType,omitempty" yaml:"accountKeyType,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
@@ -76,6 +77,7 @@ func (a *Configuration) SetDefaults() {
 	a.CAServer = lego.DirectoryURLLetsEncrypt
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
+	a.AccountKeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
@@ -290,7 +292,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		return p.client, nil
 	}
 
-	account, err := p.initAccount()
+	account, err := p.initAccount(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -453,10 +455,10 @@ func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
-func (p *Provider) initAccount() (*Account, error) {
+func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
 	if p.account == nil || len(p.account.Email) == 0 {
 		var err error
-		p.account, err = NewAccount(p.Email)
+		p.account, err = NewAccount(p.Email, GetKeyType(ctx, p.AccountKeyType))
 		if err != nil {
 			return nil, err
 		}
