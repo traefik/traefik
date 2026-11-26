@@ -376,6 +376,21 @@ Here is the list of the encoded characters that are allowed by default:
 
 You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
 
+!!! note "RFC 7239 `Forwarded` header"
+
+    The `forwardedHeaders` options apply only to the `X-Forwarded-*` headers.
+    Traefik does not process the RFC 7239 `Forwarded` header: it passes the header from the client to the backend unchanged, whether the client is trusted or not.
+    If your backends read the `Forwarded` header, remove it from untrusted requests with a [Headers](../../reference/routing-configuration/http/middlewares/headers.md) middleware:
+
+    ```yaml
+    http:
+      middlewares:
+        remove-forwarded:
+          headers:
+            customRequestHeaders:
+              Forwarded: ""
+    ```
+
 ??? info "`forwardedHeaders.trustedIPs`"
 
     Trusting Forwarded Headers from specific IPs.
