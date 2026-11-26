@@ -914,6 +914,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
 							Rule:        `(Host("*")) && !(Host("**.example.com") || Host("abc.example.com"))`,
+							Priority:    9,
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -926,6 +927,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"listener-web-http-example-com-e7b9da953ca48d642d6b": {
 							EntryPoints: []string{"web"},
 							Rule:        `(Host("**.example.com")) && !(Host("abc.example.com"))`,
+							Priority:    20,
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -1228,6 +1230,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"listener-web-http-5b3226d4ebd42b7200f1": {
 							EntryPoints: []string{"web"},
 							Rule:        `(Host("*")) && !(Host("abc.example.com"))`,
+							Priority:    9,
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
 									Sources: dynamic.KubernetesSources{
@@ -8056,6 +8059,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"listener-websecure-https-439feda8e3f1dbdca529": {
 							EntryPoints: []string{"websecure"},
 							Rule:        `(Host("*")) && !(Host("foo.com"))`,
+							Priority:    9,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "listener-websecure-https-439feda8e3f1dbdca529",
 							},
@@ -10479,6 +10483,7 @@ func TestLoadGRPCRoutes(t *testing.T) {
 						"listener-websecure-https-439feda8e3f1dbdca529": {
 							EntryPoints: []string{"websecure"},
 							Rule:        `(Host("*")) && !(Host("foo.com"))`,
+							Priority:    9,
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "listener-websecure-https-439feda8e3f1dbdca529",
 							},
@@ -22617,6 +22622,56 @@ func Test_makeListenerRouterName(t *testing.T) {
 	second := makeListenerRouterName(uniq, "example.com")
 
 	assert.NotEqual(t, first, second)
+}
+
+// Test_buildListenerRule_priority checks that the hostname exclusions do not raise the listener router priority,
+// which would make it take over the routers of the other providers sharing the entry point.
+func Test_buildListenerRule_priority(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		hostname         string
+		hostnames        []string
+		expectedRule     string
+		expectedPriority int
+	}{
+		{
+			desc:         "Catch-all without exclusion",
+			hostname:     "",
+			hostnames:    []string{""},
+			expectedRule: `Host("*")`,
+		},
+		{
+			desc:             "Catch-all with exclusions",
+			hostname:         "",
+			hostnames:        []string{"", "app.example.net", "api.example.net"},
+			expectedRule:     `(Host("*")) && !(Host("app.example.net") || Host("api.example.net"))`,
+			expectedPriority: 9,
+		},
+		{
+			desc:             "Wildcard with exclusion",
+			hostname:         "*.example.net",
+			hostnames:        []string{"", "*.example.net", "app.example.net"},
+			expectedRule:     `(Host("**.example.net")) && !(Host("app.example.net"))`,
+			expectedPriority: 20,
+		},
+		{
+			desc:         "Hostname",
+			hostname:     "app.example.net",
+			hostnames:    []string{"", "*.example.net", "app.example.net"},
+			expectedRule: `Host("app.example.net")`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rule, priority := buildListenerRule(test.hostname, test.hostnames)
+
+			assert.Equal(t, test.expectedRule, rule)
+			assert.Equal(t, test.expectedPriority, priority)
+		})
+	}
 }
 
 // TestCrossProviderNamespaces_HTTPRoute verifies that the

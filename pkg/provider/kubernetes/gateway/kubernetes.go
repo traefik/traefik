@@ -20,6 +20,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
@@ -1033,8 +1034,10 @@ func (p *Provider) buildListenerRouters(gateways []gatewayWithListeners, fronten
 		for _, hostname := range hostnames {
 			listenerRouterName := makeListenerRouterName(uniq, hostname)
 
+			rule, priority := buildListenerRule(hostname, hostnames)
 			listenerRouter := &dynamic.Router{
-				Rule:        buildListenerRule(hostname, hostnames),
+				Rule:        rule,
+				Priority:    priority,
 				EntryPoints: []string{uniq.epName},
 				Metadata:    &dynamic.Metadata{Kubernetes: &dynamic.KubernetesMetadata{}},
 			}
@@ -1137,7 +1140,8 @@ func hostnameCovers(listenerHostname, hostname string) bool {
 	return findMatchingHostname(gatev1.Hostname(listenerHostname), gatev1.Hostname(hostname)) != ""
 }
 
-func buildListenerRule(hostname string, entryPointHostnames []string) string {
+// buildListenerRule returns the listener router rule and, when it differs from the one computed from the rule, its priority.
+func buildListenerRule(hostname string, entryPointHostnames []string) (string, int) {
 	rule := `Host("*")`
 	if hostname != "" {
 		rule = fmt.Sprintf("Host(%q)", hostnameMatcherValue(hostname))
@@ -1153,10 +1157,13 @@ func buildListenerRule(hostname string, entryPointHostnames []string) string {
 	}
 
 	if len(exclusions) == 0 {
-		return rule
+		return rule, 0
 	}
 
-	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || "))
+	// The exclusions only keep the listener routers of the entry point mutually exclusive,
+	// so they must not raise the priority over the routers of the other providers
+	// sharing the entry point (see https://github.com/traefik/traefik/issues/14386).
+	return fmt.Sprintf("(%s) && !(%s)", rule, strings.Join(exclusions, " || ")), httpmuxer.GetRulePriority(rule)
 }
 
 // hostnameMatcherValue returns the Host matcher value for a Gateway API hostname,
