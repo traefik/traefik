@@ -27,6 +27,39 @@ func TestDoubleWildcardPenalty(t *testing.T) {
 	}
 }
 
+func TestToASCIIHostExpression(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		hostExpr    string
+		expected    string
+		expectedErr bool
+	}{
+		{desc: "ASCII host", hostExpr: "example.com", expected: "example.com"},
+		{desc: "IDN host", hostExpr: "münchen.de", expected: "xn--mnchen-3ya.de"},
+		{desc: "IDN host, upper case", hostExpr: "MÜNCHEN.de", expected: "xn--mnchen-3ya.de"},
+		{desc: "IDN host, trailing period", hostExpr: "münchen.de.", expected: "xn--mnchen-3ya.de."},
+		{desc: "IDN wildcard", hostExpr: "*.münchen.de", expected: "*.xn--mnchen-3ya.de"},
+		{desc: "IDN double wildcard", hostExpr: "**.münchen.de", expected: "**.xn--mnchen-3ya.de"},
+		{desc: "wildcard not as a prefix", hostExpr: "foo.*.münchen.de", expectedErr: true},
+		{desc: "invalid IDN host", hostExpr: "münchen.de:8080", expectedErr: true},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			ascii, err := ToASCIIHostExpression(test.hostExpr)
+			if test.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, ascii)
+		})
+	}
+}
+
 func TestDomainMatchHostExpression(t *testing.T) {
 	testCases := []struct {
 		desc     string

@@ -3,6 +3,8 @@ package muxer
 import (
 	"strings"
 	"unicode"
+
+	"golang.org/x/net/idna"
 )
 
 // IsASCII checks if the given string contains only ASCII characters.
@@ -14,6 +16,25 @@ func IsASCII(s string) bool {
 	}
 
 	return true
+}
+
+// ToASCIIHostExpression converts an internationalized host expression to its ASCII-compatible encoding (punycode),
+// keeping its wildcard prefix, if any.
+func ToASCIIHostExpression(hostExpr string) (string, error) {
+	var prefix string
+	switch {
+	case strings.HasPrefix(hostExpr, "**."):
+		prefix = "**."
+	case strings.HasPrefix(hostExpr, "*."):
+		prefix = "*."
+	}
+
+	ascii, err := idna.Lookup.ToASCII(hostExpr[len(prefix):])
+	if err != nil {
+		return "", err
+	}
+
+	return prefix + ascii, nil
 }
 
 // DoubleWildcardPenalty returns what a double wildcard host expression costs to the default priority
