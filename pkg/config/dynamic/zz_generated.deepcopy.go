@@ -402,6 +402,11 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ErrorResponseHeaders != nil {
+		in, out := &in.ErrorResponseHeaders, &out.ErrorResponseHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.NginxHeaders != nil {
 		in, out := &in.NginxHeaders, &out.NginxHeaders
 		*out = new(http.Header)

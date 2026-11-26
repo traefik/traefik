@@ -121,6 +121,9 @@ type ErrorPage struct {
 	// When nil (not set), all original request headers are forwarded.
 	// Set to an empty list to forward no headers, or list specific headers to forward only those.
 	ErrorRequestHeaders []string `json:"errorRequestHeaders,omitempty"`
+	// ErrorResponseHeaders defines the original backend response headers forwarded to the error page service request.
+	// These headers replace matching request headers. If not set, no response headers are forwarded to the service.
+	ErrorResponseHeaders []string `json:"errorResponseHeaders,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
