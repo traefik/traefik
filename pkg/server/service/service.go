@@ -480,6 +480,15 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	if service.HealthCheck != nil {
 		minHealthyServers = service.HealthCheck.MinHealthyServers
 	}
+	// A value above the number of configured servers could never be reached,
+	// leaving the service permanently down with no healthy servers to serve.
+	if minHealthyServers > len(service.Servers) {
+		logger.Warn().
+			Int("minHealthyServers", minHealthyServers).
+			Int("servers", len(service.Servers)).
+			Msg("minHealthyServers is greater than the number of servers, clamping it to the number of servers")
+		minHealthyServers = len(service.Servers)
+	}
 	lb.SetMinHealthyServers(minHealthyServers)
 
 	var passiveHealthChecker *healthcheck.PassiveServiceHealthChecker

@@ -399,6 +399,63 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	}
 }
 
+func TestGetLoadBalancerServiceHandler_MinHealthyServersClamped(t *testing.T) {
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server1.Close)
+
+	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server2.Close)
+
+	testCases := []struct {
+		desc              string
+		minHealthyServers int
+	}{
+		{
+			desc:              "minHealthyServers above the server count is clamped",
+			minHealthyServers: 5,
+		},
+		{
+			desc:              "minHealthyServers within the server count is kept",
+			minHealthyServers: 2,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			sm := NewManager(nil, nil, nil, transportManagerMock{}, pb)
+
+			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{
+				Strategy: dynamic.BalancerStrategyWRR,
+				Servers: []dynamic.Server{
+					{URL: server1.URL},
+					{URL: server2.URL},
+				},
+				HealthCheck: &dynamic.ServerHealthCheck{
+					MinHealthyServers: test.minHealthyServers,
+				},
+			}}}
+
+			handler, err := sm.getLoadBalancerServiceHandler(t.Context(), "test", serviceInfo)
+			require.NoError(t, err)
+			require.NotNil(t, handler)
+
+			// Both servers start healthy, so a request must succeed once the
+			// out-of-range value is clamped to the 2 configured servers.
+			// Without the clamp it would fail with 503, as 5 healthy servers
+			// could never be reached.
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, testhelpers.MustNewRequest(http.MethodGet, "http://callme", nil))
+			assert.Equal(t, http.StatusOK, recorder.Code)
+		})
+	}
+}
+
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
 	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
