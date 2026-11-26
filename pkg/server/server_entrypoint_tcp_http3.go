@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
+	"github.com/traefik/traefik/v3/pkg/server/quiclb"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service/kerberos"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -25,6 +27,10 @@ type http3server struct {
 	*http3.Server
 
 	http3conn net.PacketConn
+
+	// transport is only set when connection IDs come from a custom generator,
+	// because http3.Server.Serve creates its own transport, which cannot be given one.
+	transport *quic.Transport
 
 	lock   sync.RWMutex
 	getter func(data tcpmuxer.ConnData) (*tls.Config, string, error)
@@ -40,6 +46,13 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 
 	if config.HTTP3.AdvertisedPort < 0 {
 		return nil, errors.New("advertised port must be greater than or equal to zero")
+	}
+
+	// The AWS Load Balancer Controller injects the server ID into the pods behind an NLB routing QUIC.
+	// It is read before opening the UDP connection, which would otherwise leak on error.
+	cidGenerator, err := quiclb.NewGenerator(os.Getenv("AWS_LBC_QUIC_SERVER_ID"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid AWS_LBC_QUIC_SERVER_ID: %w", err)
 	}
 
 	// if we have predefined connections from socket activation
@@ -103,6 +116,15 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 		},
 	}
 
+	if cidGenerator != nil {
+		log.Ctx(ctx).Info().Msg("Using the AWS NLB QUIC-LB connection ID generator")
+
+		h3.transport = &quic.Transport{
+			Conn:                  conn,
+			ConnectionIDGenerator: cidGenerator,
+		}
+	}
+
 	previousHandler := httpsServer.Server.(*http.Server).Handler
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -133,7 +155,19 @@ func withReadTimeout(ctx context.Context, next http.Handler, timeout time.Durati
 }
 
 func (e *http3server) Start() error {
-	return e.Serve(e.http3conn)
+	if e.transport == nil {
+		return e.Serve(e.http3conn)
+	}
+
+	// This mirrors how http3.Server.Serve configures the listener of its own transport,
+	// except for the HTTP/3 settings it stores in session tickets for 0-RTT, which is disabled.
+	// Audit this on quic-go upgrades.
+	ln, err := e.transport.ListenEarly(http3.ConfigureTLSConfig(e.TLSConfig), e.QUICConfig.Clone())
+	if err != nil {
+		return fmt.Errorf("listening for QUIC connections: %w", err)
+	}
+
+	return e.ServeListener(ln)
 }
 
 func (e *http3server) Switch(rt *tcprouter.Router) {
@@ -145,7 +179,14 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 
 func (e *http3server) Shutdown(_ context.Context) error {
 	// TODO: use e.Server.CloseGracefully() when available.
-	return e.Server.Close()
+	err := e.Server.Close()
+	if e.transport == nil {
+		return err
+	}
+
+	// http3.Server.Close leaves the listeners given to ServeListener open, closing the transport closes them.
+	// The transport does not close the UDP connection it was given, which also stays open on the default path.
+	return errors.Join(err, e.transport.Close())
 }
 
 func (e *http3server) getTLSConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
