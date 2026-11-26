@@ -48,22 +48,23 @@ var hopHeaders = []string{
 var userAgentHeader = http.CanonicalHeaderKey("User-Agent")
 
 type forwardAuth struct {
-	address                  string
-	authResponseHeaders      []string
-	authResponseHeadersRegex *regexp.Regexp
-	next                     http.Handler
-	name                     string
-	client                   http.Client
-	trustForwardHeader       *bool
-	authRequestHeaders       []string
-	maxResponseBodySize      int64
-	addAuthCookiesToResponse map[string]struct{}
-	headerField              string
-	forwardBody              bool
-	maxBodySize              int64
-	preserveLocationHeader   bool
-	preserveRequestMethod    bool
-	authSigninURL            string
+	address                       string
+	authResponseHeaders           []string
+	authResponseHeadersRegex      *regexp.Regexp
+	next                          http.Handler
+	name                          string
+	client                        http.Client
+	trustForwardHeader            *bool
+	authRequestHeaders            []string
+	maxResponseBodySize           int64
+	addAuthCookiesToResponse      map[string]struct{}
+	addAuthCookiesToResponseRegex *regexp.Regexp
+	headerField                   string
+	forwardBody                   bool
+	maxBodySize                   int64
+	preserveLocationHeader        bool
+	preserveRequestMethod         bool
+	authSigninURL                 string
 }
 
 // NewForward creates a forward auth middleware.
@@ -154,6 +155,14 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AuthResponseHeadersRegex, err)
 		}
 		fa.authResponseHeadersRegex = re
+	}
+
+	if config.AddAuthCookiesToResponseRegex != "" {
+		re, err := regexp.Compile(config.AddAuthCookiesToResponseRegex)
+		if err != nil {
+			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AddAuthCookiesToResponseRegex, err)
+		}
+		fa.addAuthCookiesToResponseRegex = re
 	}
 
 	if config.TrustForwardHeader == nil {
@@ -360,8 +369,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	req.RequestURI = req.URL.RequestURI()
 
-	authCookies := forwardResponse.Cookies()
-	if len(authCookies) == 0 {
+	authCookies := forwardResponse.Header.Values("Set-Cookie")
+	if len(authCookies) == 0 && fa.addAuthCookiesToResponseRegex == nil {
 		fa.next.ServeHTTP(rw, req)
 		return
 	}
@@ -381,25 +390,40 @@ func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, er
 	return nil, http.ErrNoLocation
 }
 
-func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {
+func (fa *forwardAuth) buildModifier(authCookies []string) func(res *http.Response) error {
 	return func(res *http.Response) error {
-		cookies := res.Cookies()
+		cookies := res.Header.Values("Set-Cookie")
 		res.Header.Del("Set-Cookie")
 
 		for _, cookie := range cookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
-				res.Header.Add("Set-Cookie", cookie.String())
+			if !fa.isAuthCookie(cookie) {
+				res.Header.Add("Set-Cookie", cookie)
 			}
 		}
 
 		for _, cookie := range authCookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
-				res.Header.Add("Set-Cookie", cookie.String())
+			if fa.isAuthCookie(cookie) {
+				res.Header.Add("Set-Cookie", cookie)
 			}
 		}
 
 		return nil
 	}
+}
+
+// isAuthCookie works on the raw Set-Cookie line,
+// because re-serializing a parsed cookie drops the attributes unknown to net/http.
+// Only the name is read, so a backend cookie with a value net/http rejects is still removed.
+func (fa *forwardAuth) isAuthCookie(setCookie string) bool {
+	nameValue, _, _ := strings.Cut(setCookie, ";")
+	name, _, _ := strings.Cut(nameValue, "=")
+	name = strings.TrimSpace(name)
+
+	if _, found := fa.addAuthCookiesToResponse[name]; found {
+		return true
+	}
+
+	return fa.addAuthCookiesToResponseRegex != nil && fa.addAuthCookiesToResponseRegex.MatchString(name)
 }
 
 var errBodyTooLarge = errors.New("request body too large")
