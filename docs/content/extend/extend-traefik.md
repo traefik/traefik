@@ -34,8 +34,67 @@ This approach eliminates the need for compilation and a complex toolchain, makin
 - Written in Go language
 - No compilation required
 - Executed by embedded interpreter
-- Supports full Go feature set
 - Hot-reloadable during development
+
+#### Yaegi v2
+
+!!! info "Opt-in Runtime"
+
+    Yaegi v2 is available since Traefik v3.8.
+    Yaegi plugins still run with Yaegi v1 by default, and you choose which plugins run with Yaegi v2.
+
+Yaegi v2 is a new Go interpreter written from scratch for Traefik plugins.
+It relies on the official Go tools to parse and type-check the plugin code,
+so a plugin that the Go compiler accepts behaves like compiled Go in Traefik.
+
+Yaegi v2 brings:
+
+- The full Go language, including generics and iterators.
+- Plugins that behave like compiled Go, including with libraries that use `reflect`, such as `encoding/json`, `fmt`, or `text/template`.
+- Support for large libraries such as gRPC, protobuf, the AWS SDK, OpenTelemetry, or the Kubernetes client.
+  Most of them import `unsafe` or `syscall`: the plugin must set `useUnsafe: true` in its manifest,
+  and you must allow it with the `settings.useUnsafe` option of the plugin.
+- Faster request processing for most plugins.
+- Guardrails that limit the impact of a plugin bug on Traefik: execution budget, goroutine limit, memory quota,
+  and isolation of `os.Exit`, `log.Fatal`, and panics in plugin goroutines.
+
+!!! note "Not a sandbox"
+
+    A Yaegi v2 plugin still runs inside the Traefik process and shares its memory.
+    The guardrails protect Traefik from plugin bugs, not from a malicious plugin.
+
+To run a plugin with Yaegi v2, either:
+
+- Set `runtimeVersion: v2` in the plugin manifest (`.traefik.yml`), so that this plugin always runs with Yaegi v2.
+- Set the `experimental.defaultRuntimeVersion` option to `v2` in the install configuration, so that all the Yaegi plugins run with Yaegi v2.
+
+```yaml tab="File (YAML)"
+experimental:
+  defaultRuntimeVersion: v2
+```
+
+```toml tab="File (TOML)"
+[experimental]
+  defaultRuntimeVersion = "v2"
+```
+
+```bash tab="CLI"
+--experimental.defaultruntimeversion=v2
+```
+
+!!! warning "One Load Failure Disables All the Plugins"
+
+    When a plugin fails to load, Traefik disables all the plugins,
+    or does not start if [`experimental.abortOnPluginFailure`](../reference/install-configuration/configuration-options.md#opt-experimental-abortonpluginfailure) is enabled.
+    The `defaultRuntimeVersion` option switches all the Yaegi plugins at once,
+    so a single plugin that Yaegi v2 cannot load disables all the plugins of the instance.
+    Try this option on a test instance first.
+
+Yaegi v2 only loads plugins that the Go compiler accepts.
+If you maintain a plugin, check that `go build` passes before switching it to Yaegi v2.
+
+For more information about the runtime selection and the Yaegi v2 specific settings (`mounts`, `fileMapping`),
+see the [plugins reference documentation](../reference/install-configuration/experimental/plugins.md#runtime-version).
 
 ### WebAssembly (WASM) Plugin System
 
