@@ -188,7 +188,7 @@ type configBuilder struct {
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
 	allowEmptyServices        bool
-	crossProviderNamespaces   []string
+	crossProviderNamespaces   *[]string
 	nameBuilder               nameBuilder
 }
 

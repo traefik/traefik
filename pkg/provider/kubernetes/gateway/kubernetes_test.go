@@ -5220,14 +5220,15 @@ func Test_makeListenerKey(t *testing.T) {
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		allowList []string
+		allowList *[]string
 		namespace string
 		want      bool
 	}{
 		{desc: "nil allowList allows any namespace", allowList: nil, namespace: "ns-a", want: true},
-		{desc: "empty allowList denies every namespace", allowList: []string{}, namespace: "ns-a", want: false},
-		{desc: "namespace in allowList is accepted", allowList: []string{"ns-a"}, namespace: "ns-a", want: true},
-		{desc: "namespace not in allowList is rejected", allowList: []string{"ns-b"}, namespace: "ns-a", want: false},
+		{desc: "empty allowList denies every namespace", allowList: &[]string{}, namespace: "ns-a", want: false},
+		{desc: "pointer to nil allowList denies every namespace", allowList: new([]string), namespace: "ns-a", want: false},
+		{desc: "namespace in allowList is accepted", allowList: &[]string{"ns-a"}, namespace: "ns-a", want: true},
+		{desc: "namespace not in allowList is rejected", allowList: &[]string{"ns-b"}, namespace: "ns-a", want: false},
 	}
 
 	for _, test := range testCases {
@@ -5247,13 +5248,14 @@ func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouter              bool
 	}{
 		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: &[]string{}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped (pointer to nil slice, as decoded from configuration)", crossProviderNamespaces: new([]string), wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: &[]string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: &[]string{"other"}, wantRouter: false},
 	}
 
 	for _, test := range testCases {
@@ -5278,13 +5280,14 @@ func TestCrossProviderNamespaces_HTTPRoute(t *testing.T) {
 func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouter              bool
 	}{
 		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: &[]string{}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped (pointer to nil slice, as decoded from configuration)", crossProviderNamespaces: new([]string), wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: &[]string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: &[]string{"other"}, wantRouter: false},
 	}
 
 	for _, test := range testCases {
@@ -5309,13 +5312,14 @@ func TestCrossProviderNamespaces_TCPRoute(t *testing.T) {
 func TestCrossProviderNamespaces_TLSRoute(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouter              bool
 	}{
 		{desc: "nil: cross-provider TraefikService backendRefs accepted (backward compatible)", crossProviderNamespaces: nil, wantRouter: true},
-		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: []string{}, wantRouter: false},
-		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: []string{"default"}, wantRouter: true},
-		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: []string{"other"}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped", crossProviderNamespaces: &[]string{}, wantRouter: false},
+		{desc: "empty list: cross-provider TraefikService backendRefs are rejected, route dropped (pointer to nil slice, as decoded from configuration)", crossProviderNamespaces: new([]string), wantRouter: false},
+		{desc: "namespace allowed: cross-provider TraefikService backendRefs accepted", crossProviderNamespaces: &[]string{"default"}, wantRouter: true},
+		{desc: "namespace not allowed: cross-provider TraefikService backendRefs rejected, route dropped", crossProviderNamespaces: &[]string{"other"}, wantRouter: false},
 	}
 
 	for _, test := range testCases {
