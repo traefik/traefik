@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"syscall"
@@ -70,7 +71,15 @@ func (p *Proxy) dialBackend(clientConn net.Conn) (WriteCloser, error) {
 		return nil, err
 	}
 
-	return conn.(WriteCloser), nil
+	// Not every dialer opens a *net.TCPConn, and an unchecked assertion would panic on the conn of one that does not.
+	backendConn, ok := conn.(WriteCloser)
+	if !ok {
+		_ = conn.Close()
+
+		return nil, fmt.Errorf("backend connection of type %T cannot close its write half", conn)
+	}
+
+	return backendConn, nil
 }
 
 func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {

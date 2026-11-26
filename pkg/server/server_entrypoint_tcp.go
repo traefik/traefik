@@ -287,7 +287,12 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 		writeCloser, err := writeCloser(conn)
 		if err != nil {
-			panic(err)
+			// Not a panic: a connection the entryPoint cannot serve is closed,
+			// and must not stop the process for all the others.
+			logger.Error().Err(err).Msg("Unable to serve the connection, closing it")
+			_ = conn.Close()
+
+			continue
 		}
 
 		safe.Go(func() {
@@ -424,14 +429,25 @@ func (c *writeCloserWrapper) CloseWrite() error {
 func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	switch typedConn := conn.(type) {
 	case *proxyproto.Conn:
-		underlying, ok := typedConn.TCPConn()
-		if !ok {
-			return nil, errors.New("underlying connection is not a tcp connection")
+		if underlying, ok := typedConn.TCPConn(); ok {
+			return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 		}
-		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
+		// The wrapped connection is not always a *net.TCPConn: one accepted
+		// on a userspace network stack is not, but still closes its write
+		// half.
+		if underlying, ok := typedConn.Raw().(tcp.WriteCloser); ok {
+			return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
+		}
+		return nil, errors.New("underlying connection is not a tcp connection")
 	case *net.TCPConn:
 		return typedConn, nil
 	default:
+		// Connections do not always come from a host socket. One accepted on
+		// a userspace network stack is not a *net.TCPConn, but it does
+		// implement CloseWrite, which is all the TCP proxying path needs.
+		if writeCloser, ok := conn.(tcp.WriteCloser); ok {
+			return writeCloser, nil
+		}
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
 }
