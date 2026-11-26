@@ -205,10 +205,20 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	assert.Len(t, ln.conns, 10)
+	assert.Equal(t, 10, connsLen(ln))
 
 	time.Sleep(ln.timeout + time.Second)
-	assert.Empty(t, ln.conns)
+	assert.Zero(t, connsLen(ln))
+}
+
+// connsLen returns the number of ongoing sessions of the listener.
+// It reads them under the listener lock,
+// as each session removes itself from the listener when it times out.
+func connsLen(ln *Listener) int {
+	ln.mu.RLock()
+	defer ln.mu.RUnlock()
+
+	return len(ln.conns)
 }
 
 func TestShutdown(t *testing.T) {
