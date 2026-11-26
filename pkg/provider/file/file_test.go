@@ -223,6 +223,134 @@ func TestProvideWithWatch(t *testing.T) {
 	}
 }
 
+func TestProvideWatchWithSubdirectories(t *testing.T) {
+	t.Run("flat directory layout is unchanged", func(t *testing.T) {
+		tempDir := t.TempDir()
+
+		err := copyFile("./fixtures/yaml/dir01_file01.yml", filepath.Join(tempDir, "dir01_file01.yml"))
+		require.NoError(t, err)
+
+		provider := &Provider{
+			Directory: tempDir,
+			Watch:     true,
+		}
+		configChan := make(chan dynamic.Message)
+		go func() {
+			err := provider.Provide(configChan, safe.NewPool(t.Context()))
+			assert.NoError(t, err)
+		}()
+
+		// Initial configuration: 2 routers from the flat directory.
+		waitForConfiguration(t, configChan, 2, 0)
+
+		// A new file created in the top-level directory is picked up.
+		err = copyFile("./fixtures/yaml/dir01_file02.yml", filepath.Join(tempDir, "dir01_file02.yml"))
+		require.NoError(t, err)
+
+		waitForConfiguration(t, configChan, 2, 3)
+	})
+
+	t.Run("changes in a nested subdirectory are picked up", func(t *testing.T) {
+		tempDir := t.TempDir()
+
+		subDir := filepath.Join(tempDir, "sub")
+		require.NoError(t, os.MkdirAll(subDir, 0o700))
+
+		err := copyFile("./fixtures/yaml/dir01_file01.yml", filepath.Join(subDir, "dir01_file01.yml"))
+		require.NoError(t, err)
+
+		// Unsupported extension is ignored, also in subdirectories.
+		err = os.WriteFile(filepath.Join(subDir, "ignored.txt"), []byte("not a config"), 0o600)
+		require.NoError(t, err)
+
+		provider := &Provider{
+			Directory: tempDir,
+			Watch:     true,
+		}
+		configChan := make(chan dynamic.Message)
+		go func() {
+			err := provider.Provide(configChan, safe.NewPool(t.Context()))
+			assert.NoError(t, err)
+		}()
+
+		// Initial configuration: the nested file is loaded at startup.
+		waitForConfiguration(t, configChan, 2, 0)
+
+		// A file created in the nested subdirectory is picked up.
+		err = copyFile("./fixtures/yaml/dir01_file02.yml", filepath.Join(subDir, "dir01_file02.yml"))
+		require.NoError(t, err)
+
+		waitForConfiguration(t, configChan, 2, 3)
+	})
+
+	t.Run("subdirectory created after startup is watched", func(t *testing.T) {
+		tempDir := t.TempDir()
+
+		subDir := filepath.Join(tempDir, "sub")
+		require.NoError(t, os.MkdirAll(subDir, 0o700))
+
+		err := copyFile("./fixtures/yaml/dir01_file01.yml", filepath.Join(subDir, "dir01_file01.yml"))
+		require.NoError(t, err)
+
+		provider := &Provider{
+			Directory: tempDir,
+			Watch:     true,
+		}
+		configChan := make(chan dynamic.Message)
+		go func() {
+			err := provider.Provide(configChan, safe.NewPool(t.Context()))
+			assert.NoError(t, err)
+		}()
+
+		// Initial configuration: 2 routers from the nested file.
+		waitForConfiguration(t, configChan, 2, 0)
+
+		// A subdirectory created after startup.
+		deepDir := filepath.Join(subDir, "deep")
+		require.NoError(t, os.MkdirAll(deepDir, 0o700))
+
+		// Wait for the reload triggered by the directory creation before
+		// writing into it, so the new watch is guaranteed to be in place.
+		waitForConfiguration(t, configChan, 2, 0)
+
+		deepConfig := `
+http:
+  routers:
+    deep-router:
+      service: deep-service
+  services:
+    deep-service:
+      loadBalancer:
+        servers:
+          - url: "http://172.17.0.9:80"
+`
+		err = os.WriteFile(filepath.Join(deepDir, "deep.yml"), []byte(deepConfig), 0o600)
+		require.NoError(t, err)
+
+		waitForConfiguration(t, configChan, 3, 1)
+	})
+}
+
+func waitForConfiguration(t *testing.T, configChan chan dynamic.Message, expectedNumRouter, expectedNumService int) {
+	t.Helper()
+
+	timeout := time.After(2 * time.Second)
+	for {
+		select {
+		case conf := <-configChan:
+			numServices := len(conf.Configuration.HTTP.Services)
+			numRouters := len(conf.Configuration.HTTP.Routers)
+			t.Logf("received update: services %d/%d, routers %d/%d", numServices, expectedNumService, numRouters, expectedNumRouter)
+
+			if numRouters == expectedNumRouter && numServices == expectedNumService {
+				return
+			}
+		case <-timeout:
+			t.Fatalf("timeout while waiting for config with %d routers and %d services", expectedNumRouter, expectedNumService)
+		}
+	}
+}
+
 func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
 	tempDir := t.TempDir()
 
