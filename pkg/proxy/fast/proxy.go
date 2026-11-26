@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -281,7 +283,6 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 	}
 
-	var co *conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -290,8 +291,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		default:
 		}
 
-		var err error
-		co, err = connPool.AcquireConn()
+		co, err := connPool.AcquireConn()
 		if err != nil {
 			return fmt.Errorf("acquire connection: %w", err)
 		}
@@ -310,32 +310,77 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			// WroteRequest hook is used by the tracing middleware to detect if the request has been written.
 			trace.WroteRequest(httptrace.WroteRequestInfo{})
 		}
-		if err == nil {
-			break
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
+
+			co.Close()
+
+			// A request is only replayed on a reused connection, like the standard transport does.
+			if !co.reused || (wd.written && !isReplayable(req)) {
+				return err
+			}
+
+			continue
 		}
 
-		log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
+		// The response header timeout starts once the request is written, before the readLoop is unlocked below,
+		// as the readLoop only receives the responseWriter when the first response byte arrives.
+		// Closing the connection interrupts the readLoop read, which then reports the error.
+		var (
+			responseHeaderTimer    *time.Timer
+			responseHeaderTimedOut atomic.Bool
+		)
+		if co.responseHeaderTimeout > 0 {
+			responseHeaderTimer = time.AfterFunc(co.responseHeaderTimeout, func() {
+				responseHeaderTimedOut.Store(true)
+				co.Close()
+			})
+		}
 
-		co.Close()
+		// Sending the responseWriter unlocks the connection readLoop, to handle the response.
+		// The readLoop can have returned while the request was written, for example when the backend closed the
+		// connection. Nothing receives on RWCh anymore, and the error that made it return waits on ErrCh.
+		select {
+		case co.RWCh <- rwWithUpgrade{
+			ReqMethod:           req.Method,
+			RW:                  rw,
+			Upgrade:             upgradeResponseHandler(req.Context(), reqUpType),
+			ResponseHeaderTimer: responseHeaderTimer,
+		}:
 
-		if wd.written && !isReplayable(req) {
+		case err = <-co.ErrCh:
+			// The timer can have fired before the readLoop received the responseWriter.
+			if responseHeaderTimer != nil && !responseHeaderTimer.Stop() {
+				return timeoutError{errors.New("timeout awaiting response headers")}
+			}
+
+			log.Ctx(ctx).Debug().Err(err).Msg("Connection closed before handling the response")
+
+			co.Close()
+
+			if !co.reused || !isReplayable(req) {
+				return err
+			}
+
+			continue
+		}
+
+		err = <-co.ErrCh
+
+		if responseHeaderTimer != nil {
+			responseHeaderTimer.Stop()
+		}
+
+		if err != nil && responseHeaderTimedOut.Load() {
+			return timeoutError{errors.New("timeout awaiting response headers")}
+		}
+		if err != nil {
 			return err
 		}
-	}
 
-	// Sending the responseWriter unlocks the connection readLoop, to handle the response.
-	co.RWCh <- rwWithUpgrade{
-		ReqMethod: req.Method,
-		RW:        rw,
-		Upgrade:   upgradeResponseHandler(req.Context(), reqUpType),
+		connPool.ReleaseConn(co)
+		return nil
 	}
-
-	if err := <-co.ErrCh; err != nil {
-		return err
-	}
-
-	connPool.ReleaseConn(co)
-	return nil
 }
 
 func (p *ReverseProxy) writeRequest(co net.Conn, outReq *fasthttp.Request) error {
