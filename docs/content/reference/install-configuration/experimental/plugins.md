@@ -88,6 +88,33 @@ experimental:
 | <a id="opt-settings-useUnsafe-2" href="#opt-settings-useUnsafe-2" title="#opt-settings-useUnsafe-2">`settings.useUnsafe`</a> | Allow the plugin to use unsafe and syscall packages. | bool | No |
 | <a id="opt-settings-fileMapping-2" href="#opt-settings-fileMapping-2" title="#opt-settings-fileMapping-2">`settings.fileMapping`</a> | Allow a Yaegi v2 plugin to lock and map its own files (flock, mmap). Requires `useUnsafe`. | bool | No |
 
+
+## Plugin Logging
+
+### Yaegi Middleware Plugins
+
+Yaegi middleware plugins can import `github.com/traefik/traefik/v3/pkg/middlewares` and call `middlewares.GetLogger(ctx, name, "example")` in their `New` function.
+Use the context and middleware name passed to `New`, and replace `"example"` with your plugin's middleware type.
+The returned logger includes `middlewareName` and `middlewareType` fields and writes through Traefik's configured log output and format.
+
+Use `logger.Debug()`, `logger.Info()`, `logger.Warn()`, or `logger.Error()` to select a level, then add fields and call `Msg`:
+
+```text
+logger := middlewares.GetLogger(ctx, name, "example")
+logger.Info().Str("operation", "initialize").Msg("Plugin ready")
+```
+
+Capture the logger in your handler closure to log requests.
+The configured Traefik log level filters plugin messages.
+Existing standard output and standard error capture keeps its debug and error levels respectively.
+
+### Wasm Middleware Plugins
+
+Wasm plugins use the HTTP-Wasm host `log` function to select a log level and send a message.
+Traefik sends those messages through the middleware logger with the configured log output and format.
+The HTTP-Wasm log function accepts a message string; it does not provide separate structured fields.
+Wasm plugins cannot import the Yaegi middleware logger bridge.
+
 ## Runtime Version
 
 !!! info "Yaegi plugins only"
