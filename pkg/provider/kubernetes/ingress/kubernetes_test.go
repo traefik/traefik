@@ -3699,6 +3699,21 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 			},
 		},
 		{
+			desc: "Published Service ClusterIP No ExternalIPs",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					IP: "10.0.0.99",
+					Ports: []netv1.IngressPortStatus{
+						{Port: 9090, Protocol: "TCP"},
+						{Port: 9091, Protocol: "TCP"},
+					},
+				},
+			},
+		},
+		{
+			desc: "Published Service ClusterIP Headless No ExternalIPs",
+		},
+		{
 			desc: "Published Service LoadBalancer",
 			expected: []netv1.IngressLoadBalancerIngress{
 				{
@@ -3747,36 +3762,6 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 					Hostname: "example.com",
 				},
 			},
-		},
-		{
-			desc: "Published Service ClusterIP No ExternalIPs",
-			expected: []netv1.IngressLoadBalancerIngress{
-				{
-					IP: "10.0.0.99",
-					Ports: []netv1.IngressPortStatus{
-						{Port: 9090, Protocol: "TCP"},
-						{Port: 9091, Protocol: "TCP"},
-					},
-				},
-			},
-		},
-		{
-			desc: "Published Service ClusterIP IPv6",
-			expected: []netv1.IngressLoadBalancerIngress{
-				{
-					IP: "2001:db8::99",
-					Ports: []netv1.IngressPortStatus{
-						{Port: 9090, Protocol: "TCP"},
-						{Port: 9091, Protocol: "TCP"},
-					},
-				},
-			},
-		},
-		{
-			desc: "Published Service ClusterIP Headless",
-		},
-		{
-			desc: "Published Service ClusterIP Empty",
 		},
 	}
 

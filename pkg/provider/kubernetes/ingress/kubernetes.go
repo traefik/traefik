@@ -520,14 +520,16 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client, nod
 			})
 		}
 
-		for _, ip := range service.Spec.ExternalIPs {
-			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
-				IP:    ip,
-				Ports: ports,
-			})
-		}
-
-		if len(ingressStatus) == 0 && service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
+		if len(service.Spec.ExternalIPs) > 0 {
+			for _, ip := range service.Spec.ExternalIPs {
+				ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+					IP:    ip,
+					Ports: ports,
+				})
+			}
+		} else if service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
+			// The ClusterIP is published when the service has no externalIPs,
+			// because in some clusters the ClusterIP is routable.
 			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
 				IP:    service.Spec.ClusterIP,
 				Ports: ports,
