@@ -1,8 +1,12 @@
 package server
 
 import (
+	"context"
+	stdtls "crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
 	"net/url"
 	"testing"
 	"time"
@@ -12,12 +16,137 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 )
+
+func TestIngressNGINXCoalescedHTTPS(t *testing.T) {
+	cert, key, err := generate.KeyPair("*.example.com", time.Time{})
+	require.NoError(t, err)
+
+	objects := k8s.MustParseYaml([]byte(`
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: nginx
+spec:
+  controller: k8s.io/ingress-nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: backend.example.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shared
+  namespace: default
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [api.example.com, cdn.example.com]
+      secretName: shared
+  rules:
+    - host: api.example.com
+      http: {paths: [{path: /, pathType: Prefix, backend: {service: {name: backend, port: {number: 80}}}}]}
+    - host: cdn.example.com
+      http: {paths: [{path: /, pathType: Prefix, backend: {service: {name: backend, port: {number: 80}}}}]}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: client-auth
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: default/shared
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: private.example.com
+      http: {paths: [{path: /, pathType: Prefix, backend: {service: {name: backend, port: {number: 80}}}}]}
+`))
+	objects = append(objects, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "shared"},
+		Data:       map[string][]byte{corev1.TLSCertKey: cert, corev1.TLSPrivateKeyKey: key, corev1.ServiceAccountRootCAKey: cert},
+	})
+	kubeClient := ingressnginx.NewClient(kubefake.NewClientset(objects...))
+	p := &ingressnginx.Provider{HTTPSEntryPoint: "websecure"}
+	p.SetDefaults()
+	require.NoError(t, p.InitWithClient(kubeClient))
+	_, err = kubeClient.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+
+	conf := Aggregate(dynamic.Configurations{ingressnginx.ProviderName: p.BuildConfiguration(t.Context())}, []string{"websecure"}, false)
+
+	epConfig := &static.EntryPoint{Address: "127.0.0.1:0"}
+	epConfig.SetDefaults()
+	staticConfig := static.Configuration{EntryPoints: static.EntryPoints{"websecure": epConfig}}
+	tlsManager := tls.NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil, tlsManager)
+	factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, tcp.NewDialerManager(nil))
+	require.NoError(t, err)
+	routers, _ := factory.CreateRouters(runtime.NewConfig(conf))
+	t.Cleanup(factory.cancelPrevState)
+
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "websecure", epConfig, nil, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { entryPoint.Shutdown(context.Background()) })
+	entryPoint.SwitchRouter(routers["websecure"])
+	go entryPoint.Start(t.Context())
+
+	roots := x509.NewCertPool()
+	require.True(t, roots.AppendCertsFromPEM(cert))
+	transport := &http.Transport{
+		TLSClientConfig:   &stdtls.Config{ServerName: "api.example.com", RootCAs: roots},
+		ForceAttemptHTTP2: true,
+	}
+	t.Cleanup(transport.CloseIdleConnections)
+	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
+
+	for _, test := range []struct {
+		host   string
+		status int
+		reused bool
+	}{
+		{host: "api.example.com", status: http.StatusOK},
+		{host: "cdn.example.com", status: http.StatusOK, reused: true},
+		{host: "private.example.com", status: http.StatusMisdirectedRequest, reused: true},
+	} {
+		t.Run(test.host, func(t *testing.T) {
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, "https://"+entryPoint.listener.Addr().String()+"/", nil)
+			require.NoError(t, err)
+			req.Host = test.host
+			var conn httptrace.GotConnInfo
+			req = req.WithContext(httptrace.WithClientTrace(req.Context(), &httptrace.ClientTrace{
+				GotConn: func(info httptrace.GotConnInfo) { conn = info },
+			}))
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+			assert.Equal(t, 2, resp.ProtoMajor)
+			assert.Equal(t, test.reused, conn.Reused)
+			assert.Equal(t, test.status, resp.StatusCode)
+		})
+	}
+}
 
 func TestReuseService(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

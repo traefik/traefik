@@ -24,6 +24,9 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+// The leading underscore keeps the shared option distinct from options named after Ingress hosts.
+const defaultHostTLSOptionName = "_default-host"
+
 // errNoCACertificate is returned for an auth-tls-secret without CA certificate, which ingress-nginx does not treat as an error.
 var errNoCACertificate = errors.New("secret does not contain a CA certificate")
 
@@ -1009,6 +1012,9 @@ func (p *Provider) buildServersClientAuth(ctx context.Context, servers map[strin
 			host = ""
 		}
 		srv := getOrCreateServer(servers, host)
+		if host != "" {
+			srv.TLSOptionName = host
+		}
 
 		// ingress-nginx answers 403 to every request of the servers of the Ingress,
 		// so none of its locations is exposed, and neither are the ones of the other Ingresses of these servers.
@@ -1305,7 +1311,7 @@ func getOrCreateServer(m map[string]*server, hostname string) *server {
 	tlsOptionName := tls.DefaultTLSConfigName
 	var tlsOption *tls.Options
 	if hostname != "" {
-		tlsOptionName = hostname
+		tlsOptionName = defaultHostTLSOptionName
 		tlsOption = &tls.Options{}
 		tlsOption.SetDefaults()
 	}
