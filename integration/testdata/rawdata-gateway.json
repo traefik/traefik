@@ -199,11 +199,7 @@
 	"tcpRouters": {
 		"deny-unknown-host@kubernetesgateway": {
 			"entryPoints": [
-				"footcp",
-				"footlspassthrough",
-				"footlsterminate",
-				"web",
-				"websecure"
+				"footlspassthrough"
 			],
 			"service": "deny-unknown-host",
 			"rule": "HostSNI(`*`) \u0026\u0026 !ALPN(`h2`) \u0026\u0026 !ALPN(`http/1.1`)",
@@ -213,11 +209,7 @@
 			},
 			"status": "enabled",
 			"using": [
-				"footcp",
-				"footlspassthrough",
-				"footlsterminate",
-				"web",
-				"websecure"
+				"footlspassthrough"
 			]
 		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-ea7aa4e0bb352b30e06c@kubernetesgateway": {
