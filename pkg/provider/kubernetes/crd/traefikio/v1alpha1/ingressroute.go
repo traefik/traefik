@@ -235,6 +235,10 @@ type ServerHealthCheck struct {
 	FollowRedirects *bool `json:"followRedirects,omitempty"`
 	// Headers defines custom headers to be sent to the health check endpoint.
 	Headers map[string]string `json:"headers,omitempty"`
+	// MinHealthyServers defines the minimum number of healthy servers required for the service to be considered healthy.
+	// When fewer servers are healthy, the service is considered down.
+	// Default: 1
+	MinHealthyServers int `json:"minHealthyServers,omitempty"`
 }
 
 type PassiveServerHealthCheck struct {

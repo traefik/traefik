@@ -310,3 +310,92 @@ func testHandlers(inflights ...int) []*namedHandler {
 	}
 	return out
 }
+
+func TestBalancerMinHealthyServers(t *testing.T) {
+	balancer := New(nil, true)
+	balancer.SetMinHealthyServers(2)
+
+	balancer.AddServer("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+	balancer.AddServer("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+	balancer.AddServer("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "third")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+
+	var statuses []bool
+	err := balancer.RegisterStatusUpdater(func(up bool) {
+		statuses = append(statuses, up)
+	})
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	// first gets downed, but the balancer is still up since two servers are healthy.
+	balancer.SetStatus(t.Context(), "first", false)
+	assert.Empty(t, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	// second gets downed, only one healthy server remains: the balancer is down.
+	balancer.SetStatus(t.Context(), "second", false)
+	assert.Equal(t, []bool{false}, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
+
+	// first gets up, two healthy servers again: the balancer is up.
+	balancer.SetStatus(t.Context(), "first", true)
+	assert.Equal(t, []bool{false, true}, statuses)
+
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	assert.Equal(t, http.StatusOK, recorder.Code)
+}
+
+func TestBalancerMinHealthyServers_Sticky(t *testing.T) {
+	balancer := New(&dynamic.Sticky{Cookie: &dynamic.Cookie{Name: "test"}}, true)
+	balancer.SetMinHealthyServers(2)
+
+	balancer.AddServer("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+	balancer.AddServer("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+	balancer.AddServer("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "third")
+		rw.WriteHeader(http.StatusOK)
+	}), dynamic.Server{})
+
+	stickyReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	stickyReq.AddCookie(&http.Cookie{Name: "test", Value: "third"})
+
+	// While the balancer is up, the sticky request reaches "third".
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, stickyReq)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "third", recorder.Header().Get("server"))
+
+	// With "first" and "second" down, only "third" is healthy, so the balancer is down.
+	balancer.SetStatus(t.Context(), "first", false)
+	balancer.SetStatus(t.Context(), "second", false)
+
+	// The sticky request must not reach the healthy "third" server once the balancer is down.
+	recorder = httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, stickyReq)
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
+	assert.Empty(t, recorder.Header().Get("server"))
+}

@@ -30,6 +30,10 @@ type namedHandler struct {
 type Balancer struct {
 	wantsHealthCheck bool
 
+	// minHealthyServers is the minimum number of healthy servers required for
+	// the balancer to be considered up. A value below 1 means 1.
+	minHealthyServers int
+
 	// handlersMu is a mutex to protect the handlers slice, the status and the fenced maps.
 	handlersMu sync.RWMutex
 	handlers   []*namedHandler
@@ -63,6 +67,26 @@ func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 	}
 
 	return balancer
+}
+
+// SetMinHealthyServers sets the minimum number of healthy servers required for
+// the balancer to be considered up.
+func (b *Balancer) SetMinHealthyServers(minHealthyServers int) {
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
+
+	b.minHealthyServers = minHealthyServers
+}
+
+// isUp returns whether the balancer has enough healthy servers to be considered up.
+// The caller must hold handlersMu.
+func (b *Balancer) isUp() bool {
+	minHealthyServers := b.minHealthyServers
+	if minHealthyServers < 1 {
+		minHealthyServers = 1
+	}
+
+	return len(b.status) >= minHealthyServers
 }
 
 // Len implements heap.Interface/sort.Interface.
@@ -102,7 +126,7 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	upBefore := len(b.status) > 0
+	upBefore := b.isUp()
 
 	status := "DOWN"
 	if up {
@@ -117,7 +141,7 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 		delete(b.status, childName)
 	}
 
-	upAfter := len(b.status) > 0
+	upAfter := b.isUp()
 	status = "DOWN"
 	if upAfter {
 		status = "UP"
@@ -156,8 +180,9 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		} else if h != nil {
 			b.handlersMu.RLock()
 			_, ok := b.status[h.Name]
+			up := b.isUp()
 			b.handlersMu.RUnlock()
-			if ok {
+			if ok && up {
 				if rewrite {
 					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")
@@ -226,7 +251,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+	if len(b.handlers) == 0 || !b.isUp() || len(b.fenced) == len(b.handlers) {
 		return nil, errNoAvailableServer
 	}
 

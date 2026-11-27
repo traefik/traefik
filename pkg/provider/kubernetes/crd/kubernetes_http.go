@@ -491,13 +491,14 @@ func (c configBuilder) buildServersLB(ctx context.Context, svc traefikv1alpha1.L
 
 	if svc.HealthCheck != nil {
 		lb.HealthCheck = &dynamic.ServerHealthCheck{
-			Scheme:   svc.HealthCheck.Scheme,
-			Path:     svc.HealthCheck.Path,
-			Method:   svc.HealthCheck.Method,
-			Status:   svc.HealthCheck.Status,
-			Port:     svc.HealthCheck.Port,
-			Hostname: svc.HealthCheck.Hostname,
-			Headers:  svc.HealthCheck.Headers,
+			Scheme:            svc.HealthCheck.Scheme,
+			Path:              svc.HealthCheck.Path,
+			Method:            svc.HealthCheck.Method,
+			Status:            svc.HealthCheck.Status,
+			Port:              svc.HealthCheck.Port,
+			Hostname:          svc.HealthCheck.Hostname,
+			Headers:           svc.HealthCheck.Headers,
+			MinHealthyServers: svc.HealthCheck.MinHealthyServers,
 		}
 		lb.HealthCheck.SetDefaults()
 
