@@ -224,46 +224,12 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		return r.compressionWriter.Write(p)
 	}
 
-	// If we detect a contentEncoding, we know we are never going to compress.
-	if r.rw.Header().Get(contentEncoding) != "" {
+	// Disable compression if the response is already encoded, or according to
+	// user wishes in excludedContentTypes or includedContentTypes.
+	if !r.compressionAllowed() {
 		r.compressionDisabled = true
 		r.rw.WriteHeader(r.statusCode)
 		return r.rw.Write(p)
-	}
-
-	// Disable compression according to user wishes in excludedContentTypes or includedContentTypes.
-	if ct := r.rw.Header().Get(contentType); ct != "" {
-		mediaType, params, err := mime.ParseMediaType(ct)
-		// To align the behavior with the klauspost handler for Gzip,
-		// if the MIME type is not parsable the compression is disabled.
-		if err != nil {
-			r.compressionDisabled = true
-			r.rw.WriteHeader(r.statusCode)
-			return r.rw.Write(p)
-		}
-
-		if len(r.includedContentTypes) > 0 {
-			var found bool
-			for _, includedContentType := range r.includedContentTypes {
-				if includedContentType.equals(mediaType, params) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				r.compressionDisabled = true
-				r.rw.WriteHeader(r.statusCode)
-				return r.rw.Write(p)
-			}
-		}
-
-		for _, excludedContentType := range r.excludedContentTypes {
-			if excludedContentType.equals(mediaType, params) {
-				r.compressionDisabled = true
-				r.rw.WriteHeader(r.statusCode)
-				return r.rw.Write(p)
-			}
-		}
 	}
 
 	// We buffer until we know whether to compress (i.e. when we reach minSize received).
@@ -307,21 +273,75 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	return r.compressionWriter.Write(p)
 }
 
+// compressionAllowed reports whether the response headers allow compression,
+// i.e. the response is not already encoded and its content type is not excluded
+// (or is included) by the configuration.
+func (r *responseWriter) compressionAllowed() bool {
+	// If we detect a contentEncoding, we know we are never going to compress.
+	if r.rw.Header().Get(contentEncoding) != "" {
+		return false
+	}
+
+	ct := r.rw.Header().Get(contentType)
+	if ct == "" {
+		return true
+	}
+
+	mediaType, params, err := mime.ParseMediaType(ct)
+	// To align the behavior with the klauspost handler for Gzip,
+	// if the MIME type is not parsable the compression is disabled.
+	if err != nil {
+		return false
+	}
+
+	if len(r.includedContentTypes) > 0 {
+		var found bool
+		for _, includedContentType := range r.includedContentTypes {
+			if includedContentType.equals(mediaType, params) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	for _, excludedContentType := range r.excludedContentTypes {
+		if excludedContentType.equals(mediaType, params) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // FlushError flushes data to the appropriate underlying writer(s), although it does
 // not guarantee that all buffered data will be sent.
 // If not enough bytes have been written to determine whether to enable compression,
 // no flushing will take place.
 func (r *responseWriter) FlushError() (err error) {
-	if !r.seenData {
-		// we should not flush if there never was any data, because flushing the bw
-		// (just like closing) would send some extra end of compressionStarted stream bytes.
-		return nil
-	}
-
 	// It was already established by Write that compression is disabled, we only
 	// have to flush the uncompressed writer.
 	if r.compressionDisabled {
 		return http.NewResponseController(r.rw).Flush()
+	}
+
+	// Nothing was written yet, but the handler wants the response headers out
+	// (e.g. a long-lived stream that has no data to send yet).
+	// Holding them back until the first write would leave the client waiting.
+	if !r.seenData && !r.compressionStarted {
+		if !r.compressionAllowed() {
+			r.compressionDisabled = true
+			r.rw.WriteHeader(r.statusCode)
+			r.headersSent = true
+
+			return http.NewResponseController(r.rw).Flush()
+		}
+
+		// We are about to start (and flush) the compressed stream below,
+		// so close has to terminate it even if no data is ever written.
+		r.seenData = true
 	}
 
 	// Here, nothing was ever written either to rw or to bw (since we're still
