@@ -8,7 +8,7 @@ description: "TCP routers are responsible for connecting incoming TCP connection
 A TCP router is in charge of connecting incoming TCP connections to the services that can handle them. TCP routers analyze incoming connections based on rules, and when a match is found, forward the connection through any configured middlewares to the appropriate service.
 
 !!! note "TCP vs HTTP Routing"
-    If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
+    If HTTP routers and TCP routers listen to the same entry point, the TCP routers without TLS apply first to non-TLS connections. For TLS connections, an HTTPS router (an HTTP router with TLS) whose `Host` matches the SNI applies first, then a TCP router with TLS whose rule is not exactly ``HostSNI(`*`)``. For the complete order and its exceptions, see [TCP and HTTP Routers on the Same Entry Point](./rules-and-priority.md#tcp-and-http-routers-on-the-same-entry-point).
 
 ## Configuration Example
 
