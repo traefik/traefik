@@ -98,6 +98,8 @@ providers:
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			path := filepath.Join(t.TempDir(), test.filename)
 			require.NoError(t, os.WriteFile(path, []byte(test.content), 0o600))
 
@@ -148,6 +150,8 @@ func TestFlagLoader_CrossProviderNamespaces(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			conf := cmd.NewTraefikConfiguration()
 			ok, err := (&cli.FlagLoader{}).Load(test.args, &paersercli.Command{Configuration: conf})
 			require.NoError(t, err)
