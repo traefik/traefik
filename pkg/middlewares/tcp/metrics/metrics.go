@@ -117,28 +117,35 @@ func (m *metricsMiddleware) ServeTCP(conn tcp.WriteCloser) {
 
 	// Only the connections whose TLS is terminated by Traefik are TLS connections here,
 	// the passthrough ones are forwarded without their TLS parameters being known.
-	if tlsConn, ok := conn.(*tls.Conn); ok {
-		mConn := &tlsMetricsConn{
-			Conn:                           tlsConn,
-			tlsConnectionsCounter:          m.tlsConnectionsCounter,
-			tlsOpenConnectionsGauge:        m.tlsOpenConnectionsGauge,
-			tlsReceivedBytesCounter:        m.tlsReceivedBytesCounter,
-			tlsSentBytesCounter:            m.tlsSentBytesCounter,
-			tlsConnectionDurationHistogram: m.tlsConnectionDurationHistogram,
-			labels:                         slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
-			start:                          start,
+	tlsConn, ok := conn.(*tls.Conn)
+	if !ok {
+		conn := &bytesMetricsConn{
+			WriteCloser:   conn,
+			receivedBytes: m.receivedBytesCounter.With(labels...),
+			sentBytes:     m.sentBytesCounter.With(labels...),
 		}
-		defer mConn.release()
+		m.next.ServeTCP(conn)
 
-		conn = mConn
+		return
 	}
 
+	mConn := &tlsMetricsConn{
+		Conn:                           tlsConn,
+		tlsConnectionsCounter:          m.tlsConnectionsCounter,
+		tlsOpenConnectionsGauge:        m.tlsOpenConnectionsGauge,
+		tlsReceivedBytesCounter:        m.tlsReceivedBytesCounter,
+		tlsSentBytesCounter:            m.tlsSentBytesCounter,
+		tlsConnectionDurationHistogram: m.tlsConnectionDurationHistogram,
+		labels:                         slices.Concat(m.tlsOpenConnectionsLabels, networkLabels),
+		start:                          start,
+	}
+	defer mConn.release()
+
 	conn = &bytesMetricsConn{
-		WriteCloser:   conn,
+		WriteCloser:   mConn,
 		receivedBytes: m.receivedBytesCounter.With(labels...),
 		sentBytes:     m.sentBytesCounter.With(labels...),
 	}
-
 	m.next.ServeTCP(conn)
 }
 
