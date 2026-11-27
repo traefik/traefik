@@ -95,8 +95,13 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 		// rate-limits, redirects, etc. configured on a "spec.defaultBackend only"
 		// ingress reach its catch-all routers.
 		if loc := mc.DefaultBackendLocation; loc != nil {
-			p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
-			p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
+			if loc.Error {
+				rt.Service = unavailableServiceName
+				rtTLS.Service = unavailableServiceName
+			} else {
+				p.applyMiddlewares(mc, loc, defaultBackendName, rt, conf)
+				p.applyMiddlewares(mc, loc, defaultBackendTLSName, rtTLS, conf)
+			}
 		}
 
 		conf.HTTP.Routers[defaultBackendName] = rt
@@ -242,6 +247,11 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 					applyAppRootRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
 				}
+			}
+
+			// The canary routers match a subset of the requests of the location, and would bypass its unavailable service.
+			if loc.Error {
+				continue
 			}
 
 			if loc.Canary != nil && loc.Canary.RequiresCanaryRouter() {

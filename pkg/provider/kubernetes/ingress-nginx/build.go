@@ -448,14 +448,15 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 						logger.Error().
 							Err(err).
 							Str("ingress", fmt.Sprintf("%s/%s rule-%d path-%d", ing.Namespace, ing.Name, ri, pi)).
-							Msg("Cannot resolve auth secret, skipping ingress")
-						// Skipping the ingress entirely when auth secret resolution fails,
-						// to match ingress-nginx behavior.
-						continue
+							Msg("Cannot resolve auth secret, answering 503")
+						// ingress-nginx denies such a location: it is kept, and answers 503 to every request.
+						// Dropping it would leave these requests to the other routers of the host.
+						loc.Error = true
+					} else {
+						loc.BasicAuth = basic
+						loc.DigestAuth = digest
+						loc.AuthURNRefs = authURNRefs
 					}
-					loc.BasicAuth = basic
-					loc.DigestAuth = digest
-					loc.AuthURNRefs = authURNRefs
 				}
 
 				// Pre-resolve custom headers ConfigMap.
@@ -511,7 +512,8 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// ingress-nginx evaluates app-root at the server scope, so "/" is redirected
 				// even when the Ingress declares no "/" path. In Traefik a request has to match
 				// a router before any middleware runs, hence the extra router.
-				if loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
+				// A location in error emits no extra router, so it must leave it to the next location of the host.
+				if !loc.Error && loc.AppRoot != nil && !hostsWithRootPath[rule.Host] && !hostsWithAppRootRouter[rule.Host] {
 					loc.AppRootExtraRouterRule = buildAppRootRouterRule(rule.Host, loc.Aliases)
 					hostsWithAppRootRouter[rule.Host] = true
 				}
@@ -554,8 +556,9 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 					// Inherit basic/digest auth and custom headers like the rule
 					// paths do, so the catch-all is not an unauthenticated bypass.
 					if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
-						logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping ingress")
-						continue
+						logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, answering 503")
+						// The catch-all is kept, and answers 503 to every request.
+						loc.Error = true
 					}
 					p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
 
@@ -619,8 +622,9 @@ func (p *Provider) build(ctx context.Context, ingressClasses []*netv1.IngressCla
 				// Inherit basic/digest auth and custom headers like the rule paths
 				// do, so the per-host fallback is not an unauthenticated bypass.
 				if err := p.applyDefaultBackendAuth(ing.Namespace, ing.config, loc); err != nil {
-					logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, skipping")
-					continue
+					logger.Error().Err(err).Msg("Cannot resolve auth secret for default backend, answering 503")
+					// The fallback is kept, and answers 503 to every request.
+					loc.Error = true
 				}
 				p.resolveDefaultBackendCustomErrors(mc, ing.Namespace, ing.config, loc)
 
@@ -999,7 +1003,7 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, cfg Ingress
 // response headers) onto a spec.defaultBackend location, so the catch-all
 // inherits them exactly like the rule paths, matching ingress-nginx. It returns
 // an error only when a configured auth secret cannot be resolved; the caller
-// then skips the ingress, as ingress-nginx does.
+// then puts the location in error, as ingress-nginx denies it.
 func (p *Provider) applyDefaultBackendAuth(namespace string, cfg IngressConfig, loc *location) error {
 	if cfg.AuthType != nil {
 		basic, digest, authURNRefs, err := p.resolveBasicAuth(namespace, cfg)
