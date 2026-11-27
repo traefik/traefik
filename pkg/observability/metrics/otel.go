@@ -304,7 +304,7 @@ func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC) (sdkmetric.Ex
 	}
 
 	opts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlpmetricgrpc.WithEndpoint(net.JoinHostPort(host, port)),
 		otlpmetricgrpc.WithHeaders(config.Headers),
 		otlpmetricgrpc.WithCompressor(gzip.Name),
 	}

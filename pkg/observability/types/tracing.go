@@ -148,7 +148,7 @@ func (c *OTelTracing) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	}
 
 	opts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
+		otlptracegrpc.WithEndpoint(net.JoinHostPort(host, port)),
 		otlptracegrpc.WithHeaders(c.GRPC.Headers),
 		otlptracegrpc.WithCompressor(gzip.Name),
 	}
