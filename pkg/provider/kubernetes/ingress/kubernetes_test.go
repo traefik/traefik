@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -3975,4 +3977,43 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuildConfigurationDeduplicatesServiceErrors(t *testing.T) {
+	t.Parallel()
+
+	ing := &netv1.Ingress{}
+	ing.Name = "broken-ingress"
+	ing.Namespace = "default"
+	rule := netv1.IngressRule{}
+	rule.HTTP = &netv1.HTTPIngressRuleValue{
+		Paths: []netv1.HTTPIngressPath{
+			{
+				Path: "/",
+				Backend: netv1.IngressBackend{
+					Service: &netv1.IngressServiceBackend{
+						Name: "missing-service",
+						Port: netv1.ServiceBackendPort{Number: 80},
+					},
+				},
+			},
+		},
+	}
+	ing.Spec = netv1.IngressSpec{
+		Rules: []netv1.IngressRule{rule},
+	}
+
+	client := clientMock{
+		ingresses: []*netv1.Ingress{ing},
+	}
+
+	var buf bytes.Buffer
+	ctx := zerolog.New(&buf).WithContext(t.Context())
+	p := &Provider{DisableClusterScopeResources: true}
+
+	for range 3 {
+		p.BuildConfiguration(ctx, client)
+	}
+
+	assert.Equal(t, 1, strings.Count(buf.String(), "Cannot create service"))
 }

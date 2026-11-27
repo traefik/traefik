@@ -66,6 +66,7 @@ type Provider struct {
 	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	routerTransform k8s.RouterTransform
+	errorDeduper    k8s.ErrorDeduper
 }
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
@@ -81,6 +82,8 @@ func (p *Provider) Init() error {
 	if p.ReportNodeInternalIPs && p.DisableClusterScopeResources {
 		return errors.New("reportNodeInternalIPs and disableClusterScopeResources are mutually exclusive")
 	}
+
+	p.errorDeduper.Reset()
 
 	return nil
 }
@@ -272,19 +275,27 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 
 			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
 			if err != nil {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Err(err).
-					Msg("Cannot create service")
+				p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+					Provider:    ProviderName,
+					Namespace:   ingress.Namespace,
+					Resource:    ingress.Name,
+					ServiceName: ingress.Spec.DefaultBackend.Service.Name,
+					ServicePort: ingress.Spec.DefaultBackend.Service.Port.String(),
+					Err:         err,
+					Msg:         "Cannot create service",
+				})
 				continue
 			}
 
 			if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-				logger.Error().
-					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
-					Str("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
-					Msg("Skipping service: no endpoints found")
+				p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+					Provider:    ProviderName,
+					Namespace:   ingress.Namespace,
+					Resource:    ingress.Name,
+					ServiceName: ingress.Spec.DefaultBackend.Service.Name,
+					ServicePort: ingress.Spec.DefaultBackend.Service.Port.String(),
+					Msg:         "Skipping service: no endpoints found",
+				})
 				continue
 			}
 
@@ -343,19 +354,27 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client Client) *dynam
 				if !exists {
 					service, err = p.loadService(client, ingress.Namespace, pa.Backend)
 					if err != nil {
-						logger.Error().
-							Str("serviceName", pa.Backend.Service.Name).
-							Str("servicePort", pa.Backend.Service.Port.String()).
-							Err(err).
-							Msg("Cannot create service")
+						p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+							Provider:    ProviderName,
+							Namespace:   ingress.Namespace,
+							Resource:    ingress.Name,
+							ServiceName: pa.Backend.Service.Name,
+							ServicePort: pa.Backend.Service.Port.String(),
+							Err:         err,
+							Msg:         "Cannot create service",
+						})
 						continue
 					}
 
 					if len(service.LoadBalancer.Servers) == 0 && !p.AllowEmptyServices {
-						logger.Error().
-							Str("serviceName", pa.Backend.Service.Name).
-							Str("servicePort", pa.Backend.Service.Port.String()).
-							Msg("Skipping service: no endpoints found")
+						p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+							Provider:    ProviderName,
+							Namespace:   ingress.Namespace,
+							Resource:    ingress.Name,
+							ServiceName: pa.Backend.Service.Name,
+							ServicePort: pa.Backend.Service.Port.String(),
+							Msg:         "Skipping service: no endpoints found",
+						})
 						continue
 					}
 

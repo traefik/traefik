@@ -79,11 +79,15 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			for si, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
-					logger.Error().
-						Str("serviceName", service.Name).
-						Stringer("servicePort", &service.Port).
-						Err(err).
-						Msg("Cannot create service")
+					p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+						Provider:    ProviderName,
+						Namespace:   ingressRouteTCP.Namespace,
+						Resource:    ingressName,
+						ServiceName: service.Name,
+						ServicePort: service.Port.String(),
+						Err:         err,
+						Msg:         "Cannot create service",
+					})
 					continue
 				}
 

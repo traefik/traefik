@@ -52,11 +52,15 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			for si, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
-					logger.Error().
-						Str("serviceName", service.Name).
-						Stringer("servicePort", &service.Port).
-						Err(err).
-						Msg("Cannot create service")
+					p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+						Provider:    ProviderName,
+						Namespace:   ingressRouteUDP.Namespace,
+						Resource:    ingressName,
+						ServiceName: service.Name,
+						ServicePort: service.Port.String(),
+						Err:         err,
+						Msg:         "Cannot create service",
+					})
 					continue
 				}
 

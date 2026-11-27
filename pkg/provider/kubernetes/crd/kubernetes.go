@@ -84,13 +84,15 @@ type Provider struct {
 
 	// nameBuilder builds the names of the routers, services, middlewares, and other objects generated
 	// by this Provider. It is initialized once according to whether SafeNaming is enabled.
-	nameBuilder nameBuilder
+	nameBuilder  nameBuilder
+	errorDeduper k8s.ErrorDeduper
 }
 
 // Init the provider.
 func (p *Provider) Init() error {
 	// SafeNaming defaults to false (legacy naming) when left unset.
 	p.nameBuilder = nameBuilder{safe: p.SafeNaming != nil && *p.SafeNaming}
+	p.errorDeduper.Reset()
 
 	return nil
 }
@@ -353,8 +355,14 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client *Client) *dyna
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
-			log.Ctx(ctx).Error().Str(logs.ServiceName, service.Name).Err(err).
-				Msg("Error while building TraefikService")
+			p.errorDeduper.LogError(*log.Ctx(ctx), k8s.ErrorLogOptions{
+				Provider:    ProviderName,
+				Namespace:   service.Namespace,
+				Resource:    service.Name,
+				ServiceName: service.Name,
+				Err:         err,
+				Msg:         "Error while building TraefikService",
+			})
 			continue
 		}
 	}
