@@ -67,6 +67,11 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	req = req.WithContext(loggerCtx)
 
+	// Inject the active span context into the request headers so downstream
+	// middlewares (notably plugins) can propagate trace context on outbound
+	// requests they make.
+	tracing.InjectContextIntoCarrier(req)
+
 	span.SetAttributes(attribute.String("entry_point", e.entryPoint))
 
 	e.tracer.CaptureServerRequest(span, req)
