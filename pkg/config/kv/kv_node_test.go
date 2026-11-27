@@ -241,6 +241,54 @@ func TestDecodeToNode(t *testing.T) {
 				},
 			}},
 		},
+		{
+			desc: "several entries, slice syntax with empty-value folder marker",
+			in: map[string]string{
+				"traefik/foo/caFiles/":  "",
+				"traefik/foo/caFiles/0": "bar0",
+				"traefik/foo/caFiles/1": "bar1",
+			},
+			expected: expected{node: &parser.Node{
+				Name: "traefik",
+				Children: []*parser.Node{
+					{Name: "foo", Children: []*parser.Node{
+						{Name: "caFiles", Value: "bar0,bar1"},
+					}},
+				},
+			}},
+		},
+		{
+			desc: "single entry, slice syntax with empty-value folder marker",
+			in: map[string]string{
+				"traefik/foo/caFiles/":  "",
+				"traefik/foo/caFiles/0": "bar0",
+			},
+			expected: expected{node: &parser.Node{
+				Name: "traefik",
+				Children: []*parser.Node{
+					{Name: "foo", Children: []*parser.Node{
+						{Name: "caFiles", Value: "bar0"},
+					}},
+				},
+			}},
+		},
+		{
+			desc:     "lone empty-value folder marker, no siblings",
+			in:       map[string]string{"traefik/foo/bar/": ""},
+			expected: expected{node: nil},
+		},
+		{
+			desc: "trailing slash key with non-empty value is not discarded",
+			in:   map[string]string{"traefik/foo/bar/": "baz"},
+			expected: expected{node: &parser.Node{
+				Name: "traefik",
+				Children: []*parser.Node{
+					{Name: "foo", Children: []*parser.Node{
+						{Name: "bar", Value: "baz"},
+					}},
+				},
+			}},
+		},
 	}
 
 	for _, test := range testCases {
