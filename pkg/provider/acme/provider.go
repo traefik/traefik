@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/acme/api"
 	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/go-acme/lego/v5/certificate"
 	"github.com/go-acme/lego/v5/challenge"
@@ -40,6 +41,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 	"k8s.io/utils/ptr"
 )
+
+// minRenewalInfoRetryAfter prevents a too short Retry-After from the ACME server to trigger checks in a loop.
+const minRenewalInfoRetryAfter = time.Minute
 
 const resolverSuffix = ".acme"
 
@@ -260,16 +264,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger.Debug().Msgf("Attempt to renew certificates %q before expiry and check every %q",
 		renewPeriod, renewInterval)
 
-	p.renewCertificates(ctx, renewPeriod)
-
-	ticker := time.NewTicker(renewInterval)
+	timer := time.NewTimer(p.renewCertificates(ctx, renewPeriod, renewInterval))
 	pool.GoCtx(func(ctxPool context.Context) {
+		defer timer.Stop()
+
 		for {
 			select {
-			case <-ticker.C:
-				p.renewCertificates(ctx, renewPeriod)
+			case <-timer.C:
+				timer.Reset(p.renewCertificates(ctx, renewPeriod, renewInterval))
 			case <-ctxPool.Done():
-				ticker.Stop()
 				return
 			}
 		}
@@ -909,23 +912,39 @@ func (p *Provider) buildMessage() dynamic.Message {
 	return conf
 }
 
-func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration) {
+// renewCertificates renews the certificates that need it, and returns the duration to wait before the next check.
+func (p *Provider) renewCertificates(ctx context.Context, renewPeriod, renewInterval time.Duration) time.Duration {
 	logger := log.Ctx(ctx)
 
 	logger.Info().Msg("Testing certificate renew...")
 
 	p.certificatesMu.RLock()
+	stored := slices.Clone(p.certificates)
+	p.certificatesMu.RUnlock()
 
+	nextCheck := renewInterval
+
+	// Renewal information is fetched outside the lock, as it requires a request to the ACME server for each certificate.
 	var certificates []*CertAndStore
-	for _, cert := range p.certificates {
+	for _, cert := range stored {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
 		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
 			certificates = append(certificates, cert)
+			continue
+		}
+
+		suggested, retryAfter := p.checkRenewalInfo(ctx, crt)
+		if suggested {
+			certificates = append(certificates, cert)
+		}
+
+		// The suggested window can change before it starts, e.g. after a mass revocation,
+		// so the renewal information is fetched again as soon as the ACME server allows it.
+		if retryAfter > 0 {
+			nextCheck = min(nextCheck, max(retryAfter, minRenewalInfoRetryAfter))
 		}
 	}
-
-	p.certificatesMu.RUnlock()
 
 	for _, cert := range certificates {
 		client, err := p.getClient()
@@ -958,6 +977,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			Profile:          p.Profile,
 			PreferredChain:   p.PreferredChain,
 			EnableCommonName: !p.DisableCommonName,
+			UseARICertID:     true,
 		}
 
 		renewedCert, err := client.Certificate.Renew(ctx, res, opts)
@@ -976,6 +996,42 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			logger.Error().Err(err).Msg("Error adding certificate for domain")
 		}
 	}
+
+	return nextCheck
+}
+
+// checkRenewalInfo reports whether the ACME server suggests renewing the certificate now,
+// through ACME Renewal Information (RFC 9773), e.g. ahead of a mass revocation.
+// It also returns the duration the ACME server asks to wait before fetching the renewal information again.
+// This duration is 0 when the ACME server does not provide one or when the renewal information cannot be fetched,
+// so 0 is never a real Retry-After value, and the caller falls back on the renew interval.
+func (p *Provider) checkRenewalInfo(ctx context.Context, crt *x509.Certificate) (bool, time.Duration) {
+	logger := log.Ctx(ctx)
+
+	client, err := p.getClient()
+	if err != nil {
+		logger.Debug().Err(err).Msg("Unable to get ACME client to fetch renewal information")
+		return false, 0
+	}
+
+	info, err := client.Certificate.GetRenewalInfo(ctx, crt)
+	if err != nil {
+		if !errors.Is(err, api.ErrNoARI) {
+			logger.Warn().Err(err).Strs("domains", crt.DNSNames).Msg("Unable to fetch ACME renewal information")
+		}
+		return false, 0
+	}
+
+	// A zero sleep duration defers a renewal time selected in the future to a later check,
+	// so the renewal happens at the first check after it.
+	if info.ShouldRenewAt(time.Now(), 0) == nil {
+		return false, info.RetryAfter
+	}
+
+	logger.Info().Strs("domains", crt.DNSNames).Str("explanationURL", info.ExplanationURL).
+		Msg("ACME renewal information suggests renewing the certificate")
+
+	return true, info.RetryAfter
 }
 
 // Get provided certificate which check a domains list (Main and SANs)

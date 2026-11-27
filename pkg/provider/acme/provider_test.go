@@ -1,11 +1,25 @@
 package acme
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	"encoding/pem"
+	"math/big"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	legoacme "github.com/go-acme/lego/v5/acme"
+	"github.com/go-acme/lego/v5/acme/api"
+	"github.com/go-acme/lego/v5/lego"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -646,5 +660,171 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 			assert.Equal(t, test.expectRenewPeriod, renewPeriod)
 			assert.Equal(t, test.expectRenewInterval, renewInterval)
 		})
+	}
+}
+
+func TestProvider_checkRenewalInfo(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		disableARI         bool
+		windowStart        time.Duration
+		retryAfter         string
+		expectedSuggested  bool
+		expectedRetryAfter time.Duration
+	}{
+		{
+			desc:              "Renewal window has passed",
+			windowStart:       -48 * time.Hour,
+			expectedSuggested: true,
+		},
+		{
+			desc:        "Renewal window is in the future",
+			windowStart: 48 * time.Hour,
+		},
+		{
+			desc:               "Renewal window is in the future with Retry-After",
+			windowStart:        48 * time.Hour,
+			retryAfter:         "21600",
+			expectedRetryAfter: 6 * time.Hour,
+		},
+		{
+			desc:        "ACME server without renewal information",
+			disableARI:  true,
+			windowStart: -48 * time.Hour,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			crt, _ := newARITestCertificate(t)
+			p := &Provider{client: newARITestClient(t, crt, test.disableARI, test.windowStart, test.retryAfter)}
+
+			suggested, retryAfter := p.checkRenewalInfo(t.Context(), crt)
+			assert.Equal(t, test.expectedSuggested, suggested)
+			assert.Equal(t, test.expectedRetryAfter, retryAfter)
+		})
+	}
+}
+
+func TestProvider_renewCertificates_nextCheck(t *testing.T) {
+	const renewInterval = 24 * time.Hour
+
+	testCases := []struct {
+		desc       string
+		retryAfter string
+		expected   time.Duration
+	}{
+		{
+			desc:     "No Retry-After",
+			expected: renewInterval,
+		},
+		{
+			desc:       "Retry-After shorter than the renew interval",
+			retryAfter: "21600",
+			expected:   6 * time.Hour,
+		},
+		{
+			desc:       "Retry-After longer than the renew interval",
+			retryAfter: "172800",
+			expected:   renewInterval,
+		},
+		{
+			desc:       "Retry-After too short",
+			retryAfter: "1",
+			expected:   minRenewalInfoRetryAfter,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			crt, cert := newARITestCertificate(t)
+			p := &Provider{
+				client:       newARITestClient(t, crt, false, 48*time.Hour, test.retryAfter),
+				certificates: []*CertAndStore{{Certificate: cert}},
+			}
+
+			nextCheck := p.renewCertificates(t.Context(), 30*24*time.Hour, renewInterval)
+			assert.Equal(t, test.expected, nextCheck)
+		})
+	}
+}
+
+func newARITestClient(t *testing.T, crt *x509.Certificate, disableARI bool, windowStart time.Duration, retryAfter string) *lego.Client {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	server := httptest.NewTLSServer(mux)
+	t.Cleanup(server.Close)
+
+	mux.HandleFunc("/dir", func(rw http.ResponseWriter, _ *http.Request) {
+		dir := legoacme.Directory{
+			NewNonceURL:   server.URL + "/nonce",
+			NewAccountURL: server.URL + "/account",
+			NewOrderURL:   server.URL + "/order",
+		}
+		if !disableARI {
+			dir.RenewalInfo = server.URL + "/renewal-info"
+		}
+		_ = json.NewEncoder(rw).Encode(dir)
+	})
+
+	certID, err := api.MakeARICertID(crt)
+	require.NoError(t, err)
+
+	mux.HandleFunc("/renewal-info/"+certID, func(rw http.ResponseWriter, _ *http.Request) {
+		if retryAfter != "" {
+			rw.Header().Set("Retry-After", retryAfter)
+		}
+
+		start := time.Now().Add(windowStart)
+		_ = json.NewEncoder(rw).Encode(legoacme.RenewalInfo{
+			SuggestedWindow: legoacme.Window{Start: start, End: start.Add(24 * time.Hour)},
+		})
+	})
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	config := lego.NewConfig(&Account{PrivateKey: x509.MarshalPKCS1PrivateKey(key)})
+	config.CADirURL = server.URL + "/dir"
+	config.HTTPClient = server.Client()
+
+	client, err := lego.NewClient(config)
+	require.NoError(t, err)
+
+	return client
+}
+
+func newARITestCertificate(t *testing.T) (*x509.Certificate, Certificate) {
+	t.Helper()
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber:   big.NewInt(42),
+		DNSNames:       []string{"example.com"},
+		NotBefore:      time.Now().Add(-time.Hour),
+		NotAfter:       time.Now().Add(90 * 24 * time.Hour),
+		AuthorityKeyId: []byte{1, 2, 3, 4},
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, template, key.Public(), key)
+	require.NoError(t, err)
+
+	crt, err := x509.ParseCertificate(der)
+	require.NoError(t, err)
+
+	keyDER, err := x509.MarshalECPrivateKey(key)
+	require.NoError(t, err)
+
+	return crt, Certificate{
+		Domain:      types.Domain{Main: "example.com"},
+		Certificate: pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}),
+		Key:         pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}),
 	}
 }
