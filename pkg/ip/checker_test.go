@@ -77,21 +77,21 @@ func TestNew(t *testing.T) {
 				"fe80::/16",
 			},
 			expectedAuthorizedIPs: nil,
-			errMessage:            "parsing CIDR trusted IPs <nil>: invalid CIDR address: ",
+			errMessage:            "parsing CIDR trusted IPs : invalid CIDR address: ",
 		}, {
 			desc: "trusted IPs containing only an empty string",
 			trustedIPs: []string{
 				"",
 			},
 			expectedAuthorizedIPs: nil,
-			errMessage:            "parsing CIDR trusted IPs <nil>: invalid CIDR address: ",
+			errMessage:            "parsing CIDR trusted IPs : invalid CIDR address: ",
 		}, {
 			desc: "trusted IPs containing an invalid string",
 			trustedIPs: []string{
 				"foo",
 			},
 			expectedAuthorizedIPs: nil,
-			errMessage:            "parsing CIDR trusted IPs <nil>: invalid CIDR address: foo",
+			errMessage:            "parsing CIDR trusted IPs foo: invalid CIDR address: foo",
 		}, {
 			desc: "IPv4 & IPv6 trusted IPs",
 			trustedIPs: []string{
