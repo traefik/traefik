@@ -71,7 +71,13 @@ func logDeprecations(arguments []string) (bool, error) {
 
 	configFile, ok := argsLabels["traefik.configfile"]
 	if !ok {
-		configFile = argsLabels["traefik.configFile"]
+		configFile, ok = argsLabels["traefik.configFile"]
+	}
+
+	if ok {
+		// An explicit configuration file must not fall back to the default locations,
+		// the file loader reports it when it is empty or does not exist.
+		finder = cli.Finder{}
 	}
 
 	filePath, err := finder.Find(configFile)
