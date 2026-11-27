@@ -168,8 +168,7 @@ func (t *tap) GetTracingInformation() (string, string) {
 }
 
 func (t *tap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), t.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), t.name, typeName)
 
 	start := time.Now()
 

@@ -111,8 +111,7 @@ func (p *authTLSPassCertificateToUpstream) GetTracingInformation() (string, stri
 }
 
 func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), p.name, typeName)
 
 	// This middleware owns the Ssl-Client-* headers, so no value a client sent for them may reach the
 	// upstream, whether the request carries a client certificate or not.

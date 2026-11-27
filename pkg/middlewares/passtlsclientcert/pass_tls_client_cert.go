@@ -143,8 +143,7 @@ func (p *passTLSClientCert) GetTracingInformation() (string, string) {
 }
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), p.name, typeName)
 
 	// Note: the header names aliasing the managed ones (e.g. X_Forwarded_Tls_Client_Cert) are not handled here,
 	// as the aliasHeadersStrategy entry point option is expected to be enabled to prevent header spoofing.

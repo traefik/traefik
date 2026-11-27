@@ -69,8 +69,7 @@ func (al *ipAllowLister) GetTracingInformation() (string, string) {
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), al.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), al.name, typeName)
 
 	clientIP := al.strategy.GetIP(req)
 	err := al.allowLister.IsAuthorized(clientIP)

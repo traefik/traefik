@@ -59,8 +59,7 @@ func (wl *ipWhiteLister) GetTracingInformation() (string, string) {
 }
 
 func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), wl.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), wl.name, typeName)
 
 	clientIP := wl.strategy.GetIP(req)
 	err := wl.whiteLister.IsAuthorized(clientIP)
