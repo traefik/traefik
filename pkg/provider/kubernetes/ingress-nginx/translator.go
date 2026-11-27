@@ -184,6 +184,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			}
 
 			rule := buildRule(srv.Hostname, loc)
+			priority := buildLocationPriority(srv.Hostname, loc.Path, ptr.Deref(loc.PathType, netv1.PathTypePrefix))
 
 			var routerKey string
 			if loc.IsIngressDefaultBackend {
@@ -196,6 +197,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				EntryPoints:   p.NonTLSEntryPoints,
 				Rule:          rule,
 				RuleSyntax:    "default",
+				Priority:      priority,
 				Service:       routerSvcName,
 				Observability: obs,
 			}
@@ -210,7 +212,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 			if !loc.Error {
 				p.applyMiddlewares(mc, loc, routerKey, rt, conf)
 				applyFromToWwwRedirect(loc, routerKey, rt, obs, conf)
-				applyAppRootRedirect(loc, routerKey, rt, obs, conf)
+				applyAppRootRedirect(srv.Hostname, loc, routerKey, rt, obs, conf)
 			}
 
 			// An ssl-passthrough host is served over TCP on the TLS entryPoints, so it gets no TLS router at all.
@@ -220,6 +222,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints: p.TLSEntryPoints,
 					Rule:        rule,
 					RuleSyntax:  "default",
+					Priority:    priority,
 					Service:     routerSvcName,
 					TLS: &dynamic.RouterTLSConfig{
 						Options: srv.TLSOptionName,
@@ -240,7 +243,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 				if !loc.Error {
 					p.applyMiddlewares(mc, loc, routerKey+"-tls", rtTLS, conf)
 					applyFromToWwwRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
-					applyAppRootRedirect(loc, routerKey+"-tls", rtTLS, obs, conf)
+					applyAppRootRedirect(srv.Hostname, loc, routerKey+"-tls", rtTLS, obs, conf)
 				}
 			}
 
@@ -250,6 +253,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rt.RuleSyntax,
+					Priority:      priority + 1,
 					Service:       canarySvcName,
 					Observability: obs,
 				}
@@ -262,6 +266,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						EntryPoints:   rtTLS.EntryPoints,
 						Rule:          appendCanaryRule(rule, loc.Canary),
 						RuleSyntax:    rtTLS.RuleSyntax,
+						Priority:      priority + 1,
 						Service:       canarySvcName,
 						TLS:           rtTLS.TLS,
 						Observability: obs,
@@ -277,6 +282,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 					EntryPoints:   rt.EntryPoints,
 					Rule:          appendNonCanaryRule(rule, loc.Canary),
 					RuleSyntax:    rt.RuleSyntax,
+					Priority:      priority + 1,
 					Service:       primarySvcName,
 					Observability: obs,
 				}
@@ -289,6 +295,7 @@ func (p *Provider) translate(ctx context.Context, mc *model) *dynamic.Configurat
 						EntryPoints:   rtTLS.EntryPoints,
 						Rule:          appendNonCanaryRule(rule, loc.Canary),
 						RuleSyntax:    rtTLS.RuleSyntax,
+						Priority:      priority + 1,
 						Service:       primarySvcName,
 						TLS:           rtTLS.TLS,
 						Observability: obs,
@@ -634,7 +641,7 @@ func applyFromToWwwRedirect(loc *location, routerKey string, rt *dynamic.Router,
 
 // applyAppRootRedirect registers the extra router matching "/" for the app-root
 // middleware. The middleware itself is registered by applyMiddlewares.
-func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, obs *dynamic.RouterObservabilityConfig, conf *dynamic.Configuration) {
+func applyAppRootRedirect(host string, loc *location, routerKey string, rt *dynamic.Router, obs *dynamic.RouterObservabilityConfig, conf *dynamic.Configuration) {
 	if loc.AppRoot == nil || loc.AppRootExtraRouterRule == "" {
 		return
 	}
@@ -642,9 +649,10 @@ func applyAppRootRedirect(loc *location, routerKey string, rt *dynamic.Router, o
 	// The redirect router does not carry the location middlewares (auth included),
 	// so it must never reach the backend.
 	conf.HTTP.Routers[routerKey+"-app-root-redirect"] = &dynamic.Router{
-		EntryPoints:   rt.EntryPoints,
-		Rule:          loc.AppRootExtraRouterRule,
-		Priority:      rt.Priority,
+		EntryPoints: rt.EntryPoints,
+		Rule:        loc.AppRootExtraRouterRule,
+		// The redirect matches "/" exactly, like the "location = /" of ingress-nginx, so it wins over any "/" location.
+		Priority:      buildLocationPriority(host, "/", netv1.PathTypeExact) + 1,
 		RuleSyntax:    "default",
 		Middlewares:   []string{routerKey + "-app-root"},
 		Service:       unavailableServiceName,
@@ -766,6 +774,29 @@ func buildHostRule(host string, aliases []string) string {
 	}
 
 	return hostRules[0]
+}
+
+// hostPriorityOffset ranks the routers of a host above the host-less ones.
+const hostPriorityOffset = 1 << 20
+
+// buildLocationPriority returns the router priority of a location, so that the router choice follows
+// the ingress-nginx precedence instead of the rule length, which Traefik uses by default:
+// the longest path wins, and an Exact path wins over a Prefix path of the same length.
+// The routers of a host rank above the host-less ones, which only serve the hosts no server matches.
+// The derived routers of a location (canary, non-canary) use priority + 1 to win over the main one.
+func buildLocationPriority(host, path string, pathType netv1.PathType) int {
+	priority := len(path) * 4
+	if pathType == netv1.PathTypeExact {
+		priority += 2
+	}
+
+	if host != "" {
+		// Far above any path length, and below the priority of the auth-tls error routers.
+		priority += hostPriorityOffset
+	}
+
+	// Keeps the host-less routers above the priority 1 of the default server.
+	return priority + 2
 }
 
 func buildRule(host string, loc *location) string {
