@@ -57,8 +57,16 @@ const (
 	serviceRespsBytesTotalName = metricServicePrefix + "responses_bytes_total"
 
 	// TCP router level.
-	routerTCPOpenConnectionsName    = metricRouterPrefix + "tcp_open_connections"
-	routerTCPTLSOpenConnectionsName = metricRouterPrefix + "tcp_tls_open_connections"
+	routerTCPConnectionsTotalName      = metricRouterPrefix + "tcp_connections_total"
+	routerTCPTLSConnectionsTotalName   = metricRouterPrefix + "tcp_tls_connections_total"
+	routerTCPOpenConnectionsName       = metricRouterPrefix + "tcp_open_connections"
+	routerTCPTLSOpenConnectionsName    = metricRouterPrefix + "tcp_tls_open_connections"
+	routerTCPReceivedBytesTotalName    = metricRouterPrefix + "tcp_received_bytes_total"
+	routerTCPTLSReceivedBytesTotalName = metricRouterPrefix + "tcp_tls_received_bytes_total"
+	routerTCPSentBytesTotalName        = metricRouterPrefix + "tcp_sent_bytes_total"
+	routerTCPTLSSentBytesTotalName     = metricRouterPrefix + "tcp_tls_sent_bytes_total"
+	routerTCPConnectionDurationName    = metricRouterPrefix + "tcp_connection_duration_seconds"
+	routerTCPTLSConnectionDurationName = metricRouterPrefix + "tcp_tls_connection_duration_seconds"
 
 	// The TCP metrics labels are named after the tracing and OpenTelemetry semantic conventions attributes.
 	// The Prometheus client escapes their dots when the scraper does not support them.
@@ -283,6 +291,14 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 	}
 
 	if config.EnableTCPRouterMetrics {
+		routerTCPConns := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPConnectionsTotalName,
+			Help: "How many connections were handled by a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSConns := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPTLSConnectionsTotalName,
+			Help: "How many TLS connections, terminated by Traefik, were handled by a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 		routerTCPOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
 			Name: routerTCPOpenConnectionsName,
 			Help: "How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.",
@@ -291,17 +307,59 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 			Name: routerTCPTLSOpenConnectionsName,
 			Help: "How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
 		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+		routerTCPReceivedBytes := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPReceivedBytesTotalName,
+			Help: "The total size in bytes of the data received by a TCP router from its clients, partitioned by entrypoint, service, TLS mode, and network type.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSReceivedBytes := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPTLSReceivedBytesTotalName,
+			Help: "The total size in bytes of the data received by a TCP router from its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+		routerTCPSentBytes := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPSentBytesTotalName,
+			Help: "The total size in bytes of the data sent by a TCP router to its clients, partitioned by entrypoint, service, TLS mode, and network type.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSSentBytes := newCounterFrom(stdprometheus.CounterOpts{
+			Name: routerTCPTLSSentBytesTotalName,
+			Help: "The total size in bytes of the data sent by a TCP router to its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
+		routerTCPConnDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+			Name:    routerTCPConnectionDurationName,
+			Help:    "How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type.",
+			Buckets: buckets,
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpTLSModeLabel, tcpNetworkTypeLabel})
+		routerTCPTLSConnDurations := newHistogramFrom(stdprometheus.HistogramOpts{
+			Name:    routerTCPTLSConnectionDurationName,
+			Help:    "How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.",
+			Buckets: buckets,
+		}, []string{tcpEntryPointNameLabel, tcpRouterNameLabel, tcpServiceNameLabel, tcpNetworkTypeLabel, tcpTLSProtocolVersionLabel, tcpTLSCipherLabel})
 
 		// TCP metrics are tracked apart from the HTTP ones,
 		// because HTTP and TCP routers can share the same name.
 		promState.tcpVectors = append(promState.tcpVectors,
+			routerTCPConns.cv,
+			routerTCPTLSConns.cv,
 			routerTCPOpenConns.gv,
 			routerTCPTLSOpenConns.gv,
+			routerTCPReceivedBytes.cv,
+			routerTCPTLSReceivedBytes.cv,
+			routerTCPSentBytes.cv,
+			routerTCPTLSSentBytes.cv,
+			routerTCPConnDurations.hv,
+			routerTCPTLSConnDurations.hv,
 		)
 
 		reg.tcpRouterEnabled = config.EnableTCPRouterMetrics
+		reg.routerTCPConnectionsCounter = routerTCPConns
+		reg.routerTCPTLSConnectionsCounter = routerTCPTLSConns
 		reg.routerTCPOpenConnectionsGauge = routerTCPOpenConns
 		reg.routerTCPTLSOpenConnectionsGauge = routerTCPTLSOpenConns
+		reg.routerTCPReceivedBytesCounter = routerTCPReceivedBytes
+		reg.routerTCPTLSReceivedBytesCounter = routerTCPTLSReceivedBytes
+		reg.routerTCPSentBytesCounter = routerTCPSentBytes
+		reg.routerTCPTLSSentBytesCounter = routerTCPTLSSentBytes
+		reg.routerTCPConnectionDurationHistogram, _ = NewHistogramWithScale(routerTCPConnDurations, time.Second)
+		reg.routerTCPTLSConnectionDurationHistogram, _ = NewHistogramWithScale(routerTCPTLSConnDurations, time.Second)
 	}
 
 	return reg

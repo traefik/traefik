@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -153,6 +154,14 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSConnectionsCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
+	prometheusRegistry.
 		RouterTCPOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
 		Set(1)
@@ -160,6 +169,30 @@ func TestPrometheus(t *testing.T) {
 		RouterTCPTLSOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
 		Set(1)
+	prometheusRegistry.
+		RouterTCPReceivedBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSReceivedBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPSentBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPTLSSentBytesCounter().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionDurationHistogram().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "terminated", "network.type", "ipv4").
+		Observe(10)
+	prometheusRegistry.
+		RouterTCPTLSConnectionDurationHistogram().
+		With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+		Observe(10)
 
 	prometheusRegistry.
 		ServiceReqsCounter().
@@ -321,6 +354,29 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
 		},
 		{
+			name: routerTCPConnectionsTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPConnectionsTotalName, 1),
+		},
+		{
+			name: routerTCPTLSConnectionsTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSConnectionsTotalName, 1),
+		},
+		{
 			name: routerTCPOpenConnectionsName,
 			labels: map[string]string{
 				"traefik.entrypoint.name": "websecure",
@@ -342,6 +398,75 @@ func TestPrometheus(t *testing.T) {
 				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
 			},
 			assert: buildGaugeAssert(t, routerTCPTLSOpenConnectionsName, 1),
+		},
+		{
+			name: routerTCPReceivedBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPReceivedBytesTotalName, 1),
+		},
+		{
+			name: routerTCPTLSReceivedBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSReceivedBytesTotalName, 1),
+		},
+		{
+			name: routerTCPSentBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildCounterAssert(t, routerTCPSentBytesTotalName, 1),
+		},
+		{
+			name: routerTCPTLSSentBytesTotalName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildCounterAssert(t, routerTCPTLSSentBytesTotalName, 1),
+		},
+		{
+			name: routerTCPConnectionDurationName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"traefik.tls.mode":        "terminated",
+				"network.type":            "ipv4",
+			},
+			assert: buildHistogramAssert(t, routerTCPConnectionDurationName, 1),
+		},
+		{
+			name: routerTCPTLSConnectionDurationName,
+			labels: map[string]string{
+				"traefik.entrypoint.name": "websecure",
+				"traefik.router.name":     "demo",
+				"traefik.service.name":    "service1",
+				"network.type":            "ipv4",
+				"tls.protocol.version":    "1.3",
+				"tls.cipher":              "TLS_AES_128_GCM_SHA256",
+			},
+			assert: buildHistogramAssert(t, routerTCPTLSConnectionDurationName, 1),
 		},
 		{
 			name: serviceReqsTotalName,
@@ -522,6 +647,27 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
 }
 
+func TestPrometheusHeaderLabelsWithDots(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
+	t.Cleanup(promState.reset)
+
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{
+		AddEntryPointsLabels: true,
+		HeaderLabels:         map[string]string{"user.agent": "User-Agent"},
+	})
+	defer promRegistry.Unregister(promState)
+
+	// The header label names are kept as configured.
+	prometheusRegistry.
+		EntryPointReqsCounter().
+		With(http.Header{"User-Agent": {"curl"}}, "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "web").
+		Add(1)
+
+	family := findMetricFamily(entryPointReqsTotalName, mustScrape())
+	assert.NotNil(t, findMetricByLabelNamesValues(family, "entrypoint", "web", "user.agent", "curl"))
+}
+
 func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
@@ -564,16 +710,98 @@ func TestPrometheusTCPRouterMetricRemoval(t *testing.T) {
 		RouterTCPOpenConnectionsGauge().
 		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
 		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionsCounter().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Add(1)
+	prometheusRegistry.
+		RouterTCPConnectionDurationHistogram().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "kept@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Observe(1)
+	prometheusRegistry.
+		RouterTCPConnectionDurationHistogram().
+		With("traefik.entrypoint.name", "web", "traefik.router.name", "removed@providerName", "traefik.service.name", "bar", "traefik.tls.mode", "none", "network.type", "ipv4").
+		Observe(1)
 
 	// The metric of the removed router is exported on the first scrape,
 	// and removed after that scrape.
-	family := findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	families := mustScrape()
+	for _, name := range []string{routerTCPOpenConnectionsName, routerTCPConnectionsTotalName, routerTCPConnectionDurationName} {
+		family := findMetricFamily(name, families)
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	}
 
-	family = findMetricFamily(routerTCPOpenConnectionsName, mustScrape())
-	assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
-	assert.Nil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	families = mustScrape()
+	for _, name := range []string{routerTCPOpenConnectionsName, routerTCPConnectionsTotalName, routerTCPConnectionDurationName} {
+		family := findMetricFamily(name, families)
+		assert.NotNil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "kept@providerName", "traefik.service.name", "bar"))
+		assert.Nil(t, findMetricByLabelNamesValues(family, "traefik.router.name", "removed@providerName", "traefik.service.name", "bar"))
+	}
+}
+
+func TestPrometheusTCPRouterConnectionDurationBuckets(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		buckets  []float64
+		expected []float64
+	}{
+		{
+			desc:     "default buckets",
+			expected: []float64{0.1, 0.3, 1.2, 5},
+		},
+		{
+			desc:     "custom buckets",
+			buckets:  []float64{1, 60, 3600},
+			expected: []float64{1, 60, 3600},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			promState = newPrometheusState()
+			promRegistry = prometheus.NewRegistry()
+			t.Cleanup(promState.reset)
+
+			prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{
+				AddRoutersLabels:       true,
+				EnableTCPRouterMetrics: true,
+				Buckets:                test.buckets,
+			})
+			defer promRegistry.Unregister(promState)
+
+			prometheusRegistry.
+				RouterReqDurationHistogram().
+				With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+				Observe(1)
+			prometheusRegistry.
+				RouterTCPConnectionDurationHistogram().
+				With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "traefik.tls.mode", "none", "network.type", "ipv4").
+				Observe(1)
+			prometheusRegistry.
+				RouterTCPTLSConnectionDurationHistogram().
+				With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "service1", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").
+				Observe(1)
+
+			// The TCP connection durations share the buckets of the HTTP request durations.
+			families := mustScrape()
+			for _, name := range []string{routerReqDurationName, routerTCPConnectionDurationName, routerTCPTLSConnectionDurationName} {
+				family := findMetricFamily(name, families)
+				require.NotNil(t, family)
+
+				var upperBounds []float64
+				for _, bucket := range family.GetMetric()[0].GetHistogram().GetBucket() {
+					upperBounds = append(upperBounds, bucket.GetUpperBound())
+				}
+
+				assert.Equal(t, test.expected, upperBounds)
+			}
+		})
+	}
 }
 
 func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {

@@ -438,12 +438,28 @@ func TestOpenTelemetry(t *testing.T) {
 			tryAssertMessage(t, c, expectedServicesRetries)
 
 			expectedTCPRouters := []string{
+				`({"name":"traefik\.router\.tcp\.connections","description":"How many connections were handled by a TCP router, partitioned by entrypoint, service, TLS mode, and network type.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
+				`({"name":"traefik\.router\.tcp\.tls\.connections","description":"How many TLS connections, terminated by Traefik, were handled by a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 				`({"name":"traefik\.router\.tcp\.open_connections","description":"How many open connections exist on a TCP router, partitioned by entrypoint, service, TLS mode, and network type.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2}})`,
 				`({"name":"traefik\.router\.tcp\.tls\.open_connections","description":"How many open TLS connections, terminated by Traefik, exist on a TCP router, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"\{connection\}","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2}})`,
+				`({"name":"traefik\.router\.tcp\.received_bytes","description":"The total size in bytes of the data received by a TCP router from its clients, partitioned by entrypoint, service, TLS mode, and network type.","unit":"By","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
+				`({"name":"traefik\.router\.tcp\.tls\.received_bytes","description":"The total size in bytes of the data received by a TCP router from its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"By","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
+				`({"name":"traefik\.router\.tcp\.sent_bytes","description":"The total size in bytes of the data sent by a TCP router to its clients, partitioned by entrypoint, service, TLS mode, and network type.","unit":"By","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
+				`({"name":"traefik\.router\.tcp\.tls\.sent_bytes","description":"The total size in bytes of the data sent by a TCP router to its clients over TLS connections terminated by Traefik, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"By","sum":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
+				`({"name":"traefik\.router\.tcp\.connection\.duration","description":"How long the connections handled by a TCP router stayed open, partitioned by entrypoint, service, TLS mode, and network type.","unit":"s","histogram":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}},{"key":"traefik.tls.mode","value":{"stringValue":"terminated"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.075,0.1,0.25,0.5,0.75,1,2.5,5,7.5,10\],"min":10000,"max":10000}\],"aggregationTemporality":2}})`,
+				`({"name":"traefik\.router\.tcp\.tls\.connection\.duration","description":"How long the TLS connections, terminated by Traefik, handled by a TCP router stayed open, partitioned by entrypoint, service, network type, TLS version, and TLS cipher.","unit":"s","histogram":{"dataPoints":\[{"attributes":\[{"key":"network.type","value":{"stringValue":"ipv4"}},{"key":"tls.cipher","value":{"stringValue":"TLS_AES_128_GCM_SHA256"}},{"key":"tls.protocol.version","value":{"stringValue":"1.3"}},{"key":"traefik.entrypoint.name","value":{"stringValue":"websecure"}},{"key":"traefik.router.name","value":{"stringValue":"demo"}},{"key":"traefik.service.name","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.075,0.1,0.25,0.5,0.75,1,2.5,5,7.5,10\],"min":10000,"max":10000}\],"aggregationTemporality":2}})`,
 			}
 
+			registry.RouterTCPConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+			registry.RouterTCPTLSConnectionsCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
 			registry.RouterTCPOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
 			registry.RouterTCPTLSOpenConnectionsGauge().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+			registry.RouterTCPReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+			registry.RouterTCPTLSReceivedBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+			registry.RouterTCPSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Add(1)
+			registry.RouterTCPTLSSentBytesCounter().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Add(1)
+			registry.RouterTCPConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "terminated", "network.type", "ipv4").Observe(10000)
+			registry.RouterTCPTLSConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Observe(10000)
 
 			tryAssertMessage(t, c, expectedTCPRouters)
 
@@ -530,6 +546,63 @@ func TestOpenTelemetry_histogramAggregation(t *testing.T) {
 			assert.Equal(t, test.expectedMetricType, metrics.At(0).Type())
 		})
 	}
+}
+
+func TestOpenTelemetry_explicitBoundaries(t *testing.T) {
+	c := make(chan pmetric.Metrics, 1)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
+		require.NoError(t, err)
+
+		req := pmetricotlp.NewExportRequest()
+		err = req.UnmarshalProto(body)
+		require.NoError(t, err)
+
+		c <- req.Metrics()
+	}))
+	t.Cleanup(ts.Close)
+
+	var cfg otypes.OTLP
+	(&cfg).SetDefaults()
+	cfg.AddRoutersLabels = true
+	cfg.EnableTCPRouterMetrics = true
+	cfg.ExplicitBoundaries = []float64{1, 60, 3600}
+	cfg.HTTP = &otypes.OTelHTTP{
+		Endpoint: ts.URL,
+	}
+	cfg.PushInterval = ptypes.Duration(time.Hour)
+
+	registry := RegisterOpenTelemetry(t.Context(), &cfg)
+	require.NotNil(t, registry)
+
+	registry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(1)
+	registry.RouterTCPConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "traefik.tls.mode", "none", "network.type", "ipv4").Observe(1)
+	registry.RouterTCPTLSConnectionDurationHistogram().With("traefik.entrypoint.name", "websecure", "traefik.router.name", "demo", "traefik.service.name", "test", "network.type", "ipv4", "tls.protocol.version", "1.3", "tls.cipher", "TLS_AES_128_GCM_SHA256").Observe(1)
+
+	// Shutdown flushes the metrics.
+	StopOpenTelemetry()
+
+	require.Len(t, c, 1)
+
+	metrics := (<-c).ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics()
+
+	// The TCP connection durations share the explicit boundaries of the HTTP request durations.
+	boundaries := make(map[string][]float64)
+	for i := range metrics.Len() {
+		if metrics.At(i).Type() == pmetric.MetricTypeHistogram {
+			boundaries[metrics.At(i).Name()] = metrics.At(i).Histogram().DataPoints().At(0).ExplicitBounds().AsRaw()
+		}
+	}
+
+	assert.Equal(t, map[string][]float64{
+		"traefik_router_request_duration_seconds":    {1, 60, 3600},
+		"traefik.router.tcp.connection.duration":     {1, 60, 3600},
+		"traefik.router.tcp.tls.connection.duration": {1, 60, 3600},
+	}, boundaries)
 }
 
 func assertMessage(t *testing.T, msg string, expected []string) {

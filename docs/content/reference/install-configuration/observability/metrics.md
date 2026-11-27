@@ -636,47 +636,96 @@ Enable them with the `enableTCPRouterMetrics` option of the metrics exporter.
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections" href="#opt-traefik-router-tcp-connections" title="#opt-traefik-router-tcp-connections">`traefik.router.tcp.connections`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections" href="#opt-traefik-router-tcp-tls-connections" title="#opt-traefik-router-tcp-tls-connections">`traefik.router.tcp.tls.connections`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections" href="#opt-traefik-router-tcp-open-connections" title="#opt-traefik-router-tcp-open-connections">`traefik.router.tcp.open_connections`</a> | UpDownCounter | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections" href="#opt-traefik-router-tcp-tls-open-connections" title="#opt-traefik-router-tcp-tls-open-connections">`traefik.router.tcp.tls.open_connections`</a> | UpDownCounter | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-received-bytes" href="#opt-traefik-router-tcp-received-bytes" title="#opt-traefik-router-tcp-received-bytes">`traefik.router.tcp.received_bytes`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data received by a TCP router from its clients. |
+    | <a id="opt-traefik-router-tcp-tls-received-bytes" href="#opt-traefik-router-tcp-tls-received-bytes" title="#opt-traefik-router-tcp-tls-received-bytes">`traefik.router.tcp.tls.received_bytes`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data received by a TCP router from its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-sent-bytes" href="#opt-traefik-router-tcp-sent-bytes" title="#opt-traefik-router-tcp-sent-bytes">`traefik.router.tcp.sent_bytes`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data sent by a TCP router to its clients. |
+    | <a id="opt-traefik-router-tcp-tls-sent-bytes" href="#opt-traefik-router-tcp-tls-sent-bytes" title="#opt-traefik-router-tcp-tls-sent-bytes">`traefik.router.tcp.tls.sent_bytes`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data sent by a TCP router to its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-connection-duration" href="#opt-traefik-router-tcp-connection-duration" title="#opt-traefik-router-tcp-connection-duration">`traefik.router.tcp.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The duration of the connections handled by a TCP router, observed when they are closed. |
+    | <a id="opt-traefik-router-tcp-tls-connection-duration" href="#opt-traefik-router-tcp-tls-connection-duration" title="#opt-traefik-router-tcp-tls-connection-duration">`traefik.router.tcp.tls.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The duration of the TLS connections handled by a TCP router, observed when they are closed. |
 
 === "Prometheus"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections-total" href="#opt-traefik-router-tcp-connections-total" title="#opt-traefik-router-tcp-connections-total">`traefik_router_tcp_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections-total" href="#opt-traefik-router-tcp-tls-connections-total" title="#opt-traefik-router-tcp-tls-connections-total">`traefik_router_tcp_tls_connections_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections-2" href="#opt-traefik-router-tcp-open-connections-2" title="#opt-traefik-router-tcp-open-connections-2">`traefik_router_tcp_open_connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections-2" href="#opt-traefik-router-tcp-tls-open-connections-2" title="#opt-traefik-router-tcp-tls-open-connections-2">`traefik_router_tcp_tls_open_connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-received-bytes-total" href="#opt-traefik-router-tcp-received-bytes-total" title="#opt-traefik-router-tcp-received-bytes-total">`traefik_router_tcp_received_bytes_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data received by a TCP router from its clients. |
+    | <a id="opt-traefik-router-tcp-tls-received-bytes-total" href="#opt-traefik-router-tcp-tls-received-bytes-total" title="#opt-traefik-router-tcp-tls-received-bytes-total">`traefik_router_tcp_tls_received_bytes_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data received by a TCP router from its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-sent-bytes-total" href="#opt-traefik-router-tcp-sent-bytes-total" title="#opt-traefik-router-tcp-sent-bytes-total">`traefik_router_tcp_sent_bytes_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data sent by a TCP router to its clients. |
+    | <a id="opt-traefik-router-tcp-tls-sent-bytes-total" href="#opt-traefik-router-tcp-tls-sent-bytes-total" title="#opt-traefik-router-tcp-tls-sent-bytes-total">`traefik_router_tcp_tls_sent_bytes_total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data sent by a TCP router to its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-connection-duration-seconds" href="#opt-traefik-router-tcp-connection-duration-seconds" title="#opt-traefik-router-tcp-connection-duration-seconds">`traefik_router_tcp_connection_duration_seconds`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The duration of the connections handled by a TCP router, observed when they are closed. |
+    | <a id="opt-traefik-router-tcp-tls-connection-duration-seconds" href="#opt-traefik-router-tcp-tls-connection-duration-seconds" title="#opt-traefik-router-tcp-tls-connection-duration-seconds">`traefik_router_tcp_tls_connection_duration_seconds`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The duration of the TLS connections handled by a TCP router, observed when they are closed. |
 
 === "Datadog"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-router-tcp-connections-total" href="#opt-router-tcp-connections-total" title="#opt-router-tcp-connections-total">`router.tcp.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-router-tcp-tls-connections-total" href="#opt-router-tcp-tls-connections-total" title="#opt-router-tcp-tls-connections-total">`router.tcp.tls.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-router-tcp-open-connections" href="#opt-router-tcp-open-connections" title="#opt-router-tcp-open-connections">`router.tcp.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-router-tcp-tls-open-connections" href="#opt-router-tcp-tls-open-connections" title="#opt-router-tcp-tls-open-connections">`router.tcp.tls.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-router-tcp-received-bytes-total" href="#opt-router-tcp-received-bytes-total" title="#opt-router-tcp-received-bytes-total">`router.tcp.received.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data received by a TCP router from its clients. |
+    | <a id="opt-router-tcp-tls-received-bytes-total" href="#opt-router-tcp-tls-received-bytes-total" title="#opt-router-tcp-tls-received-bytes-total">`router.tcp.tls.received.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data received by a TCP router from its clients over TLS. |
+    | <a id="opt-router-tcp-sent-bytes-total" href="#opt-router-tcp-sent-bytes-total" title="#opt-router-tcp-sent-bytes-total">`router.tcp.sent.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data sent by a TCP router to its clients. |
+    | <a id="opt-router-tcp-tls-sent-bytes-total" href="#opt-router-tcp-tls-sent-bytes-total" title="#opt-router-tcp-tls-sent-bytes-total">`router.tcp.tls.sent.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data sent by a TCP router to its clients over TLS. |
+    | <a id="opt-router-tcp-connection-duration" href="#opt-router-tcp-connection-duration" title="#opt-router-tcp-connection-duration">`router.tcp.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The duration of the connections handled by a TCP router, observed when they are closed. |
+    | <a id="opt-router-tcp-tls-connection-duration" href="#opt-router-tcp-tls-connection-duration" title="#opt-router-tcp-tls-connection-duration">`router.tcp.tls.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The duration of the TLS connections handled by a TCP router, observed when they are closed. |
 
 === "InfluxDB2"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-traefik-router-tcp-connections-total-2" href="#opt-traefik-router-tcp-connections-total-2" title="#opt-traefik-router-tcp-connections-total-2">`traefik.router.tcp.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total count of connections handled by a TCP router. |
+    | <a id="opt-traefik-router-tcp-tls-connections-total-2" href="#opt-traefik-router-tcp-tls-connections-total-2" title="#opt-traefik-router-tcp-tls-connections-total-2">`traefik.router.tcp.tls.connections.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total count of TLS connections handled by a TCP router. |
     | <a id="opt-traefik-router-tcp-open-connections-3" href="#opt-traefik-router-tcp-open-connections-3" title="#opt-traefik-router-tcp-open-connections-3">`traefik.router.tcp.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The current count of open connections on a TCP router. |
     | <a id="opt-traefik-router-tcp-tls-open-connections-3" href="#opt-traefik-router-tcp-tls-open-connections-3" title="#opt-traefik-router-tcp-tls-open-connections-3">`traefik.router.tcp.tls.open.connections`</a> | Gauge | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The current count of open TLS connections on a TCP router. |
+    | <a id="opt-traefik-router-tcp-received-bytes-total-2" href="#opt-traefik-router-tcp-received-bytes-total-2" title="#opt-traefik-router-tcp-received-bytes-total-2">`traefik.router.tcp.received.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data received by a TCP router from its clients. |
+    | <a id="opt-traefik-router-tcp-tls-received-bytes-total-2" href="#opt-traefik-router-tcp-tls-received-bytes-total-2" title="#opt-traefik-router-tcp-tls-received-bytes-total-2">`traefik.router.tcp.tls.received.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data received by a TCP router from its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-sent-bytes-total-2" href="#opt-traefik-router-tcp-sent-bytes-total-2" title="#opt-traefik-router-tcp-sent-bytes-total-2">`traefik.router.tcp.sent.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The total size in bytes of the data sent by a TCP router to its clients. |
+    | <a id="opt-traefik-router-tcp-tls-sent-bytes-total-2" href="#opt-traefik-router-tcp-tls-sent-bytes-total-2" title="#opt-traefik-router-tcp-tls-sent-bytes-total-2">`traefik.router.tcp.tls.sent.bytes.total`</a> | Count | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The total size in bytes of the data sent by a TCP router to its clients over TLS. |
+    | <a id="opt-traefik-router-tcp-connection-duration-2" href="#opt-traefik-router-tcp-connection-duration-2" title="#opt-traefik-router-tcp-connection-duration-2">`traefik.router.tcp.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `traefik.tls.mode`, `network.type` | The duration of the connections handled by a TCP router, observed when they are closed. |
+    | <a id="opt-traefik-router-tcp-tls-connection-duration-2" href="#opt-traefik-router-tcp-tls-connection-duration-2" title="#opt-traefik-router-tcp-tls-connection-duration-2">`traefik.router.tcp.tls.connection.duration`</a> | Histogram | `traefik.entrypoint.name`, `traefik.router.name`, `traefik.service.name`, `network.type`, `tls.protocol.version`, `tls.cipher` | The duration of the TLS connections handled by a TCP router, observed when they are closed. |
 
 === "StatsD"
 
     | Metric | Type | Labels | Description |
     |--------|------|--------|-------------|
+    | <a id="opt-prefix-router-tcp-connections-total" href="#opt-prefix-router-tcp-connections-total" title="#opt-prefix-router-tcp-connections-total">`{prefix}.router.tcp.connections.total`</a> | Count | | The total count of connections, over all the TCP routers. |
+    | <a id="opt-prefix-router-tcp-tls-connections-total" href="#opt-prefix-router-tcp-tls-connections-total" title="#opt-prefix-router-tcp-tls-connections-total">`{prefix}.router.tcp.tls.connections.total`</a> | Count | | The total count of TLS connections, over all the TCP routers. |
     | <a id="opt-prefix-router-tcp-open-connections" href="#opt-prefix-router-tcp-open-connections" title="#opt-prefix-router-tcp-open-connections">`{prefix}.router.tcp.open.connections`</a> | Gauge | | The current count of open connections, over all the TCP routers. |
     | <a id="opt-prefix-router-tcp-tls-open-connections" href="#opt-prefix-router-tcp-tls-open-connections" title="#opt-prefix-router-tcp-tls-open-connections">`{prefix}.router.tcp.tls.open.connections`</a> | Gauge | | The current count of open TLS connections, over all the TCP routers. |
+    | <a id="opt-prefix-router-tcp-received-bytes-total" href="#opt-prefix-router-tcp-received-bytes-total" title="#opt-prefix-router-tcp-received-bytes-total">`{prefix}.router.tcp.received.bytes.total`</a> | Count | | The total size in bytes of the data received by all the TCP routers from their clients. |
+    | <a id="opt-prefix-router-tcp-tls-received-bytes-total" href="#opt-prefix-router-tcp-tls-received-bytes-total" title="#opt-prefix-router-tcp-tls-received-bytes-total">`{prefix}.router.tcp.tls.received.bytes.total`</a> | Count | | The total size in bytes of the data received by all the TCP routers from their clients over TLS. |
+    | <a id="opt-prefix-router-tcp-sent-bytes-total" href="#opt-prefix-router-tcp-sent-bytes-total" title="#opt-prefix-router-tcp-sent-bytes-total">`{prefix}.router.tcp.sent.bytes.total`</a> | Count | | The total size in bytes of the data sent by all the TCP routers to their clients. |
+    | <a id="opt-prefix-router-tcp-tls-sent-bytes-total" href="#opt-prefix-router-tcp-tls-sent-bytes-total" title="#opt-prefix-router-tcp-tls-sent-bytes-total">`{prefix}.router.tcp.tls.sent.bytes.total`</a> | Count | | The total size in bytes of the data sent by all the TCP routers to their clients over TLS. |
+    | <a id="opt-prefix-router-tcp-connection-duration" href="#opt-prefix-router-tcp-connection-duration" title="#opt-prefix-router-tcp-connection-duration">`{prefix}.router.tcp.connection.duration`</a> | Histogram | | The duration of the connections handled by all the TCP routers, observed when they are closed. |
+    | <a id="opt-prefix-router-tcp-tls-connection-duration" href="#opt-prefix-router-tcp-tls-connection-duration" title="#opt-prefix-router-tcp-tls-connection-duration">`{prefix}.router.tcp.tls.connection.duration`</a> | Histogram | | The duration of the TLS connections handled by all the TCP routers, observed when they are closed. |
 
 !!! note "\{prefix\} Default Value"
         By default, \{prefix\} value is `traefik`.
 
 !!! info "TLS connections"
 
-    The TLS connections metric only counts the connections whose TLS is terminated by Traefik,
+    The TLS metrics only count the connections whose TLS is terminated by Traefik,
     once the TLS handshake is done.
-    These connections are also counted by the open connections metric.
-    The connections of a router with TLS passthrough are only counted by the open connections metric,
+    These connections are also counted by the matching non-TLS metrics.
+    The connections of a router with TLS passthrough are only counted by the non-TLS metrics,
     because Traefik forwards them without knowing the negotiated TLS version and cipher.
+
+!!! info "Connection durations"
+
+    The connection durations are observed when the connections are closed,
+    so a connection that is still open is only counted by the open connections metrics.
+    They are measured from when the connection is routed, and include the TLS handshake for the TLS connections.
+    With Prometheus, they use the buckets of the [`buckets`](#opt-metrics-prometheus-buckets) option,
+    and with OpenTelemetry, the boundaries of the [`explicitBoundaries`](#opt-metrics-otlp-explicitBoundaries) option,
+    as the HTTP request durations do.
 
 ##### Labels
 
@@ -694,8 +743,5 @@ Here is a comprehensive list of labels that are provided by the TCP router metri
 
 !!! note "Labels names"
 
-    The router and service labels are named after the attributes of the tracing spans,
-    and the other ones after the [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/) attributes.
-    With Prometheus, the dots are replaced by underscores (e.g. `traefik_router_name`)
-    when the scraper does not support UTF-8 label names.
-    StatsD does not support labels.
+    With Prometheus 2, the dots are replaced by underscores (e.g. `traefik_router_name`),
+    as dots in label names are only supported since Prometheus 3.
