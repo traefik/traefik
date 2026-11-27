@@ -68,6 +68,7 @@ spec:
 | <a id="opt-preserveLocationHeader" href="#opt-preserveLocationHeader" title="#opt-preserveLocationHeader">`preserveLocationHeader`</a> | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.                                                                                                                                          | false | No      |
 | <a id="opt-preserveRequestMethod" href="#opt-preserveRequestMethod" title="#opt-preserveRequestMethod">`preserveRequestMethod`</a> | Defines whether to preserve the original request method while forwarding the request to the authentication server.                                                                                                                                                          | false | No      |
 | <a id="opt-authSigninURL" href="#opt-authSigninURL" title="#opt-authSigninURL">`authSigninURL`</a> | Specifies the URL to redirect to when the authentication server returns 401 Unauthorized.                                                                                                                                                                                   | "" | No      |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration of the request to the authentication server, including connection time and reading the response body. If the authentication server does not respond in time, the request is rejected with a 500 (Internal Server Error). Setting it to `0` disables the timeout. <br/>More information [here](#timeout). | 30s | No |
 | <a id="opt-tls-ca" href="#opt-tls-ca" title="#opt-tls-ca">`tls.ca`</a> | Sets the path to the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle.                                                                                                                                  | "" | No |
 | <a id="opt-tls-cert" href="#opt-tls-cert" title="#opt-tls-cert">`tls.cert`</a> | Sets the path to the public certificate used for the secure connection to the authentication server. When using this option, setting the key option is required.                                                                                                            | "" | No |
 | <a id="opt-tls-key" href="#opt-tls-key" title="#opt-tls-key">`tls.key`</a> | Sets the path to the private key used for the secure connection to the authentication server. When using this option, setting the `cert` option is required.                                                                                                                | "" | No |
@@ -127,6 +128,23 @@ If left unset, the request body size is unrestricted which can have performance 
 
     It is strongly recommended to set this option to a suitable value.
     Not setting it (or setting it to `-1`) allows unlimited response body sizes which can lead to DoS attacks and memory exhaustion.
+
+### timeout
+
+The `timeout` option defines how long Traefik waits for the authentication server to answer,
+from establishing the connection to reading the full response body.
+
+The value can be provided as a number of seconds or as a valid duration format (see [time.ParseDuration](https://pkg.go.dev/time#ParseDuration)).
+
+When the timeout is reached, the request is not forwarded to the service and Traefik responds with a 500 (Internal Server Error).
+
+Setting `timeout` to `0` disables the timeout,
+which means a slow or unresponsive authentication server can hold requests indefinitely.
+
+```yaml
+# Allow the authentication server up to 2 minutes to answer
+timeout: 2m
+```
 
 ### trustForwardHeader
 

@@ -371,6 +371,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.Timeout != nil {
+		in, out := &in.Timeout, &out.Timeout
+		*out = new(intstr.IntOrString)
+		**out = **in
+	}
 	return
 }
 

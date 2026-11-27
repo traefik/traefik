@@ -26,6 +26,10 @@ THE SOFTWARE.
 
 package v1alpha1
 
+import (
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
+)
+
 // ForwardAuthApplyConfiguration represents a declarative configuration of the ForwardAuth type for use
 // with apply.
 //
@@ -66,6 +70,11 @@ type ForwardAuthApplyConfiguration struct {
 	PreserveRequestMethod *bool `json:"preserveRequestMethod,omitempty"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL *string `json:"authSigninURL,omitempty"`
+	// Timeout defines the maximum duration of the request to the authentication server, including connection time and reading the response body.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// Zero means no timeout. Default is 30s.
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
 }
 
 // ForwardAuthApplyConfiguration constructs a declarative configuration of the ForwardAuth type for use with
@@ -189,5 +198,13 @@ func (b *ForwardAuthApplyConfiguration) WithPreserveRequestMethod(value bool) *F
 // If called multiple times, the AuthSigninURL field is set to the value of the last call.
 func (b *ForwardAuthApplyConfiguration) WithAuthSigninURL(value string) *ForwardAuthApplyConfiguration {
 	b.AuthSigninURL = &value
+	return b
+}
+
+// WithTimeout sets the Timeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Timeout field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithTimeout(value intstr.IntOrString) *ForwardAuthApplyConfiguration {
+	b.Timeout = &value
 	return b
 }
