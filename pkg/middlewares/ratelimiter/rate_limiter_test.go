@@ -18,6 +18,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter/ttlmap"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
 	lua "github.com/yuin/gopher-lua"
@@ -150,6 +151,57 @@ func TestNewRateLimiter(t *testing.T) {
 			if test.expectedRTL != 0 {
 				assert.InDelta(t, float64(test.expectedRTL), float64(rtl.rate), delta)
 			}
+		})
+	}
+}
+
+func TestRateLimitAllowError(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		err            error
+		expectedStatus int
+	}{
+		{
+			desc:           "client closed request",
+			err:            fmt.Errorf("evaluating script: %w", context.Canceled),
+			expectedStatus: httputil.StatusClientClosedRequest,
+		},
+		{
+			desc:           "store timeout",
+			err:            fmt.Errorf("evaluating script: %w", context.DeadlineExceeded),
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			desc:           "store error",
+			err:            errors.New("connection refused"),
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var nextCalled bool
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				nextCalled = true
+			})
+
+			handler, err := New(t.Context(), next, dynamic.RateLimit{Average: 10, Burst: 1}, "rate-limiter")
+			require.NoError(t, err)
+
+			rl, ok := handler.(*rateLimiter)
+			require.True(t, ok)
+			rl.limiter = errorLimiter{err: test.err}
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost", http.NoBody)
+			req.RemoteAddr = "127.0.0.1:1234"
+			recorder := httptest.NewRecorder()
+
+			rl.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.expectedStatus, recorder.Result().StatusCode)
+			assert.False(t, nextCalled)
 		})
 	}
 }
@@ -682,4 +734,12 @@ func computeMinCount(wantCount int) int {
 	}
 
 	return wantCount * 95 / 100
+}
+
+type errorLimiter struct {
+	err error
+}
+
+func (l errorLimiter) Allow(context.Context, string) (*time.Duration, error) {
+	return nil, l.err
 }
