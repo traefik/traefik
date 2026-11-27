@@ -107,6 +107,12 @@ func TestMatchDomain(t *testing.T) {
 			expected:   false,
 		},
 		{
+			desc:       "exact match with trailing dot",
+			certDomain: "traefik.wtf.",
+			domain:     "traefik.wtf",
+			expected:   true,
+		},
+		{
 			desc:       "wildcard and sub domain",
 			certDomain: "*.traefik.wtf",
 			domain:     "sub.traefik.wtf",
