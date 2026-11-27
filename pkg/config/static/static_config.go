@@ -365,7 +365,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	if c.Providers.KubernetesGateway != nil {
 		entryPoints := make(map[string]gateway.Entrypoint)
 		for epName, entryPoint := range c.EntryPoints {
-			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
+			protocol, _ := entryPoint.GetProtocol()
+			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), Protocol: protocol, HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
 		}
 
 		if c.Providers.KubernetesCRD != nil {
