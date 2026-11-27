@@ -1462,6 +1462,36 @@ add_header X-Response response-value always;
 			},
 		},
 		{
+			desc: "rewrite break keeps the deferred directives nested in an if block that follows it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+if ($request_method = GET) {
+	more_set_input_headers "X-If-After-Break: if-after-break";
+	more_set_headers "X-If-Response: if-response";
+}
+`,
+			path:         "/old",
+			expectedPath: "/new",
+			expectedRequestHeaders: map[string]string{
+				"X-If-After-Break": "if-after-break",
+			},
+			expectedResponseHeaders: map[string]string{
+				"X-If-Response": "if-response",
+			},
+		},
+		{
+			desc: "rewrite break skips the rewrite directives nested in an if block that follows it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+if ($request_method = GET) {
+	set $late unexpected;
+	return 403;
+}
+`,
+			path:         "/old",
+			expectedPath: "/new",
+		},
+		{
 			desc: "rewrite break in server snippet keeps the directives that follow it",
 			serverSnippet: `
 rewrite ^/old/(.*)$ /new/$1 break;
