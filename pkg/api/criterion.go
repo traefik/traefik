@@ -98,15 +98,15 @@ func pagination(request *http.Request, maximum int) (pageInfo, error) {
 		return pageInfo{}, err
 	}
 
-	startIndex := (page - 1) * perPage
-	if startIndex != 0 && startIndex >= maximum {
+	if page > 1 && (maximum == 0 || page-1 > (maximum-1)/perPage) {
 		return pageInfo{}, fmt.Errorf("invalid request: page: %d, per_page: %d", page, perPage)
 	}
 
-	endIndex := min(startIndex+perPage, maximum)
+	startIndex := (page - 1) * perPage
+	endIndex := startIndex + min(perPage, maximum-startIndex)
 
 	nextPage := 1
-	if page*perPage < maximum {
+	if maximum-startIndex > perPage {
 		nextPage = page + 1
 	}
 
