@@ -442,23 +442,41 @@ type tcpKeepAliveListener struct {
 }
 
 func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
-	tc, err := ln.AcceptTCP()
-	if err != nil {
-		return nil, err
-	}
+	return acceptTCPWithKeepAlive(ln.AcceptTCP, configureTCPKeepAlive)
+}
 
+func configureTCPKeepAlive(tc *net.TCPConn) error {
 	if err := tc.SetKeepAlive(true); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
 		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
-			return nil, err
+			return err
 		}
 	}
 
-	return tc, nil
+	return nil
+}
+
+func acceptTCPWithKeepAlive(accept func() (*net.TCPConn, error), configure func(*net.TCPConn) error) (net.Conn, error) {
+	for {
+		tc, err := accept()
+		if err != nil {
+			return nil, err
+		}
+
+		// A reset peer can make a keep-alive setsockopt fail on FreeBSD. The
+		// accepted connection is unusable, but the listener can keep accepting.
+		if err := configure(tc); err != nil {
+			log.Debug().Err(err).Msg("Closing accepted connection after keep-alive setup failed")
+			_ = tc.Close()
+			continue
+		}
+
+		return tc, nil
+	}
 }
 
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
