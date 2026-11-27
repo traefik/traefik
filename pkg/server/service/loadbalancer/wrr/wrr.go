@@ -159,7 +159,7 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			b.handlersMu.RUnlock()
 			if ok {
 				if rewrite {
-					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
+					if err := b.sticky.WriteStickyCookie(rw, req, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")
 					}
 				}
@@ -181,7 +181,7 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.sticky != nil {
-		if err := b.sticky.WriteStickyCookie(rw, server.name); err != nil {
+		if err := b.sticky.WriteStickyCookie(rw, req, server.name); err != nil {
 			log.Error().Err(err).Msg("Error while writing sticky cookie")
 		}
 	}
