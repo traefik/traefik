@@ -185,6 +185,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 		// a default cert for the ACME store does not make any sense, so generating one is a waste.
 		if storeName == tlsalpn01.ACMETLS1Protocol {
+			st.matchIPReverseAddress = true
 			continue
 		}
 
