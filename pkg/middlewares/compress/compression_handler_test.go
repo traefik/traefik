@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -1159,6 +1160,60 @@ func Test_ParseContentType_equals(t *testing.T) {
 			t.Parallel()
 
 			test.expect(t, test.pct.equals(test.mediaType, test.params))
+		})
+	}
+}
+
+func Test_PartialContentIsNotCompressed(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		algo           string
+		acceptEncoding string
+	}{
+		{
+			desc:           "brotli",
+			algo:           brotliName,
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			algo:           zstdName,
+			acceptEncoding: "zstd",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// A range response describes the identity representation: its Content-Range and
+			// Content-Length refer to the bytes the backend selected. Compressing the body
+			// would leave both headers describing something the client is not receiving, so
+			// the klauspost gzip handler skips a response carrying Content-Range and this
+			// handler has to do the same.
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("Content-Range", "bytes 0-"+strconv.Itoa(len(bigTestBody)-1)+"/100000")
+				rw.Header().Set("Content-Length", strconv.Itoa(len(bigTestBody)))
+				rw.WriteHeader(http.StatusPartialContent)
+
+				_, err := rw.Write(bigTestBody)
+				require.NoError(t, err)
+			})
+
+			h := mustNewCompressionHandler(t, Config{MinSize: 1024, MiddlewareName: "Compress"}, test.algo, next)
+
+			req, err := http.NewRequest(http.MethodGet, "/whatever", nil)
+			require.NoError(t, err)
+			req.Header.Set(acceptEncodingHeader, test.acceptEncoding)
+
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusPartialContent, rw.Code)
+			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Equal(t, "bytes 0-"+strconv.Itoa(len(bigTestBody)-1)+"/100000", rw.Header().Get("Content-Range"))
+			assert.Equal(t, strconv.Itoa(len(bigTestBody)), rw.Header().Get(contentLength))
+			assert.Equal(t, bigTestBody, rw.Body.Bytes())
 		})
 	}
 }
