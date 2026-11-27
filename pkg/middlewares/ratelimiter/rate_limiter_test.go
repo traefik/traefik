@@ -553,11 +553,11 @@ func TestRedisRateLimit(t *testing.T) {
 
 type mockRedisClient struct {
 	ttl  int
-	keys *ttlmap.Map[[]string]
+	keys *ttlmap.Map[map[string]string]
 }
 
 func newMockRedisClient(ttl int) Rediser {
-	buckets, _ := ttlmap.New[[]string](65536)
+	buckets, _ := ttlmap.New[map[string]string](65536)
 	return &mockRedisClient{
 		ttl:  ttl,
 		keys: buckets,
@@ -588,26 +588,23 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 			switch state.Get(1).String() {
 			case "hset":
 				key := state.Get(2).String()
-				keyLast := state.Get(3).String()
-				last := state.Get(4).String()
-				keyTokens := state.Get(5).String()
-				tokens := state.Get(6).String()
-				table := []string{keyLast, last, keyTokens, tokens}
-				_ = m.keys.Set(key, table, m.ttl)
-			case "hgetall":
-				key := state.Get(2).String()
-				value, ok := m.keys.Get(key)
-				table := state.NewTable()
-				if !ok {
-					state.Push(table)
-				} else {
-					if len(value) == 4 {
-						for i := range value {
-							table.Append(lua.LString(value[i]))
-						}
-					}
-					state.Push(table)
+				fields := map[string]string{}
+				for i := 3; i < state.GetTop(); i += 2 {
+					fields[state.Get(i).String()] = state.Get(i + 1).String()
 				}
+				_ = m.keys.Set(key, fields, m.ttl)
+			case "hmget":
+				fields, _ := m.keys.Get(state.Get(2).String())
+				table := state.NewTable()
+				for i := 3; i <= state.GetTop(); i++ {
+					// Redis converts a missing field to false, not nil.
+					var value lua.LValue = lua.LFalse
+					if v, ok := fields[state.Get(i).String()]; ok {
+						value = lua.LString(v)
+					}
+					table.Append(value)
+				}
+				state.Push(table)
 			case "expire":
 			default:
 				return 0
