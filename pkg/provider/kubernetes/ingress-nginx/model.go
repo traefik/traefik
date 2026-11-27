@@ -87,7 +87,8 @@ type server struct {
 	Locations []*location
 
 	// TLSOptionName is the name of the TLS option of the server.
-	// Every host gets its own TLS option, as ingress-nginx configures TLS per server block.
+	// Named hosts with the provider's default TLS option share its name so clients can coalesce connections.
+	// Named hosts with client authentication configuration have their own TLS option.
 	// Host-less rules belong to the ingress-nginx default server, which answers unknown server names:
 	// in Traefik, only the default TLS option applies to them.
 	TLSOptionName string

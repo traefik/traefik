@@ -110,7 +110,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-service-unavailable-http-37-unavailable-11-80-2",
 							Middlewares: []string{"default-7-ingress-with-service-unavailable-http-37-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -207,7 +207,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -249,7 +249,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-service-unavailable-http-37-unavailable-11-80-2",
 							Middlewares: []string{"default-7-ingress-with-service-unavailable-http-37-rule-0-path-0-tls-redirect", "default-7-ingress-with-service-unavailable-http-37-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -378,7 +378,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -420,7 +420,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-service-unavailable-default-backend-48-default-backend",
 							Middlewares: []string{"default-7-ingress-with-service-unavailable-default-backend-48-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -455,7 +455,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-service-unavailable-default-backend-48-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-service-unavailable-default-backend-48-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -611,7 +611,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -671,7 +671,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-custom-headers-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -690,7 +690,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-cross-namespace-headers-36-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cross-namespace.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -928,8 +928,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-namespace.localhost": hostTLSOption(),
-						"whoami.localhost":          hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -970,7 +969,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     unavailableServiceName,
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -1042,7 +1041,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -1100,7 +1099,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-custom-headers-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -1118,7 +1117,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "unavailable-service",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cross-namespace.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -1298,8 +1297,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-namespace.localhost": hostTLSOption(),
-						"whoami.localhost":          hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -1359,7 +1357,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-custom-headers-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-custom-headers-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -1378,7 +1376,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-cross-namespace-headers-36-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-cross-namespace-headers-36-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-cross-namespace-headers-36-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cross-namespace.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -1616,8 +1614,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-namespace.localhost": hostTLSOption(),
-						"whoami.localhost":          hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -1642,7 +1639,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-with-no-annotation-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-no-annotation-26-whoami-6-80-2",
@@ -1791,7 +1788,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -1818,7 +1815,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/dash")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-my-ingress-10-rule-0-path-0-tls-retry"},
 							Service:     "default-7-my-ingress-10-whoami-6-80-2",
@@ -1853,7 +1850,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/dot")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-my.ingress-10-rule-0-path-0-tls-retry"},
 							Service:     "default-7-my.ingress-10-whoami-6-80-2",
@@ -2053,7 +2050,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -2079,7 +2076,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/dash")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"team-4-dev-web-7-rule-0-path-0-tls-retry"},
 							Service:     "team-4-dev-web-7-whoami-6-80-2",
@@ -2114,7 +2111,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/dot")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"team-dev-8-web-3-rule-0-path-0-tls-retry"},
 							Service:     "team-dev-8-web-3-whoami-6-80-2",
@@ -2294,7 +2291,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -2336,7 +2333,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-basicauth-22-rule-0-path-0-tls-basic-auth", "default-7-ingress-with-basicauth-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-basicauth-22-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -2498,7 +2495,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -2540,7 +2537,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-digestauth-23-rule-0-path-0-tls-digest-auth", "default-7-ingress-with-digestauth-23-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-digestauth-23-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -2702,7 +2699,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -2778,7 +2775,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-snippet", "default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-forwardauth-24-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -2923,7 +2920,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3001,7 +2998,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-forwardauth-snippet-32-rule-0-path-0-tls-snippet", "default-7-ingress-with-forwardauth-snippet-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-forwardauth-snippet-32-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -3148,7 +3145,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3191,7 +3188,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-snippet", "default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -3320,7 +3317,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3363,7 +3360,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-global-auth-disabled-33-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-global-auth-disabled-33-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -3460,7 +3457,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3503,7 +3500,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-snippet", "default-7-ingress-with-forwardauth-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-forwardauth-24-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -3638,7 +3635,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3680,7 +3677,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -3777,7 +3774,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -3802,7 +3799,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "sslredirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-with-ssl-redirect-25-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-ssl-redirect-25-whoami-6-80-2",
@@ -3856,7 +3853,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("withoutsslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "withoutsslredirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-without-ssl-redirect-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-ssl-redirect-28-whoami-6-80-2",
@@ -3896,7 +3893,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-force-ssl-redirect-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-force-ssl-redirect-31-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "forcesslredirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -4189,9 +4186,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"forcesslredirect.localhost":   hostTLSOption(),
-						"sslredirect.localhost":        hostTLSOption(),
-						"withoutsslredirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -4238,7 +4233,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("forcesslredirectnotls.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "forcesslredirectnotls.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Service: "default-7-ingress-with-force-ssl-redirect-no-tls-38-whoami-6-80-2",
 							Middlewares: []string{
@@ -4360,7 +4355,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"forcesslredirectnotls.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -5689,7 +5684,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-sticky-19-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-sticky-19-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "sticky.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -5809,7 +5804,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"sticky.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -5852,7 +5847,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-ssl-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-ssl-22-whoami-tls-10-443-3",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "proxy-ssl.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -5962,7 +5957,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"proxy-ssl.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6004,7 +5999,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-cors-17-rule-0-path-0-tls-cors", "default-7-ingress-with-cors-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-cors-17-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cors.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6149,7 +6144,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cors.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6191,7 +6186,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-cors-wildcard-origin-33-rule-0-path-0-tls-cors", "default-7-ingress-with-cors-wildcard-origin-33-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-cors-wildcard-origin-33-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cors-wildcard.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6338,7 +6333,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cors-wildcard.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6380,7 +6375,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-service-upstream-29-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-service-upstream-29-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "service-upstream.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6484,7 +6479,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"service-upstream.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6526,7 +6521,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-upstream-vhost-27-rule-0-path-0-tls-vhost", "default-7-ingress-with-upstream-vhost-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-upstream-vhost-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "upstream-vhost.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6675,7 +6670,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"upstream-vhost.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6717,7 +6712,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-no-rewrite-target-49-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-no-rewrite-target-49-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "x-forwarded-prefix.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6824,7 +6819,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"x-forwarded-prefix.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -6898,7 +6893,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-x-forwarded-prefix-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-31-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "x-forwarded-prefix.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6917,7 +6912,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-regex-37-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-x-forwarded-prefix-regex-37-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-regex-37-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "x-forwarded-prefix-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -6936,7 +6931,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-x-forwarded-prefix-three-groups-44-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-x-forwarded-prefix-three-groups-44-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-x-forwarded-prefix-three-groups-44-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "x-forwarded-prefix-three-groups.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7289,9 +7284,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"x-forwarded-prefix-regex.localhost":        hostTLSOption(),
-						"x-forwarded-prefix-three-groups.localhost": hostTLSOption(),
-						"x-forwarded-prefix.localhost":              hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -7333,7 +7326,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-use-regex-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-use-regex-22-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "use-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7440,7 +7433,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"use-regex.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -7499,7 +7492,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-a-with-use-regex-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-a-with-use-regex-24-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "shared.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7518,7 +7511,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-b-without-use-regex-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-b-without-use-regex-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "shared.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7701,7 +7694,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"shared.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -7759,7 +7752,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-a-with-use-regex-24-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-a-with-use-regex-24-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7778,7 +7771,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-b-without-use-regex-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-b-without-use-regex-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "no-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -7960,8 +7953,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"no-regex.localhost": hostTLSOption(),
-						"regex.localhost":    hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -8003,7 +7995,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-rewrite-target-27-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-27-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-27-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8038,7 +8030,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-rewrite-target-no-regex-36-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target-no-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8250,8 +8242,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"rewrite-target-no-regex.localhost": hostTLSOption(),
-						"rewrite-target.localhost":          hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -8293,7 +8284,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-rewrite-target-absolute-url-40-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-absolute-url-40-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-absolute-url-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target-absolute-url.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8430,7 +8421,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"rewrite-target-absolute-url.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -8472,7 +8463,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-rewrite-target-trailing-group-42-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-trailing-group-42-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-trailing-group-42-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target-trailing-group.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8609,7 +8600,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"rewrite-target-trailing-group.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -8657,7 +8648,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-rewrite-target-no-regex-36-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target-no-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8794,7 +8785,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"rewrite-target-no-regex.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -8853,7 +8844,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-a-with-rewrite-target-29-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-rewrite-target", "default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "shared.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -8872,7 +8863,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-b-without-rewrite-target-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "shared.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9065,7 +9056,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"shared.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -9123,7 +9114,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-a-with-rewrite-target-29-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-rewrite-target", "default-7-ingress-a-with-rewrite-target-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9142,7 +9133,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-b-without-rewrite-target-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-b-without-rewrite-target-32-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "no-rewrite.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9334,8 +9325,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"no-rewrite.localhost": hostTLSOption(),
-						"rewrite.localhost":    hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -9377,7 +9367,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-rewrite-target-use-regex-false-43-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-rewrite-target-use-regex-false-43-rule-0-path-0-tls-rewrite-target", "default-7-ingress-with-rewrite-target-use-regex-false-43-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "rewrite-target.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9504,7 +9494,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"rewrite-target.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -9562,7 +9552,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-21-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-21-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-21-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9581,7 +9571,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "unavailable-service",
 							Middlewares: []string{"default-7-ingress-with-app-root-21-rule-0-path-0-tls-app-root"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9716,7 +9706,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -9774,7 +9764,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-alias-27-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9793,7 +9783,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "unavailable-service",
 							Middlewares: []string{"default-7-ingress-with-app-root-alias-27-rule-0-path-0-tls-app-root"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -9928,7 +9918,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -9970,7 +9960,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-root-path-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-root-path-31-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-root-path-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10005,7 +9995,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-root-path-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-root-path-31-rule-0-path-1-tls-app-root", "default-7-ingress-with-app-root-root-path-31-rule-0-path-1-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10199,7 +10189,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -10241,7 +10231,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-shared-host-root-38-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-shared-host-root-38-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-shared-host-root-38-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10276,7 +10266,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-shared-host-33-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-shared-host-33-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-shared-host-33-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10516,7 +10506,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -10558,7 +10548,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-and-default-backend-41-default-backend",
 							Middlewares: []string{"default-7-ingress-with-app-root-and-default-backend-41-rule-0-default-backend-tls-app-root", "default-7-ingress-with-app-root-and-default-backend-41-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10593,7 +10583,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-app-root-and-default-backend-41-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-app-root-and-default-backend-41-rule-0-path-0-tls-app-root", "default-7-ingress-with-app-root-and-default-backend-41-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -10799,7 +10789,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -11047,7 +11037,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-app-root-21-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-app-root-21-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "app-root.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11154,7 +11144,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"app-root.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -11212,7 +11202,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-www-host-21-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-www-host-21-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "www.host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11231,7 +11221,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     unavailableServiceName,
 							Middlewares: []string{"default-7-ingress-with-www-host-21-rule-0-path-0-tls-from-to-www-redirect"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "www.host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11370,7 +11360,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"www.host.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -11428,7 +11418,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-host-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-host-17-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11447,7 +11437,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     unavailableServiceName,
 							Middlewares: []string{"default-7-ingress-with-host-17-rule-0-path-0-tls-from-to-www-redirect"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11586,7 +11576,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"host.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -11644,7 +11634,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-host-17-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-host-17-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11663,7 +11653,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-www-host-21-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-www-host-21-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "www.host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -11845,8 +11835,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"host.localhost":     hostTLSOption(),
-						"www.host.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -12660,7 +12649,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-basic-auth-48-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-default-backend-tls-basic-auth", "default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -12695,7 +12684,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-basic-auth-48-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-path-0-tls-basic-auth", "default-7-ingress-with-default-backend-per-host-basic-auth-48-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -12955,7 +12944,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -12998,7 +12987,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-headers-52-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-default-backend-tls-custom-headers", "default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -13033,7 +13022,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-headers-52-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-path-0-tls-custom-headers", "default-7-ingress-with-default-backend-per-host-custom-headers-52-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -13247,7 +13236,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -13520,7 +13509,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-default-backend-tls-custom-http-errors", "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -13555,7 +13544,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-with-default-backend-per-host-custom-http-errors-56-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -13893,7 +13882,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -14100,7 +14089,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-annotations-40-whoami-tls-10-443-3",
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotations-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14137,7 +14126,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-annotations-40-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotations-40-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14315,7 +14304,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -14357,7 +14346,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-multiple-hosts-43-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-multiple-hosts-43-rule-0-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "one.whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14392,7 +14381,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-multiple-hosts-43-default-backend",
 							Middlewares: []string{"default-7-ingress-with-default-backend-multiple-hosts-43-rule-1-default-backend-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "two.whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14525,8 +14514,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"one.whoami.localhost": hostTLSOption(),
-						"two.whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -14568,7 +14556,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-whitelist-single-ip-32-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-whitelist-single-ip-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-whitelist-single-ip-32-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whitelist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14703,7 +14691,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whitelist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -14745,7 +14733,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-whitelist-single-cidr-34-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-whitelist-single-cidr-34-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-whitelist-single-cidr-34-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whitelist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -14880,7 +14868,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whitelist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -14922,7 +14910,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-whitelist-multiple-ip-and-cidr-43-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-whitelist-multiple-ip-and-cidr-43-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-whitelist-multiple-ip-and-cidr-43-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whitelist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15057,7 +15045,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whitelist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15099,7 +15087,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-whitelist-empty-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-whitelist-empty-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whitelist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15206,7 +15194,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whitelist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15248,7 +15236,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-allowlist-empty-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-empty-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "allowlist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15355,7 +15343,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"allowlist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15397,7 +15385,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-single-ip-32-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "allowlist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15532,7 +15520,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"allowlist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15575,7 +15563,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-allowlist-single-ip-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-single-ip-32-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "allowlist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15716,7 +15704,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"allowlist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15758,7 +15746,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-allowlist-single-cidr-34-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-allowlist-single-cidr-34-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-single-cidr-34-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "allowlist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -15893,7 +15881,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"allowlist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -15935,7 +15923,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-allowlist-multiple-ip-and-cidr-43-rule-0-path-0-tls-allowed-source-range", "default-7-ingress-with-allowlist-multiple-ip-and-cidr-43-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-allowlist-multiple-ip-and-cidr-43-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "allowlist-source-range.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -16070,7 +16058,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"allowlist-source-range.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -16115,7 +16103,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-access-log-enabled-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-enabled-31-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "accesslog-enabled.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								AccessLogs: new(true),
@@ -16156,7 +16144,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-access-log-disabled-32-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-disabled-32-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "accesslog-disabled.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
 								AccessLogs: new(false),
@@ -16194,7 +16182,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-access-log-default-31-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-access-log-default-31-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "accesslog-default.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -16421,9 +16409,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"accesslog-default.localhost":  hostTLSOption(),
-						"accesslog-disabled.localhost": hostTLSOption(),
-						"accesslog-enabled.localhost":  hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -16465,7 +16451,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-permanent-redirect-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "permanent-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -16604,7 +16590,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"permanent-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -16646,7 +16632,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-cors-and-permanent-redirect-40-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-cors", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-redirect", "default-7-ingress-with-cors-and-permanent-redirect-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "cors-permanent-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -16823,7 +16809,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cors-permanent-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -16865,7 +16851,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-permanent-redirect-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "permanent-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17004,7 +16990,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"permanent-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17046,7 +17032,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-permanent-redirect-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-permanent-redirect-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "permanent-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17185,7 +17171,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"permanent-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17227,7 +17213,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-redirect-21-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-redirect-21-rule-0-path-0-tls-redirect", "default-7-ingress-with-redirect-21-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17366,7 +17352,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17408,7 +17394,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-temporal-redirect-30-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "temporal-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17547,7 +17533,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"temporal-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17589,7 +17575,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-temporal-redirect-30-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "temporal-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17728,7 +17714,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"temporal-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17770,7 +17756,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-temporal-redirect-30-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-redirect", "default-7-ingress-with-temporal-redirect-30-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "temporal-redirect.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -17909,7 +17895,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"temporal-redirect.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -17951,7 +17937,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-redirect-use-regex-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-tls-redirect", "default-7-ingress-with-redirect-use-regex-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "redirect-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -18090,7 +18076,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"redirect-regex.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -18132,7 +18118,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-timeout-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-timeout-26-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -18235,7 +18221,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -18277,7 +18263,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-timeout-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-timeout-26-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -18380,7 +18366,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -18422,7 +18408,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-timeout-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-timeout-26-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -18525,7 +18511,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -21059,7 +21045,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-without-auth-20-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-without-auth-20-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -21424,7 +21410,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 						},
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 						"auth-tls-verify-client.localhost": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
@@ -22000,7 +21986,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-public-ingress-14-rule-0-path-0-tls-retry"},
 							Service:     "default-7-public-ingress-14-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "auth-tls-rule-without-paths.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -22107,7 +22093,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"auth-tls-rule-without-paths.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -22578,7 +22564,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-known-host-ingress-18-rule-0-path-0-tls-retry"},
 							Service:     "default-7-known-host-ingress-18-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "known-host.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -22696,7 +22682,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"known-host.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -23009,7 +22995,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-custom-http-errors-and-default-backend-51-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-custom-http-errors-and-default-backend-51-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-with-custom-http-errors-and-default-backend-51-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -23209,7 +23195,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -23251,7 +23237,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-a-with-custom-http-errors-33-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-a-with-custom-http-errors-33-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "a.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -23286,7 +23272,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-b-with-custom-http-errors-33-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-custom-http-errors", "default-7-ingress-b-with-custom-http-errors-33-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "b.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -23656,8 +23642,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"a.localhost": hostTLSOption(),
-						"b.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -23707,7 +23692,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-custom-http-errors-31-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -23899,7 +23884,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -23941,7 +23926,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-custom-http-errors-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-custom-http-errors-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24042,7 +24027,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24084,7 +24069,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-default-backend-annotation-39-empty-5-80-2",
 							Middlewares: []string{"default-7-ingress-with-default-backend-annotation-39-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24192,7 +24177,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24234,7 +24219,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-body-size-28-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-body-size-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-body-size-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24375,7 +24360,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24418,7 +24403,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-request-buffering-off-40-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-request-buffering-off-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24525,7 +24510,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24567,7 +24552,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-body-size-retry-34-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-body-size-retry-34-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24674,7 +24659,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24716,7 +24701,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-body-size-zero-retry-39-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-body-size-zero-retry-39-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24823,7 +24808,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -24865,7 +24850,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-http-status-retry-and-buffering-off-48-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-http-status-retry-and-buffering-off-48-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -24974,7 +24959,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25016,7 +25001,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-client-body-buffer-size-36-rule-0-path-0-tls-buffering", "default-7-ingress-with-client-body-buffer-size-36-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-client-body-buffer-size-36-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -25157,7 +25142,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25199,7 +25184,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-body-size-and-client-body-buffer-size-56-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-body-size-and-client-body-buffer-size-56-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-body-size-and-client-body-buffer-size-56-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -25340,7 +25325,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25382,7 +25367,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-buffer-size-30-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-buffer-size-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-buffer-size-30-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -25525,7 +25510,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25567,7 +25552,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-buffers-number-33-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-buffers-number-33-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-buffers-number-33-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -25710,7 +25695,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25752,7 +25737,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-buffer-size-and-number-41-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-buffer-size-and-number-41-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-buffer-size-and-number-41-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -25895,7 +25880,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -25937,7 +25922,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-proxy-max-temp-file-size-37-rule-0-path-0-tls-buffering", "default-7-ingress-with-proxy-max-temp-file-size-37-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-proxy-max-temp-file-size-37-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "hostname.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26080,7 +26065,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"hostname.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -26129,7 +26114,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26260,7 +26245,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -26309,7 +26294,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-a-with-server-snippet-29-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26350,7 +26335,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-b-without-server-snippet-32-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26582,7 +26567,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -26631,7 +26616,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26762,7 +26747,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -26811,7 +26796,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -26944,7 +26929,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -27092,7 +27077,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-server-snippet-27-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-snippet", "default-7-ingress-with-server-snippet-27-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -27223,7 +27208,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -27266,7 +27251,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-configuration-snippet-34-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-snippet", "default-7-ingress-with-configuration-snippet-34-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -27397,7 +27382,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -27440,7 +27425,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-both-snippets-26-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-snippet", "default-7-ingress-with-both-snippets-26-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "snippet.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -27573,7 +27558,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"snippet.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -28068,7 +28053,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-next-upstream-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-32-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28086,7 +28071,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-proxy-next-upstream-off-36-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28234,7 +28219,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -28276,7 +28261,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-next-upstream-status-only-44-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-status-only-44-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28383,7 +28368,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -28450,7 +28435,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-proxy-next-upstream-32-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28471,7 +28456,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-proxy-next-upstream-off-36-rule-0-path-0-tls-buffering",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28687,7 +28672,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -28745,7 +28730,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-next-upstream-tries-unlimited-48-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-tries-unlimited-48-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28764,7 +28749,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-next-upstream-tries-38-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-tries-38-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -28938,7 +28923,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -28980,7 +28965,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-next-upstream-timeout-40-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-next-upstream-timeout-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29085,7 +29070,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -29127,7 +29112,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-server-alias-25-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-server-alias-25-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "original.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29235,7 +29220,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"original.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -29293,7 +29278,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-primary-ingress-15-rule-0-path-0-tls-retry"},
 							Service:     "default-7-primary-ingress-15-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "conflict.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29312,7 +29297,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-alias-ingress-13-rule-0-path-0-tls-retry"},
 							Service:     "default-7-alias-ingress-13-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "original.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29486,8 +29471,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"conflict.localhost": hostTLSOption(),
-						"original.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -29545,7 +29529,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-first-ingress-13-rule-0-path-0-tls-retry"},
 							Service:     "default-7-first-ingress-13-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "first.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29564,7 +29548,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-second-ingress-14-rule-0-path-0-tls-retry"},
 							Service:     "default-7-second-ingress-14-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "second.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29738,8 +29722,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"first.localhost":  hostTLSOption(),
-						"second.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -29781,7 +29764,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-http-version-31-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-http-version-31-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "proxy-http-version.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -29885,7 +29868,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"proxy-http-version.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -29927,7 +29910,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-proxy-http-version-unsupported-43-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-proxy-http-version-unsupported-43-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "proxy-http-version-unsupported.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30030,7 +30013,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"proxy-http-version-unsupported.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -30072,7 +30055,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-upstream-hash-by-29-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-upstream-hash-by-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30176,7 +30159,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -30220,7 +30203,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-19-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-19-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30385,7 +30368,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -30429,7 +30412,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-and-sticky-30-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-and-sticky-30-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30633,7 +30616,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -30677,7 +30660,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-weight-26-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-weight-26-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30842,7 +30825,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -30904,7 +30887,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-29-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -30925,7 +30908,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-29-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31120,7 +31103,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -31182,7 +31165,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-value-35-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-value-35-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31203,7 +31186,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-value-35-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-value-35-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31398,7 +31381,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -31460,7 +31443,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-pattern-37-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-pattern-37-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31481,7 +31464,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-pattern-37-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-pattern-37-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31676,7 +31659,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -31720,7 +31703,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-misconfigured-43-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-misconfigured-43-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31885,7 +31868,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -31947,7 +31930,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-cookie-29-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-cookie-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -31968,7 +31951,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-cookie-29-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-cookie-29-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32163,7 +32146,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -32210,7 +32193,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32251,7 +32234,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-tls-limit-allowlist-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32290,7 +32273,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-limit-rps", "default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32331,7 +32314,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-and-limit-allowlist-39-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-and-limit-allowlist-39-rule-0-path-0-canary-tls-limit-allowlist-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32602,7 +32585,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -32682,7 +32665,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32703,7 +32686,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32724,7 +32707,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-and-cookie-and-weight-51-rule-0-path-0-non-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -32949,7 +32932,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -33020,7 +33003,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33044,7 +33027,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-31-rule-0-path-0-canary-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33295,7 +33278,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -33337,7 +33320,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-non-matching-canary-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-non-matching-canary-32-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33444,7 +33427,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -33518,7 +33501,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33542,7 +33525,7 @@ func TestLoadIngresses(t *testing.T) {
 								"default-7-ingress-with-canary-middlewares-and-tls-39-rule-0-path-0-canary-tls-retry",
 							},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33815,7 +33798,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -33873,7 +33856,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-rps-22-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-rps-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-rps-22-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -33892,7 +33875,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-rps-zero-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-rps-zero-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami-zero.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34098,8 +34081,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami-zero.localhost": hostTLSOption(),
-						"whoami.localhost":      hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -34141,7 +34123,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-whitelist-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34178,7 +34160,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-whitelist-28-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-7-ingress-with-limit-whitelist-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34331,7 +34313,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -34373,7 +34355,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-connections", "default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34410,7 +34392,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-28-rule-0-path-0-tls-limit-allowlist-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-28-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34597,7 +34579,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -34639,7 +34621,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-allowlist-no-limit-37-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-allowlist-no-limit-37-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -34736,7 +34718,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -35034,7 +35016,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-rpm-22-rule-0-path-0-tls-limit-rpm", "default-7-ingress-with-limit-rpm-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-rpm-22-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35053,7 +35035,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-rpm-zero-27-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-rpm-zero-27-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami-zero.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35259,8 +35241,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami-zero.localhost": hostTLSOption(),
-						"whoami.localhost":      hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -35299,7 +35280,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-burst-multiplier-35-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-burst-multiplier-35-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-burst-multiplier-35-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami-burst.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35334,7 +35315,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-burst-multiplier-zero-40-rule-0-path-0-tls-limit-rps", "default-7-ingress-with-limit-burst-multiplier-zero-40-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-burst-multiplier-zero-40-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami-burst-zero.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35524,8 +35505,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami-burst-zero.localhost": hostTLSOption(),
-						"whoami-burst.localhost":      hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -35567,7 +35547,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-limit-connections-30-rule-0-path-0-tls-limit-connections", "default-7-ingress-with-limit-connections-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-limit-connections-30-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35694,7 +35674,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -35771,7 +35751,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-use-regex-22-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-use-regex-22-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "use-regex.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -35868,7 +35848,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"use-regex.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -35908,7 +35888,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "*.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-with-wildcard-host-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-wildcard-host-26-whoami-6-80-2",
@@ -36013,7 +35993,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"*.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -36057,7 +36037,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("*.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "*.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-with-wildcard-host-tls-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-wildcard-host-tls-30-whoami-6-80-2",
@@ -36183,7 +36163,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"*.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -36259,7 +36239,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "external.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36294,7 +36274,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-1-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-http-4",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "external.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36329,7 +36309,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-2-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-3000-4",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "external.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36364,7 +36344,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-external-name-26-rule-0-path-3-tls-retry"},
 							Service:     "default-7-ingress-with-external-name-26-external-8-foo-3",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "external.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36636,7 +36616,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"external.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -36684,7 +36664,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-tls-multi-secrets-30-rule-0-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-tls-multi-secrets-30-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "first.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36722,7 +36702,7 @@ func TestLoadIngresses(t *testing.T) {
 							Middlewares: []string{"default-7-ingress-with-tls-multi-secrets-30-rule-1-path-0-tls-retry"},
 							Service:     "default-7-ingress-with-tls-multi-secrets-30-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "second.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -36896,8 +36876,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Options: map[string]tls.Options{
-						"first.localhost":  hostTLSOption(),
-						"second.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -37343,7 +37322,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-with-custom-http-errors-and-upstream-hash-by-52-whoami-6-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{
 								"default-7-ingress-with-custom-http-errors-and-upstream-hash-by-52-rule-0-path-0-tls-custom-http-errors",
@@ -37543,7 +37522,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -37584,7 +37563,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-endpoint-conditions-32-whoami-6-80-2",
 							Middlewares: []string{"default-7-ingress-with-endpoint-conditions-32-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -37687,7 +37666,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -37714,7 +37693,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-disable-http-entrypoint-31-service1-8-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-31-rule-0-path-0-tls-retry"},
 							Metadata: &dynamic.Metadata{
@@ -37797,7 +37776,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -37824,7 +37803,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-service1-8-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-limit-rps", "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-retry"},
 							Metadata: &dynamic.Metadata{
@@ -37844,7 +37823,7 @@ func TestLoadIngresses(t *testing.T) {
 							Priority:    44,
 							Service:     "default-7-ingress-disable-http-entrypoint-limit-allowlist-47-service1-8-80-2",
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Middlewares: []string{"default-7-ingress-disable-http-entrypoint-limit-allowlist-47-rule-0-path-0-tls-limit-allowlist-retry"},
 							Metadata: &dynamic.Metadata{
@@ -37958,7 +37937,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -37985,7 +37964,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-29-whoami-6-80-2-wrr",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -38006,7 +37985,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-canary-by-header-29-whoami-6-80-2-canary",
 							Middlewares: []string{"default-7-ingress-with-canary-by-header-29-rule-0-path-0-canary-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "production.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -38171,7 +38150,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"production.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -38416,7 +38395,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-nil-endpointslice-port-name-40-whoami-nil-port-name-20-80-2",
 							Middlewares: []string{"default-7-ingress-with-nil-endpointslice-port-name-40-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -38514,7 +38493,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
@@ -38556,7 +38535,7 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-7-ingress-with-nil-endpointslice-port-value-41-whoami-nil-port-value-21-80-2",
 							Middlewares: []string{"default-7-ingress-with-nil-endpointslice-port-value-41-rule-0-path-0-tls-retry"},
 							TLS: &dynamic.RouterTLSConfig{
-								Options: "whoami.localhost",
+								Options: defaultHostTLSOptionName,
 							},
 							Metadata: &dynamic.Metadata{
 								Kubernetes: &dynamic.KubernetesMetadata{
@@ -38654,7 +38633,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"whoami.localhost": hostTLSOption(),
+						defaultHostTLSOptionName: hostTLSOption(),
 					},
 				},
 			},
