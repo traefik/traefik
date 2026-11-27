@@ -338,7 +338,7 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioenable-cors" href="#opt-nginx-ingress-kubernetes-ioenable-cors" title="#opt-nginx-ingress-kubernetes-ioenable-cors">`nginx.ingress.kubernetes.io/enable-cors`</a> | Partial support.                                                                           |
+| <a id="opt-nginx-ingress-kubernetes-ioenable-cors" href="#opt-nginx-ingress-kubernetes-ioenable-cors" title="#opt-nginx-ingress-kubernetes-ioenable-cors">`nginx.ingress.kubernetes.io/enable-cors`</a> | Partial support. Requests whose origin does not match `cors-allow-origin` are proxied to the backend without CORS headers, as with ingress-nginx. |
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-credentials" href="#opt-nginx-ingress-kubernetes-iocors-allow-credentials" title="#opt-nginx-ingress-kubernetes-iocors-allow-credentials">`nginx.ingress.kubernetes.io/cors-allow-credentials`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-headers" href="#opt-nginx-ingress-kubernetes-iocors-allow-headers" title="#opt-nginx-ingress-kubernetes-iocors-allow-headers">`nginx.ingress.kubernetes.io/cors-allow-headers`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-methods" href="#opt-nginx-ingress-kubernetes-iocors-allow-methods" title="#opt-nginx-ingress-kubernetes-iocors-allow-methods">`nginx.ingress.kubernetes.io/cors-allow-methods`</a> |                                                                                            |
@@ -427,7 +427,7 @@ The following annotations are organized by category for easier navigation.
 - **Session Affinity**: Only persistent mode is supported.
 - **Leader Election**: Not supported; no cluster mode with leader election.
 - **Load Balancing**: Only round_robin is supported; EWMA and IP hash are not supported.
-- **CORS**: NGINX responds with all configured headers unconditionally; Traefik handles headers differently between pre-flight and regular requests.
+- **CORS**: Only requests whose origin matches `cors-allow-origin` are handled; other requests are proxied to the backend without CORS headers, as with NGINX. Preflight responses return `200 OK` instead of NGINX's `204 No Content`.
 - **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
 - **Path Handling**: Traefik preserves trailing slashes by default; NGINX removes them unless configured otherwise.
 - **Retry**: NGINX guarantee that the next retry will be passed to the next server, while on Traefik there is a possibility that the retry would be passed to the same server.

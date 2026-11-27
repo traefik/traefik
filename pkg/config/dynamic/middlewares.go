@@ -374,6 +374,11 @@ type Headers struct {
 	AccessControlMaxAge *int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
 	// AddVaryHeader defines whether the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
+	// CORSStrict restricts CORS processing to requests whose Origin matches the allow list.
+	// When enabled, preflight requests from other origins are passed to the next handler,
+	// and credentials and expose headers are only set for allowed origins.
+	// It is not part of the public configuration, and is set by the Kubernetes Ingress NGINX provider.
+	CORSStrict bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 	// AllowedHosts defines the fully qualified list of allowed domain names.
 	AllowedHosts []string `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
 	// HostsProxyHeaders defines the header keys that may hold a proxied hostname value for the request.
