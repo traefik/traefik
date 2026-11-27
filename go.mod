@@ -2,6 +2,8 @@ module github.com/traefik/traefik/v2
 
 go 1.27.0
 
+toolchain go1.27.4
+
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61 // No tag on the repo.

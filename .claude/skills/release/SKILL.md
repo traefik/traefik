@@ -187,10 +187,29 @@ Prepend the processed result to the top of `CHANGELOG.md`.
 
 Show the added lines (first ~30 lines of the new block).
 
-**Pause 2** — ask: "CHANGELOG.md updated. Review in your editor, adjust if needed. (y to commit)"
+Check the Go toolchain pin.
+The binaries are built with the latest patch of the Go version in `.go-version` (setup-go with `check-latest`),
+and the `toolchain` directive of `go.mod` must match it:
+scanners read it to tell which standard library the release is built with, and a stale one makes them report vulnerabilities already fixed in the binaries.
 
 ```bash
-git add CHANGELOG.md
+latest=$(curl -sSfL 'https://go.dev/dl/?mode=json&include=all' \
+  | jq -r --arg v "go$(tr -d '[:space:]' < .go-version)" '[.[] | select(.stable) | .version | select(startswith($v + "."))] | first // empty')
+pinned=$(GOTOOLCHAIN=local go mod edit -json | jq -r '.Toolchain // ("go" + .Go)')
+echo "latest=${latest} pinned=${pinned}"
+```
+
+If `latest` is empty, stop and ask.
+If they differ, bump the pin (it is committed with `CHANGELOG.md` in the next step):
+
+```bash
+GOTOOLCHAIN=local go mod edit -toolchain="${latest}"
+```
+
+**Pause 2** — ask: "CHANGELOG.md updated (and go.mod if the toolchain was bumped). Review in your editor, adjust if needed. (y to commit)"
+
+```bash
+git add CHANGELOG.md go.mod
 git commit -m "Prepare release ${NEW_TAG}"
 ```
 
