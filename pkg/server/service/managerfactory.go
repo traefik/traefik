@@ -27,6 +27,7 @@ type ManagerFactory struct {
 	dashboardHandler http.Handler
 	metricsHandler   http.Handler
 	pingHandler      http.Handler
+	readyHandler     http.Handler
 	acmeHTTPHandler  http.Handler
 
 	routinesPool *safe.Pool
@@ -75,6 +76,11 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 		factory.pingHandler = staticConfiguration.Ping
 	}
 
+	// Same typed-nil concern as Ping above.
+	if staticConfiguration.Ready != nil {
+		factory.readyHandler = staticConfiguration.Ready
+	}
+
 	return factory
 }
 
@@ -85,6 +91,6 @@ func (f *ManagerFactory) Build(configuration *runtime.Configuration) *Manager {
 		apiHandler = f.api(configuration)
 	}
 
-	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
+	internalHandlers := NewInternalHandlers(apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.readyHandler, f.dashboardHandler, f.acmeHTTPHandler)
 	return NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.transportManager, f.proxyBuilder, internalHandlers)
 }

@@ -139,6 +139,10 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
 
+	if staticConfiguration.Ready != nil {
+		staticConfiguration.Ready.WithContext(ctx)
+	}
+
 	svr.Start(ctx)
 	defer svr.Close()
 
@@ -189,6 +193,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	if err != nil {
 		return nil, err
 	}
+
+	// Snapshot provider count before adding lazy providers (ACME, Tailscale)
+	// that do not send an initial configuration message on startup.
+	startupProviderCount := providerAggregator.ProviderCount()
 
 	// ACME
 
@@ -328,6 +336,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		"internal",
 		staticConfiguration.Core != nil && staticConfiguration.Core.StrictTLSOptions,
 	)
+
+	if staticConfiguration.Ready != nil {
+		watcher.SetReadinessTracking(startupProviderCount, staticConfiguration.Ready.SetReady)
+	}
 
 	// TLS
 	watcher.AddListener(func(conf dynamic.Configuration) {
