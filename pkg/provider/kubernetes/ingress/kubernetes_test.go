@@ -1794,18 +1794,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-foo": {
-							Rule:    `PathPrefix("/foo")`,
-							Service: "testing-service1-80",
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "Ingress",
-										Namespace: "testing",
-									},
-								},
-							},
-						},
 						"testing-bar": {
 							Rule:    `PathPrefix("/bar")`,
 							Service: "testing-service1-80",
@@ -2231,7 +2219,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress with ingressClass",
+			desc:         "Ingress with ingressClass",
+			ingressClass: "traefik-lb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2274,6 +2263,18 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			// Empty provider ingressClass only matches the IngressClass named "traefik",
+			// not another Traefik IngressClass such as traefik-lb.
+			desc: "Ingress with ingressClass",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
