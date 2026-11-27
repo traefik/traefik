@@ -224,6 +224,8 @@ func isGRPCRequest(req *http.Request) bool {
 func grpcStatusCode(rw http.ResponseWriter) int {
 	code := codes.Unknown
 
+	// A compliant gRPC server sends Grpc-Status either as a header (Trailers-Only response) or as a trailer, never both,
+	// so the order of the lookups below does not matter.
 	status := rw.Header().Get("Grpc-Status")
 	if status == "" {
 		// Trailers not announced by the backend are written with the http.TrailerPrefix.
