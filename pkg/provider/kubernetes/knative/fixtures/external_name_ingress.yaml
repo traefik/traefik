@@ -1,0 +1,24 @@
+---
+apiVersion: networking.internal.knative.dev/v1alpha1
+kind: Ingress
+metadata:
+  annotations:
+    networking.knative.dev/ingress.class: traefik.ingress.networking.knative.dev
+  name: custom-another-domain-com
+  namespace: knative-serving
+spec:
+  httpOption: Enabled
+  rules:
+    - hosts:
+        - custom.another-domain.com
+      http:
+        paths:
+          - rewriteHost: hello-world.knative-serving.svc.cluster.local
+            splits:
+              - appendHeaders:
+                  K-Original-Host: custom.another-domain.com
+                percent: 100
+                serviceName: hello-world
+                serviceNamespace: knative-serving
+                servicePort: 80
+      visibility: ExternalIP

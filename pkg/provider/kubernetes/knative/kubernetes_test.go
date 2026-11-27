@@ -29,10 +29,11 @@ func init() {
 
 func Test_loadConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc    string
-		paths   []string
-		want    *dynamic.Configuration
-		wantLen int
+		desc                      string
+		paths                     []string
+		allowExternalNameServices bool
+		want                      *dynamic.Configuration
+		wantLen                   int
 	}{
 		{
 			desc:    "Wrong ingress class",
@@ -187,6 +188,119 @@ func Test_loadConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc:    "Domain Mapping with rewriteHost",
+			paths:   []string{"domain_mapping.yaml", "services.yaml"},
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-custom-another-domain-com-rule-0-path-0": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "default-custom-another-domain-com-rule-0-path-0-wrr",
+							Rule:        `(Host("custom.another-domain.com"))`,
+							Middlewares: []string{"default-custom-another-domain-com-rule-0-path-0-append-headers"},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-custom-another-domain-com-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.38.208:80",
+									},
+								},
+							},
+						},
+						"default-custom-another-domain-com-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-custom-another-domain-com-rule-0-path-0-split-0",
+										Weight: ptr.To(100),
+										Headers: map[string]string{
+											"K-Original-Host": "custom.another-domain.com",
+										},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-custom-another-domain-com-rule-0-path-0-append-headers": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{
+									"Host":              "helloworld-go.default.svc.cluster.local",
+									"K-Original-Host":   "custom.another-domain.com",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:                      "Domain Mapping with ExternalName service",
+			paths:                     []string{"external_name_ingress.yaml", "external_name_service.yaml"},
+			allowExternalNameServices: true,
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"knative-serving-custom-another-domain-com-rule-0-path-0": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "knative-serving-custom-another-domain-com-rule-0-path-0-wrr",
+							Rule:        `(Host("custom.another-domain.com"))`,
+							Middlewares: []string{"knative-serving-custom-another-domain-com-rule-0-path-0-append-headers"},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"knative-serving-custom-another-domain-com-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "h2c://hello-world.knative-serving.example.com:80",
+									},
+								},
+							},
+						},
+						"knative-serving-custom-another-domain-com-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "knative-serving-custom-another-domain-com-rule-0-path-0-split-0",
+										Weight: ptr.To(100),
+										Headers: map[string]string{
+											"K-Original-Host": "custom.another-domain.com",
+										},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"knative-serving-custom-another-domain-com-rule-0-path-0-append-headers": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{
+									"Host":            "hello-world.knative-serving.svc.cluster.local",
+									"K-Original-Host": "custom.another-domain.com",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:    "TLS",
 			paths:   []string{"tls.yaml", "services.yaml"},
 			wantLen: 1,
@@ -290,9 +404,10 @@ func Test_loadConfiguration(t *testing.T) {
 			}
 
 			p := Provider{
-				PublicEntrypoints:  []string{"http", "https"},
-				PrivateEntrypoints: []string{"priv-http", "priv-https"},
-				client:             client,
+				PublicEntrypoints:         []string{"http", "https"},
+				PrivateEntrypoints:        []string{"priv-http", "priv-https"},
+				AllowExternalNameServices: testCase.allowExternalNameServices,
+				client:                    client,
 			}
 
 			got, gotIngresses := p.loadConfiguration(t.Context())
