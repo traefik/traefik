@@ -173,14 +173,15 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		delete(conf.TLS.Stores, traefiktls.DefaultTLSStoreName)
 	}
 
-	if len(defaultTLSOptionProviders) == 0 {
+	switch {
+	case len(defaultTLSOptionProviders) == 0:
 		conf.TLS.Options[traefiktls.DefaultTLSConfigName] = traefiktls.DefaultTLSOptions
-	} else if len(defaultTLSOptionProviders) > 1 {
+	case len(defaultTLSOptionProviders) > 1:
 		log.Error().Msgf("Default TLS Options defined in multiple providers %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
 		delete(conf.TLS.Options, traefiktls.DefaultTLSConfigName)
-	} else if defaultTLSOptionProviders[0] != ingressnginx.ProviderName {
+	case defaultTLSOptionProviders[0] != ingressnginx.ProviderName:
 		if nginxConfig := configurations[ingressnginx.ProviderName]; nginxConfig != nil && nginxConfig.TLS != nil {
 			defaultOptions := conf.TLS.Options[traefiktls.DefaultTLSConfigName]
 			for name, options := range nginxConfig.TLS.Options {
