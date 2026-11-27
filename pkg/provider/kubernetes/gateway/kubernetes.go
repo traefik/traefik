@@ -52,7 +52,7 @@ type Provider struct {
 	Namespaces              []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector           string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	ThrottleDuration        ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	CrossProviderNamespaces []string              `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	CrossProviderNamespaces *[]string             `description:"List of namespaces from which Gateway API routes are allowed to declare TraefikService backendRef references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	EntryPoints             map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	lastConfiguration safe.Safe
@@ -86,7 +86,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.CrossProviderNamespaces != nil {
-		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
+		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", *p.CrossProviderNamespaces)
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -1444,7 +1444,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 }
 
 // loadServices is generating a WRR service, even when there is only one target.
-func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HTTPBackendRef, crossProviderNamespaces []string) (*dynamic.Service, map[string]*dynamic.Service, error) {
+func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HTTPBackendRef, crossProviderNamespaces *[]string) (*dynamic.Service, map[string]*dynamic.Service, error) {
 	services := map[string]*dynamic.Service{}
 
 	wrrSvc := &dynamic.Service{
@@ -1573,7 +1573,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 }
 
 // loadTCPServices is generating a WRR service, even when there is only one target.
-func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2.BackendRef, crossProviderNamespaces []string) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
+func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2.BackendRef, crossProviderNamespaces *[]string) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
 	services := map[string]*dynamic.TCPService{}
 
 	wrrSvc := &dynamic.TCPService{
@@ -1747,13 +1747,15 @@ func isInternalService(ref gatev1alpha2.BackendRef) bool {
 	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
-// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to use cross-provider references.
-func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool {
+// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare cross-provider references.
+// A nil allowList means the option is not set: every namespace is allowed.
+// A non-nil allowList pointing to an empty (or nil) slice means the option is set to an empty list: every namespace is rejected.
+func isCrossProviderNamespaceAllowed(allowList *[]string, namespace string) bool {
 	if allowList == nil {
 		return true
 	}
 
-	return slices.Contains(allowList, namespace)
+	return slices.Contains(*allowList, namespace)
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.

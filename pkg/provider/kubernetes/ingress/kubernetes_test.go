@@ -1914,7 +1914,7 @@ func generateTestFilename(suffix, desc string) string {
 func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		paths                   []string
 		wantRouter              string
 	}{
@@ -1930,7 +1930,16 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 		},
 		{
 			desc:                    "Ingress with middleware annotation is dropped when option is empty",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			paths: []string{
+				"fixtures/Ingress-with-annotations_ingress.yml",
+				"fixtures/Ingress-with-annotations_endpoint.yml",
+				"fixtures/Ingress-with-annotations_service.yml",
+			},
+		},
+		{
+			desc:                    "Ingress with middleware annotation is dropped when option is empty (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			paths: []string{
 				"fixtures/Ingress-with-annotations_ingress.yml",
 				"fixtures/Ingress-with-annotations_endpoint.yml",
@@ -1939,7 +1948,7 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 		},
 		{
 			desc:                    "Ingress with middleware annotation is kept when its namespace is allow-listed",
-			crossProviderNamespaces: []string{"testing"},
+			crossProviderNamespaces: &[]string{"testing"},
 			paths: []string{
 				"fixtures/Ingress-with-annotations_ingress.yml",
 				"fixtures/Ingress-with-annotations_endpoint.yml",
@@ -1949,7 +1958,7 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces(t *testing.T)
 		},
 		{
 			desc:                    "Ingress with middleware annotation is dropped when its namespace is not allow-listed",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 			paths: []string{
 				"fixtures/Ingress-with-annotations_ingress.yml",
 				"fixtures/Ingress-with-annotations_endpoint.yml",
@@ -1987,7 +1996,7 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions(t 
 
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouter              string
 	}{
 		{
@@ -1997,16 +2006,20 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_TLSOptions(t 
 		},
 		{
 			desc:                    "Ingress with TLS options annotation is dropped when option is empty",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+		},
+		{
+			desc:                    "Ingress with TLS options annotation is dropped when option is empty (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 		},
 		{
 			desc:                    "Ingress with TLS options annotation is kept when its namespace is allow-listed",
-			crossProviderNamespaces: []string{"testing"},
+			crossProviderNamespaces: &[]string{"testing"},
 			wantRouter:              "testing-bar",
 		},
 		{
 			desc:                    "Ingress with TLS options annotation is dropped when its namespace is not allow-listed",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 		},
 	}
 
@@ -2041,7 +2054,7 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransp
 
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantService             string
 	}{
 		{
@@ -2051,16 +2064,20 @@ func TestLoadConfigurationFromIngressesWithCrossProviderNamespaces_ServersTransp
 		},
 		{
 			desc:                    "Service with serversTransport annotation is dropped when option is empty",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+		},
+		{
+			desc:                    "Service with serversTransport annotation is dropped when option is empty (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 		},
 		{
 			desc:                    "Service with serversTransport annotation is kept when its namespace is allow-listed",
-			crossProviderNamespaces: []string{"testing"},
+			crossProviderNamespaces: &[]string{"testing"},
 			wantService:             "testing-service1-80",
 		},
 		{
 			desc:                    "Service with serversTransport annotation is dropped when its namespace is not allow-listed",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 		},
 	}
 

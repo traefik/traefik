@@ -1762,7 +1762,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		expected                     *dynamic.Configuration
 		allowCrossNamespace          bool
 		allowEmptyServices           bool
-		crossProviderNamespaces      []string
+		crossProviderNamespaces      *[]string
 		defaultTLSResourcesNamespace string
 		safeNaming                   bool
 	}{
@@ -2064,7 +2064,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:                    "Simple Ingress Route with middleware crossprovider",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 			allowCrossNamespace:     true,
 			paths:                   []string{"services.yml", "with_middleware_cross_provider.yml"},
 			expected: &dynamic.Configuration{
@@ -8147,15 +8147,15 @@ func TestCrossNamespace(t *testing.T) {
 func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		allowList []string
+		allowList *[]string
 		namespace string
 		want      bool
 	}{
 		{desc: "nil allowList allows any namespace", allowList: nil, namespace: "ns-a", want: true},
-		{desc: "empty allowList denies every namespace", allowList: []string{}, namespace: "ns-a", want: false},
-		{desc: "namespace in allowList is accepted", allowList: []string{"ns-a"}, namespace: "ns-a", want: true},
-		{desc: "namespace not in allowList is rejected", allowList: []string{"ns-b"}, namespace: "ns-a", want: false},
-		{desc: "namespace among multiple allowed entries is accepted", allowList: []string{"ns-a", "ns-b"}, namespace: "ns-b", want: true},
+		{desc: "empty allowList denies every namespace", allowList: &[]string{}, namespace: "ns-a", want: false},
+		{desc: "namespace in allowList is accepted", allowList: &[]string{"ns-a"}, namespace: "ns-a", want: true},
+		{desc: "namespace not in allowList is rejected", allowList: &[]string{"ns-b"}, namespace: "ns-a", want: false},
+		{desc: "namespace among multiple allowed entries is accepted", allowList: &[]string{"ns-a", "ns-b"}, namespace: "ns-b", want: true},
 	}
 
 	for _, test := range testCases {
@@ -8173,7 +8173,7 @@ func Test_isCrossProviderNamespaceAllowed(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantMiddlewares         []string
 		wantRouterDropped       bool
 	}{
@@ -8184,17 +8184,22 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 		},
 		{
 			desc:                    "empty list: cross-provider middleware refs are rejected, IngressRoute is dropped",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "empty list: cross-provider middleware refs are rejected, IngressRoute is dropped (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			wantRouterDropped:       true,
 		},
 		{
 			desc:                    "namespace allowed: cross-provider middleware refs are accepted",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 			wantMiddlewares:         []string{"default-stripprefix", "foo-addprefix", "basicauth@file", "redirect@file"},
 		},
 		{
 			desc:                    "namespace not allowed: cross-provider middleware refs are rejected, IngressRoute is dropped",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 			wantRouterDropped:       true,
 		},
 	}
@@ -8246,7 +8251,7 @@ func TestCrossProviderNamespaces_HTTPMiddleware(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantMirrorService       bool
 		wantWeightedService     bool
 	}{
@@ -8258,31 +8263,37 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 		},
 		{
 			desc:                    "empty list: both Mirror and Weighted TraefikServices are rejected",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			wantMirrorService:       false,
+			wantWeightedService:     false,
+		},
+		{
+			desc:                    "empty list: both Mirror and Weighted TraefikServices are rejected (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			wantMirrorService:       false,
 			wantWeightedService:     false,
 		},
 		{
 			desc:                    "only the Mirror's namespace is allowed: Weighted is still rejected",
-			crossProviderNamespaces: []string{"foo"},
+			crossProviderNamespaces: &[]string{"foo"},
 			wantMirrorService:       true,
 			wantWeightedService:     false,
 		},
 		{
 			desc:                    "only the Weighted's namespace is allowed: Mirror is still rejected",
-			crossProviderNamespaces: []string{"bar"},
+			crossProviderNamespaces: &[]string{"bar"},
 			wantMirrorService:       false,
 			wantWeightedService:     true,
 		},
 		{
 			desc:                    "both namespaces allowed: both TraefikServices are accepted",
-			crossProviderNamespaces: []string{"foo", "bar"},
+			crossProviderNamespaces: &[]string{"foo", "bar"},
 			wantMirrorService:       true,
 			wantWeightedService:     true,
 		},
 		{
 			desc:                    "originating IngressRoute namespace alone is not enough: TraefikService namespace must also be allowed",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 			wantMirrorService:       false,
 			wantWeightedService:     false,
 		},
@@ -8328,7 +8339,7 @@ func TestCrossProviderNamespaces_HTTPServiceTransitivity(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouterDropped       bool
 	}{
 		{
@@ -8337,16 +8348,21 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 		},
 		{
 			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRoute is dropped",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRoute is dropped (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			wantRouterDropped:       true,
 		},
 		{
 			desc:                    "namespace allowed: cross-provider TLSOption ref is accepted",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 		},
 		{
 			desc:                    "namespace not allowed: cross-provider TLSOption ref is rejected, IngressRoute is dropped",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 			wantRouterDropped:       true,
 		},
 	}
@@ -8382,7 +8398,7 @@ func TestCrossProviderNamespaces_HTTPTLSOption(t *testing.T) {
 func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantRouterDropped       bool
 	}{
 		{
@@ -8391,16 +8407,21 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 		},
 		{
 			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRouteTCP is dropped",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			wantRouterDropped:       true,
+		},
+		{
+			desc:                    "empty list: cross-provider TLSOption ref is rejected, IngressRouteTCP is dropped (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			wantRouterDropped:       true,
 		},
 		{
 			desc:                    "namespace allowed: cross-provider TLSOption ref is accepted",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 		},
 		{
 			desc:                    "namespace not allowed: cross-provider TLSOption ref is rejected, IngressRouteTCP is dropped",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 			wantRouterDropped:       true,
 		},
 	}
@@ -8436,7 +8457,7 @@ func TestCrossProviderNamespaces_TCPTLSOption(t *testing.T) {
 func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 	testCases := []struct {
 		desc                    string
-		crossProviderNamespaces []string
+		crossProviderNamespaces *[]string
 		wantServiceDropped      bool
 	}{
 		{
@@ -8445,16 +8466,21 @@ func TestCrossProviderNamespaces_HTTPServersTransport(t *testing.T) {
 		},
 		{
 			desc:                    "empty list: cross-provider ServersTransport ref is rejected, service is dropped",
-			crossProviderNamespaces: []string{},
+			crossProviderNamespaces: &[]string{},
+			wantServiceDropped:      true,
+		},
+		{
+			desc:                    "empty list: cross-provider ServersTransport ref is rejected, service is dropped (pointer to nil slice, as decoded from configuration)",
+			crossProviderNamespaces: new([]string),
 			wantServiceDropped:      true,
 		},
 		{
 			desc:                    "namespace allowed: cross-provider ServersTransport ref is accepted",
-			crossProviderNamespaces: []string{"default"},
+			crossProviderNamespaces: &[]string{"default"},
 		},
 		{
 			desc:                    "namespace not allowed: cross-provider ServersTransport ref is rejected, service is dropped",
-			crossProviderNamespaces: []string{"other"},
+			crossProviderNamespaces: &[]string{"other"},
 			wantServiceDropped:      true,
 		},
 	}

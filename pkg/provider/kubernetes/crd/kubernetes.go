@@ -61,7 +61,7 @@ type Provider struct {
 	Namespaces                   []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	AllowCrossNamespace          bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices    bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	CrossProviderNamespaces      []string        `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
+	CrossProviderNamespaces      *[]string       `description:"List of namespaces from which IngressRoute, IngressRouteTCP, IngressRouteUDP, and TraefikService are allowed to declare cross-provider references." json:"crossProviderNamespaces,omitempty" toml:"crossProviderNamespaces,omitempty" yaml:"crossProviderNamespaces,omitempty" export:"true"`
 	LabelSelector                string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass                 string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration             ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
@@ -113,7 +113,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.CrossProviderNamespaces != nil {
-		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", p.CrossProviderNamespaces)
+		logger.Warnf("Cross-provider references are restricted to namespaces %v (see CrossProviderNamespaces option)", *p.CrossProviderNamespaces)
 	}
 
 	if p.SafeNaming == nil {
@@ -1232,14 +1232,15 @@ func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace str
 	return allowCrossNamespace || parentNamespace == namespace
 }
 
-// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare direct references to Traefik resources.
-// A nil allowList means references are unrestricted, and an empty allowList disables them entirely.
-func isCrossProviderNamespaceAllowed(allowList []string, namespace string) bool {
+// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare cross-provider references.
+// A nil allowList means the option is not set: every namespace is allowed.
+// A non-nil allowList pointing to an empty (or nil) slice means the option is set to an empty list: every namespace is rejected.
+func isCrossProviderNamespaceAllowed(allowList *[]string, namespace string) bool {
 	if allowList == nil {
 		return true
 	}
 
-	return slices.Contains(allowList, namespace)
+	return slices.Contains(*allowList, namespace)
 }
 
 func (p *Provider) resolveReference(ctx context.Context, parentNs, ns, name string) (string, error) {
