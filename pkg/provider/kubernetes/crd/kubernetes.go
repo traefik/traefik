@@ -1149,6 +1149,10 @@ func createRateLimitMiddleware(client *Client, namespace string, rateLimit *trae
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	if rateLimit.Scope != nil {
+		rl.Scope = *rateLimit.Scope
+	}
+
 	if rateLimit.Redis != nil {
 		rl.Redis = &dynamic.Redis{
 			DB:             rateLimit.Redis.DB,

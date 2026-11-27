@@ -9,6 +9,7 @@ spec:
     period: 1m
     average: 6
     burst: 12
+    scope: middleware
     sourceCriterion:
       ipStrategy:
         excludedIPs:

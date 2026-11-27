@@ -3723,6 +3723,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ratelimit": {
 							RateLimit: &dynamic.RateLimit{
+								Scope:   dynamic.RateLimitScopeMiddleware,
 								Average: 6,
 								Burst:   12,
 								Period:  ptypes.Duration(60 * time.Second),
