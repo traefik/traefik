@@ -285,6 +285,10 @@ The following annotations are organized by category for easier navigation.
 
 ### SSL/TLS
 
+Generated per-host TLS options inherit `minVersion`, `maxVersion`, and `cipherSuites`
+from a single `default` TLS option configured outside the Ingress-NGINX provider.
+Client certificate authentication continues to follow the provider's `auth-tls` annotations.
+
 | Annotation                                                                                                                                                                                                                                          | Limitations / Notes                                                                                            |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iossl-redirect" href="#opt-nginx-ingress-kubernetes-iossl-redirect" title="#opt-nginx-ingress-kubernetes-iossl-redirect">`nginx.ingress.kubernetes.io/ssl-redirect`</a> | Cannot opt-out per route if enabled globally.                                                                  |

@@ -11,6 +11,7 @@ import (
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
@@ -172,13 +173,25 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		delete(conf.TLS.Stores, traefiktls.DefaultTLSStoreName)
 	}
 
-	if len(defaultTLSOptionProviders) == 0 {
+	switch {
+	case len(defaultTLSOptionProviders) == 0:
 		conf.TLS.Options[traefiktls.DefaultTLSConfigName] = traefiktls.DefaultTLSOptions
-	} else if len(defaultTLSOptionProviders) > 1 {
+	case len(defaultTLSOptionProviders) > 1:
 		log.Error().Msgf("Default TLS Options defined in multiple providers %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
 		delete(conf.TLS.Options, traefiktls.DefaultTLSConfigName)
+	case defaultTLSOptionProviders[0] != ingressnginx.ProviderName:
+		if nginxConfig := configurations[ingressnginx.ProviderName]; nginxConfig != nil && nginxConfig.TLS != nil {
+			defaultOptions := conf.TLS.Options[traefiktls.DefaultTLSConfigName]
+			for name, options := range nginxConfig.TLS.Options {
+				// Inherit the protocol and cipher policy without changing the host's client authentication.
+				options.MinVersion = defaultOptions.MinVersion
+				options.MaxVersion = defaultOptions.MaxVersion
+				options.CipherSuites = slices.Clone(defaultOptions.CipherSuites)
+				conf.TLS.Options[provider.MakeQualifiedName(ingressnginx.ProviderName, name)] = options
+			}
+		}
 	}
 
 	return conf

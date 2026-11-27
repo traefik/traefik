@@ -315,6 +315,57 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress-NGINX host options inherit TLS versions and ciphers without changing client authentication",
+			given: dynamic.Configurations{
+				"kubernetescrd": {
+					TLS: &dynamic.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"default": {
+								MinVersion:   "VersionTLS12",
+								MaxVersion:   "VersionTLS13",
+								CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+								ClientAuth:   tls.ClientAuth{ClientAuthType: tls.RequestClientCert},
+							},
+							"custom": {},
+						},
+					},
+				},
+				"kubernetesingressnginx": {
+					TLS: &dynamic.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"public.example.com": {
+								CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"},
+							},
+							"mtls.example.com": {
+								CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"},
+								ClientAuth:   tls.ClientAuth{ClientAuthType: tls.RequireAndVerifyClientCert},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Options{
+				"default": {
+					MinVersion:   "VersionTLS12",
+					MaxVersion:   "VersionTLS13",
+					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+					ClientAuth:   tls.ClientAuth{ClientAuthType: tls.RequestClientCert},
+				},
+				"custom@kubernetescrd": {},
+				"public.example.com@kubernetesingressnginx": {
+					MinVersion:   "VersionTLS12",
+					MaxVersion:   "VersionTLS13",
+					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+				},
+				"mtls.example.com@kubernetesingressnginx": {
+					MinVersion:   "VersionTLS12",
+					MaxVersion:   "VersionTLS13",
+					CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+					ClientAuth:   tls.ClientAuth{ClientAuthType: tls.RequireAndVerifyClientCert},
+				},
+			},
+		},
+		{
 			desc: "No default tls option if it is defined in multiple providers",
 			given: dynamic.Configurations{
 				"provider-1": &dynamic.Configuration{
