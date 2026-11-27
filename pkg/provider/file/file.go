@@ -412,7 +412,13 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 			filename = filepath.Join(prefix, item.Name())
 		}
 
-		if item.IsDir() {
+		if item.IsDir() || (item.Type()&os.ModeSymlink != 0 && isVolumeDataDirLink(itemPath)) {
+			// Kubernetes ConfigMap and Secret volumes keep their files in "..<timestamp>" directories, linked at the top level.
+			if strings.HasPrefix(item.Name(), "..") {
+				logger.Debug().Msg("Skipping directory, Kubernetes volume data")
+				continue
+			}
+
 			sub, err := p.collectFileConfigs(ctx, itemPath, filename)
 			if err != nil {
 				return nil, fmt.Errorf("loading content configuration from subdirectory %s: %w", item, err)
@@ -438,6 +444,17 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 	}
 
 	return configurations, nil
+}
+
+// isVolumeDataDirLink reports whether path is a Kubernetes volume link to a nested item directory, such as "sub -> ..data/sub".
+func isVolumeDataDirLink(path string) bool {
+	target, err := os.Readlink(path)
+	if err != nil || !strings.HasPrefix(target, "..data"+string(filepath.Separator)) {
+		return false
+	}
+
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
