@@ -3746,6 +3746,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 									ReadTimeout:    new(ptypes.Duration(42 * time.Second)),
 									WriteTimeout:   new(ptypes.Duration(42 * time.Second)),
 									DialTimeout:    new(ptypes.Duration(42 * time.Second)),
+									DenyOnError:    new(true),
 								},
 							},
 							URNRefs: map[string]string{
