@@ -1876,7 +1876,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 
 // getECHKeys resolves the ECH key secrets, substituting invalid PEM content
 // for unresolved entries so that the TLS option fails closed.
-func getECHKeys(logger *zerolog.Logger, client Client, namespace string, secretNames []string) []types.FileOrContent {
+func getECHKeys(logger *zerolog.Logger, client *Client, namespace string, secretNames []string) []types.FileOrContent {
 	var echKeys []types.FileOrContent
 	var unresolved int
 	for _, secretName := range secretNames {
@@ -1898,7 +1898,7 @@ func getECHKeys(logger *zerolog.Logger, client Client, namespace string, secretN
 	return echKeys
 }
 
-func getECHKey(client Client, namespace, secretName string) (types.FileOrContent, error) {
+func getECHKey(client *Client, namespace, secretName string) (types.FileOrContent, error) {
 	secret, exists, err := client.GetSecret(namespace, secretName)
 	if err != nil {
 		return "", fmt.Errorf("fetching secret: %w", err)

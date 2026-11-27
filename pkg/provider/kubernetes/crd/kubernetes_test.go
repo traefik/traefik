@@ -7497,12 +7497,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
 							},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "test.route",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
 							},
@@ -7526,13 +7525,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/0"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0/services/0"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
@@ -7581,12 +7581,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-foo",
 							},
-							Observability: &dynamic.RouterObservabilityConfig{
-								Metadata: &dynamic.ObservabilityMetadata{
-									Ingress: &dynamic.KubernetesMetadata{
-										Kind:      "IngressRoute",
-										Namespace: "default",
-										Name:      "test.route",
+							Metadata: &dynamic.Metadata{
+								Kubernetes: &dynamic.KubernetesMetadata{
+									Primary: &dynamic.KubernetesRef{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route"},
+									Sources: dynamic.KubernetesSources{
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0"},
 									},
 								},
 							},
@@ -7610,13 +7609,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
-							Observability: &dynamic.ServiceObservabilityConfig{
-								Metadata: &dynamic.ServiceObservabilityMetadata{
-									Kubernetes: &dynamic.KubernetesServiceMetadata{
-										Namespace: "default",
-										Name:      "whoami",
-										Port:      "80",
+							Metadata: &dynamic.ServiceMetadata{
+								Kubernetes: &dynamic.KubernetesServiceMetadata{
+									Primary: &dynamic.KubernetesRef{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami"},
+									Sources: dynamic.KubernetesSources{
+										{Version: "v1", Kind: "Service", Namespace: "default", Name: "whoami", Path: "/spec/ports/0"},
+										{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute", Namespace: "default", Name: "test.route", Path: "/spec/routes/0/services/0"},
 									},
+									ServicePort: "80",
 								},
 							},
 						},
