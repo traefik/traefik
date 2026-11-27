@@ -688,3 +688,126 @@ func TestPopulateUsedBy(t *testing.T) {
 		})
 	}
 }
+
+// NewConfig copies each dynamic section into its runtime counterpart, so a
+// populated input must never produce a nil map.
+func TestNewConfig(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		conf     dynamic.Configuration
+		expected *runtime.Configuration
+	}{
+		{
+			desc:     "empty dynamic configuration",
+			conf:     dynamic.Configuration{},
+			expected: &runtime.Configuration{},
+		},
+		{
+			desc: "HTTP routers, services and middlewares",
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"router-0@myprovider": {Service: "service-0@myprovider", Rule: "Host(`foo.bar`)"},
+					},
+					Services: map[string]*dynamic.Service{
+						"service-0@myprovider": {LoadBalancer: &dynamic.ServersLoadBalancer{}},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"middleware-0@myprovider": {AddPrefix: &dynamic.AddPrefix{Prefix: "/foo"}},
+					},
+				},
+			},
+			expected: &runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"router-0@myprovider": {
+						Router: &dynamic.Router{Service: "service-0@myprovider", Rule: "Host(`foo.bar`)"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+				Services: map[string]*runtime.ServiceInfo{
+					"service-0@myprovider": {
+						Service: &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{}},
+						Status:  runtime.StatusEnabled,
+					},
+				},
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"middleware-0@myprovider": {
+						Middleware: &dynamic.Middleware{AddPrefix: &dynamic.AddPrefix{Prefix: "/foo"}},
+						Status:     runtime.StatusEnabled,
+					},
+				},
+			},
+		},
+		{
+			desc: "TCP routers, services and middlewares",
+			conf: dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcp-router-0@myprovider": {Service: "tcp-service-0@myprovider", Rule: "HostSNI(`foo.bar`)"},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"tcp-service-0@myprovider": {LoadBalancer: &dynamic.TCPServersLoadBalancer{}},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{
+						"tcp-middleware-0@myprovider": {InFlightConn: &dynamic.TCPInFlightConn{Amount: 1}},
+					},
+				},
+			},
+			expected: &runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"tcp-router-0@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{Service: "tcp-service-0@myprovider", Rule: "HostSNI(`foo.bar`)"},
+						Status:    runtime.StatusEnabled,
+					},
+				},
+				TCPServices: map[string]*runtime.TCPServiceInfo{
+					"tcp-service-0@myprovider": {
+						TCPService: &dynamic.TCPService{LoadBalancer: &dynamic.TCPServersLoadBalancer{}},
+						Status:     runtime.StatusEnabled,
+					},
+				},
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"tcp-middleware-0@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{InFlightConn: &dynamic.TCPInFlightConn{Amount: 1}},
+						Status:        runtime.StatusEnabled,
+					},
+				},
+			},
+		},
+		{
+			desc: "UDP routers and services",
+			conf: dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udp-router-0@myprovider": {Service: "udp-service-0@myprovider"},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udp-service-0@myprovider": {LoadBalancer: &dynamic.UDPServersLoadBalancer{}},
+					},
+				},
+			},
+			expected: &runtime.Configuration{
+				UDPRouters: map[string]*runtime.UDPRouterInfo{
+					"udp-router-0@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{Service: "udp-service-0@myprovider"},
+						Status:    runtime.StatusEnabled,
+					},
+				},
+				UDPServices: map[string]*runtime.UDPServiceInfo{
+					"udp-service-0@myprovider": {
+						UDPService: &dynamic.UDPService{LoadBalancer: &dynamic.UDPServersLoadBalancer{}},
+						Status:     runtime.StatusEnabled,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, runtime.NewConfig(test.conf))
+		})
+	}
+}
