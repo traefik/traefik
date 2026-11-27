@@ -116,7 +116,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client *Cl
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, wrrKey, conf.Services, servicesRef, servicesRef)
 				if errBuild != nil {
-					logger.Error().Err(errBuild).Send()
+					p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+						Provider:  ProviderName,
+						Namespace: ingressRoute.Namespace,
+						Resource:  ingressName,
+						Err:       errBuild,
+					})
 					continue
 				}
 			case len(route.Services) == 1:
@@ -127,7 +132,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client *Cl
 
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec, serviceKey)
 				if err != nil {
-					logger.Error().Err(err).Send()
+					p.errorDeduper.LogError(logger, k8s.ErrorLogOptions{
+						Provider:  ProviderName,
+						Namespace: ingressRoute.Namespace,
+						Resource:  ingressName,
+						Err:       err,
+					})
 					continue
 				}
 
