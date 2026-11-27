@@ -1232,8 +1232,6 @@ func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace str
 	return allowCrossNamespace || parentNamespace == namespace
 }
 
-// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare direct references to Traefik resources.
-// A nil allowList means references are unrestricted, and an empty allowList disables them entirely.
 // isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare cross-provider references.
 // A nil allowList means the option is not set: every namespace is allowed.
 // A non-nil allowList pointing to an empty (or nil) slice means the option is set to an empty list: every namespace is rejected.

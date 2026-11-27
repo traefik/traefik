@@ -1747,7 +1747,6 @@ func isInternalService(ref gatev1alpha2.BackendRef) bool {
 	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
-// isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to use cross-provider references.
 // isCrossProviderNamespaceAllowed reports whether the given namespace is allowed to declare cross-provider references.
 // A nil allowList means the option is not set: every namespace is allowed.
 // A non-nil allowList pointing to an empty (or nil) slice means the option is set to an empty list: every namespace is rejected.
