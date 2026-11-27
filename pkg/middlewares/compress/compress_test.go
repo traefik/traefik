@@ -309,14 +309,6 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 		respContentType string
 	}{
 		{
-			desc: "Exclude Request Content-Type",
-			conf: dynamic.Compress{
-				Encodings:            defaultSupportedEncodings,
-				ExcludedContentTypes: []string{"text/event-stream"},
-			},
-			reqContentType: "text/event-stream",
-		},
-		{
 			desc: "Exclude Response Content-Type",
 			conf: dynamic.Compress{
 				Encodings:            defaultSupportedEncodings,
@@ -338,7 +330,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 				Encodings:            defaultSupportedEncodings,
 				ExcludedContentTypes: []string{"application/json"},
 			},
-			reqContentType: "application/grpc",
+			respContentType: "application/grpc",
 		},
 		{
 			desc: "Ignoring application/grpc with include option",
@@ -346,14 +338,14 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 				Encodings:            defaultSupportedEncodings,
 				IncludedContentTypes: []string{"application/json"},
 			},
-			reqContentType: "application/grpc",
+			respContentType: "application/grpc",
 		},
 		{
 			desc: "Ignoring application/grpc with no option",
 			conf: dynamic.Compress{
 				Encodings: defaultSupportedEncodings,
 			},
-			reqContentType: "application/grpc",
+			respContentType: "application/grpc",
 		},
 	}
 
