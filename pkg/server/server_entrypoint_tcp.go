@@ -539,10 +539,14 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
 
 	if config.ProxyProtocol != nil {
-		listener, err = buildProxyProtocolListener(ctx, config, listener)
-		if err != nil {
-			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
+		proxyListener, proxyErr := buildProxyProtocolListener(ctx, config, listener)
+		if proxyErr != nil {
+			// The listener is already bound, close it to avoid leaking the socket.
+			_ = listener.Close()
+			return nil, fmt.Errorf("error creating proxy protocol listener: %w", proxyErr)
 		}
+
+		listener = proxyListener
 	}
 	return &onceCloseListener{Listener: listener}, nil
 }
