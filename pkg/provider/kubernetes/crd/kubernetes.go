@@ -536,6 +536,7 @@ func (p *Provider) BuildConfiguration(ctx context.Context, client *Client) *dyna
 			MinVersion:          minVersion,
 			MaxVersion:          maxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
+			PreferIPv6:          serversTransport.Spec.PreferIPv6,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
 			PeerCertURI:         serversTransport.Spec.PeerCertURI,
