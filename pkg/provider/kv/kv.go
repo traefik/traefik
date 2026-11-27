@@ -26,6 +26,10 @@ type Provider struct {
 
 	name     string
 	kvClient store.Store
+
+	// newKVClient creates the KV client.
+	// It is called by Provide until it succeeds.
+	newKVClient func(ctx context.Context) (store.Store, error)
 }
 
 // SetDefaults sets the default values.
@@ -35,16 +39,14 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init(storeType, name string, config valkeyrie.Config) error {
-	ctx := log.With().Str(logs.ProviderName, name).Logger().WithContext(context.Background())
-
 	p.name = name
 
-	kvClient, err := p.createKVClient(ctx, storeType, config)
-	if err != nil {
-		return fmt.Errorf("failed to Connect to KV store: %w", err)
+	// The KV client is not created here but in Provide, where it is retried:
+	// some stores need to reach the server to create a client (e.g. etcd with authentication),
+	// and a KV store which is unavailable when Traefik starts must not disable the provider.
+	p.newKVClient = func(ctx context.Context) (store.Store, error) {
+		return p.createKVClient(ctx, storeType, config)
 	}
-
-	p.kvClient = kvClient
 
 	return nil
 }
@@ -55,6 +57,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctx := logger.WithContext(context.Background())
 
 	operation := func() error {
+		if p.kvClient == nil {
+			kvClient, err := p.newKVClient(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to connect to KV store: %w", err)
+			}
+
+			p.kvClient = kvClient
+		}
+
 		if _, err := p.kvClient.Exists(ctx, path.Join(p.RootKey, "qmslkjdfmqlskdjfmqlksjazcueznbvbwzlkajzebvkwjdcqmlsfj"), nil); err != nil {
 			return fmt.Errorf("KV store connection error: %w", err)
 		}

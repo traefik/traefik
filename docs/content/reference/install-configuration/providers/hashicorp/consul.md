@@ -5,6 +5,12 @@ description: "Use Consul as a provider for configuration discovery in Traefik Pr
 
 # Traefik & Consul
 
+!!! info "KV Store Unreachable at Startup"
+
+    If the KV store cannot be reached when Traefik starts, the provider is not disabled:
+    Traefik retries creating the connection with an exponential backoff until it succeeds,
+    then reads the dynamic configuration.
+
 ## Configuration Example
 
 You can enable the Consul provider as detailed below:

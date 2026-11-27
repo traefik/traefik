@@ -1,6 +1,7 @@
 package kv
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -968,6 +970,55 @@ func Test_buildConfiguration_KV_error(t *testing.T) {
 	cfg, err := provider.buildConfiguration(t.Context())
 	require.Error(t, err)
 	assert.Nil(t, cfg)
+}
+
+func TestProvide_retryKVClientCreation(t *testing.T) {
+	var attempts int
+	provider := &Provider{
+		RootKey: "traefik",
+		name:    "test",
+		newKVClient: func(context.Context) (store.Store, error) {
+			attempts++
+			if attempts < 3 {
+				return nil, errors.New("connection refused")
+			}
+
+			return &existsMock{Mock: &Mock{
+				KVPairs: mapToPairs(map[string]string{
+					"traefik/http/routers/foo/rule": "Host(`foo.localhost`)",
+				}),
+				WatchTreeMethod: func() <-chan []*store.KVPair {
+					return make(chan []*store.KVPair)
+				},
+			}}, nil
+		},
+	}
+
+	pool := safe.NewPool(t.Context())
+	t.Cleanup(pool.Stop)
+
+	configChan := make(chan dynamic.Message, 1)
+	err := provider.Provide(configChan, pool)
+	require.NoError(t, err)
+
+	select {
+	case msg := <-configChan:
+		assert.Equal(t, 3, attempts)
+		require.NotNil(t, msg.Configuration.HTTP)
+		assert.Equal(t, "Host(`foo.localhost`)", msg.Configuration.HTTP.Routers["foo"].Rule)
+	case <-time.After(10 * time.Second):
+		t.Fatal("no configuration received")
+	}
+}
+
+// existsMock is a Mock whose Exists method behaves like the real stores:
+// a missing key is not an error.
+type existsMock struct {
+	*Mock
+}
+
+func (s *existsMock) Exists(_ context.Context, _ string, _ *store.ReadOptions) (bool, error) {
+	return false, nil
 }
 
 func TestKvWatchTree(t *testing.T) {
