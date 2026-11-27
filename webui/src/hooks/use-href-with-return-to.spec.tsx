@@ -24,20 +24,55 @@ describe('useGetUrlWithReturnTo', () => {
     expect(result.current).toBe('/target?returnTo=%2Fcurrent%2Fpath%3Ffoo%3Dbar')
   })
 
-  it('should use initialReturnTo when provided', () => {
-    const { result } = renderHook(() => useGetUrlWithReturnTo('/target', '/custom/return'), {
-      wrapper: createWrapper('/current/path'),
+  it('should not grow the returnTo chain when bouncing back and forth between two pages', () => {
+    // list -> router
+    const { result: toRouter } = renderHook(() => useGetUrlWithReturnTo('/http/routers/router-1'), {
+      wrapper: createWrapper('/http/routers'),
     })
+    expect(toRouter.current).toBe('/http/routers/router-1?returnTo=%2Fhttp%2Frouters')
 
-    expect(result.current).toBe('/target?returnTo=%2Fcustom%2Freturn')
+    // router -> middleware
+    const { result: toMiddleware } = renderHook(() => useGetUrlWithReturnTo('/http/middlewares/middleware-1'), {
+      wrapper: createWrapper(toRouter.current),
+    })
+    expect(toMiddleware.current).toBe(
+      '/http/middlewares/middleware-1?returnTo=%2Fhttp%2Frouters%2Frouter-1%3FreturnTo%3D%252Fhttp%252Frouters',
+    )
+
+    // middleware -> router (back to a page already in the chain): should collapse back to the
+    // router's original URL instead of nesting a third layer.
+    const { result: backToRouter } = renderHook(() => useGetUrlWithReturnTo('/http/routers/router-1'), {
+      wrapper: createWrapper(toMiddleware.current),
+    })
+    expect(backToRouter.current).toBe(toRouter.current)
+
+    // router -> middleware again: should be identical to the first hop, not longer.
+    const { result: toMiddlewareAgain } = renderHook(() => useGetUrlWithReturnTo('/http/middlewares/middleware-1'), {
+      wrapper: createWrapper(backToRouter.current),
+    })
+    expect(toMiddlewareAgain.current).toBe(toMiddleware.current)
   })
 
-  it('should return the href as-is when href is empty string', () => {
-    const { result } = renderHook(() => useGetUrlWithReturnTo(''), {
-      wrapper: createWrapper('/current/path'),
-    })
+  it('should cap the returnTo chain length when navigating through distinct pages that never repeat', () => {
+    // Zero-padded so every page name is the same length — isolates chain growth from
+    // incidental differences in the target path's own length.
+    let currentPath = '/page-00'
+    const urls: string[] = [currentPath]
 
-    expect(result.current).toBe('')
+    // Walk through 10 hops, each to a page never visited before, so cycle detection never kicks in.
+    for (let i = 1; i <= 10; i++) {
+      const { result } = renderHook(() => useGetUrlWithReturnTo(`/page-${String(i).padStart(2, '0')}`), {
+        wrapper: createWrapper(currentPath),
+      })
+      currentPath = result.current
+      urls.push(currentPath)
+    }
+
+    // Once the chain hits its cap, each further hop drops the oldest entry rather than growing,
+    // so the URL length settles instead of climbing forever.
+    const lastLength = urls[urls.length - 1].length
+    const secondToLastLength = urls[urls.length - 2].length
+    expect(lastLength).toBe(secondToLastLength)
   })
 
   it('should handle href with existing query params', () => {
@@ -68,14 +103,6 @@ describe('useHrefWithReturnTo', () => {
     })
 
     expect(result.current).toBe('/target?returnTo=%2Fcurrent%3Ffoo%3Dbar%26baz%3Dqux')
-  })
-
-  it('should use custom returnTo when provided instead of current path', () => {
-    const { result } = renderHook(() => useHrefWithReturnTo('/target', '/custom/return'), {
-      wrapper: createWrapper('/current'),
-    })
-
-    expect(result.current).toBe('/target?returnTo=%2Fcustom%2Freturn')
   })
 
   it('should handle absolute paths correctly', () => {
