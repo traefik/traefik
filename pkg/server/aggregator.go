@@ -128,7 +128,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 
 		if configuration.TLS != nil {
 			for _, cert := range configuration.TLS.Certificates {
-				if slices.Contains(cert.Stores, tlsalpn01.ACMETLS1Protocol) && pvd != "tlsalpn.acme" {
+				if slices.Contains(cert.Stores, tlsalpn01.ACMETLS1Protocol) && pvd != "tlsalpn.internal" {
 					continue
 				}
 

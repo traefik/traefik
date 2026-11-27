@@ -633,3 +633,9 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 		})
 	}
 }
+
+func TestProvider_buildMessage_providerName(t *testing.T) {
+	p := &Provider{ResolverName: "tlsalpn"}
+
+	assert.NotEqual(t, createMessage(nil).ProviderName, p.buildMessage().ProviderName)
+}

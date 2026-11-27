@@ -147,7 +147,7 @@ func Test_mergeConfiguration_tlsCertificates(t *testing.T) {
 		{
 			desc: "Allows tlsalpn provider to give certificates",
 			given: dynamic.Configurations{
-				"tlsalpn.acme": &dynamic.Configuration{
+				"tlsalpn.internal": &dynamic.Configuration{
 					TLS: &dynamic.TLSConfiguration{
 						Certificates: []*tls.CertAndStores{{
 							CertFile: "foo",
