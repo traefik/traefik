@@ -179,6 +179,33 @@ func TestManager_Get(t *testing.T) {
 	}
 }
 
+func TestManager_Get_UsesCurrentStores(t *testing.T) {
+	tlsConfigs := map[string]Options{"default": DefaultTLSOptions}
+
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
+
+	config, err := tlsManager.Get("default", "default")
+	require.NoError(t, err)
+
+	clientHello := &tls.ClientHelloInfo{ServerName: "example.com"}
+
+	certificate, err := config.GetCertificate(clientHello)
+	require.NoError(t, err)
+	require.NotNil(t, certificate)
+	assert.NotContains(t, certificate.Leaf.DNSNames, "example.com")
+
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, []*CertAndStores{{
+		CertFile: localhostCert,
+		KeyFile:  localhostKey,
+	}})
+
+	certificate, err = config.GetCertificate(clientHello)
+	require.NoError(t, err)
+	require.NotNil(t, certificate)
+	assert.Contains(t, certificate.Leaf.DNSNames, "example.com")
+}
+
 func TestClientAuth(t *testing.T) {
 	tlsConfigs := map[string]Options{
 		"eca": {

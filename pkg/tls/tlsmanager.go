@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/go-acme/lego/v5/challenge/dns01"
 	"github.com/go-acme/lego/v5/challenge/tlsalpn01"
@@ -60,6 +61,11 @@ type Manager struct {
 	configs      map[string]Options
 	certs        []*CertAndStores
 
+	// currentStores is the last fully built stores map, which is never modified once published.
+	// The TLS configurations read it at handshake time instead of keeping a reference to a store,
+	// because a connection keeps its TLS configuration, and so everything it references, until it is closed.
+	currentStores atomic.Pointer[map[string]*CertificateStore]
+
 	// As of today, the TLS manager contains and is responsible for creating/starting the OCSP ocspStapler.
 	// It would likely have been a Configuration listener but this implies that certs are re-parsed.
 	// But this would probably have impact on resource consumption.
@@ -74,6 +80,8 @@ func NewManager(ocspConfig *OCSPConfig) *Manager {
 			"default": DefaultTLSOptions,
 		},
 	}
+
+	manager.currentStores.Store(&manager.stores)
 
 	if ocspConfig != nil {
 		manager.ocspStapler = newOCSPStapler(ocspConfig.ResponderOverrides)
@@ -199,6 +207,9 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		st.DefaultCertificate = certificate
 	}
 
+	builtStores := m.stores
+	m.currentStores.Store(&builtStores)
+
 	if m.ocspStapler != nil {
 		m.ocspStapler.ForceStapleUpdates()
 	}
@@ -250,6 +261,10 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		stores := *m.currentStores.Load()
+		store := stores[storeName]
+		acmeTLSStore := stores[tlsalpn01.ACMETLS1Protocol]
+
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 		if slices.Contains(clientHello.SupportedProtos, tlsalpn01.ACMETLS1Protocol) {
