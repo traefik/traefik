@@ -43,16 +43,14 @@ func newInMemoryRateLimiter(rl rate.Limit, burst int64, maxDelay time.Duration, 
 }
 
 func (i *inMemoryRateLimiter) Allow(_ context.Context, source string) (*time.Duration, error) {
-	// Get bucket which contains limiter information.
-	bucket, exists := i.buckets.Get(source)
-	if !exists {
-		bucket = rate.NewLimiter(i.rate, int(i.burst))
-	}
-
-	// We Set even in the case where the source already exists,
-	// because we want to update the expiryTime everytime we get the source,
-	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
-	if err := i.buckets.Set(source, bucket, i.ttl); err != nil {
+	// The bucket is looked up and, when there is none, created in a single step:
+	// otherwise, concurrent first requests from a source would each create their own full bucket.
+	// The expiryTime is updated everytime we get the source,
+	// as it is supposed to reflect the activity (or lack thereof) on that source.
+	bucket, err := i.buckets.GetOrSet(source, func() *rate.Limiter {
+		return rate.NewLimiter(i.rate, int(i.burst))
+	}, i.ttl)
+	if err != nil {
 		return nil, fmt.Errorf("setting buckets: %w", err)
 	}
 
