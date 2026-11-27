@@ -135,6 +135,20 @@ func TestProxyRedirect(t *testing.T) {
 			},
 		},
 		{
+			desc: "case-sensitive regular expression replacement with relative target does not insert host",
+			config: dynamic.ProxyRedirect{
+				From: `~^http://backend:\d+(/.*)$`,
+				To:   "/prefix$1",
+			},
+			reqHost: "example.com",
+			respHeaders: map[string]string{
+				"Location": "http://backend:8080/test/path",
+			},
+			expectedHeaders: map[string]string{
+				"Location": "/prefix/test/path",
+			},
+		},
+		{
 			desc: "rewrites Refresh header",
 			config: dynamic.ProxyRedirect{
 				From: "http://backend:8080/",

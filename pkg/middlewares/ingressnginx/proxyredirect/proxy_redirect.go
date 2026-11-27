@@ -81,7 +81,7 @@ func (p *proxyRedirect) modifyResponse(res *http.Response) error {
 	to := p.to
 	if to == "" || to == "default" {
 		to = "$scheme://$best_http_host/"
-	} else if strings.Contains(from, "://") && strings.HasPrefix(to, "/") {
+	} else if p.regex == nil && strings.Contains(from, "://") && strings.HasPrefix(to, "/") {
 		// NGINX inserts the server's name and port when the replacement omits it.
 		to = "$scheme://$best_http_host" + to
 	}
