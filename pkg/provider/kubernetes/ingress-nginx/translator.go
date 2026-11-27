@@ -713,6 +713,12 @@ func (p *Provider) buildMiddlewareChain(mc *model, loc *location, routerKey stri
 		rt.Middlewares = append(rt.Middlewares, name)
 	}
 
+	if loc.ProxyRedirect != nil {
+		name := routerKey + "-proxy-redirect"
+		conf.HTTP.Middlewares[name] = &dynamic.Middleware{ProxyRedirect: loc.ProxyRedirect}
+		rt.Middlewares = append(rt.Middlewares, name)
+	}
+
 	if loc.Retry != nil {
 		name := routerKey + "-retry"
 		conf.HTTP.Middlewares[name] = &dynamic.Middleware{Retry: loc.Retry, Metadata: loc.metadata()}

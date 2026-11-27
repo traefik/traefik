@@ -37,6 +37,7 @@ func (p *Provider) buildMiddlewares(ctx context.Context, loc *location, hostname
 	p.buildCORS(loc)
 	p.buildRewriteTarget(loc)
 	p.buildUpstreamVhost(loc)
+	p.buildProxyRedirect(loc)
 	p.buildRateLimit(loc)
 	p.buildLimitConnections(loc)
 	p.buildLimitAllowlist(loc)
@@ -341,6 +342,27 @@ func (p *Provider) buildUpstreamVhost(loc *location) {
 			"$service_name":  loc.ServiceName,
 			"$service_port":  loc.ServicePort,
 		},
+	}
+}
+
+func (p *Provider) buildProxyRedirect(loc *location) {
+	if loc.Config.ProxyRedirectFrom == nil {
+		return
+	}
+
+	from := *loc.Config.ProxyRedirectFrom
+	if from == "" || from == "off" {
+		return
+	}
+
+	to := ""
+	if loc.Config.ProxyRedirectTo != nil {
+		to = *loc.Config.ProxyRedirectTo
+	}
+
+	loc.ProxyRedirect = &dynamic.ProxyRedirect{
+		From: from,
+		To:   to,
 	}
 }
 

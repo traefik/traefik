@@ -39,6 +39,8 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/limit-rpm":                "120",
 				"nginx.ingress.kubernetes.io/x-forwarded-prefix":       "/test",
 				"nginx.ingress.kubernetes.io/upstream-vhost":           "upstream-vhost",
+				"nginx.ingress.kubernetes.io/proxy-redirect-from":      "http://backend:8080/",
+				"nginx.ingress.kubernetes.io/proxy-redirect-to":        "https://example.com/",
 			},
 			expected: IngressConfig{
 				SSLPassthrough:        new(true),
@@ -64,6 +66,8 @@ func Test_parseIngressConfig(t *testing.T) {
 				LimitRPM:              new(120),
 				XForwardedPrefix:      new("/test"),
 				UpstreamVHost:         new("upstream-vhost"),
+				ProxyRedirectFrom:     new("http://backend:8080/"),
+				ProxyRedirectTo:       new("https://example.com/"),
 			},
 		},
 		{

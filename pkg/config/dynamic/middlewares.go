@@ -68,6 +68,7 @@ type Middleware struct {
 	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	UpstreamVHost                    *UpstreamVHost                    `json:"upstreamVHost,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	AppRoot                          *AppRoot                          `json:"appRoot,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	ProxyRedirect                    *ProxyRedirect                    `json:"proxyRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 
 	// URNRefs holds the values a provider read for the URN references of the middleware, keyed by the JSON Pointer of the field holding the reference.
 	// The values are only set when the middleware is built (see ResolveURNRefs), so the dynamic configuration only exposes the references.
@@ -1050,4 +1051,15 @@ type UpstreamVHost struct {
 type AppRoot struct {
 	// Path defines the path that should be treated as the app root.
 	Path string `json:"path,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ProxyRedirect holds the proxy-redirect middleware configuration used by the ingress-nginx provider.
+// It rewrites the Location and Refresh response headers from a proxied server.
+type ProxyRedirect struct {
+	// From defines the text or pattern that should be replaced in the Location and Refresh header fields.
+	From string `json:"from,omitempty"`
+	// To defines the replacement text in the Location and Refresh header fields.
+	To string `json:"to,omitempty"`
 }
