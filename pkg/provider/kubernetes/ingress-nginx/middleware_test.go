@@ -2,9 +2,12 @@ package ingressnginx
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	netv1 "k8s.io/api/networking/v1"
 )
 
@@ -75,6 +78,111 @@ func TestBuildFromToWwwRedirect(t *testing.T) {
 			p.buildFromToWwwRedirect(loc, test.hostname, test.allHosts)
 
 			assert.Equal(t, test.expected, loc.FromToWwwRedirect)
+		})
+	}
+}
+
+func TestBuildLimits(t *testing.T) {
+	testCases := []struct {
+		desc                     string
+		limitIPStrategy          *dynamic.IPStrategy
+		expectedRateLimitRPS     *dynamic.RateLimit
+		expectedRateLimitRPM     *dynamic.RateLimit
+		expectedLimitConnections *dynamic.InFlightReq
+	}{
+		{
+			desc: "without limit IP strategy",
+			expectedRateLimitRPS: &dynamic.RateLimit{
+				Average: 10,
+				Period:  ptypes.Duration(time.Second),
+				Burst:   50,
+			},
+			expectedRateLimitRPM: &dynamic.RateLimit{
+				Average: 120,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   600,
+			},
+			expectedLimitConnections: &dynamic.InFlightReq{
+				Amount: 5,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{},
+				},
+			},
+		},
+		{
+			desc:            "with limit IP strategy",
+			limitIPStrategy: &dynamic.IPStrategy{Depth: 1},
+			expectedRateLimitRPS: &dynamic.RateLimit{
+				Average: 10,
+				Period:  ptypes.Duration(time.Second),
+				Burst:   50,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{Depth: 1},
+				},
+			},
+			expectedRateLimitRPM: &dynamic.RateLimit{
+				Average: 120,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   600,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{Depth: 1},
+				},
+			},
+			expectedLimitConnections: &dynamic.InFlightReq{
+				Amount: 5,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{Depth: 1},
+				},
+			},
+		},
+		{
+			desc:            "with excluded IPs limit IP strategy",
+			limitIPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+			expectedRateLimitRPS: &dynamic.RateLimit{
+				Average: 10,
+				Period:  ptypes.Duration(time.Second),
+				Burst:   50,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+			expectedRateLimitRPM: &dynamic.RateLimit{
+				Average: 120,
+				Period:  ptypes.Duration(time.Minute),
+				Burst:   600,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+			expectedLimitConnections: &dynamic.InFlightReq{
+				Amount: 5,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var ing netv1.Ingress
+			ing.SetAnnotations(map[string]string{
+				"nginx.ingress.kubernetes.io/limit-rps":         "10",
+				"nginx.ingress.kubernetes.io/limit-rpm":         "120",
+				"nginx.ingress.kubernetes.io/limit-connections": "5",
+			})
+
+			loc := &location{Config: parseIngressConfig(&ing)}
+
+			p := &Provider{LimitIPStrategy: test.limitIPStrategy}
+			p.buildRateLimit(loc)
+			p.buildLimitConnections(loc)
+
+			assert.Equal(t, test.expectedRateLimitRPS, loc.RateLimitRPS)
+			assert.Equal(t, test.expectedRateLimitRPM, loc.RateLimitRPM)
+			assert.Equal(t, test.expectedLimitConnections, loc.LimitConnections)
 		})
 	}
 }

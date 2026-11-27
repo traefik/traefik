@@ -378,6 +378,17 @@ The following annotations are organized by category for easier navigation.
 
 ### Rate Limiting
 
+!!! info "Client IP Strategy"
+
+    By default, Traefik counts requests and connections per remote address of the incoming request.
+    When Traefik is behind a reverse proxy, all clients share the remote address of the proxy, and the actual client IP is often found in the `X-Forwarded-For` header instead.
+    This can be configured globally using the provider option [`limitIPStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-limitIPStrategy).
+    ingress-nginx applies its [real IP configuration](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers) to both rate limiting and allowlists, so `limitIPStrategy` is usually set to the same value as [`ipAllowListStrategy`](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-ipAllowListStrategy).
+
+    Every proxy in front of Traefik that appends to `X-Forwarded-For` counts toward `depth`: for example, a CDN followed by an HTTP load balancer requires `depth: 2`.
+    The addresses of these proxies must be listed in the entry point [`forwardedHeaders.trustedIPs`](../../../install-configuration/entrypoints/#forwarded-headers), otherwise Traefik removes the `X-Forwarded-For` header.
+    When no client IP can be found (header missing or shorter than `depth`), there is no fallback to the remote address and all those requests share a single limit.
+
 | Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |-----------------------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |

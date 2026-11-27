@@ -27409,6 +27409,8 @@ func TestProvider_validateConfiguration(t *testing.T) {
 		defaultBackendService           string
 		expectedBackendServiceName      string
 		expectedBackendServiceNamespace string
+		ipAllowListStrategy             *dynamic.IPStrategy
+		limitIPStrategy                 *dynamic.IPStrategy
 		expectError                     bool
 	}{
 		{
@@ -27442,6 +27444,26 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			defaultBackendService: "namespace",
 			expectError:           true,
 		},
+		{
+			desc:                "Valid IP strategies",
+			ipAllowListStrategy: &dynamic.IPStrategy{Depth: 1, IPv6Subnet: new(64)},
+			limitIPStrategy:     &dynamic.IPStrategy{ExcludedIPs: []string{"173.245.48.0/20"}},
+		},
+		{
+			desc:                "Invalid ipAllowListStrategy IPv6 subnet",
+			ipAllowListStrategy: &dynamic.IPStrategy{Depth: 1, IPv6Subnet: new(0)},
+			expectError:         true,
+		},
+		{
+			desc:            "Invalid limitIPStrategy IPv6 subnet",
+			limitIPStrategy: &dynamic.IPStrategy{Depth: 1, IPv6Subnet: new(129)},
+			expectError:     true,
+		},
+		{
+			desc:            "Invalid limitIPStrategy excluded IPs",
+			limitIPStrategy: &dynamic.IPStrategy{ExcludedIPs: []string{"not-an-ip"}},
+			expectError:     true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -27451,6 +27473,8 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			provider := &Provider{
 				GlobalAllowedResponseHeaders: test.globalAllowedResponseHeaders,
 				DefaultBackendService:        test.defaultBackendService,
+				IPAllowListStrategy:          test.ipAllowListStrategy,
+				LimitIPStrategy:              test.limitIPStrategy,
 			}
 
 			err := provider.validateConfiguration()
