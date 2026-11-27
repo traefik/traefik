@@ -1405,6 +1405,109 @@ add_header X-Config "config-value" always;
 			unexpectedResponseHeaders: []string{"X-Config"},
 		},
 		{
+			desc: "rewrite break keeps the directives that follow it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+proxy_set_header X-Upstream upstream-value;
+add_header X-Response response-value always;
+`,
+			path:         "/old",
+			expectedPath: "/new",
+			expectedRequestHeaders: map[string]string{
+				"X-Upstream": "upstream-value",
+			},
+			expectedResponseHeaders: map[string]string{
+				"X-Response": "response-value",
+			},
+		},
+		{
+			desc: "rewrite break keeps the directives written before it",
+			configurationSnippet: `
+proxy_set_header X-Upstream upstream-value;
+add_header X-Response response-value always;
+rewrite ^/old$ /new break;
+`,
+			path:         "/old",
+			expectedPath: "/new",
+			expectedRequestHeaders: map[string]string{
+				"X-Upstream": "upstream-value",
+			},
+			expectedResponseHeaders: map[string]string{
+				"X-Response": "response-value",
+			},
+		},
+		{
+			desc: "rewrite break skips the rewrite directives that follow it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+set $late unexpected;
+return 403;
+`,
+			path:               "/old",
+			expectedPath:       "/new",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc: "rewrite break in an if block keeps the directives that follow it",
+			configurationSnippet: `
+if ($request_method = GET) {
+	rewrite ^/old$ /new break;
+}
+add_header X-Response response-value always;
+`,
+			path:         "/old",
+			expectedPath: "/new",
+			expectedResponseHeaders: map[string]string{
+				"X-Response": "response-value",
+			},
+		},
+		{
+			desc: "rewrite break keeps the deferred directives nested in an if block that follows it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+if ($request_method = GET) {
+	more_set_input_headers "X-If-After-Break: if-after-break";
+	more_set_headers "X-If-Response: if-response";
+}
+`,
+			path:         "/old",
+			expectedPath: "/new",
+			expectedRequestHeaders: map[string]string{
+				"X-If-After-Break": "if-after-break",
+			},
+			expectedResponseHeaders: map[string]string{
+				"X-If-Response": "if-response",
+			},
+		},
+		{
+			desc: "rewrite break skips the rewrite directives nested in an if block that follows it",
+			configurationSnippet: `
+rewrite ^/old$ /new break;
+if ($request_method = GET) {
+	set $late unexpected;
+	return 403;
+}
+`,
+			path:         "/old",
+			expectedPath: "/new",
+		},
+		{
+			desc: "rewrite break in server snippet keeps the directives that follow it",
+			serverSnippet: `
+rewrite ^/old/(.*)$ /new/$1 break;
+add_header X-Server server-value always;
+`,
+			configurationSnippet: `
+add_header X-Config config-value always;
+`,
+			path:         "/old/page",
+			expectedPath: "/new/page",
+			expectedResponseHeaders: map[string]string{
+				"X-Server": "server-value",
+			},
+			unexpectedResponseHeaders: []string{"X-Config"},
+		},
+		{
 			desc: "rewrite last in server snippet allows configuration snippet to run",
 			serverSnippet: `
 rewrite ^/old/(.*)$ /new/$1 last;

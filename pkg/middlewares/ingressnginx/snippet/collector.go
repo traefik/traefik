@@ -50,7 +50,19 @@ type CollectableAction func(rw http.ResponseWriter, req *http.Request, ctx *acti
 
 // SnippetActions holds the parsed collectable actions from a snippet.
 type SnippetActions struct {
-	actions []CollectableAction
+	actions []snippetAction
+}
+
+// snippetAction pairs a collectable action with the phase it belongs to.
+type snippetAction struct {
+	run CollectableAction
+
+	// rewritePhase is true for directives of the rewrite module (set, rewrite,
+	// return), which run immediately and are stopped by a `rewrite ... break`.
+	// Other directives collect actions for a later phase and still apply after a
+	// break. The if and location blocks also stay on this side: they are only
+	// containers, and their nested directives decide for themselves.
+	rewritePhase bool
 }
 
 // BuildSnippetActions parses directives from a block and builds collectable actions.
@@ -62,12 +74,12 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 			return nil, err
 		}
 
-		action, err := buildCollectableAction(d)
+		action, rewritePhase, err := buildCollectableAction(d)
 		if err != nil {
 			return nil, fmt.Errorf("building %s action: %w", d.GetName(), err)
 		}
 
-		sa.actions = append(sa.actions, action)
+		sa.actions = append(sa.actions, snippetAction{run: action, rewritePhase: rewritePhase})
 	}
 
 	return sa, nil
@@ -78,6 +90,11 @@ func BuildSnippetActions(block config.IBlock) (*SnippetActions, error) {
 // Other directives are collected into the appropriate phase bucket.
 // After a `return` directive terminates, we continue collecting header-phase
 // directives (they're in a different NGINX phase and should still apply).
+// A `rewrite ... break` stops the rewrite-phase directives that follow it, but the
+// directives of the other phases still apply, as `break` only ends the processing of
+// the ngx_http_rewrite_module directives. The stop is kept in the context, so the
+// directives nested in an if or location block written after the break are skipped
+// in there too.
 // Returns (terminated, skipToAccess, error).
 func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx *actionContext, pc *PhaseCollector) (terminated bool, skipToAccess bool, err error) {
 	if sa == nil {
@@ -85,7 +102,13 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 	}
 
 	for _, act := range sa.actions {
-		termResult, err := act(rw, req, ctx, pc)
+		if ctx.stopAllDirectives && act.rewritePhase {
+			// rewrite...break happened earlier in this block or in an enclosing one:
+			// stop the rewrite-phase directives, the others still apply.
+			continue
+		}
+
+		termResult, err := act.run(rw, req, ctx, pc)
 		if err != nil {
 			return false, false, err
 		}
@@ -99,17 +122,13 @@ func (sa *SnippetActions) Collect(rw http.ResponseWriter, req *http.Request, ctx
 		if terminated {
 			continue
 		}
-		if ctx.stopAllDirectives {
-			// rewrite...break: stop processing, skip to access phase
-			return terminated, true, nil
-		}
 		if ctx.stopCurrentBlock {
 			// rewrite...last: stop current block
 			return terminated, false, nil
 		}
 	}
 
-	return terminated, false, nil
+	return terminated, ctx.stopAllDirectives, nil
 }
 
 // HasAccess returns true if there are any access control actions collected.
@@ -134,54 +153,67 @@ type addHeaderEntry struct {
 	always bool
 }
 
-// buildCollectableAction creates a CollectableAction for a directive.
-func buildCollectableAction(d config.IDirective) (CollectableAction, error) {
+// buildCollectableAction creates a CollectableAction for a directive, and reports whether
+// the directive belongs to the rewrite phase (and is therefore stopped by a
+// `rewrite ... break`) instead of collecting actions for a later phase.
+func buildCollectableAction(d config.IDirective) (CollectableAction, bool, error) {
+	var (
+		action       CollectableAction
+		rewritePhase bool
+		err          error
+	)
+
 	switch d.GetName() {
 	// Rewrite phase - execute immediately
 	case "set":
-		return createSetCollectable(d)
+		action, err = createSetCollectable(d)
+		rewritePhase = true
 	case "return":
-		return createReturnCollectable(d)
+		action, err = createReturnCollectable(d)
+		rewritePhase = true
 	case "rewrite":
-		return createRewriteCollectable(d)
+		action, err = createRewriteCollectable(d)
+		rewritePhase = true
 	case "if":
-		return createIfCollectable(d)
+		action, err = createIfCollectable(d)
 	case "location":
-		return createLocationCollectable(d)
+		action, err = createLocationCollectable(d)
 
 	// Access phase - collect
 	case "allow", "deny":
-		return createAccessCollectable(d)
+		action, err = createAccessCollectable(d)
 
 	// Input filter phase - collect
 	case "more_set_input_headers":
-		return createMoreSetInputHeadersCollectable(d)
+		action, err = createMoreSetInputHeadersCollectable(d)
 	case "more_clear_input_headers":
-		return createMoreClearInputHeadersCollectable(d)
+		action, err = createMoreClearInputHeadersCollectable(d)
 
 	// Content phase - collect
 	case "auth_request_set":
-		return createAuthRequestSetCollectable(d)
+		action, err = createAuthRequestSetCollectable(d)
 	case "proxy_set_header":
-		return createProxySetHeaderCollectable(d)
+		action, err = createProxySetHeaderCollectable(d)
 	case "proxy_method":
-		return createProxyMethodCollectable(d)
+		action, err = createProxyMethodCollectable(d)
 
 	// Header filter phase - collect
 	case "add_header":
-		return createAddHeaderCollectable(d)
+		action, err = createAddHeaderCollectable(d)
 	case "more_set_headers":
-		return createMoreSetHeadersCollectable(d)
+		action, err = createMoreSetHeadersCollectable(d)
 	case "more_clear_headers":
-		return createMoreClearHeadersCollectable(d)
+		action, err = createMoreClearHeadersCollectable(d)
 	case "proxy_hide_header":
-		return createProxyHideHeaderCollectable(d)
+		action, err = createProxyHideHeaderCollectable(d)
 	case "expires":
-		return createExpiresCollectable(d)
+		action, err = createExpiresCollectable(d)
 
 	default:
-		return nil, fmt.Errorf("unsupported directive %q", d.GetName())
+		return nil, false, fmt.Errorf("unsupported directive %q", d.GetName())
 	}
+
+	return action, rewritePhase, err
 }
 
 // === Rewrite phase directives (execute immediately) ===
