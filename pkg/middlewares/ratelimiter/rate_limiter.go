@@ -43,10 +43,8 @@ type rateLimiter struct {
 
 // New returns a rate limiter middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
+	ctxLog, logger := middlewares.WithLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
-
-	ctxLog := logger.WithContext(ctx)
 
 	if config.SourceCriterion == nil ||
 		config.SourceCriterion.IPStrategy == nil &&
@@ -128,8 +126,7 @@ func (rl *rateLimiter) GetTracingInformation() (string, string) {
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), rl.name, typeName)
-	ctx := logger.WithContext(req.Context())
+	ctx, logger := middlewares.WithLogger(req.Context(), rl.name, typeName)
 
 	source, amount, err := rl.sourceMatcher.Extract(req)
 	if err != nil {
