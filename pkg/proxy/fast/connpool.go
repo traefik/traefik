@@ -17,6 +17,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
+	"golang.org/x/net/http/httpguts"
 )
 
 // rwWithUpgrade contains a ResponseWriter and an upgradeHandler,
@@ -208,6 +209,11 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 		return nil
 	}
 
+	// The Connection header is removed below, so it must be checked before.
+	if isLastResponse(&res.Header) {
+		c.broken.Store(true)
+	}
+
 	removeConnectionHeaders(&res.Header)
 
 	for _, header := range hopHeaders {
@@ -320,6 +326,25 @@ func (c *conn) handleResponse(r rwWithUpgrade) error {
 	return nil
 }
 
+// isLastResponse reports whether the backend closes the connection after the response with the given headers,
+// in which case the connection must not be reused (RFC 9112 section 9.6).
+func isLastResponse(h *fasthttp.ResponseHeader) bool {
+	// This covers an HTTP/1.0 response without keep-alive,
+	// and a response without Content-Length or Transfer-Encoding, as its body ends with the connection close.
+	if h.ConnectionClose() {
+		return true
+	}
+
+	// ConnectionClose only recognizes a Connection header value that is exactly "close".
+	for _, v := range h.PeekAll(fasthttp.HeaderConnection) {
+		if httpguts.HeaderValuesContainsToken([]string{string(v)}, "close") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // connPool is a net.Conn pool implementation using channels.
 type connPool struct {
 	dialer                func() (net.Conn, error)
@@ -404,6 +429,15 @@ func (c *connPool) ReleaseConn(co *conn) {
 	// An upgraded connection cannot be safely reused for another roundTrip,
 	// thus we are not putting it back to the pool.
 	if co.isUpgraded() {
+		return
+	}
+
+	if co.broken.Load() {
+		if err := co.Close(); err != nil {
+			log.Debug().
+				Err(err).
+				Msg("Unexpected error while closing the connection")
+		}
 		return
 	}
 
