@@ -74,7 +74,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// nested directories are also picked up
 					subDirs, err := collectSubDirectories(path.Join(p.Directory, entry.Name()))
 					if err != nil {
-						return fmt.Errorf("unable to read directory %s: %w", path.Join(p.Directory, entry.Name()), err)
+						log.Error().Err(err).Msgf("Unable to read directory %s", path.Join(p.Directory, entry.Name()))
+						continue
 					}
 					watchItems = append(watchItems, subDirs...)
 					continue
