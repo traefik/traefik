@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"maps"
 	"os"
 	"os/signal"
@@ -69,7 +70,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			for _, entry := range fileList {
 				if entry.IsDir() {
-					// ignore sub-dir
+					// watch the whole sub-directory tree, so that changes in
+					// nested directories are also picked up
+					subDirs, err := collectSubDirectories(path.Join(p.Directory, entry.Name()))
+					if err != nil {
+						log.Error().Err(err).Msgf("Unable to read directory %s", path.Join(p.Directory, entry.Name()))
+						continue
+					}
+					watchItems = append(watchItems, subDirs...)
 					continue
 				}
 				if !isFileSupported(entry.Name()) {
@@ -199,6 +207,8 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 						}
 					}
 				} else {
+					watchNewSubDirectories(watcher, evt)
+
 					err := callback(configurationChan)
 					if err != nil {
 						logger.Error().Err(err).Msg("Error occurred during watcher callback")
@@ -210,6 +220,57 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 		}
 	})
 	return nil
+}
+
+// watchNewSubDirectories adds watchers on a directory created after startup,
+// and on all of its sub-directories, so that a growing directory tree keeps
+// being watched entirely. Symlinks are not followed, consistently with the
+// directory discovery.
+func watchNewSubDirectories(watcher *fsnotify.Watcher, evt fsnotify.Event) {
+	if !evt.Has(fsnotify.Create) {
+		return
+	}
+
+	info, err := os.Lstat(evt.Name)
+	if err != nil || !info.IsDir() {
+		// Not a directory, or already gone: nothing to watch.
+		return
+	}
+
+	subDirs, err := collectSubDirectories(evt.Name)
+	if err != nil {
+		log.Error().Err(err).Msgf("Unable to read directory %s", evt.Name)
+		return
+	}
+
+	for _, dir := range subDirs {
+		log.Debug().Msgf("add watcher on: %s", dir)
+		if err := watcher.Add(dir); err != nil {
+			log.Error().Err(err).Msgf("Unable to add file watcher for %s", dir)
+		}
+	}
+}
+
+// collectSubDirectories returns the given directory and all of its
+// sub-directories, recursively, to watch a whole directory tree.
+func collectSubDirectories(root string) ([]string, error) {
+	var directories []string
+
+	err := filepath.WalkDir(root, func(itemPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		directories = append(directories, itemPath)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return directories, nil
 }
 
 // applyConfiguration builds the configuration and sends it to the given configurationChan.
