@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -1074,4 +1075,148 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 	// With 3:1 weight ratio, distribution should be ~75%/25% (60/80 and 20/80), ±1 due to initialization.
 	assert.InDelta(t, 60, counts["weighted"], 1)
 	assert.InDelta(t, 20, counts["normal"], 1)
+}
+
+func TestColdBusyServerDoesNotPileUp(t *testing.T) {
+	t.Run("prefers warm idle servers over cold busy server", func(t *testing.T) {
+		balancer := New(nil, false)
+
+		noop := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		})
+		balancer.Add("cold-busy", noop, new(1), false)
+		balancer.Add("warm-1", noop, new(1), false)
+		balancer.Add("warm-2", noop, new(1), false)
+
+		// Simulate cold-busy still handling its first request while warm servers have samples.
+		balancer.handlers[0].inflightCount.Store(1)
+		balancer.handlers[1].updateResponseTime(5 * time.Millisecond)
+		balancer.handlers[2].updateResponseTime(5 * time.Millisecond)
+
+		counts := map[string]int{}
+		for range 10 {
+			server, err := balancer.nextServer()
+			require.NoError(t, err)
+			counts[server.name]++
+		}
+
+		assert.Zero(t, counts["cold-busy"])
+		assert.Equal(t, 10, counts["warm-1"]+counts["warm-2"])
+		assert.InDelta(t, 5, counts["warm-1"], 1)
+		assert.InDelta(t, 5, counts["warm-2"], 1)
+	})
+
+	t.Run("concurrent requests do not pile onto slow first request", func(t *testing.T) {
+		balancer := New(nil, false)
+
+		slowStarted := make(chan struct{})
+		releaseSlow := make(chan struct{})
+
+		var slowHits atomic.Int64
+		balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if slowHits.Add(1) == 1 {
+				close(slowStarted)
+				<-releaseSlow
+			}
+			rw.Header().Set("server", "server1")
+			rw.WriteHeader(http.StatusOK)
+			httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
+		}), new(1), false)
+
+		var fastHits atomic.Int64
+		balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			fastHits.Add(1)
+			time.Sleep(2 * time.Millisecond)
+			rw.Header().Set("server", "server2")
+			rw.WriteHeader(http.StatusOK)
+			httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
+		}), new(1), false)
+
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			balancer.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		})
+
+		<-slowStarted
+
+		// While server1 is still handling its first request (no samples yet), subsequent
+		// requests should go to server2 instead of piling onto server1.
+		for range 10 {
+			balancer.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		}
+
+		close(releaseSlow)
+		wg.Wait()
+
+		assert.Equal(t, int64(1), slowHits.Load())
+		assert.Equal(t, int64(10), fastHits.Load())
+	})
+}
+
+func TestColdServersPreferIdleOverBusy(t *testing.T) {
+	balancer := New(nil, false)
+
+	noop := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	balancer.Add("server1", noop, new(1), false)
+	balancer.Add("server2", noop, new(1), false)
+	balancer.Add("server3", noop, new(1), false)
+
+	// All servers are cold; server1 has 2 inflight, server2 has 1, server3 is idle.
+	balancer.handlers[0].inflightCount.Store(2)
+	balancer.handlers[1].inflightCount.Store(1)
+
+	server, err := balancer.nextServer()
+	require.NoError(t, err)
+	assert.Equal(t, "server3", server.name)
+
+	// Once server3 also has 2 inflight, server2 (1 inflight) should win.
+	balancer.handlers[2].inflightCount.Store(2)
+
+	server, err = balancer.nextServer()
+	require.NoError(t, err)
+	assert.Equal(t, "server2", server.name)
+}
+
+func TestSubMillisecondResponseTimePrecision(t *testing.T) {
+	balancer := New(nil, false)
+
+	noop := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	balancer.Add("fast", noop, new(1), false)
+	balancer.Add("slower", noop, new(1), false)
+
+	balancer.handlers[0].updateResponseTime(200 * time.Microsecond)
+	balancer.handlers[1].updateResponseTime(800 * time.Microsecond)
+
+	assert.InDelta(t, 0.2, balancer.handlers[0].getAvgResponseTime(), 1e-9)
+	assert.InDelta(t, 0.8, balancer.handlers[1].getAvgResponseTime(), 1e-9)
+
+	server, err := balancer.nextServer()
+	require.NoError(t, err)
+	assert.Equal(t, "fast", server.name)
+
+	// Inflight load should still shift traffic away from a sub-millisecond server.
+	balancer.handlers[0].inflightCount.Store(4)
+	server, err = balancer.nextServer()
+	require.NoError(t, err)
+	assert.Equal(t, "slower", server.name)
+}
+
+func TestRingBufferFloatDriftOnWraparound(t *testing.T) {
+	handler := &namedHandler{
+		Handler: http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {}),
+		name:    "test",
+		weight:  1,
+	}
+
+	// Fill with a large latency spike, then wrap around completely with small sub-millisecond samples.
+	handler.updateResponseTime(10 * time.Second)
+	for range sampleSize {
+		handler.updateResponseTime(100 * time.Microsecond)
+	}
+
+	assert.InDelta(t, 0.1, handler.getAvgResponseTime(), 1e-9)
 }

@@ -44,7 +44,7 @@ func (s *namedHandler) updateResponseTime(elapsed time.Duration) {
 	s.responseTimeMu.Lock()
 	defer s.responseTimeMu.Unlock()
 
-	ms := float64(elapsed.Milliseconds())
+	ms := max(float64(elapsed)/float64(time.Millisecond), 0)
 
 	if s.sampleCount < sampleSize {
 		// Still filling the buffer.
@@ -55,22 +55,36 @@ func (s *namedHandler) updateResponseTime(elapsed time.Duration) {
 		// Buffer is full, replace oldest value.
 		oldValue := s.responseTimes[s.responseTimeIdx]
 		s.responseTimes[s.responseTimeIdx] = ms
-		s.responseTimeSum = s.responseTimeSum - oldValue + ms
+		s.responseTimeSum = max(s.responseTimeSum-oldValue+ms, 0)
 	}
 
 	s.responseTimeIdx = (s.responseTimeIdx + 1) % sampleSize
+	if s.sampleCount == sampleSize && s.responseTimeIdx == 0 {
+		// Recompute on wraparound to prevent floating-point drift.
+		var sum float64
+		for _, v := range s.responseTimes {
+			sum += v
+		}
+		s.responseTimeSum = sum
+	}
+}
+
+// responseTimeStats returns the average response time in milliseconds and whether any samples exist.
+func (s *namedHandler) responseTimeStats() (float64, bool) {
+	s.responseTimeMu.RLock()
+	defer s.responseTimeMu.RUnlock()
+
+	if s.sampleCount == 0 {
+		return 0, false
+	}
+	return s.responseTimeSum / float64(s.sampleCount), true
 }
 
 // getAvgResponseTime returns the average response time in milliseconds.
 // Returns 0 if no samples have been collected yet (cold start).
 func (s *namedHandler) getAvgResponseTime() float64 {
-	s.responseTimeMu.RLock()
-	defer s.responseTimeMu.RUnlock()
-
-	if s.sampleCount == 0 {
-		return 0
-	}
-	return s.responseTimeSum / float64(s.sampleCount)
+	avg, _ := s.responseTimeStats()
+	return avg
 }
 
 func (s *namedHandler) getDeadline() float64 {
@@ -343,20 +357,54 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		return healthy[0], nil
 	}
 
+	type serverMetrics struct {
+		handler    *namedHandler
+		avgRT      float64
+		hasSamples bool
+		inflight   float64
+	}
+
+	metrics := make([]serverMetrics, len(healthy))
+	var warmRTSum float64
+	var warmCount int
+	for i, h := range healthy {
+		avgRT, hasSamples := h.responseTimeStats()
+		inflight := float64(h.inflightCount.Load())
+		metrics[i] = serverMetrics{
+			handler:    h,
+			avgRT:      avgRT,
+			hasSamples: hasSamples,
+			inflight:   inflight,
+		}
+		if hasSamples {
+			warmRTSum += avgRT
+			warmCount++
+		}
+	}
+
+	// Avoid scoring a cold server with inflight requests as 0ms, which would
+	// pile concurrent requests onto it before its first response completes.
+	coldBusyRT := 1.0
+	if warmCount > 0 && warmRTSum > 0 {
+		coldBusyRT = warmRTSum / float64(warmCount)
+	}
+
 	// Calculate scores and find minimum.
 	minScore := math.MaxFloat64
 	var candidates []*namedHandler
 
-	for _, h := range healthy {
-		avgRT := h.getAvgResponseTime()
-		inflight := float64(h.inflightCount.Load())
-		score := (avgRT * (1 + inflight)) / h.weight
+	for _, m := range metrics {
+		effectiveRT := m.avgRT
+		if !m.hasSamples && m.inflight > 0 {
+			effectiveRT = coldBusyRT
+		}
+		score := (effectiveRT * (1 + m.inflight)) / m.handler.weight
 
 		if score < minScore {
 			minScore = score
-			candidates = []*namedHandler{h}
+			candidates = []*namedHandler{m.handler}
 		} else if score == minScore {
-			candidates = append(candidates, h)
+			candidates = append(candidates, m.handler)
 		}
 	}
 
