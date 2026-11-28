@@ -535,6 +535,10 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
 		}
+	} else {
+		// Socket activation ignores the configured address, so record the bound address
+		// for consumers such as entrypoint redirections.
+		config.Address = listener.Addr().String()
 	}
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}

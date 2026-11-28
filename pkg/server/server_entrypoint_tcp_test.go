@@ -25,7 +25,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/proxy/fast"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -1885,4 +1888,134 @@ func TestConnectionTracker_openConnectionsGauge(t *testing.T) {
 
 	tracker.RemoveConnection(connB)
 	assert.InDelta(t, 0, gauge.Value(), 0)
+}
+
+func TestBuildListenerSocketActivationUpdatesAddress(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		entryPointName  string
+		initialAddress  string
+		socketActivated bool
+	}{
+		{
+			desc:            "empty address updated from socket activation listener",
+			entryPointName:  "websecure",
+			initialAddress:  "",
+			socketActivated: true,
+		},
+		{
+			desc:            "configured address overwritten by socket activation listener",
+			entryPointName:  "websecure",
+			initialAddress:  ":9999",
+			socketActivated: true,
+		},
+		{
+			desc:            "unmatched entrypoint falls back to configured address",
+			entryPointName:  "other",
+			initialAddress:  "127.0.0.1:0",
+			socketActivated: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			saListener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = saListener.Close() })
+
+			origSocketActivation := socketActivation
+			t.Cleanup(func() { socketActivation = origSocketActivation })
+
+			socketActivation = &SocketActivation{
+				enabled: true,
+				listeners: map[string]net.Listener{
+					"websecure": saListener,
+				},
+			}
+
+			epConfig := &static.EntryPoint{Address: test.initialAddress}
+			epConfig.SetDefaults()
+
+			listener, err := buildListener(t.Context(), test.entryPointName, epConfig)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = listener.Close() })
+
+			if test.socketActivated {
+				assert.Equal(t, saListener.Addr().String(), epConfig.Address)
+			} else {
+				assert.Equal(t, test.initialAddress, epConfig.Address)
+			}
+		})
+	}
+}
+
+func TestSocketActivationEntryPointRedirection(t *testing.T) {
+	webListener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = webListener.Close() })
+
+	websecureListener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = websecureListener.Close() })
+
+	_, expectedPort, err := net.SplitHostPort(websecureListener.Addr().String())
+	require.NoError(t, err)
+
+	origSocketActivation := socketActivation
+	t.Cleanup(func() { socketActivation = origSocketActivation })
+
+	socketActivation = &SocketActivation{
+		enabled: true,
+		listeners: map[string]net.Listener{
+			"web":       webListener,
+			"websecure": websecureListener,
+		},
+	}
+
+	webEP := &static.EntryPoint{}
+	webEP.SetDefaults()
+	webEP.HTTP.Redirections = &static.Redirections{
+		EntryPoint: &static.RedirectEntryPoint{
+			To:        "websecure",
+			Scheme:    "https",
+			Permanent: true,
+		},
+	}
+
+	websecureEP := &static.EntryPoint{}
+	websecureEP.SetDefaults()
+
+	staticCfg := static.Configuration{
+		EntryPoints: static.EntryPoints{
+			"web":       webEP,
+			"websecure": websecureEP,
+		},
+	}
+
+	// Instantiate the internal provider before creating entrypoints to match setupServer.
+	internalProvider := traefik.New(staticCfg)
+
+	eps, err := NewTCPEntryPoints(staticCfg.EntryPoints, nil, metrics.NewVoidRegistry())
+	require.NoError(t, err)
+	t.Cleanup(func() { eps.Stop() })
+
+	cfgChan := make(chan dynamic.Message, 1)
+	err = internalProvider.Provide(cfgChan, safe.NewPool(t.Context()))
+	require.NoError(t, err)
+
+	msg := <-cfgChan
+	require.NotNil(t, msg.Configuration)
+	require.NotNil(t, msg.Configuration.HTTP)
+
+	rt, ok := msg.Configuration.HTTP.Routers["web-to-websecure"]
+	require.True(t, ok)
+	assert.Equal(t, []string{"web"}, rt.EntryPoints)
+	assert.Equal(t, []string{"redirect-web-to-websecure"}, rt.Middlewares)
+
+	md, ok := msg.Configuration.HTTP.Middlewares["redirect-web-to-websecure"]
+	require.True(t, ok)
+	require.NotNil(t, md.RedirectScheme)
+	assert.Equal(t, "https", md.RedirectScheme.Scheme)
+	assert.Equal(t, expectedPort, md.RedirectScheme.Port)
+	assert.True(t, md.RedirectScheme.Permanent)
 }
