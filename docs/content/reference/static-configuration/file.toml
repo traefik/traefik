@@ -552,6 +552,7 @@
       disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
+      accountKeyType = "foobar"
       certificatesDuration = 42
       clientTimeout = "42s"
       clientResponseHeaderTimeout = "42s"
@@ -587,6 +588,7 @@
       disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
+      accountKeyType = "foobar"
       certificatesDuration = 42
       clientTimeout = "42s"
       clientResponseHeaderTimeout = "42s"

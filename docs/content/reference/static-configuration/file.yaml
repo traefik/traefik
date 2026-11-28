@@ -596,6 +596,7 @@ certificatesResolvers:
       disableCommonName: true
       storage: foobar
       keyType: foobar
+      accountKeyType: foobar
       eab:
         kid: foobar
         hmacEncoded: foobar
@@ -637,6 +638,7 @@ certificatesResolvers:
       disableCommonName: true
       storage: foobar
       keyType: foobar
+      accountKeyType: foobar
       eab:
         kid: foobar
         hmacEncoded: foobar
